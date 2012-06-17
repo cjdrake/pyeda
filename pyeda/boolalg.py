@@ -133,14 +133,14 @@ def svec(name, *args, **kwargs):
     """Return a signed vector of variables."""
     return vec(name, *args, format=TWOS_COMPLEMENT, **kwargs)
 
-def zeros(width):
+def zeros(length):
     """Return a vector of zeros."""
     z = Vector()
-    for i in range(width):
+    for i in range(length):
         z.append(Zero)
     return z
 
-def uint2vec(num, width=None):
+def uint2vec(num, length=None):
     """Convert an unsigned integer to a Vector."""
     assert num >= 0
 
@@ -152,30 +152,30 @@ def uint2vec(num, width=None):
             vv.append(Buf(num & 1))
             num >>= 1
 
-    if width:
-        if width < len(vv):
+    if length:
+        if length < len(vv):
             raise ValueError("overflow: " + str(num))
         else:
-            vv.zext(width - len(vv))
+            vv.zext(length - len(vv))
 
     return vv
 
-def int2vec(num, width=None):
+def int2vec(num, length=None):
     """Convert a signed integer to a Vector."""
     if num < 0:
-        req_width = clog2(abs(num)) + 1
-        vv = uint2vec(2**req_width + num)
+        req_length = clog2(abs(num)) + 1
+        vv = uint2vec(2 ** req_length + num)
     else:
-        req_width = clog2(num + 1) + 1
+        req_length = clog2(num + 1) + 1
         vv = uint2vec(num)
-        vv.zext(req_width - len(vv))
+        vv.zext(req_length - len(vv))
     vv.format = TWOS_COMPLEMENT
 
-    if width:
-        if width < req_width:
+    if length:
+        if length < req_length:
             raise ValueError("overflow: " + str(num))
         else:
-            vv.sext(width - req_width)
+            vv.sext(length - req_length)
 
     return vv
 
