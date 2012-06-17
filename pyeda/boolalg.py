@@ -15,7 +15,6 @@ Interface Functions:
 
     uint2vec
     int2vec
-    expand_vecs
 
 Classes:
     Boolean
@@ -67,11 +66,15 @@ Properties of Boolean Algebraic Systems
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 __license__ = "All rights reserved"
 
+import re
+
 #==============================================================================
 # Constants
 #==============================================================================
 
 UNSIGNED, TWOS_COMPLEMENT = range(2)
+
+VARIABLE_REX = re.compile(r"([a-zA-Z][a-zA-Z_]+)\[(\d+)\]?")
 
 #==============================================================================
 # Interface Functions
@@ -104,8 +107,8 @@ def cube_pos(*vs):
 
 def iter_space(*vs):
     """Return the multi-dimensional space spanned by N Boolean variables."""
-    for i in range(2**len(vs)):
-        yield [(v if _bit_on(i, j) else -v) for j, v in enumerate(vs)]
+    for num in range(2 ** len(vs)):
+        yield [(v if _bit_on(num, i) else -v) for i, v in enumerate(vs)]
 
 def iter_points(op, *vs):
     """
@@ -127,11 +130,11 @@ def vec(name, *args, **kwargs):
     else:
         raise TypeError("vec expected at most three arguments")
     fs = [Variable("{}[{}]".format(name, i)) for i in range(start, stop)]
-    return Vector(*fs, offset=start, **kwargs)
+    return Vector(*fs, start=start, **kwargs)
 
 def svec(name, *args, **kwargs):
     """Return a signed vector of variables."""
-    return vec(name, *args, format=TWOS_COMPLEMENT, **kwargs)
+    return vec(name, *args, bnr=TWOS_COMPLEMENT, **kwargs)
 
 def zeros(length):
     """Return a vector of zeros."""
@@ -156,7 +159,7 @@ def uint2vec(num, length=None):
         if length < len(vv):
             raise ValueError("overflow: " + str(num))
         else:
-            vv.zext(length - len(vv))
+            vv.ext(length - len(vv))
 
     return vv
 
@@ -168,30 +171,16 @@ def int2vec(num, length=None):
     else:
         req_length = clog2(num + 1) + 1
         vv = uint2vec(num)
-        vv.zext(req_length - len(vv))
-    vv.format = TWOS_COMPLEMENT
+        vv.ext(req_length - len(vv))
+    vv.bnr = TWOS_COMPLEMENT
 
     if length:
         if length < req_length:
             raise ValueError("overflow: " + str(num))
         else:
-            vv.sext(length - req_length)
+            vv.ext(length - req_length)
 
     return vv
-
-def expand_vecs(d):
-    """Expand all vectors in a substitution dict."""
-    temp = {k: v for k, v in d.items() if isinstance(k, Vector)}
-    d = {k: v for k, v in d.items() if k not in temp}
-    while temp:
-        key, val = temp.popitem()
-        if isinstance(key, Vector):
-            assert len(key) == len(val)
-            for i, x in enumerate(val):
-                d[key[i + key.offset]] = Buf(x)
-        elif isinstance(key, Literal):
-            d[key] = val
-    return d
 
 #==============================================================================
 # Classes
@@ -224,10 +213,6 @@ class Boolean(object):
     def __rshift__(self, other):
         return Implies(self, other)
 
-    def _cmp_str(self):
-        """Return a string for canonical ordering comparisons."""
-        return self.__str__()
-
 
 class Number(Boolean):
     """Boolean number"""
@@ -239,25 +224,20 @@ class Number(Boolean):
         return self._val
 
     def __str__(self):
-        return ("1" if self._val else "0")
+        return str(self._val)
 
     def __eq__(self, other):
-        if isinstance(other, bool) or isinstance(other, int):
-            return self._val == other
-        elif isinstance(other, Number):
+        if isinstance(other, Number):
             return self._val == other.val
         else:
-            return False
+            return self._val == int(other)
 
     def __lt__(self, other):
-        if isinstance(other, bool) or isinstance(other, int):
-            return self._val < other
-        elif isinstance(other, Number):
+        if isinstance(other, Number):
             return self._val < other.val
-        elif isinstance(other, Expression):
+        if isinstance(other, Expression):
             return True
-        else:
-            return id(self) < id(other)
+        return id(self) < id(other)
 
     def __nonzero__(self):
         return self._val
@@ -267,8 +247,8 @@ class Number(Boolean):
         return self._val
 
 
-Zero = Number(False)
-One = Number(True)
+Zero = Number(0)
+One = Number(1)
 
 
 class Expression(Boolean):
@@ -335,6 +315,10 @@ class Expression(Boolean):
         """Substitute numbers into a boolean expression."""
         raise NotImplementedError()
 
+    def vsubs(self, d):
+        """Expand all vectors before doing a substitution."""
+        return self.subs(_expand_vectors(d))
+
     def to_pos(self):
         """Return the expression as a product of sums."""
         return self._flatten(Or)
@@ -353,8 +337,8 @@ class Expression(Boolean):
 
     def iter_cofactors(self, *vs):
         """Iterate through the cofactors of N variables."""
-        for i in range(2**len(vs)):
-            yield self.subs({v: _bit_on(i, j) for j, v in enumerate(vs)})
+        for num in range(2 ** len(vs)):
+            yield self.subs({v: _bit_on(num, i) for i, v in enumerate(vs)})
 
     def cofactors(self, *vs):
         """Return a list of cofactors of N variables.
@@ -496,12 +480,11 @@ class Variable(Literal):
     def __lt__(self, other):
         if isinstance(other, Number):
             return False
-        elif isinstance(other, Literal):
+        if isinstance(other, Literal):
             return self._name < other.name
-        elif isinstance(other, OrAnd):
+        if isinstance(other, OrAnd):
             return True
-        else:
-            return id(self) < id(other)
+        return id(self) < id(other)
 
     @property
     def name(self):
@@ -515,9 +498,6 @@ class Variable(Literal):
             return Buf(d[self])
         else:
             return self
-
-    def _cmp_str(self):
-        return self._name + "1"
 
 
 class Complement(Literal):
@@ -536,14 +516,13 @@ class Complement(Literal):
     def __lt__(self, other):
         if isinstance(other, Number):
             return False
-        elif isinstance(other, Variable):
+        if isinstance(other, Variable):
             return self._var.name <= other.name
-        elif isinstance(other, Complement):
+        if isinstance(other, Complement):
             return self._var.name < other.name
-        elif isinstance(other, OrAnd):
+        if isinstance(other, OrAnd):
             return True
-        else:
-            return id(self) < id(other)
+        return id(self) < id(other)
 
     @property
     def name(self):
@@ -561,9 +540,6 @@ class Complement(Literal):
             return Not(d[self._var])
         else:
             return self
-
-    def _cmp_str(self):
-        return self._var.name + "0"
 
 
 class OrAnd(Expression):
@@ -599,10 +575,14 @@ class OrAnd(Expression):
             return False
         if isinstance(other, Literal):
             return False
-        elif isinstance(other, OrAnd):
-            return self._cmp_str() < other._cmp_str()
-        else:
-            return id(self) < id(other)
+        if isinstance(other, OrAnd):
+            vs = self.support | other.support
+            for v in sorted(vs):
+                if -v in self.xs and v in other.xs:
+                    return True
+                elif v in self.xs and -v in other.xs:
+                    return False
+        return id(self) < id(other)
 
     @property
     def duals(self):
@@ -681,7 +661,10 @@ class OrAnd(Expression):
 
     @classmethod
     def _reduce_assoc(cls, xs):
-        # x + (y + z) = x + y + z; x * (y * z) = x * y * z
+        """
+        x + (y + z) = x + y + z
+        x * (y * z) = x * y * z
+        """
         temps = {x for x in xs if isinstance(x, cls)}
         xs -= temps
         while temps:
@@ -694,28 +677,42 @@ class OrAnd(Expression):
 
     @classmethod
     def _reduce_nums(cls, xs):
-        # x + 1 = 1; x * 0 = 0
+        """
+        x + 1 = 1; x * 0 = 0
+        x + 0 = x; x * 1 = x
+        """
         if -cls.IDENTITY in xs:
-            xs = {-cls.IDENTITY}
-        # x + 0 = x; x * 1 = x
-        if len(xs) > 1:
+            return {-cls.IDENTITY}
+        elif len(xs) > 1:
             xs.discard(cls.IDENTITY)
-        return xs
+            return xs
+        else:
+            return xs
 
     @classmethod
     def _reduce_comps(cls, xs):
-        # x + x' = 1; x * x' = 0
+        """
+        x + x' = 1; x * x' = 0
+        """
         vs = {x for x in xs if isinstance(x, Variable)}
         cvs = {x.var for x in xs if isinstance(x, Complement)}
         if vs & cvs:
-            xs = {-cls.IDENTITY}
-        return xs
+            return {-cls.IDENTITY}
+        else:
+            return xs
 
     @staticmethod
     def _reduce_absorb(xs):
-        # x + (x * y) = x; x * (x + y) = x
-        xs -= {xj for xi in xs for xj in xs if xi != xj and xi.xs <= xj.xs}
-        return xs
+        """
+        x + (x * y) = x
+        x * (x + y) = x
+        """
+        absorb = set()
+        for xi in xs:
+            for xj in xs:
+                if xi != xj and xj not in absorb and xi.xs < xj.xs:
+                    absorb.add(xj)
+        return xs - absorb
 
     @classmethod
     def _reduce(cls, xs):
@@ -780,9 +777,6 @@ class Or(OrAnd):
     def get_dual():
         return And
 
-    def _cmp_str(self):
-        return "0".join(x._cmp_str() for x in sorted(self.xs))
-
 
 class And(OrAnd):
     """boolean multiplication (and) operator"""
@@ -805,9 +799,6 @@ class And(OrAnd):
     @staticmethod
     def get_dual():
         return Or
-
-    def _cmp_str(self):
-        return "1".join(x._cmp_str() for x in sorted(self.xs))
 
 
 class Buf(Boolean):
@@ -874,8 +865,8 @@ class Vector(object):
 
     def __init__(self, *fs, **kwargs):
         self.fs = [Buf(f) for f in fs]
-        self._offset = kwargs.get("offset", 0)
-        self._format = kwargs.get("format", UNSIGNED)
+        self._start = kwargs.get("start", 0)
+        self._bnr = kwargs.get("bnr", UNSIGNED)
 
     def __len__(self):
         return len(self.fs)
@@ -894,22 +885,26 @@ class Vector(object):
 
     def __invert__(self):
         fs = [Not(v) for v in self.fs]
-        return Vector(*fs, offset=self._offset, format=self._format)
+        return Vector(*fs, start=self._start, bnr=self._bnr)
 
     def __or__(self, other):
         assert isinstance(other, Vector) and len(self.fs) == len(other.fs)
-        fs = [Or(f, other[i + other.offset]) for i, f in enumerate(self.fs)]
-        return Vector(*fs, offset=self._offset, format=self._format)
+        fs = [Or(f, other.getitemfz(i)) for i, f in enumerate(self.fs)]
+        return Vector(*fs, start=self._start, bnr=self._bnr)
 
     def __and__(self, other):
         assert isinstance(other, Vector) and len(self.fs) == len(other.fs)
-        fs = [And(f, other[i + other.offset]) for i, f in enumerate(self.fs)]
-        return Vector(*fs, offset=self._offset, format=self._format)
+        fs = [And(f, other.getitemfz(i)) for i, f in enumerate(self.fs)]
+        return Vector(*fs, start=self._start, bnr=self._bnr)
 
     def __xor__(self, other):
         assert isinstance(other, Vector) and len(self.fs) == len(other.fs)
-        fs = [Xor(f, other[i + other.offset]) for i, f in enumerate(self.fs)]
-        return Vector(*fs, offset=self._offset, format=self._format)
+        fs = [Xor(f, other.getitemfz(i)) for i, f in enumerate(self.fs)]
+        return Vector(*fs, start=self._start, bnr=self._bnr)
+
+    def getitemfz(self, i):
+        """Get item from zero-based index."""
+        return self.__getitem__(i + self.start)
 
     def __getitem__(self, sl):
         if isinstance(sl, int):
@@ -917,8 +912,8 @@ class Vector(object):
         else:
             norm = self._norm_slice(sl)
             return Vector(*self.fs.__getitem__(norm),
-                          offset=(norm.start + self._offset),
-                          format=self._format)
+                          start=(norm.start + self._start),
+                          bnr=self._bnr)
 
     def __setitem__(self, sl, f):
         if isinstance(sl, int):
@@ -928,20 +923,20 @@ class Vector(object):
             self.fs.__setitem__(norm, f)
 
     @property
-    def offset(self):
-        return self._offset
+    def start(self):
+        return self._start
 
     @property
-    def format(self):
-        return self._format
+    def bnr(self):
+        return self._bnr
 
-    @format.setter
-    def format(self, value):
-        self._format = value
+    @bnr.setter
+    def bnr(self, value):
+        self._bnr = value
 
     @property
     def sl(self):
-        return slice(self._offset, len(self.fs) + self._offset)
+        return slice(self._start, len(self.fs) + self._start)
 
     def to_uint(self):
         """Convert vector into an unsigned integer."""
@@ -957,8 +952,8 @@ class Vector(object):
     def to_int(self):
         """Convert vector into an integer."""
         num = self.to_uint()
-        if self._format == TWOS_COMPLEMENT and self.fs[-1]:
-            return -2 ** (self.__len__()) + num
+        if self._bnr == TWOS_COMPLEMENT and self.fs[-1]:
+            return -2 ** self.__len__() + num
         else:
             return num
 
@@ -969,47 +964,53 @@ class Vector(object):
             cpy[i] = cpy[i].subs(d)
         return cpy
 
-    def ripple_carry_add(self, b, ci=Zero):
-        assert isinstance(b, Vector) and len(self.fs) == len(b.fs)
-        fmt = UNSIGNED
-        if self._format == TWOS_COMPLEMENT or b.format == TWOS_COMPLEMENT:
-            fmt = TWOS_COMPLEMENT
-        s = Vector(format=fmt)
-        c = Vector()
-        for i, a in enumerate(self.fs):
-            carry = (ci if i == 0 else c[i-1])
-            s.append(Xor(a, b[i + b.offset], carry))
-            c.append(a * b[i + b.offset] + a * carry + b[i + b.offset] * carry)
-        return s, c
+    def vsubs(self, d):
+        """Expand all vectors before doing a substitution."""
+        return self.subs(_expand_vectors(d))
 
     def append(self, f):
         """Append logic function to the end of this vector."""
         self.fs.append(f)
 
-    def sext(self, n):
-        """Sign extend this vector by n bits."""
-        sign = self.fs[-1]
-        for i in range(n):
-            self.append(sign)
+    def ext(self, num):
+        """Extend this vector by N bits.
 
-    def zext(self, n):
-        """Zero extend this vector by n bits."""
-        for i in range(n):
-            self.append(Zero)
+        If this vector uses two's complement representation, sign extend;
+        otherwise, zero extend.
+        """
+        if self.bnr == TWOS_COMPLEMENT:
+            bit = self.fs[-1]
+        else:
+            bit = Zero
+        for i in range(num):
+            self.append(bit)
+
+    def ripple_carry_add(A, B, ci=Zero):
+        assert isinstance(B, Vector) and len(A.fs) == len(B.fs)
+        bnr = UNSIGNED
+        if A.bnr == TWOS_COMPLEMENT or B.bnr == TWOS_COMPLEMENT:
+            bnr = TWOS_COMPLEMENT
+        S = Vector(bnr=bnr)
+        C = Vector()
+        for i, A in enumerate(A.fs):
+            carry = (ci if i == 0 else C[i-1])
+            S.append(Xor(A, B.getitemfz(i), carry))
+            C.append(A * B.getitemfz(i) + A * carry + B.getitemfz(i) * carry)
+        return S, C
 
     def _norm_idx(self, i):
-        """Return an index normalized to vector offset."""
+        """Return an index normalized to vector start index."""
         if i >= 0:
-            if i < self._offset:
+            if i < self._start:
                 raise IndexError("list index out of range")
             else:
-                idx = i - self._offset
+                idx = i - self._start
         else:
-            idx = i + self._offset
+            idx = i + self._start
         return idx
 
     def _norm_slice(self, sl):
-        """Return a slice normalized to vector offset."""
+        """Return a slice normalized to vector start index."""
         d = dict()
         for k in ("start", "stop"):
             idx = getattr(sl, k)
@@ -1021,7 +1022,7 @@ class Vector(object):
             raise IndexError("list index out of range")
         elif d["start"] >= d["stop"]:
             raise IndexError("zero-sized slice")
-        return slice(d["start"] - self._offset, d["stop"] - self._offset)
+        return slice(d["start"] - self._start, d["stop"] - self._start)
 
 
 #==============================================================================
@@ -1031,4 +1032,16 @@ class Vector(object):
 def _bit_on(num, bit):
     return bool((num >> bit) & 1)
 
-
+def _expand_vectors(d):
+    """Expand all vectors in a substitution dict."""
+    temp = {k: v for k, v in d.items() if isinstance(k, Vector)}
+    d = {k: v for k, v in d.items() if k not in temp}
+    while temp:
+        key, val = temp.popitem()
+        if isinstance(key, Vector):
+            assert len(key) == len(val)
+            for i, x in enumerate(val):
+                d[key.getitemfz(i)] = Buf(x)
+        elif isinstance(key, Literal):
+            d[key] = val
+    return d

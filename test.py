@@ -12,7 +12,7 @@ import unittest
 # pyeda
 from pyeda.boolalg import (
     Zero, One, Variable, Not, Or, And, Nor, Nand, Xor, Xnor, Implies,
-    vec, svec, int2vec, uint2vec, expand_vecs
+    vec, svec, int2vec, uint2vec
 )
 
 class TestBoolalg(unittest.TestCase):
@@ -246,26 +246,26 @@ class TestBoolvec(unittest.TestCase):
         super(TestBoolvec, self).tearDown()
 
     def test_rcadd(self):
-        a, b = vec("a", 8), vec("b", 8)
-        s, c = a.ripple_carry_add(b)
-        s.append(c[-1])
+        A, B = vec("A", 8), vec("B", 8)
+        S, C = A.ripple_carry_add(B)
+        S.append(C[-1])
         for i in range(self.LOOPS):
             ra = random.randint(0, 2**8-1)
             rb = random.randint(0, 2**8-1)
-            d = expand_vecs({a: uint2vec(ra, 8), b: uint2vec(rb, 8)})
-            self.assertEqual(int(a.subs(d)), ra)
-            self.assertEqual(int(b.subs(d)), rb)
-            self.assertEqual(int(s.subs(d)), ra + rb)
+            d = {A: uint2vec(ra, 8), B: uint2vec(rb, 8)}
+            self.assertEqual(int(A.vsubs(d)), ra)
+            self.assertEqual(int(B.vsubs(d)), rb)
+            self.assertEqual(int(S.vsubs(d)), ra + rb)
 
-        a, b = svec("a", 8), svec("b", 8)
-        s, c = a.ripple_carry_add(b)
+        A, B = svec("A", 8), svec("B", 8)
+        S, C = A.ripple_carry_add(B)
         for i in range(self.LOOPS):
             ra = random.randint(-2**6, 2**6-1)
             rb = random.randint(-2**6, 2**6-1)
-            d = expand_vecs({a: int2vec(ra, 8), b: int2vec(rb, 8)})
-            self.assertEqual(int(a.subs(d)), ra)
-            self.assertEqual(int(b.subs(d)), rb)
-            self.assertEqual(int(s.subs(d)), ra + rb)
+            d = {A: int2vec(ra, 8), B: int2vec(rb, 8)}
+            self.assertEqual(int(A.vsubs(d)), ra)
+            self.assertEqual(int(B.vsubs(d)), rb)
+            self.assertEqual(int(S.vsubs(d)), ra + rb)
 
 
 if __name__ == "__main__":
