@@ -1,0 +1,6 @@
+# Filename: .gitignore
+
+build/
+dist/
+
+*.py[co]
