@@ -252,7 +252,7 @@ One = Number(1)
 
 
 class Expression(Boolean):
-    """Boolean symbol"""
+    """Boolean expression"""
 
     def __init__(self):
         self.cache = dict()
@@ -563,6 +563,9 @@ class OrAnd(Expression):
             h = sum(x.__hash__() for x in self.xs)
             self.cache["hash"] = h
         return h
+
+    def __iter__(self):
+        return iter(self.xs)
 
     def __len__(self):
         return len(self.xs)
@@ -883,26 +886,34 @@ class Vector(object):
     def __iter__(self):
         return iter(self.fs)
 
+    # unary operators
     def __invert__(self):
         fs = [Not(v) for v in self.fs]
         return Vector(*fs, start=self._start, bnr=self._bnr)
 
+    def uor(self):
+        return Or(*list(self.fs))
+
+    def uand(self):
+        return And(*list(self.fs))
+
+    def uxor(self):
+        return Xor(*list(self.fs))
+
+    # binary operators
     def __or__(self, other):
-        assert isinstance(other, Vector) and len(self.fs) == len(other.fs)
-        fs = [Or(f, other.getitemfz(i)) for i, f in enumerate(self.fs)]
-        return Vector(*fs, start=self._start, bnr=self._bnr)
+        assert isinstance(other, Vector) and len(self) == len(other)
+        return Vector(*[Or(*t) for t in zip(self.fs, other.fs)])
 
     def __and__(self, other):
-        assert isinstance(other, Vector) and len(self.fs) == len(other.fs)
-        fs = [And(f, other.getitemfz(i)) for i, f in enumerate(self.fs)]
-        return Vector(*fs, start=self._start, bnr=self._bnr)
+        assert isinstance(other, Vector) and len(self) == len(other)
+        return Vector(*[And(*t) for t in zip(self.fs, other.fs)])
 
     def __xor__(self, other):
-        assert isinstance(other, Vector) and len(self.fs) == len(other.fs)
-        fs = [Xor(f, other.getitemfz(i)) for i, f in enumerate(self.fs)]
-        return Vector(*fs, start=self._start, bnr=self._bnr)
+        assert isinstance(other, Vector) and len(self) == len(other)
+        return Vector(*[Xor(*t) for t in zip(self.fs, other.fs)])
 
-    def getitemfz(self, i):
+    def getifz(self, i):
         """Get item from zero-based index."""
         return self.__getitem__(i + self.start)
 
@@ -985,17 +996,27 @@ class Vector(object):
         for i in range(num):
             self.append(bit)
 
+    def eq(A, B):
+        assert isinstance(B, Vector) and len(A) == len(B)
+        return And(*[Xnor(*t) for t in zip(A.fs, B.fs)])
+
+    def decode(A):
+        return Vector(*[And(*[f if _bit_on(i, j) else -f
+                              for j, f in enumerate(A.fs)])
+                        for i in range(2 ** len(A))])
+
     def ripple_carry_add(A, B, ci=Zero):
-        assert isinstance(B, Vector) and len(A.fs) == len(B.fs)
-        bnr = UNSIGNED
+        assert isinstance(B, Vector) and len(A) == len(B)
         if A.bnr == TWOS_COMPLEMENT or B.bnr == TWOS_COMPLEMENT:
-            bnr = TWOS_COMPLEMENT
-        S = Vector(bnr=bnr)
+            sum_bnr = TWOS_COMPLEMENT
+        else:
+            sum_bnr = UNSIGNED
+        S = Vector(bnr=sum_bnr)
         C = Vector()
         for i, A in enumerate(A.fs):
             carry = (ci if i == 0 else C[i-1])
-            S.append(Xor(A, B.getitemfz(i), carry))
-            C.append(A * B.getitemfz(i) + A * carry + B.getitemfz(i) * carry)
+            S.append(Xor(A, B.getifz(i), carry))
+            C.append(A * B.getifz(i) + A * carry + B.getifz(i) * carry)
         return S, C
 
     def _norm_idx(self, i):
@@ -1041,7 +1062,7 @@ def _expand_vectors(d):
         if isinstance(key, Vector):
             assert len(key) == len(val)
             for i, x in enumerate(val):
-                d[key.getitemfz(i)] = Buf(x)
+                d[key.getifz(i)] = Buf(x)
         elif isinstance(key, Literal):
             d[key] = val
     return d
