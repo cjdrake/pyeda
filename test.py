@@ -128,6 +128,7 @@ class TestBoolalg(unittest.TestCase):
 
     def test_cmp(self):
         a, b = map(Variable, "ab")
+        A = vec("a", 11)
         self.assertLess(-a, a)
         self.assertLess(a, b)
         self.assertLess(-a, -b)
@@ -135,6 +136,16 @@ class TestBoolalg(unittest.TestCase):
         self.assertLess(a, a * b)
         self.assertLess(-a * b, a * b)
         self.assertLess(-a * -b, -a * b)
+        self.assertLess(a, A[0])
+        self.assertLess(A[0], A[1])
+        self.assertLess(A[1], A[10])
+        self.assertLess(A[0], -A[1])
+        self.assertLess(A[1], -A[10])
+        self.assertLess(-A[0], -A[1])
+        self.assertLess(-A[1], -A[10])
+        self.assertLess(-A[0], A[0])
+        self.assertLess(-A[0], A[1])
+        self.assertLess(-A[1], A[10])
 
     def test_nops(self):
         a, b, c, d = map(Variable, "abcd")

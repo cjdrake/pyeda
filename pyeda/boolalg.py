@@ -74,7 +74,7 @@ import re
 
 UNSIGNED, TWOS_COMPLEMENT = range(2)
 
-VARIABLE_REX = re.compile(r"([a-zA-Z][a-zA-Z_]+)\[(\d+)\]?")
+VARNAME_REX = re.compile(r"([a-zA-Z][a-zA-Z_0-9]*)(?:\[(\d+)\])?")
 
 #==============================================================================
 # Interface Functions
@@ -471,7 +471,14 @@ class Variable(Literal):
     """boolean variable"""
 
     def __init__(self, name):
+        match = VARNAME_REX.match(name)
+        if match:
+            ident, idx = match.groups()
+        else:
+            raise ValueError("invalid variable name")
         self._name = name
+        self._ident = ident
+        self._idx = (int(idx) if idx else -1)
         super(Variable, self).__init__()
 
     def __str__(self):
@@ -481,7 +488,7 @@ class Variable(Literal):
         if isinstance(other, Number):
             return False
         if isinstance(other, Literal):
-            return self._name < other.name
+            return self._ident < other.ident or self._idx < other.idx
         if isinstance(other, OrAnd):
             return True
         return id(self) < id(other)
@@ -489,6 +496,14 @@ class Variable(Literal):
     @property
     def name(self):
         return self._name
+
+    @property
+    def ident(self):
+        return self._ident
+
+    @property
+    def idx(self):
+        return self._idx
 
     def iter_vars(self, visit=None):
         yield self
@@ -517,9 +532,9 @@ class Complement(Literal):
         if isinstance(other, Number):
             return False
         if isinstance(other, Variable):
-            return self._var.name <= other.name
+            return self._var.ident <= other.ident or self._var.idx <= other.idx
         if isinstance(other, Complement):
-            return self._var.name < other.name
+            return self._var.ident < other.ident or self._var.idx < other.idx
         if isinstance(other, OrAnd):
             return True
         return id(self) < id(other)
@@ -527,6 +542,14 @@ class Complement(Literal):
     @property
     def name(self):
         return self._var.name
+
+    @property
+    def ident(self):
+        return self._var.ident
+
+    @property
+    def idx(self):
+        return self._var.idx
 
     @property
     def var(self):
@@ -583,7 +606,7 @@ class OrAnd(Expression):
             for v in sorted(vs):
                 if -v in self.xs and v in other.xs:
                     return True
-                elif v in self.xs and -v in other.xs:
+                if v in self.xs and -v in other.xs:
                     return False
         return id(self) < id(other)
 
