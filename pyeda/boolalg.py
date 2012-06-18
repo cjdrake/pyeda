@@ -66,15 +66,11 @@ Properties of Boolean Algebraic Systems
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 __license__ = "All rights reserved"
 
-import re
-
 #==============================================================================
 # Constants
 #==============================================================================
 
 UNSIGNED, TWOS_COMPLEMENT = range(2)
-
-VARNAME_REX = re.compile(r"([a-zA-Z][a-zA-Z_0-9]*)(?:\[(\d+)\])?")
 
 #==============================================================================
 # Interface Functions
@@ -129,7 +125,7 @@ def vec(name, *args, **kwargs):
         start, stop = args
     else:
         raise TypeError("vec expected at most three arguments")
-    fs = [Variable("{}[{}]".format(name, i)) for i in range(start, stop)]
+    fs = [Variable(name, index=i) for i in range(start, stop)]
     return Vector(*fs, start=start, **kwargs)
 
 def svec(name, *args, **kwargs):
@@ -234,7 +230,7 @@ class Number(Boolean):
 
     def __lt__(self, other):
         if isinstance(other, Number):
-            return self._val < other.val
+            return self.val < other.val
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
@@ -451,7 +447,8 @@ class Literal(Expression):
         return 1
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.name == other.name
+        return (isinstance(other, self.__class__) and
+                self.name == other.name and self.index == other.index)
 
     @property
     def depth(self):
@@ -470,25 +467,22 @@ class Literal(Expression):
 class Variable(Literal):
     """boolean variable"""
 
-    def __init__(self, name):
-        match = VARNAME_REX.match(name)
-        if match:
-            ident, idx = match.groups()
-        else:
-            raise ValueError("invalid variable name")
+    def __init__(self, name, index=-1):
         self._name = name
-        self._ident = ident
-        self._idx = (int(idx) if idx else -1)
+        self._index = index
         super(Variable, self).__init__()
 
     def __str__(self):
-        return self._name
+        if self._index >= 0:
+            return "{0._name}[{0.index}]".format(self)
+        else:
+            return self._name
 
     def __lt__(self, other):
         if isinstance(other, Number):
             return False
         if isinstance(other, Literal):
-            return self._ident < other.ident or self._idx < other.idx
+            return self.name < other.name or self.index < other.index
         if isinstance(other, OrAnd):
             return True
         return id(self) < id(other)
@@ -498,12 +492,8 @@ class Variable(Literal):
         return self._name
 
     @property
-    def ident(self):
-        return self._ident
-
-    @property
-    def idx(self):
-        return self._idx
+    def index(self):
+        return self._index
 
     def iter_vars(self, visit=None):
         yield self
@@ -526,15 +516,15 @@ class Complement(Literal):
         super(Complement, self).__init__()
 
     def __str__(self):
-        return self._var.name + self.OP
+        return str(self._var) + self.OP
 
     def __lt__(self, other):
         if isinstance(other, Number):
             return False
         if isinstance(other, Variable):
-            return self._var.ident <= other.ident or self._var.idx <= other.idx
+            return self.name <= other.name or self.index <= other.index
         if isinstance(other, Complement):
-            return self._var.ident < other.ident or self._var.idx < other.idx
+            return self.name < other.name or self.index < other.index
         if isinstance(other, OrAnd):
             return True
         return id(self) < id(other)
@@ -544,12 +534,8 @@ class Complement(Literal):
         return self._var.name
 
     @property
-    def ident(self):
-        return self._var.ident
-
-    @property
-    def idx(self):
-        return self._var.idx
+    def index(self):
+        return self._var.index
 
     @property
     def var(self):
