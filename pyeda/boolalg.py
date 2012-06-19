@@ -624,8 +624,8 @@ class OrAnd(Expression):
         for x in self.xs:
             for v in x.iter_vars(visit):
                 if v not in visit:
+                    visit.add(v)
                     yield v
-                visit.add(v)
 
     def copy(self):
         return self.__class__(*[x for x in self.xs])
