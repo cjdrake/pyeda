@@ -72,6 +72,8 @@ __license__ = "All rights reserved"
 
 UNSIGNED, TWOS_COMPLEMENT = range(2)
 
+COMPLEMENTS = dict()
+
 #==============================================================================
 # Interface Functions
 #==============================================================================
@@ -482,7 +484,8 @@ class Variable(Literal):
         if isinstance(other, Number):
             return False
         if isinstance(other, Literal):
-            return self.name < other.name or self.index < other.index
+            return (self.name < other.name or
+                    self.name == other.name and self.index < other.index)
         if isinstance(other, OrAnd):
             return True
         return id(self) < id(other)
@@ -522,9 +525,11 @@ class Complement(Literal):
         if isinstance(other, Number):
             return False
         if isinstance(other, Variable):
-            return self.name <= other.name or self.index <= other.index
+            return (self.name < other.name or
+                    self.name == other.name and self.index <= other.index)
         if isinstance(other, Complement):
-            return self.name < other.name or self.index < other.index
+            return (self.name < other.name or
+                    self.name == other.name and self.index < other.index)
         if isinstance(other, OrAnd):
             return True
         return id(self) < id(other)
@@ -832,7 +837,9 @@ class Not(Boolean):
             return Zero if x else One
         # x'
         elif isinstance(x, Variable):
-            return Complement(x)
+            if x not in COMPLEMENTS:
+                COMPLEMENTS[x] = Complement(x)
+            return COMPLEMENTS[x]
         # (x')' = x
         elif isinstance(x, Complement):
             return x.var
