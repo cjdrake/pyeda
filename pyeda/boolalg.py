@@ -2,7 +2,10 @@
 Boolean Algebra
 
 Interface Functions:
-    clog2
+    tobool
+
+    factor
+    simplify
 
     cube_sop
     cube_pos
@@ -11,6 +14,7 @@ Interface Functions:
 
     vec
     svec
+
     zeros
 
     uint2vec
@@ -19,6 +23,7 @@ Interface Functions:
 Classes:
     Boolean
         Number: {Zero, One}
+
         Expression
             Literal
                 Variable
@@ -26,10 +31,14 @@ Classes:
             OrAnd
                 Or
                 And
-        Buf, Not
-        Nor, Nand,
-        Xor, Xnor,
-        Implies
+            BufNot
+                Buf
+                Not
+            Xor
+            Implies
+
+    Nor, Nand, Xnor
+    NotF, OrF, NorF, AndF, NandF, XorF, XnorF, ImpliesF
 
     Vector
 
@@ -63,6 +72,8 @@ Properties of Boolean Algebraic Systems
 +---------------------------+---------------+
 """
 
+import multiprocessing
+
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 __license__ = "All rights reserved"
 
@@ -78,14 +89,26 @@ COMPLEMENTS = dict()
 # Interface Functions
 #==============================================================================
 
-def clog2(num):
-    """Return the ceiling, log base two of an integer."""
-    assert num >= 1
-    i, x = 0, 1
-    while x < num:
-        x = x << 1;
-        i += 1
-    return i
+def tobool(x):
+    """Return a Boolean data type."""
+    if isinstance(x, Boolean):
+        return x
+    else:
+        num = int(x)
+        if num == 0:
+            return Zero
+        elif num == 1:
+            return One
+        else:
+            raise ValueError("invalid input for tobool()")
+
+def factor(expr):
+    """Return a factored expression."""
+    return expr.factor()
+
+def simplify(expr):
+    """Return a simplified expression."""
+    return expr.simplify()
 
 def cube_sop(*vs):
     """
@@ -120,13 +143,13 @@ def iter_points(op, *vs):
 def vec(name, *args, **kwargs):
     """Return a vector of variables."""
     if len(args) == 0:
-        raise TypeError("vec expected at least two argument")
+        raise TypeError("vec() expected at least two argument")
     elif len(args) == 1:
         start, stop = 0, args[0]
     elif len(args) == 2:
         start, stop = args
     else:
-        raise TypeError("vec expected at most three arguments")
+        raise TypeError("vec() expected at most three arguments")
     fs = [Variable(name, index=i) for i in range(start, stop)]
     return Vector(*fs, start=start, **kwargs)
 
@@ -150,7 +173,7 @@ def uint2vec(num, length=None):
         vv.append(Zero)
     else:
         while num != 0:
-            vv.append(Buf(num & 1))
+            vv.append(tobool(num & 1))
             num >>= 1
 
     if length:
@@ -164,10 +187,10 @@ def uint2vec(num, length=None):
 def int2vec(num, length=None):
     """Convert a signed integer to a Vector."""
     if num < 0:
-        req_length = clog2(abs(num)) + 1
+        req_length = _clog2(abs(num)) + 1
         vv = uint2vec(2 ** req_length + num)
     else:
-        req_length = clog2(num + 1) + 1
+        req_length = _clog2(num + 1) + 1
         vv = uint2vec(num)
         vv.ext(req_length - len(vv))
     vv.bnr = TWOS_COMPLEMENT
@@ -185,7 +208,10 @@ def int2vec(num, length=None):
 #==============================================================================
 
 class Boolean(object):
-    """Base class for boolean objects"""
+    """Base class for Boolean objects"""
+
+    def __init__(self):
+        pass
 
     def __hash__(self):
         raise NotImplementedError()
@@ -211,11 +237,48 @@ class Boolean(object):
     def __rshift__(self, other):
         return Implies(self, other)
 
+    @property
+    def depth(self):
+        """The number of levels in the expression tree."""
+        expr = self.factor()
+        return expr._depth
+
+    def copy(self):
+        """
+        Construct a new expression that contains references to the objects
+        found in the original.
+        """
+        raise NotImplementedError()
+
+    def subs(self, d):
+        """Substitute numbers into a Boolean expression."""
+        raise NotImplementedError()
+
+    def vsubs(self, d):
+        """Expand all vectors before doing a substitution."""
+        return self.subs(_expand_vectors(d))
+
+    def factor(self):
+        """Return a factored expression.
+
+        A factored expression is one and only one of the following:
+        * A literal.
+        * A sum / product of factored expressions.
+        """
+        expr = self._factor()
+        return expr
+
+    def simplify(self):
+        """Return a simplifed expression."""
+        expr = self._simplify()
+        return expr
+
 
 class Number(Boolean):
     """Boolean number"""
 
     def __init__(self, val):
+        super(Number, self).__init__()
         self._val = val
 
     def __hash__(self):
@@ -225,10 +288,8 @@ class Number(Boolean):
         return str(self._val)
 
     def __eq__(self, other):
-        if isinstance(other, Number):
-            return self._val == other.val
-        else:
-            return self._val == int(other)
+        other = tobool(other)
+        return isinstance(other, Number) and self._val == other.val
 
     def __lt__(self, other):
         if isinstance(other, Number):
@@ -241,8 +302,18 @@ class Number(Boolean):
         return self._val
 
     @property
+    def _depth(self):
+        return 0
+
+    @property
     def val(self):
         return self._val
+
+    def copy(self): return self
+    def subs(self, d): return self
+
+    def _factor(self): return self
+    def _simplify(self): return self
 
 
 Zero = Number(0)
@@ -253,7 +324,15 @@ class Expression(Boolean):
     """Boolean expression"""
 
     def __init__(self):
+        super(Expression, self).__init__()
         self.cache = dict()
+
+    def __hash__(self):
+        val = self.cache.get("hash", None)
+        if val is None:
+            val = sum(x.__hash__() for x in self.xs)
+            self.cache["hash"] = val
+        return val
 
     @property
     def support(self):
@@ -262,76 +341,63 @@ class Expression(Boolean):
         Let f(x1, x2, ..., xn) be a Boolean function of N variables. The set
         {x1, x2, ..., xn} is called the *support* of the function.
         """
-        s = self.cache.get("support", None)
-        if s is None:
-            s = {v for v in self.iter_vars()}
-            self.cache["support"] = s
-        return s
+        val = self.cache.get("support", None)
+        if val is None:
+            val = {v for v in self.iter_vars()}
+            self.cache["support"] = val
+        return val
 
     @property
     def minterms(self):
         """The sum of products of N literals"""
-        return {x for x in self.iter_minterms()}
+        val = self.cache.get("minterms", None)
+        if val is None:
+            val = {x for x in self.iter_minterms()}
+            self.cache["minterms"] = val
+        return val
 
     @property
     def maxterms(self):
         """The product of sums of N literals"""
-        return {x for x in self.iter_maxterms()}
+        val = self.cache.get("maxterms", None)
+        if val is None:
+            val = {x for x in self.iter_maxterms()}
+            self.cache["maxterms"] = val
+        return val
 
-    @property
-    def depth(self):
-        """The number of levels in the expression tree."""
-        raise NotImplementedError()
-
-    def iter_vars(self, visit=None):
+    def iter_vars(self):
         """Recursively iterate through all variables in the expression."""
         raise NotImplementedError()
 
     def iter_minterms(self):
         """Iterate through the sum of products of N literals."""
-        raise NotImplementedError()
+        for term in self.to_csop():
+            yield term
 
     def iter_maxterms(self):
         """Iterate through the product of sums of N literals."""
-        raise NotImplementedError()
-
-    def copy(self):
-        """
-        Construct a new expression that contains references to the objects
-        found in the original.
-        """
-        raise NotImplementedError()
-
-    def deepcopy(self):
-        """
-        Recursively construct a new expression that contains copies of the
-        objects found in the original.
-        """
-        raise NotImplementedError()
-
-    def subs(self, d):
-        """Substitute numbers into a boolean expression."""
-        raise NotImplementedError()
-
-    def vsubs(self, d):
-        """Expand all vectors before doing a substitution."""
-        return self.subs(_expand_vectors(d))
+        for term in self.to_cpos():
+            yield term
 
     def to_pos(self):
         """Return the expression as a product of sums."""
-        return self._flatten(Or)
+        expr = self.factor()
+        expr = expr.flatten(Or)
+        return expr
 
     def to_sop(self):
         """Return the expression as a sum of products."""
-        return self._flatten(And)
+        expr = self.factor()
+        expr = expr.flatten(And)
+        return expr
 
     def to_cpos(self):
         """Return the expression as a product of sums of N literals."""
-        return self._canonize(Or)
+        return self.to_pos().canonize(Or)
 
     def to_csop(self):
         """Return the expression as a sum of products of N literals."""
-        return self._canonize(And)
+        return self.to_sop().canonize(And)
 
     def iter_cofactors(self, *vs):
         """Iterate through the cofactors of N variables."""
@@ -419,16 +485,16 @@ class Expression(Boolean):
         """Alias for derivative"""
         return self.derivative(*vs)
 
-    def _flatten(self, op):
+    def flatten(self, op):
         """Return expression after flattening OR/AND."""
-        raise NotImplementedError()
+        expr = self._flatten(op)
+        expr = expr.simplify()
+        return expr
 
-    def _canonize(self, op):
+    def canonize(self, op):
         """Return an expression with all terms expanded to length N."""
-        raise NotImplementedError()
-
-    def _clear_cache(self):
-        self.cache.clear()
+        expr = self._canonize(op)
+        return expr
 
 
 class Literal(Expression):
@@ -436,14 +502,16 @@ class Literal(Expression):
 
     def __init__(self):
         super(Literal, self).__init__()
-        self.xs = {self}
 
     def __hash__(self):
-        h = self.cache.get("hash", None)
-        if h is None:
-            h = hash(self.__str__())
-            self.cache["hash"] = h
-        return h
+        val = self.cache.get("hash", None)
+        if val is None:
+            val = hash(self.__str__())
+            self.cache["hash"] = val
+        return val
+
+    def __iter__(self):
+        yield self
 
     def __len__(self):
         return 1
@@ -453,26 +521,26 @@ class Literal(Expression):
                 self.name == other.name and self.index == other.index)
 
     @property
-    def depth(self):
+    def _depth(self):
         return 1
 
-    def iter_minterms(self): yield self
-    def iter_maxterms(self): yield self
+    @property
+    def xs(self):
+        return {self}
 
     def copy(self): return self
-    def deepcopy(self): return self
 
-    def _flatten(self, op): return self
-    def _canonize(self, op): return self
+    def _factor(self): return self
+    def _simplify(self): return self
 
 
 class Variable(Literal):
-    """boolean variable"""
+    """Boolean variable"""
 
     def __init__(self, name, index=-1):
+        super(Variable, self).__init__()
         self._name = name
         self._index = index
-        super(Variable, self).__init__()
 
     def __str__(self):
         if self._index >= 0:
@@ -498,25 +566,25 @@ class Variable(Literal):
     def index(self):
         return self._index
 
-    def iter_vars(self, visit=None):
+    def iter_vars(self):
         yield self
 
     def subs(self, d):
         if self in d:
-            return Buf(d[self])
+            return tobool(d[self])
         else:
             return self
 
 
 class Complement(Literal):
-    """boolean complement"""
+    """Boolean complement"""
 
     # Postfix symbol used in string representation
     OP = "'"
 
     def __init__(self, var):
-        self._var = var
         super(Complement, self).__init__()
+        self._var = var
 
     def __str__(self):
         return str(self._var) + self.OP
@@ -546,7 +614,7 @@ class Complement(Literal):
     def var(self):
         return self._var
 
-    def iter_vars(self, visit=None):
+    def iter_vars(self):
         yield self._var
 
     def subs(self, d):
@@ -557,29 +625,25 @@ class Complement(Literal):
 
 
 class OrAnd(Expression):
-    """base class for boolean OR, AND expressions"""
+    """base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *xs):
-        xs = cls._reduce(set(xs))
+        xs = {tobool(x) for x in xs}
+        if len(xs) == 0:
+            return cls.IDENTITY
         if len(xs) == 1:
             return xs.pop()
         else:
-            self = super(OrAnd, cls).__new__(cls)
-            self.xs = xs
-            return self
+            return super(OrAnd, cls).__new__(cls)
 
     def __init__(self, *xs):
         super(OrAnd, self).__init__()
-
-    def __hash__(self):
-        h = self.cache.get("hash", None)
-        if h is None:
-            h = sum(x.__hash__() for x in self.xs)
-            self.cache["hash"] = h
-        return h
+        self.xs = {tobool(x) for x in xs}
+        self._reduce_assoc()
 
     def __iter__(self):
-        return iter(self.xs)
+        for x in self.xs:
+            yield x
 
     def __len__(self):
         return len(self.xs)
@@ -602,142 +666,109 @@ class OrAnd(Expression):
         return id(self) < id(other)
 
     @property
-    def duals(self):
-        ds = self.cache.get("duals", None)
-        if ds is None:
-            ds = {x for x in self.xs if isinstance(x, self.get_dual())}
-            self.cache["duals"] = ds
-        return ds
+    def _depth(self):
+        val = self.cache.get("depth", None)
+        if val is None:
+            val = max((x.depth + 1 if isinstance(x, OrAnd) else x.depth)
+                      for x in self.xs)
+            self.cache["depth"] = val
+        return val
 
     @property
-    def depth(self):
-        d = self.cache.get("depth", None)
-        if d is None:
-            d = max((x.depth + 1 if isinstance(x, OrAnd) else x.depth)
-                    for x in self.xs)
-            self.cache["depth"] = d
-        return d
+    def duals(self):
+        val = self.cache.get("duals", None)
+        if val is None:
+            val = {x for x in self.xs if isinstance(x, self.get_dual())}
+            self.cache["duals"] = val
+        return val
 
     @staticmethod
     def get_dual():
         """The dual of OR is AND, and the dual of AND is OR."""
         raise NotImplementedError()
 
-    def iter_vars(self, visit=None):
-        if visit is None:
-            visit = set()
+    def iter_vars(self):
         for x in self.xs:
-            for v in x.iter_vars(visit):
-                if v not in visit:
-                    visit.add(v)
+            if not isinstance(x, Number):
+                for v in x.iter_vars():
                     yield v
 
     def copy(self):
         return self.__class__(*[x for x in self.xs])
 
-    def deepcopy(self):
-        return self.__class__(*[x.deepcopy() for x in self.xs])
-
     def subs(self, d):
-        """Return expression with literal substitutions."""
         replace = []
         for x in self.xs:
             _x = x.subs(d)
             if id(x) != id(_x):
                 replace.append((x, _x))
         if replace:
-            f = self.copy()
+            expr = self.copy()
             for old, new in replace:
-                f.xs.remove(old)
-                f.xs.add(new)
-            f.xs = f._reduce(f.xs)
-            if len(f.xs) == 1:
-                return f.xs.pop()
-            else:
-                f._clear_cache()
-                return f
+                expr.xs.remove(old)
+                expr.xs.add(new)
+            return expr.simplify()
         else:
             return self
 
-    def iter_minterms(self):
-        for term in self._iter_terms(And):
-            yield term
+    def _factor(self):
+        expr = self.copy()
+        expr.xs = {x.factor() for x in self.xs}
+        expr._reduce_assoc()
+        return expr.simplify()
 
-    def iter_maxterms(self):
-        for term in self._iter_terms(Or):
-            yield term
+    def _simplify(self):
+        expr = self.copy()
+        expr.xs = {x.simplify() for x in self.xs}
 
-    def _iter_terms(self, op):
-        """Iterate through either minterms or maxterms."""
-        f = self._canonize(op)
-        if f.depth == 1:
-            yield f
+        # x + 1 = 1; x * 0 = 0
+        if -self.IDENTITY in expr.xs:
+            return -self.IDENTITY
+
+        # x + x' = 1; x * x' = 0
+        vs = {x for x in expr.xs if isinstance(x, Variable)}
+        for v in vs:
+            if -v in expr.xs:
+                return -self.IDENTITY
+
+        # x + 0 = x; x * 1 = x
+        expr.xs.discard(self.IDENTITY)
+
+        if len(expr.xs) > 1:
+            expr._reduce_absorb()
+
+        if len(expr.xs) == 0:
+            return self.IDENTITY
+        elif len(expr.xs) == 1:
+            return expr.xs.pop()
         else:
-            for x in f.xs:
-                yield x
+            return expr
 
-    @classmethod
-    def _reduce_assoc(cls, xs):
+    def _reduce_assoc(self):
         """
         x + (y + z) = x + y + z
         x * (y * z) = x * y * z
         """
-        temps = {x for x in xs if isinstance(x, cls)}
-        xs -= temps
+        temps = {x for x in self.xs if isinstance(x, self.__class__)}
+        self.xs -= temps
         while temps:
             t = temps.pop()
-            if isinstance(t, cls):
+            if isinstance(t, self.__class__):
                 temps |= t.xs
             else:
-                xs.add(t)
-        return xs
+                self.xs.add(t)
 
-    @classmethod
-    def _reduce_nums(cls, xs):
-        """
-        x + 1 = 1; x * 0 = 0
-        x + 0 = x; x * 1 = x
-        """
-        if -cls.IDENTITY in xs:
-            return {-cls.IDENTITY}
-        elif len(xs) > 1:
-            xs.discard(cls.IDENTITY)
-            return xs
-        else:
-            return xs
-
-    @classmethod
-    def _reduce_comps(cls, xs):
-        """
-        x + x' = 1; x * x' = 0
-        """
-        vs = {x for x in xs if isinstance(x, Variable)}
-        cvs = {x.var for x in xs if isinstance(x, Complement)}
-        if vs & cvs:
-            return {-cls.IDENTITY}
-        else:
-            return xs
-
-    @staticmethod
-    def _reduce_absorb(xs):
+    def _reduce_absorb(self):
         """
         x + (x * y) = x
         x * (x + y) = x
         """
         absorb = set()
-        for xi in xs:
-            for xj in xs:
+        for xi in self.xs:
+            for xj in self.xs:
                 if xi != xj and xj not in absorb and xi.xs < xj.xs:
                     absorb.add(xj)
-        return xs - absorb
-
-    @classmethod
-    def _reduce(cls, xs):
-        xs = cls._reduce_assoc(xs)
-        xs = cls._reduce_nums(xs)
-        xs = cls._reduce_comps(xs)
-        xs = cls._reduce_absorb(xs)
-        return xs
+        self.xs -= absorb
 
     def _flatten(self, op):
         dual_op = op.get_dual()
@@ -746,40 +777,40 @@ class OrAnd(Expression):
                 dual = list(self.duals)[0]
                 others = list(self.xs - {dual})
                 xs = [op(x, *others) for x in dual.xs]
-                f = dual_op(*xs)
-                return f._flatten(op) if isinstance(f, OrAnd) else f
+                expr = dual_op(*xs)
+                if isinstance(expr, OrAnd):
+                    return expr.flatten(op)
+                else:
+                    return expr
             else:
                 return self
         else:
             nested = {x for x in self.duals if x.depth > 1}
             others = list(self.xs - nested)
-            xs = [x._flatten(op) for x in nested] + others
+            xs = [x.flatten(op) for x in nested] + others
             return dual_op(*xs)
 
     def _canonize(self, op):
-        f = self._flatten(op)
-        if isinstance(f, op):
-            return f
+        if isinstance(self, op):
+            return self
         else:
-            support_len = len(self.support)
-            temps = {x for x in f.xs if len(x) < support_len}
-            f.xs -= temps
-            flush = bool(temps)
+            expr = self.copy()
+            support_len = len(expr.support)
+            temps = {x for x in expr.xs if len(x) < support_len}
+            expr.xs -= temps
             while temps:
                 t = temps.pop()
-                vs = self.support - t.support
+                vs = expr.support - t.support
                 if vs:
                     v, tc = vs.pop(), t.copy()
                     temps |= {op(-v, t), op(v, tc)}
                 else:
-                    f.xs.add(t)
-            if flush:
-                f._clear_cache()
-        return f
+                    expr.xs.add(t)
+            return expr
 
 
 class Or(OrAnd):
-    """boolean addition (or) operator"""
+    """Boolean addition (or) operator"""
 
     # Infix symbol used in string representation
     OP = "+"
@@ -796,7 +827,7 @@ class Or(OrAnd):
 
 
 class And(OrAnd):
-    """boolean multiplication (and) operator"""
+    """Boolean multiplication (and) operator"""
 
     # Infix symbol used in string representation
     OP = "*"
@@ -818,20 +849,68 @@ class And(OrAnd):
         return Or
 
 
-class Buf(Boolean):
+class BufNot(Expression):
+    """base class for BUF/NOT operators"""
+
+    def __init__(self, x):
+        super(BufNot, self).__init__()
+        self.x = tobool(x)
+
+    def __eq__(self, other):
+        other = tobool(other)
+        return isinstance(other, self.__class__) and self.x == other.x
+
+    def __lt__(self, other):
+        return id(self) < id(other)
+
+    @property
+    def xs(self):
+        return {self.x}
+
+    def iter_vars(self):
+        for v in self.x.iter_vars():
+            yield v
+
+    def copy(self):
+        return self.__class__(self.x)
+
+    def subs(self, d):
+        expr = self.x.subs(d)
+        if id(expr) == id(self.x):
+            return self
+        else:
+            return self.__class__(expr)
+
+    def _simplify(self):
+        expr = self.x.simplify()
+        if id(expr) == id(self.x):
+            return self
+        else:
+            return self.__class__(expr)
+
+
+class Buf(BufNot):
     """buffer operator"""
 
     def __new__(cls, x):
-        if isinstance(x, Boolean):
+        x = tobool(x)
+        if isinstance(x, Number):
             return x
         else:
-            return One if int(x) else Zero
+            return super(Buf, cls).__new__(cls)
+
+    def __str__(self):
+        return "Buf({0.x})".format(self)
+
+    def _factor(self):
+        return self.x.factor()
 
 
-class Not(Boolean):
-    """boolean NOT operator"""
+class Not(BufNot):
+    """Boolean NOT operator"""
 
     def __new__(cls, x):
+        x = tobool(x)
         # 0' = 1; 1' = 0
         if isinstance(x, Number):
             return Zero if x else One
@@ -843,47 +922,248 @@ class Not(Boolean):
         # (x')' = x
         elif isinstance(x, Complement):
             return x.var
-        # (x + y)' = x' * y'; (x * y)' = x' + y'
-        elif isinstance(x, OrAnd):
-            return x.get_dual()(*[Not(x) for x in x.xs])
         else:
-            return Zero if int(x) else One
+            return super(Not, cls).__new__(cls)
+
+    def __str__(self):
+        return "Not({0.x})".format(self)
+
+    def _factor(self):
+        expr = self.x.factor()
+        # 0' = 1; 1' = 0
+        if isinstance(expr, Number):
+            return Zero if expr else One
+        # x'
+        elif isinstance(expr, Variable):
+            if expr not in COMPLEMENTS:
+                COMPLEMENTS[expr] = Complement(expr)
+            return COMPLEMENTS[expr]
+        # (x')' = x
+        elif isinstance(expr, Complement):
+            return expr.var
+        # (x + y)' = x' * y'; (x * y)' = x' + y'
+        elif isinstance(expr, OrAnd):
+            expr = expr.get_dual()(*[Not(x) for x in expr.xs])
+            return expr.factor()
+        else:
+            raise Exception("factor() returned unfactored expression")
 
 
-class Nor(Boolean):
-    """boolean NOR (not or) operator"""
+class Xor(Expression):
+    """Boolean XOR (exclusive or) operator"""
+
+    IDENTITY = Zero
+
+    def __new__(cls, *xs):
+        xs = [tobool(x) for x in xs]
+        if len(xs) == 0:
+            return cls.IDENTITY
+        elif len(xs) == 1:
+            return xs.pop()
+        else:
+            return super(Xor, cls).__new__(cls)
+
+    def __init__(self, *xs):
+        super(Xor, self).__init__()
+        self.xs = [tobool(x) for x in xs]
+        self._reduce_assoc()
+
+    def __str__(self):
+        args = ", ".join(str(x) for x in self.xs)
+        return "Xor(" + args + ")"
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.xs == other.xs
+
+    def __lt__(self, other):
+        return id(self) < id(other)
+
+    def iter_vars(self):
+        for x in self.xs:
+            if not isinstance(x, Number):
+                for v in x.iter_vars():
+                    yield v
+
+    def copy(self):
+        return self.__class__(*self.xs)
+
+    def subs(self, d):
+        replace = []
+        for x in self.xs:
+            _x = x.subs(d)
+            if id(x) != id(_x):
+                replace.append((x, _x))
+        if replace:
+            expr = self.copy()
+            for old, new in replace:
+                expr.xs.remove(old)
+                expr.xs.append(new)
+            return expr.simplify()
+        else:
+            return self
+
+    def _factor(self):
+        x, xs = self.xs[0], self.xs[1:]
+        return OrF(And(Not(x), Xor(*xs)), And(x, Xnor(*xs)))
+
+    def _simplify(self):
+        xs = [x.simplify() for x in self.xs]
+
+        # XOR(x, x') = 1
+        for x in xs:
+            while xs.count(x) > 0 and xs.count(-x) > 0:
+                xs.remove(x)
+                xs.remove(-x)
+                xs.append(One)
+        # XOR(x, x) = 0
+        dups = {x for x in xs if xs.count(x) > 1}
+        for dup in dups:
+            while xs.count(dup) > 1:
+                xs.remove(dup)
+                xs.remove(dup)
+        # XOR(x, 0) = x
+        while xs.count(self.IDENTITY) > 0:
+            xs.remove(self.IDENTITY)
+
+        if len(xs) == 0:
+            return self.IDENTITY
+        if len(xs) == 1:
+            return xs.pop()
+
+        # XOR(x, 1) = x'
+        if One in xs:
+            xs.remove(One)
+            return Xnor(*xs)
+        elif xs == self.xs:
+            return self
+        else:
+            return self.__class__(*xs)
+
+    def _reduce_assoc(self):
+        """XOR(a, XOR(b, c)) = XOR(a, b, c)"""
+        temps = [x for x in self.xs if isinstance(x, self.__class__)]
+        self.xs = [x for x in self.xs if not isinstance(x, self.__class__)]
+        while temps:
+            t = temps.pop()
+            if isinstance(t, self.__class__):
+                temps += t.xs
+            else:
+                self.xs.append(t)
+
+
+class Implies(Expression):
+    """Boolean implication operator"""
+
+    OP = "=>"
+
+    def __init__(self, x0, x1):
+        super(Implies, self).__init__()
+        self.xs = [tobool(x0), tobool(x1)]
+
+    def __str__(self):
+        s = []
+        for x in self.xs:
+            if isinstance(x, Implies):
+                s.append("(" + str(x) + ")")
+            else:
+                s.append(str(x))
+        sep = " " + self.OP + " "
+        return sep.join(s)
+
+    def iter_vars(self):
+        for x in self.xs:
+            for v in x.iter_vars():
+                yield v
+
+    def copy(self):
+        return Implies(*self.xs)
+
+    def _factor(self):
+        return OrF(Not(self.xs[0]), self.xs[1])
+
+    def _simplify(self):
+        xs = [x.simplify() for x in self.xs]
+
+        # 0 => x = 1; x => 1 = 1
+        if xs[0] is Zero or xs[1] is One:
+            return One
+        # 1 => x = x
+        elif xs[0] is One:
+            return xs[1]
+        # x => 0 = x'
+        elif xs[1] is Zero:
+            return -xs[0]
+
+        if xs == self.xs:
+            return self
+        else:
+            return self.__class__(xs[0], xs[1])
+
+
+# Miscellaneous operators
+class Nor(object):
+    """Boolean NOR (not or) operator"""
     def __new__(cls, *xs):
         return Not(Or(*xs))
 
-class Nand(Boolean):
-    """boolean NAND (not and) operator"""
+class Nand(object):
+    """Boolean NAND (not and) operator"""
     def __new__(cls, *xs):
         return Not(And(*xs))
 
-class Xor(Boolean):
-    """boolean XOR (exclusive or) operator"""
-    def __new__(cls, x, *xs):
-        if xs:
-            return Or(And(Not(x), Xor(*xs)), And(x, Xnor(*xs)))
-        else:
-            return x
-
 class Xnor(Boolean):
-    """boolean XNOR (exclusive nor) operator"""
+    """Boolean XNOR (exclusive nor) operator"""
     def __new__(cls, *xs):
         return Not(Xor(*xs))
 
-class Implies(Boolean):
-    """boolean implication operator"""
+
+# Factored convenience classes
+class NotF(object):
+    """factored NOT operator"""
+    def __new__(cls, x):
+        return Not(x).factor()
+
+class OrF(object):
+    """factored OR operator"""
+    def __new__(cls, *xs):
+        return Or(*xs).factor()
+
+class NorF(object):
+    """Boolean NOR (not or) operator"""
+    def __new__(cls, *xs):
+        return Nor(*xs).factor()
+
+class AndF(object):
+    """factored AND operator"""
+    def __new__(cls, *xs):
+        return And(*xs).factor()
+
+class NandF(object):
+    """Boolean NAND (not and) operator"""
+    def __new__(cls, *xs):
+        return Nand(*xs).factor()
+
+class XorF(object):
+    """factored XOR operator"""
+    def __new__(cls, *xs):
+        return Xor(*xs).factor()
+
+class XnorF(object):
+    """Boolean XNOR (not xor) operator"""
+    def __new__(cls, *xs):
+        return Xnor(*xs).factor()
+
+class ImpliesF(Boolean):
+    """Factored IMPLIES operator"""
     def __new__(cls, x0, x1):
-        return Or(Not(x0), x1)
+        return Implies(x0, x1).factor()
 
 
 class Vector(object):
     """Boolean vector"""
 
     def __init__(self, *fs, **kwargs):
-        self.fs = [Buf(f) for f in fs]
+        self.fs = [tobool(f) for f in fs]
         self._start = kwargs.get("start", 0)
         self._bnr = kwargs.get("bnr", UNSIGNED)
 
@@ -900,7 +1180,8 @@ class Vector(object):
         return self.__str__()
 
     def __iter__(self):
-        return iter(self.fs)
+        for f in self.fs:
+            yield f
 
     # unary operators
     def __invert__(self):
@@ -985,7 +1266,7 @@ class Vector(object):
             return num
 
     def subs(self, d):
-        """Substitute numbers into a boolean vector."""
+        """Substitute numbers into a Boolean vector."""
         cpy = self[:]
         for i, f in enumerate(cpy.fs):
             cpy[i] = cpy[i].subs(d)
@@ -1066,6 +1347,15 @@ class Vector(object):
 # Internal Functions
 #==============================================================================
 
+def _clog2(num):
+    """Return the ceiling, log base two of an integer."""
+    assert num >= 1
+    i, x = 0, 1
+    while x < num:
+        x = x << 1;
+        i += 1
+    return i
+
 def _bit_on(num, bit):
     return bool((num >> bit) & 1)
 
@@ -1078,7 +1368,7 @@ def _expand_vectors(d):
         if isinstance(key, Vector):
             assert len(key) == len(val)
             for i, x in enumerate(val):
-                d[key.getifz(i)] = Buf(x)
+                d[key.getifz(i)] = tobool(x)
         elif isinstance(key, Literal):
             d[key] = val
     return d

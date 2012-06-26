@@ -11,7 +11,14 @@ import unittest
 
 # pyeda
 from pyeda.boolalg import (
-    Zero, One, Variable, Not, Or, And, Nor, Nand, Xor, Xnor, Implies,
+    Zero, One,
+    Variable, Complement,
+    Not, NotF,
+    Or, OrF, And, AndF,
+    Nor, NorF, Nand, NandF,
+    Xor, Xnor,
+    Implies, ImpliesF,
+    factor, simplify,
     vec, svec, int2vec, uint2vec
 )
 
@@ -30,12 +37,16 @@ class TestBoolalg(unittest.TestCase):
         self.assertNotEqual(a, b)
         self.assertNotEqual(b, a)
 
-    def test_not(self):
-        a = Variable("a")
+    def test_complement(self):
+        a, b = map(Variable, "ab")
         self.assertEqual(str(Not(a)), "a'")
         self.assertEqual(str(-a), "a'")
         self.assertEqual(Not(a), Not(a))
         self.assertEqual(-a, -a)
+        self.assertEqual(id(-a), id(-a))
+        self.assertNotEqual(-a, -b)
+        self.assertNotEqual(-b, -a)
+        self.assertNotEqual(a, -a)
 
         self.assertEqual(Not(Not(a)), a)
         self.assertEqual(-(-a), a)
@@ -43,6 +54,12 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(-(-(-a)), -a)
         self.assertEqual(Not(Not(Not(Not(a)))), a)
         self.assertEqual(-(-(-(-a))), a)
+
+    def test_not(self):
+        self.assertEqual(Not(Zero), One)
+        self.assertEqual(-Zero, One)
+        self.assertEqual(Not(One), Zero)
+        self.assertEqual(-One, Zero)
 
     def test_or(self):
         a, b, c, d = map(Variable, "abcd")
@@ -55,22 +72,30 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(a + b + c), "a + b + c")
         self.assertEqual(str(a + b + c + d), "a + b + c + d")
 
-        self.assertEqual(Or(a, True), One)
-        self.assertEqual(Or(a, 1), One)
-        self.assertEqual(a + True, One)
-        self.assertEqual(a + 1, One)
+        self.assertEqual(OrF(a, True), One)
+        self.assertEqual(OrF(a, 1), One)
+        self.assertEqual(OrF(a, "1"), One)
 
-        self.assertEqual(Or(a, False), a)
-        self.assertEqual(Or(a, 0), a)
-        self.assertEqual(a + False, a)
-        self.assertEqual(a + 0, a)
+        self.assertEqual(factor(a + True), One)
+        self.assertEqual(factor(a + 1), One)
+        self.assertEqual(factor(a + "1"), One)
 
-        self.assertEqual(a + -a, One)
+        self.assertEqual(OrF(a, False), a)
+        self.assertEqual(OrF(a, 0), a)
+        self.assertEqual(OrF(a, "0"), a)
+
+        self.assertEqual(factor(a + False), a)
+        self.assertEqual(factor(a + 0), a)
+        self.assertEqual(factor(a + "0"), a)
+
+        self.assertEqual(OrF(a, -a), One)
+        self.assertEqual(factor(a + -a), One)
 
         self.assertEqual(Or(a, a), a)
         self.assertEqual(Or(a, a, a), a)
         self.assertEqual(Or(a, a, a, a), a)
         self.assertEqual(Or(Or(a, a), Or(a, a)), a)
+
         self.assertEqual(a + a, a)
         self.assertEqual(a + a + a, a)
         self.assertEqual(a + a + a + a, a)
@@ -96,22 +121,30 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(a * b * c), "a * b * c")
         self.assertEqual(str(a * b * c * d), "a * b * c * d")
 
-        self.assertEqual(And(a, False), Zero)
-        self.assertEqual(And(a, 0), Zero)
-        self.assertEqual(a * False, Zero)
-        self.assertEqual(a * 0, Zero)
+        self.assertEqual(AndF(a, False), Zero)
+        self.assertEqual(AndF(a, 0), Zero)
+        self.assertEqual(AndF(a, "0"), Zero)
 
-        self.assertEqual(And(a, True), a)
-        self.assertEqual(And(a, 1), a)
-        self.assertEqual(a * True, a)
-        self.assertEqual(a * 1, a)
+        self.assertEqual(factor(a * False), Zero)
+        self.assertEqual(factor(a * 0), Zero)
+        self.assertEqual(factor(a * "0"), Zero)
 
-        self.assertEqual(a * -a, Zero)
+        self.assertEqual(AndF(a, True), a)
+        self.assertEqual(AndF(a, 1), a)
+        self.assertEqual(AndF(a, "1"), a)
+
+        self.assertEqual(factor(a * True), a)
+        self.assertEqual(factor(a * 1), a)
+        self.assertEqual(factor(a * "1"), a)
+
+        self.assertEqual(AndF(a, -a), Zero)
+        self.assertEqual(factor(a * -a), Zero)
 
         self.assertEqual(And(a, a), a)
         self.assertEqual(And(a, a, a), a)
         self.assertEqual(And(a, a, a, a), a)
         self.assertEqual(And(And(a, a), And(a, a)), a)
+
         self.assertEqual(a * a, a)
         self.assertEqual(a * a * a, a)
         self.assertEqual(a * a * a * a, a)
@@ -147,13 +180,26 @@ class TestBoolalg(unittest.TestCase):
         self.assertLess(-A[0], A[1])
         self.assertLess(-A[1], A[10])
 
+    def test_implies(self):
+        a, b, c, d = map(Variable, "abcd")
+        self.assertEqual(str(a >> b), "a => b")
+        self.assertEqual(str(-a >> b), "a' => b")
+        self.assertEqual(str(a >> -b), "a => b'")
+        self.assertEqual(str(-a + b >> a + -b), "a' + b => a + b'")
+        self.assertEqual(str((-a >> b) >> (a >> -b)), "(a' => b) => (a => b')")
+        self.assertEqual(simplify(a >> 0), -a)
+        self.assertEqual(simplify(a >> 1), 1)
+        self.assertEqual(simplify(Zero >> a), 1)
+        self.assertEqual(simplify(One >> a), a)
+        self.assertEqual(ImpliesF(a, b), -a + b)
+        self.assertEqual(factor(a >> b), -a + b)
+
     def test_nops(self):
         a, b, c, d = map(Variable, "abcd")
-        self.assertEqual(Nor(a, b), -a * -b)
-        self.assertEqual(Nor(a, b, c, d), -a * -b * -c * -d)
-        self.assertEqual(Nand(a, b), -a + -b)
-        self.assertEqual(Nand(a, b, c, d), -a + -b + -c + -d)
-        self.assertEqual(Implies(a, b), -a + b)
+        self.assertEqual(NorF(a, b), -a * -b)
+        self.assertEqual(NorF(a, b, c, d), -a * -b * -c * -d)
+        self.assertEqual(NandF(a, b), -a + -b)
+        self.assertEqual(NandF(a, b, c, d), -a + -b + -c + -d)
 
     def test_xor(self):
         a, b, c  = map(Variable, "abc")
@@ -162,54 +208,89 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(Xor(a, b, c).to_sop(),  -a * -b * c + -a * b * -c + a * -b * -c + a * b * c)
         self.assertEqual(Xnor(a, b, c).to_sop(),  -a * -b * -c + -a * b * c + a * -b * c + a * b * -c)
 
+    def test_factor(self):
+        a, b, c, d = map(Variable, "abcd")
+        self.assertEqual(factor(a * -(b + c)), a * -b * -c)
+        self.assertEqual(factor(a + -(b * c)), a + -b + -c)
+
     def test_demorgan(self):
         a, b, c = map(Variable, "abc")
-        self.assertEqual(-(a * b), -a + -b)
-        self.assertEqual(-(a + b), -a * -b)
-        self.assertEqual(-(a * -b), -a + b)
-        self.assertEqual(-(a + -b), -a * b)
-        self.assertEqual(-(-a * b), a + -b)
-        self.assertEqual(-(-a + b), a * -b)
-        self.assertEqual(-(a * b * c), -a + -b + -c)
-        self.assertEqual(-(a + b + c), -a * -b * -c)
-        self.assertEqual(-(-a * b * c), a + -b + -c)
-        self.assertEqual(-(-a + b + c), a * -b * -c)
-        self.assertEqual(-(a * -b * c), -a + b + -c)
-        self.assertEqual(-(a + -b + c), -a * b * -c)
-        self.assertEqual(-(a * b * -c), -a + -b + c)
-        self.assertEqual(-(a + b + -c), -a * -b * c)
+
+        self.assertEqual(NotF(a * b), -a + -b)
+        self.assertEqual(NotF(a + b), -a * -b)
+        self.assertEqual(factor(-(a * b)), -a + -b)
+        self.assertEqual(factor(-(a + b)), -a * -b)
+
+        self.assertEqual(NotF(a * -b), -a + b)
+        self.assertEqual(NotF(a * -b), -a + b)
+        self.assertEqual(factor(-(a + -b)), -a * b)
+        self.assertEqual(factor(-(a + -b)), -a * b)
+
+        self.assertEqual(NotF(-a * b), a + -b)
+        self.assertEqual(NotF(-a * b), a + -b)
+        self.assertEqual(factor(-(-a + b)), a * -b)
+        self.assertEqual(factor(-(-a + b)), a * -b)
+
+        self.assertEqual(NotF(a * b * c), -a + -b + -c)
+        self.assertEqual(NotF(a + b + c), -a * -b * -c)
+        self.assertEqual(factor(-(a * b * c)), -a + -b + -c)
+        self.assertEqual(factor(-(a + b + c)), -a * -b * -c)
+
+        self.assertEqual(NotF(-a * b * c), a + -b + -c)
+        self.assertEqual(NotF(-a + b + c), a * -b * -c)
+        self.assertEqual(factor(-(-a * b * c)), a + -b + -c)
+        self.assertEqual(factor(-(-a + b + c)), a * -b * -c)
+
+        self.assertEqual(NotF(a * -b * c), -a + b + -c)
+        self.assertEqual(NotF(a + -b + c), -a * b * -c)
+        self.assertEqual(factor(-(a * -b * c)), -a + b + -c)
+        self.assertEqual(factor(-(a + -b + c)), -a * b * -c)
+
+        self.assertEqual(NotF(a * b * -c), -a + -b + c)
+        self.assertEqual(NotF(a + b + -c), -a * -b * c)
+        self.assertEqual(factor(-(a * b * -c)), -a + -b + c)
+        self.assertEqual(factor(-(a + b + -c)), -a * -b * c)
 
     def test_absorb(self):
         a, b, c, d = map(Variable, "abcd")
-        self.assertEqual(a * (a + b), a)
-        self.assertEqual(a * b * (a + c), a * b)
-        self.assertEqual(a * b * (a + c) * (a + d), a * b)
-        self.assertEqual(-a * (-a + b), -a)
-        self.assertEqual(-a * b * (-a + c), -a * b)
-        self.assertEqual(-a * b * (-a + c) * (-a + d), -a * b)
-        self.assertEqual(a * -b + a * -b * c, a * -b)
-        self.assertEqual((a + -b) * (a + -b + c), a + -b)
+        self.assertEqual(simplify(a * (a + b)), a)
+        self.assertEqual(simplify(a * b * (a + c)), a * b)
+        self.assertEqual(simplify(a * b * (a + c) * (a + d)), a * b)
+        self.assertEqual(simplify(-a * (-a + b)), -a)
+        self.assertEqual(simplify(-a * b * (-a + c)), -a * b)
+        self.assertEqual(simplify(-a * b * (-a + c) * (-a + d)), -a * b)
+        self.assertEqual(simplify(a * -b + a * -b * c), a * -b)
+        self.assertEqual(simplify((a + -b) * (a + -b + c)), a + -b)
 
     def test_subs(self):
         a, b, c = map(Variable, "abc")
-        f = a * b + a * c + b * c
-        self.assertEqual(f.subs({a: True}), b + c + b * c)
-        self.assertEqual(f.subs({a: 1}), b + c + b * c)
+        f = -a * b * c + a * -b * c + a * b * -c
         self.assertEqual(f.subs({a: False}), b * c)
         self.assertEqual(f.subs({a: 0}), b * c)
-        self.assertEqual(f.subs({a: False, b: False}), Zero)
-        self.assertEqual(f.subs({a: False, b: True}), c)
-        self.assertEqual(f.subs({a: True, b: False}), c)
-        self.assertEqual(f.subs({a: True, b: True}), One)
+        self.assertEqual(f.subs({a: "0"}), b * c)
+
+        self.assertEqual(f.subs({a: True}), -b * c + b * -c)
+        self.assertEqual(f.subs({a: 1}), -b * c + b * -c)
+        self.assertEqual(f.subs({a: "1"}), -b * c + b * -c)
+
+        self.assertEqual(f.subs({a: 0, b: 0}), 0)
+        self.assertEqual(f.subs({a: 0, b: 1}), c)
+        self.assertEqual(f.subs({a: 1, b: 0}), c)
+        self.assertEqual(f.subs({a: 1, b: 1}), -c)
+
         g = (a + b) * (a + c) * (b + c)
+        self.assertEqual(g.subs({a: False}), b * c)
+        self.assertEqual(g.subs({a: 0}), b * c)
+        self.assertEqual(g.subs({a: "0"}), b * c)
+
         self.assertEqual(g.subs({a: True}), b + c)
         self.assertEqual(g.subs({a: 1}), b + c)
-        self.assertEqual(g.subs({a: False}), b * c * (b + c))
-        self.assertEqual(g.subs({a: 0}), b * c * (b + c))
-        self.assertEqual(g.subs({a: False, b: False}), Zero)
-        self.assertEqual(g.subs({a: False, b: True}), c)
-        self.assertEqual(g.subs({a: True, b: False}), c)
-        self.assertEqual(g.subs({a: True, b: True}), One)
+        self.assertEqual(g.subs({a: "1"}), b + c)
+
+        self.assertEqual(g.subs({a: 0, b: 0}), 0)
+        self.assertEqual(g.subs({a: 0, b: 1}), c)
+        self.assertEqual(g.subs({a: 1, b: 0}), c)
+        self.assertEqual(g.subs({a: 1, b: 1}), 1)
 
     def test_sop(self):
         a, b, c, d = map(Variable, "abcd")
@@ -218,19 +299,21 @@ class TestBoolalg(unittest.TestCase):
 
     def test_pos(self):
         a, b, c, d = map(Variable, "abcd")
-        self.assertEqual(Xor(a, b, c).to_pos(), (-a + -b + c) * (-a + b + -c) * (a + -b + -c) * (a + b + c))
-        self.assertEqual(Xor(a, b, c, d).to_pos(), (-a + -b + -c + -d) * (-a + -b + c + d) * (-a + b + -c + d) * (-a + b + c + -d) * (a + -b + -c + d) * (a + -b + c + -d) * (a + b + -c + -d) * (a + b + c + d))
+        self.assertEqual(Xor(a, b, c).to_pos(),
+                         (-a + -b + c) * (-a + b + -c) * (a + -b + -c) * (a + b + c))
+        self.assertEqual(Xor(a, b, c, d).to_pos(),
+                         (-a + -b + -c + -d) * (-a + -b + c + d) * (-a + b + -c + d) * (-a + b + c + -d) * (a + -b + -c + d) * (a + -b + c + -d) * (a + b + -c + -d) * (a + b + c + d))
 
     def test_cofactors(self):
         a, b, c, d = map(Variable, "abcd")
         f = a * b + a * c + b * c
         self.assertEqual(f.cofactors(), [a * b + a * c + b * c])
-        self.assertEqual(f.cofactors(a), [b * c, b + c + (b * c)]) # b * c, b + c
+        self.assertEqual(f.cofactors(a), [b * c, b + c])
         self.assertEqual(f.cofactors(a, b), [0, c, c, 1])
         self.assertEqual(f.cofactors(a, b, c), [0, 0, 0, 1, 0, 1, 1, 1])
         self.assertEqual(f.derivative(a).to_sop(), -b * c + b * -c)
-        self.assertEqual(f.consensus(a), b * c * (b + c + (b * c))) # b * c
-        self.assertEqual(f.smoothing(a), b + c + (b * c)) # b + c
+        self.assertEqual(f.consensus(a), b * c * (b + c))
+        self.assertEqual(f.smoothing(a), b + c + (b * c))
 
     def test_unate(self):
         a, b, c, d = map(Variable, "abcd")
@@ -251,7 +334,7 @@ class TestBoolvec(unittest.TestCase):
 
     def setUp(self):
         super(TestBoolvec, self).setUp()
-        self.LOOPS = 16
+        self.LOOPS = 32
 
     def tearDown(self):
         super(TestBoolvec, self).tearDown()
