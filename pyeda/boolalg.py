@@ -309,6 +309,9 @@ class Number(Boolean):
     def val(self):
         return self._val
 
+    def get_dual(self):
+        return Zero if self._val else One
+
     def copy(self): return self
     def subs(self, d): return self
 
@@ -528,6 +531,9 @@ class Literal(Expression):
     def xs(self):
         return {self}
 
+    def get_dual(self):
+        raise NotImplementedError()
+
     def copy(self): return self
 
     def _factor(self): return self
@@ -565,6 +571,11 @@ class Variable(Literal):
     @property
     def index(self):
         return self._index
+
+    def get_dual(self):
+        if self not in COMPLEMENTS:
+            COMPLEMENTS[self] = Complement(self)
+        return COMPLEMENTS[self]
 
     def iter_vars(self):
         yield self
@@ -612,6 +623,9 @@ class Complement(Literal):
 
     @property
     def var(self):
+        return self._var
+
+    def get_dual(self):
         return self._var
 
     def iter_vars(self):
@@ -721,15 +735,17 @@ class OrAnd(Expression):
         expr = self.copy()
         expr.xs = {x.simplify() for x in self.xs}
 
+        _zero = self.IDENTITY.get_dual()
+
         # x + 1 = 1; x * 0 = 0
-        if -self.IDENTITY in expr.xs:
-            return -self.IDENTITY
+        if _zero in expr.xs:
+            return _zero
 
         # x + x' = 1; x * x' = 0
         vs = {x for x in expr.xs if isinstance(x, Variable)}
         for v in vs:
             if -v in expr.xs:
-                return -self.IDENTITY
+                return _zero
 
         # x + 0 = x; x * 1 = x
         expr.xs.discard(self.IDENTITY)
@@ -894,7 +910,7 @@ class Buf(BufNot):
 
     def __new__(cls, x):
         x = tobool(x)
-        if isinstance(x, Number):
+        if isinstance(x, Number) or isinstance(x, Literal):
             return x
         else:
             return super(Buf, cls).__new__(cls)
@@ -911,17 +927,9 @@ class Not(BufNot):
 
     def __new__(cls, x):
         x = tobool(x)
-        # 0' = 1; 1' = 0
-        if isinstance(x, Number):
-            return Zero if x else One
-        # x'
-        elif isinstance(x, Variable):
-            if x not in COMPLEMENTS:
-                COMPLEMENTS[x] = Complement(x)
-            return COMPLEMENTS[x]
-        # (x')' = x
-        elif isinstance(x, Complement):
-            return x.var
+        # 0' = 1; 1' = 0; x', (x')'
+        if isinstance(x, Number) or isinstance(x, Literal):
+            return x.get_dual()
         else:
             return super(Not, cls).__new__(cls)
 
@@ -930,17 +938,9 @@ class Not(BufNot):
 
     def _factor(self):
         expr = self.x.factor()
-        # 0' = 1; 1' = 0
-        if isinstance(expr, Number):
-            return Zero if expr else One
-        # x'
-        elif isinstance(expr, Variable):
-            if expr not in COMPLEMENTS:
-                COMPLEMENTS[expr] = Complement(expr)
-            return COMPLEMENTS[expr]
-        # (x')' = x
-        elif isinstance(expr, Complement):
-            return expr.var
+        # 0' = 1; 1' = 0; x', (x')'
+        if isinstance(expr, Number) or isinstance(expr, Literal):
+            return expr.get_dual()
         # (x + y)' = x' * y'; (x * y)' = x' + y'
         elif isinstance(expr, OrAnd):
             expr = expr.get_dual()(*[Not(x) for x in expr.xs])
@@ -1092,7 +1092,7 @@ class Implies(Expression):
             return xs[1]
         # x => 0 = x'
         elif xs[1] is Zero:
-            return -xs[0]
+            return Not(xs[0])
 
         if xs == self.xs:
             return self
