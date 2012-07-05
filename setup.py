@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+__copyright__ = "Copyright (c) 2012, Chris Drake"
+__license__ = "All rights reserved."
+
 # standard library
 from distutils.core import setup
 
