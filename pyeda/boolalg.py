@@ -298,11 +298,10 @@ class Number(Boolean):
         return str(self._val)
 
     def __eq__(self, other):
-        if not isinstance(other, Boolean):
-            other = Number(other)
-            return self._val == other.val
-        else:
+        if isinstance(other, Boolean):
             return isinstance(other, Number) and self._val == other.val
+        else:
+            return self._val == Number(other).val
 
     def __lt__(self, other):
         if isinstance(other, Number):
