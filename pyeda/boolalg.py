@@ -2,8 +2,6 @@
 Boolean Algebra
 
 Interface Functions:
-    num
-
     factor
     simplify
 
@@ -80,21 +78,13 @@ __license__ = "All rights reserved"
 
 UNSIGNED, TWOS_COMPLEMENT = range(2)
 
+NUMBERS = dict()
+VARIABLES = dict()
 COMPLEMENTS = dict()
 
 #==============================================================================
 # Interface Functions
 #==============================================================================
-
-def num(x):
-    """Return a Boolean number."""
-    n = int(x)
-    if n == 0:
-        return Zero
-    elif n == 1:
-        return One
-    else:
-        raise ValueError("invalid input for num(): " + str(x))
 
 def factor(expr):
     """Return a factored expression."""
@@ -183,21 +173,21 @@ def zeros(length):
         z.append(Zero)
     return z
 
-def uint2vec(n, length=None):
+def uint2vec(num, length=None):
     """Convert an unsigned integer to a Vector."""
-    assert n >= 0
+    assert num >= 0
 
     vv = Vector()
-    if n == 0:
+    if num == 0:
         vv.append(Zero)
     else:
-        while n != 0:
-            vv.append(num(n & 1))
-            n >>= 1
+        while num != 0:
+            vv.append(Number(num & 1))
+            num >>= 1
 
     if length:
         if length < len(vv):
-            raise ValueError("overflow: " + str(n))
+            raise ValueError("overflow: " + str(num))
         else:
             vv.ext(length - len(vv))
 
@@ -289,8 +279,17 @@ class Boolean:
 class Number(Boolean):
     """Boolean number"""
 
-    def __init__(self, val):
-        self._val = val
+    def __new__(cls, val):
+        num = int(val)
+        if not (0 <= num <= 1):
+            raise ValueError("invalid Boolean number: " + str(num))
+        try:
+            self = NUMBERS[num]
+        except KeyError:
+            self = super(Number, cls).__new__(cls)
+            self._val = num
+            NUMBERS[num] = self
+        return self
 
     def __hash__(self):
         return self._val
@@ -300,7 +299,7 @@ class Number(Boolean):
 
     def __eq__(self, other):
         if not isinstance(other, Boolean):
-            other = num(other)
+            other = Number(other)
             return self._val == other.val
         else:
             return isinstance(other, Number) and self._val == other.val
@@ -525,9 +524,6 @@ class Expression(Boolean):
 class Literal(Expression):
     """An instance of a variable or of its complement"""
 
-    def __init__(self):
-        super(Literal, self).__init__()
-
     def __iter__(self):
         yield self
 
@@ -552,10 +548,18 @@ class Literal(Expression):
 class Variable(Literal):
     """Boolean variable"""
 
+    def __new__(cls, name, index=-1):
+        try:
+            self = VARIABLES[(name, index)]
+        except KeyError:
+            self = super(Variable, cls).__new__(cls)
+            self._name = name
+            self._index = index
+            VARIABLES[(name, index)] = self
+        return self
+
     def __init__(self, name, index=-1):
         super(Variable, self).__init__()
-        self._name = name
-        self._index = index
 
     def __str__(self):
         if self._index >= 0:
@@ -582,9 +586,7 @@ class Variable(Literal):
         return self._index
 
     def get_dual(self):
-        if self not in COMPLEMENTS:
-            COMPLEMENTS[self] = Complement(self)
-        return COMPLEMENTS[self]
+        return Complement(self)
 
     def iter_vars(self):
         yield self
@@ -593,7 +595,7 @@ class Variable(Literal):
         if self in d:
             val = d[self]
             if not isinstance(val, Boolean):
-                val = num(val)
+                val = Number(val)
             return val
         else:
             return self
@@ -608,9 +610,17 @@ class Complement(Literal):
     # Postfix symbol used in string representation
     OP = "'"
 
+    def __new__(cls, var):
+        try:
+            self = COMPLEMENTS[var]
+        except KeyError:
+            self = super(Complement, cls).__new__(cls)
+            self._var = var
+            COMPLEMENTS[var] = self
+        return self
+
     def __init__(self, var):
         super(Complement, self).__init__()
-        self._var = var
 
     def __str__(self):
         return str(self._var) + self.OP
@@ -650,7 +660,7 @@ class Complement(Literal):
         if self._var in d:
             val = d[self._var]
             if not isinstance(val, Boolean):
-                val = num(val)
+                val = Number(val)
             return Not(val)
         else:
             return self
@@ -663,7 +673,7 @@ class OrAnd(Expression):
     """base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *xs):
-        xs = [x if isinstance(x, Boolean) else num(x) for x in xs]
+        xs = [x if isinstance(x, Boolean) else Number(x) for x in xs]
         _assoc(cls, xs)
         if len(xs) == 0:
             return cls.IDENTITY
@@ -749,11 +759,13 @@ class OrAnd(Expression):
                 for i in range(old_cnt):
                     xs.remove(old)
                 xs.append(new)
+
             if self.ABSORBER in xs:
                 return self.ABSORBER
             ident_cnt = xs.count(self.IDENTITY)
             for i in range(ident_cnt):
                 xs.remove(self.IDENTITY)
+
             return self.__class__(*xs)
         else:
             return self
@@ -882,11 +894,11 @@ class Or(OrAnd):
 
     @property
     def term_index(self):
-        n = abs(self) - 1
+        num = abs(self) - 1
         idx = 0
         for i, v in enumerate(sorted(self.support)):
             if -v in self.xs:
-                idx |= 1 << (n - i)
+                idx |= 1 << (num - i)
         return idx
 
     def equal(self, other):
@@ -920,11 +932,11 @@ class And(OrAnd):
 
     @property
     def term_index(self):
-        n = abs(self) - 1
+        num = abs(self) - 1
         idx = 0
         for i, v in enumerate(sorted(self.support)):
             if v in self.xs:
-                idx |= 1 << (n - i)
+                idx |= 1 << (num - i)
         return idx
 
     def equal(self, other):
@@ -938,7 +950,7 @@ class BufNot(Expression):
 
     def __init__(self, x):
         super(BufNot, self).__init__()
-        self.x = x if isinstance(x, Boolean) else num(x)
+        self.x = x if isinstance(x, Boolean) else Number(x)
 
     @property
     def xs(self):
@@ -967,7 +979,7 @@ class Buf(BufNot):
     """buffer operator"""
 
     def __new__(cls, x):
-        x = x if isinstance(x, Boolean) else num(x)
+        x = x if isinstance(x, Boolean) else Number(x)
         # Auto-simplify numbers and literals
         if isinstance(x, Number) or isinstance(x, Literal):
             return x
@@ -985,7 +997,7 @@ class Not(BufNot):
     """Boolean NOT operator"""
 
     def __new__(cls, x):
-        x = x if isinstance(x, Boolean) else num(x)
+        x = x if isinstance(x, Boolean) else Number(x)
         # Auto-simplify numbers and literals
         if isinstance(x, Number) or isinstance(x, Literal):
             return x.get_dual()
@@ -1014,7 +1026,7 @@ class Xor(Expression):
     IDENTITY = Zero
 
     def __new__(cls, *xs):
-        xs = [x if isinstance(x, Boolean) else num(x) for x in xs]
+        xs = [x if isinstance(x, Boolean) else Number(x) for x in xs]
         _assoc(cls, xs)
         if len(xs) == 0:
             return cls.IDENTITY
@@ -1056,10 +1068,13 @@ class Xor(Expression):
                 for i in range(old_cnt):
                     xs.remove(old)
                 xs.append(new)
+
             # XOR(1, 1) = 0
-            while xs.count(One) > 1:
+            one_cnt = xs.count(One)
+            while one_cnt > 1:
                 xs.remove(One)
                 xs.remove(One)
+                one_cnt -= 2
             # XOR(x, 0) = x
             ident_cnt = xs.count(self.IDENTITY)
             for i in range(ident_cnt):
@@ -1068,8 +1083,8 @@ class Xor(Expression):
             if One in xs:
                 xs.remove(One)
                 return Xnor(*xs)
-            else:
-                return Xor(*xs)
+
+            return Xor(*xs)
         else:
             return self
 
@@ -1077,12 +1092,12 @@ class Xor(Expression):
         x, xs = self.xs[0], self.xs[1:]
         return Or(And(Not(x), Xor(*xs)), And(x, Xnor(*xs))).factor()
 
-    # FIXME -- count usage
     def _simplify(self):
         xs = [x.simplify() for x in self.xs]
 
         # XOR(x, x') = 1
         for x in xs:
+            # FIXME -- count usage
             while xs.count(x) > 0 and xs.count(-x) > 0:
                 xs.remove(x)
                 xs.remove(-x)
@@ -1090,19 +1105,22 @@ class Xor(Expression):
         # XOR(x, x) = 0
         dups = {x for x in xs if xs.count(x) > 1}
         for dup in dups:
-            while xs.count(dup) > 1:
+            dup_cnt = xs.count(dup)
+            while dup_cnt > 1:
                 xs.remove(dup)
                 xs.remove(dup)
+                dup_cnt -= 2
         # XOR(x, 0) = x
-        while xs.count(self.IDENTITY) > 0:
+        ident_cnt = xs.count(self.IDENTITY)
+        while ident_cnt > 0:
             xs.remove(self.IDENTITY)
-
+            ident_cnt -= 1
         # XOR(x, 1) = x'
         if One in xs:
             xs.remove(One)
             return Xnor(*xs)
-        else:
-            return Xor(*xs)
+
+        return Xor(*xs)
 
 
 class Implies(Expression):
@@ -1112,7 +1130,7 @@ class Implies(Expression):
 
     def __init__(self, x0, x1):
         super(Implies, self).__init__()
-        self.xs = [x if isinstance(x, Boolean) else num(x) for x in (x0, x1)]
+        self.xs = [x if isinstance(x, Boolean) else Number(x) for x in (x0, x1)]
 
     def __str__(self):
         s = list()
@@ -1135,17 +1153,14 @@ class Implies(Expression):
     def _simplify(self):
         xs = [x.simplify() for x in self.xs]
 
-        # x => x = 1
-        if xs[0] == xs[1]:
+        # 0 => x = 1; x => 1 = 1; x => x = 1
+        if xs[0] == Zero or xs[1] == One or xs[0] == xs[1]:
             return One
-        # 0 => x = 1; x => 1 = 1
-        elif xs[0] is Zero or xs[1] is One:
-            return One
-        # 1 => x = x
-        elif xs[0] is One:
+        # 1 => x = x; -x => x = x
+        elif xs[0] == One or -xs[0] == xs[1]:
             return xs[1]
-        # x => 0 = x'
-        elif xs[1] is Zero:
+        # x => 0 = x'; x => -x = -x
+        elif xs[1] == Zero or xs[0] == -xs[1]:
             return Not(xs[0])
 
         return Implies(xs[0], xs[1])
@@ -1172,7 +1187,7 @@ class Vector:
     """Boolean vector"""
 
     def __init__(self, *fs, **kwargs):
-        self.fs = [f if isinstance(f, Boolean) else num(f) for f in fs]
+        self.fs = [f if isinstance(f, Boolean) else Number(f) for f in fs]
         self._start = kwargs.get("start", 0)
         self._bnr = kwargs.get("bnr", UNSIGNED)
 
@@ -1257,22 +1272,22 @@ class Vector:
 
     def to_uint(self):
         """Convert vector into an unsigned integer."""
-        n = 0
+        num = 0
         for i, f in enumerate(self.fs):
             if isinstance(f, Number):
                 if f is One:
-                    n += 2 ** i
+                    num += 2 ** i
             else:
                 raise ValueError("cannot convert to uint")
-        return n
+        return num
 
     def to_int(self):
         """Convert vector into an integer."""
-        n = self.to_uint()
+        num = self.to_uint()
         if self._bnr == TWOS_COMPLEMENT and self.fs[-1]:
-            return -2 ** self.__len__() + n
+            return -2 ** self.__len__() + num
         else:
-            return n
+            return num
 
     def subs(self, d):
         """Substitute numbers into a Boolean vector."""
@@ -1289,7 +1304,7 @@ class Vector:
         """Append logic function to the end of this vector."""
         self.fs.append(f)
 
-    def ext(self, n):
+    def ext(self, num):
         """Extend this vector by N bits.
 
         If this vector uses two's complement representation, sign extend;
@@ -1299,7 +1314,7 @@ class Vector:
             bit = self.fs[-1]
         else:
             bit = Zero
-        for i in range(n):
+        for i in range(num):
             self.append(bit)
 
     def eq(A, B):
@@ -1356,17 +1371,17 @@ class Vector:
 # Internal Functions
 #==============================================================================
 
-def _clog2(n):
+def _clog2(num):
     """Return the ceiling, log base two of an integer."""
-    assert n >= 1
+    assert num >= 1
     i, x = 0, 1
-    while x < n:
+    while x < num:
         x = x << 1;
         i += 1
     return i
 
-def _bit_on(n, bit):
-    return bool((n >> bit) & 1)
+def _bit_on(num, bit):
+    return bool((num >> bit) & 1)
 
 def _assoc(cls, xs):
     """a op (b op c) = a op b op c"""
@@ -1391,7 +1406,7 @@ def _expand_vectors(d):
         if isinstance(key, Vector):
             assert len(key) == len(val)
             for i, x in enumerate(val):
-                d[key.getifz(i)] = x if isinstance(x, Boolean) else num(x)
+                d[key.getifz(i)] = x if isinstance(x, Boolean) else Number(x)
         elif isinstance(key, Literal):
             d[key] = val
     return d
