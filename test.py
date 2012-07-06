@@ -7,7 +7,6 @@ __license__ = "All rights reserved."
 
 # standard library
 import random
-import unittest
 
 # pyeda
 from pyeda.boolalg import (
@@ -22,508 +21,471 @@ from pyeda.boolalg import (
     int2vec, uint2vec
 )
 
-class TestBoolalg(unittest.TestCase):
-
-    def setUp(self):
-        super(TestBoolalg, self).setUp()
-
-    def tearDown(self):
-        super(TestBoolalg, self).tearDown()
-
-    def test_number(self):
-        a, b = map(var, "ab")
-
-        # __str__
-        self.assertEqual(str(Zero), "0")
-        self.assertEqual(str(One), "1")
-
-        # __eq__
-        for val in (Zero, False, 0, 0.0, "0"):
-            self.assertEqual(Zero, val)
-            self.assertNotEqual(One, val)
-        for val in (One, True, 1, 1.0, "1"):
-            self.assertNotEqual(Zero, val)
-            self.assertEqual(One, val)
-
-        # __lt__
-        self.assertLess(Zero, One)
-        self.assertGreater(One, Zero)
-        self.assertLess(Zero, a)
-        self.assertLess(One, a)
-        self.assertLess(Zero, a + b)
-        self.assertLess(One, a + b)
-
-        # __bool__
-        self.assertFalse(Zero)
-        self.assertTrue(One)
-
-        # depth
-        self.assertEqual(Zero.depth, 1)
-        self.assertEqual(One.depth, 1)
-
-        # val
-        self.assertEqual(Zero.val, 0)
-        self.assertEqual(One.val, 1)
-
-        # get_dual
-        self.assertEqual(Zero.get_dual(), One)
-        self.assertEqual(One.get_dual(), Zero)
-
-        # subs
-        self.assertEqual(Zero.subs({a: 0, b: 1}), 0)
-        self.assertEqual(One.subs({a: 0, b: 1}), 1)
-
-        # factor
-        self.assertEqual(Zero.factor(), Zero)
-        self.assertEqual(One.factor(), One)
-
-        # simplify
-        self.assertEqual(Zero.simplify(), Zero)
-        self.assertEqual(One.simplify(), One)
-
-    def test_literal(self):
-        a, b = map(var, "ab")
-        c0 = var("c", 0)
-        c1 = var("c", 1)
-
-        # __len__
-        self.assertEqual(len(-a), 1)
-        self.assertEqual(len(a), 1)
-
-        # __str__
-        self.assertEqual(str(-a), "a'")
-        self.assertEqual(str(a), "a")
-        self.assertEqual(str(c0), "c[0]")
-        self.assertEqual(str(-c0), "c[0]'")
-        self.assertEqual(str(c1), "c[1]")
-        self.assertEqual(str(-c1), "c[1]'")
-
-        # __eq__
-        self.assertEqual(-a, -a)
-        self.assertNotEqual(a, -a)
-        self.assertNotEqual(-a, a)
-        self.assertEqual(a, a)
-
-        self.assertNotEqual(a, b)
-        self.assertNotEqual(b, a)
-        self.assertNotEqual(c0, c1)
-        self.assertNotEqual(c1, c0)
-
-        # __lt__
-        self.assertLess(Zero, -a)
-        self.assertLess(Zero, a)
-        self.assertLess(One, -a)
-        self.assertLess(One, a)
-        self.assertLess(-a, a)
-        self.assertLess(a, b)
-        self.assertLess(c0, c1)
-        self.assertLess(a, a + b)
-        self.assertLess(b, a + b)
-
-        # name
-        self.assertEqual((-a).name, "a")
-        self.assertEqual(a.name, "a")
-
-        # index
-        self.assertEqual((-a).index, -1)
-        self.assertEqual(a.index, -1)
-        self.assertEqual(c0.index, 0)
-        self.assertEqual(c1.index, 1)
-
-        # get_dual
-        self.assertEqual((-a).get_dual(), a)
-        self.assertEqual(a.get_dual(), -a)
-
-        # support
-        self.assertEqual((-a).support, {a})
-        self.assertEqual(a.support, {a})
-
-        # subs
-        self.assertEqual(a.subs({a: 0}), 0)
-        self.assertEqual(a.subs({a: 1}), 1)
-        self.assertEqual(a.subs({a: -b}), -b)
-        self.assertEqual(a.subs({a: b}), b)
-        self.assertEqual((-a).subs({a: 0}), 1)
-        self.assertEqual((-a).subs({a: 1}), 0)
-        self.assertEqual((-a).subs({a: -b}), b)
-        self.assertEqual((-a).subs({a: b}), -b)
-
-        # factor
-        self.assertEqual((-a).factor(), -a)
-        self.assertEqual(a.factor(), a)
-
-        # simplify
-        self.assertEqual((-a).simplify(), -a)
-        self.assertEqual(a.simplify(), a)
-
-    def test_buf(self):
-        a, b, c = map(var, "abc")
-
-        self.assertEqual(Buf(0), 0)
-        self.assertEqual(Buf(1), 1)
-        self.assertEqual(Buf(-a), -a)
-        self.assertEqual(Buf(a), a)
-
-        self.assertEqual(Buf(Buf(a)), a)
-        self.assertEqual(Buf(Buf(Buf(a))), a)
-        self.assertEqual(Buf(Buf(Buf(Buf(a)))), a)
-
-        # __str__
-        self.assertEqual(str(Buf(-a + b)), "Buf(a' + b)")
-        self.assertEqual(str(Buf(a + -b)), "Buf(a + b')")
-
-        # support
-        self.assertEqual(Buf(-a + b).support, {a, b})
-
-        # subs
-        self.assertEqual(Buf(-a + b).subs({a: 0}), 1)
-        self.assertEqual(Buf(-a + b).subs({a: 1}), b)
-        self.assertEqual(str(Buf(-a + b + c).subs({a: 1})), "Buf(b + c)")
-
-        # factor
-        self.assertEqual(str(Buf(-a + b).factor()), "a' + b")
-
-        # simplify
-        self.assertEqual(simplify(Buf(a + -a)), 1)
-        self.assertEqual(simplify(Buf(a * -a)), 0)
-
-    def test_not(self):
-        a, b, c = map(var, "abc")
-
-        self.assertEqual(Not(0), 1)
-        self.assertEqual(Not(1), 0)
-        self.assertEqual(Not(-a), a)
-        self.assertEqual(Not(a), -a)
-
-        self.assertEqual(-(-a), a)
-        self.assertEqual(-(-(-a)), -a)
-        self.assertEqual(-(-(-(-a))), a)
-
-        # __str__
-        self.assertEqual(str(Not(-a + b)), "Not(a' + b)")
-        self.assertEqual(str(Not(a + -b)), "Not(a + b')")
-
-        # support
-        self.assertEqual(Not(-a + b).support, {a, b})
-
-        # subs
-        self.assertEqual(Not(-a + b).subs({a: 0}), 0)
-        self.assertEqual(Not(-a + b).subs({a: 1}), -b)
-        self.assertEqual(str(Not(-a + b + c).subs({a: 1})), "Not(b + c)")
-
-        # factor
-        self.assertEqual(str(Not(-a + b).factor()), "a * b'")
-
-        # simplify
-        self.assertEqual(simplify(Not(a + -a)), 0)
-        self.assertEqual(simplify(Not(a * -a)), 1)
-
-    def test_or(self):
-        a, b, c, d = map(var, "abcd")
-
-        self.assertEqual(Or(), 0)
-        self.assertEqual(Or(a), a)
-
-        self.assertEqual(a + 1, 1)
-        self.assertEqual(a + b + 1, 1)
-        self.assertEqual(a + 0, a)
-
-        # __len__
-        self.assertEqual(len(a + b + c), 3)
-
-        # __str__
-        self.assertEqual(str(a + b), "a + b")
-        self.assertEqual(str(a + b + c), "a + b + c")
-        self.assertEqual(str(a + b + c + d), "a + b + c + d")
-
-        # __lt__
-        self.assertLess(Zero, a + b)
-        self.assertLess(One, a + b)
-
-        self.assertLess(-a, a + b)
-        self.assertLess(a, a + b)
-        self.assertLess(-b, a + b)
-        self.assertLess(b, a + b)
-
-        self.assertLess(a + b, a + -b)   # 00 < 01
-        self.assertLess(a + b, -a + b)   # 00 < 10
-        self.assertLess(a + b, -a + -b)  # 00 < 11
-        self.assertLess(a + -b, -a + b)  # 01 < 10
-        self.assertLess(a + -b, -a + -b) # 01 < 11
-        self.assertLess(-a + b, -a + -b) # 10 < 11
-
-        self.assertLess(a + b, a + b + c)
-
-        # associative
-        self.assertEqual(str((a + b) + c + d),   "a + b + c + d")
-        self.assertEqual(str(a + (b + c) + d),   "a + b + c + d")
-        self.assertEqual(str(a + b + (c + d)),   "a + b + c + d")
-        self.assertEqual(str((a + b) + (c + d)), "a + b + c + d")
-        self.assertEqual(str((a + b + c) + d),   "a + b + c + d")
-        self.assertEqual(str(a + (b + c + d)),   "a + b + c + d")
-        self.assertEqual(str(a + (b + (c + d))), "a + b + c + d")
-        self.assertEqual(str(((a + b) + c) + d), "a + b + c + d")
-
-        # depth
-        self.assertEqual((a + b).depth, 1)
-        self.assertEqual((a + (b * c)).depth, 2)
-        self.assertEqual((a + (b * (c + d))).depth, 3)
-
-        # get_dual
-        self.assertEqual(Or.get_dual(), And)
-
-        # support
-        self.assertEqual((-a + b + (-c * d)).support, {a, b, c, d})
-
-        # subs
-        f = -a * b * c + a * -b * c + a * b * -c
-        fa0, fa1 = f.subs({a: 0}), f.subs({a: 1})
-        self.assertEqual(str(fa0), "b * c")
-        self.assertEqual(str(fa1), "b' * c + b * c'")
-
-        self.assertEqual(f.subs({a: 0, b: 0}), 0)
-        self.assertEqual(f.subs({a: 0, b: 1}), c)
-        self.assertEqual(f.subs({a: 1, b: 0}), c)
-        self.assertEqual(f.subs({a: 1, b: 1}), -c)
-
-        # factor
-        self.assertEqual(str(factor(a + -(b * c))), "a + b' + c'")
-
-        # simplify
-        self.assertEqual(simplify(-a + a), 1)
-        self.assertEqual(simplify(-a + a + b), 1)
-
-        self.assertEqual(simplify(a + a), a)
-        self.assertEqual(simplify(a + a + a), a)
-        self.assertEqual(simplify(a + a + a + a), a)
-        self.assertEqual(simplify((a + a) + (a + a)), a)
-
-        # to_csop
-        f = a * b + a * c + b * c
-        self.assertEqual(str(f.to_csop()), "a' * b * c + a * b' * c + a * b * c' + a * b * c")
-
-    def test_and(self):
-        a, b, c, d = map(var, "abcd")
-
-        self.assertEqual(And(), One)
-        self.assertEqual(And(a), a)
-
-        self.assertEqual(a * 0, 0)
-        self.assertEqual(a * b * 0, 0)
-        self.assertEqual(a * 1, a)
-
-        # __len__
-        self.assertEqual(len(a * b * c), 3)
-
-        # __str__
-        self.assertEqual(str(a * b), "a * b")
-        self.assertEqual(str(a * b * c), "a * b * c")
-        self.assertEqual(str(a * b * c * d), "a * b * c * d")
-
-        # __lt__
-        self.assertLess(Zero, a * b)
-        self.assertLess(One, a * b)
-
-        self.assertLess(-a, a * b)
-        self.assertLess(a, a * b)
-        self.assertLess(-b, a * b)
-        self.assertLess(b, a * b)
-
-        self.assertLess(-a * -b, -a * b) # 00 < 01
-        self.assertLess(-a * -b, a * -b) # 00 < 10
-        self.assertLess(-a * -b, a * b)  # 00 < 11
-        self.assertLess(-a * b, a * -b)  # 01 < 10
-        self.assertLess(-a * b, a * b)   # 01 < 11
-        self.assertLess(a * -b, a * b)   # 10 < 11
-
-        self.assertLess(a * b, a * b * c)
-
-        # associative
-        self.assertEqual(str((a * b) * c * d),   "a * b * c * d")
-        self.assertEqual(str(a * (b * c) * d),   "a * b * c * d")
-        self.assertEqual(str(a * b * (c * d)),   "a * b * c * d")
-        self.assertEqual(str((a * b) * (c * d)), "a * b * c * d")
-        self.assertEqual(str((a * b * c) * d),   "a * b * c * d")
-        self.assertEqual(str(a * (b * c * d)),   "a * b * c * d")
-        self.assertEqual(str(a * (b * (c * d))), "a * b * c * d")
-        self.assertEqual(str(((a * b) * c) * d), "a * b * c * d")
-
-        # depth
-        self.assertEqual((a * b).depth, 1)
-        self.assertEqual((a * (b + c)).depth, 2)
-        self.assertEqual((a * (b + (c * d))).depth, 3)
-
-        # get_dual
-        self.assertEqual(And.get_dual(), Or)
-
-        # support
-        self.assertEqual((-a * b * (-c + d)).support, {a, b, c, d})
-
-        # subs
-        f = (-a + b + c) * (a + -b + c) * (a + b + -c)
-        fa0, fa1 = f.subs({a: 0}), f.subs({a: 1})
-        self.assertEqual(str(fa0), "(b + c') * (b' + c)")
-        self.assertEqual(str(fa1), "b + c")
-
-        self.assertEqual(f.subs({a: 0, b: 0}), -c)
-        self.assertEqual(f.subs({a: 0, b: 1}), c)
-        self.assertEqual(f.subs({a: 1, b: 0}), c)
-        self.assertEqual(f.subs({a: 1, b: 1}), 1)
-
-        # factor
-        self.assertEqual(str(factor(a * -(b + c))), "a * b' * c'")
-
-        # simplify
-        self.assertEqual(simplify(-a * a), 0)
-        self.assertEqual(simplify(-a * a * b), 0)
-
-        self.assertEqual(simplify(a * a), a)
-        self.assertEqual(simplify(a * a * a), a)
-        self.assertEqual(simplify(a * a * a * a), a)
-        self.assertEqual(simplify((a * a) + (a * a)), a)
-
-        # to_cpos
-        f = a * b + a * c + b * c
-        self.assertEqual(str(f.to_cpos()), "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)")
-
-    def test_implies(self):
-        a, b, c, d = map(var, "abcd")
-        self.assertEqual(str(a >> b), "a => b")
-        self.assertEqual(str(-a >> b), "a' => b")
-        self.assertEqual(str(a >> -b), "a => b'")
-        self.assertEqual(str(-a + b >> a + -b), "a' + b => a + b'")
-        self.assertEqual(str((-a >> b) >> (a >> -b)), "(a' => b) => (a => b')")
-        self.assertEqual(simplify(a >> a), 1)
-        self.assertEqual(simplify(a >> -a), -a)
-        self.assertEqual(simplify(-a >> a), a)
-        self.assertEqual(a >> 0, -a)
-        self.assertEqual(a >> 1, 1)
-        self.assertEqual(Zero >> a, 1)
-        self.assertEqual(One >> a, a)
-        self.assertEqual(str(impliesf(a, b)), "a' + b")
-        self.assertEqual(str(factor(a >> b)), "a' + b")
-
-    def test_nops(self):
-        a, b, c, d = map(var, "abcd")
-        self.assertEqual(str(norf(a, b)), "a' * b'")
-        self.assertEqual(str(norf(a, b, c, d)), "a' * b' * c' * d'")
-        self.assertEqual(str(nandf(a, b)), "a' + b'")
-        self.assertEqual(str(nandf(a, b, c, d)), "a' + b' + c' + d'")
-
-    def test_xor(self):
-        a, b, c  = map(var, "abc")
-        self.assertEqual(Xor(), 0)
-        self.assertEqual(Xor(a), a)
-        self.assertEqual(Xor(0, 0), 0)
-        self.assertEqual(Xor(0, 1), 1)
-        self.assertEqual(Xor(1, 0), 1)
-        #self.assertEqual(Xor(1, 1), 0)
-        self.assertEqual(str(Xor(a, b).to_sop()),  "a' * b + a * b'")
-        self.assertEqual(str(Xnor(a, b).to_sop()), "a' * b' + a * b")
-        self.assertEqual(str(Xor(a, b, c).to_sop()),  "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c")
-        self.assertEqual(str(Xnor(a, b, c).to_sop()), "a' * b' * c' + a' * b * c + a * b' * c + a * b * c'")
-
-    def test_demorgan(self):
-        a, b, c = map(var, "abc")
-
-        self.assertEqual(str(notf(a * b)),  "a' + b'")
-        self.assertEqual(str(notf(a + b)),  "a' * b'")
-        self.assertEqual(str(notf(a * -b)), "a' + b")
-        self.assertEqual(str(notf(a * -b)), "a' + b")
-        self.assertEqual(str(notf(-a * b)), "a + b'")
-        self.assertEqual(str(notf(-a * b)), "a + b'")
-
-        self.assertEqual(str(notf(a * b * c)),  "a' + b' + c'")
-        self.assertEqual(str(notf(a + b + c)),  "a' * b' * c'")
-        self.assertEqual(str(notf(-a * b * c)), "a + b' + c'")
-        self.assertEqual(str(notf(-a + b + c)), "a * b' * c'")
-        self.assertEqual(str(notf(a * -b * c)), "a' + b + c'")
-        self.assertEqual(str(notf(a + -b + c)), "a' * b * c'")
-        self.assertEqual(str(notf(a * b * -c)), "a' + b' + c")
-        self.assertEqual(str(notf(a + b + -c)), "a' * b' * c")
-
-    def test_absorb(self):
-        a, b, c, d = map(var, "abcd")
-        self.assertEqual(str(simplify(a * b + a * b)), "a * b")
-        self.assertEqual(simplify(a * (a + b)), a)
-        self.assertEqual(simplify(-a * (-a + b)), -a)
-        self.assertEqual(str(simplify(a * b * (a + c))), "a * b")
-        self.assertEqual(str(simplify(a * b * (a + c) * (a + d))), "a * b")
-        self.assertEqual(str(simplify(-a * b * (-a + c))), "a' * b")
-        self.assertEqual(str(simplify(-a * b * (-a + c) * (-a + d))), "a' * b")
-        self.assertEqual(str(simplify(a * -b + a * -b * c)), "a * b'")
-        self.assertEqual(str(simplify((a + -b) * (a + -b + c))), "a + b'")
-
-    def test_cofactors(self):
-        a, b, c, d = map(var, "abcd")
-        f = a * b + a * c + b * c
-        self.assertEqual(str(f.cofactors()), "[a * b + a * c + b * c]")
-        self.assertEqual(str(f.cofactors(a)), "[b * c, b + c + b * c]")
-        self.assertEqual(f.cofactors(a, b), [0, c, c, 1])
-        self.assertEqual(f.cofactors(a, b, c), [0, 0, 0, 1, 0, 1, 1, 1])
-        self.assertEqual(str(f.smoothing(a)), "b + c + b * c + b * c")
-        self.assertEqual(str(f.consensus(a)), "b * c * (b + c + b * c)")
-        self.assertEqual(str(f.derivative(a).to_sop()), "b' * c + b * c'")
-
-    def test_unate(self):
-        a, b, c, d = map(var, "abcd")
-        f = a + b + -c
-        self.assertTrue(f.is_pos_unate(a))
-        self.assertTrue(f.is_pos_unate(b))
-        self.assertTrue(f.is_neg_unate(c))
-        self.assertFalse(f.is_neg_unate(a))
-        self.assertFalse(f.is_neg_unate(b))
-        self.assertTrue(f.is_neg_unate(c))
-        self.assertFalse(f.is_binate(a))
-        self.assertFalse(f.is_binate(b))
-        self.assertFalse(f.is_binate(c))
-        self.assertTrue(f.is_binate())
-        g = a * b + a * -c + b * -c
-        self.assertTrue(f.is_pos_unate(a))
-        self.assertTrue(f.is_pos_unate(b))
-        self.assertTrue(f.is_neg_unate(c))
-
-    def test_cube(self):
-        a, b, c = map(var, "abc")
-        self.assertEqual(str(cube_sop(a, b, c)), "a' * b' * c' + a' * b' * c + a' * b * c' + a' * b * c + a * b' * c' + a * b' * c + a * b * c' + a * b * c")
-        self.assertEqual(str(cube_pos(a, b, c)), "(a + b + c) * (a + b + c') * (a + b' + c) * (a + b' + c') * (a' + b + c) * (a' + b + c') * (a' + b' + c) * (a' + b' + c')")
-
-
-class TestBoolvec(unittest.TestCase):
-
-    def setUp(self):
-        super(TestBoolvec, self).setUp()
-        self.LOOPS = 64
-
-    def tearDown(self):
-        super(TestBoolvec, self).tearDown()
-
-    def test_rcadd(self):
-        A, B = vec("A", 8), vec("B", 8)
-        S, C = A.ripple_carry_add(B)
-        S.append(C[-1])
-        for i in range(self.LOOPS):
-            ra = random.randint(0, 2**8-1)
-            rb = random.randint(0, 2**8-1)
-            d = {A: uint2vec(ra, 8), B: uint2vec(rb, 8)}
-            self.assertEqual(int(A.vsubs(d)), ra)
-            self.assertEqual(int(B.vsubs(d)), rb)
-            self.assertEqual(int(S.vsubs(d)), ra + rb)
-
-        A, B = svec("A", 8), svec("B", 8)
-        S, C = A.ripple_carry_add(B)
-        for i in range(self.LOOPS):
-            ra = random.randint(-2**6, 2**6-1)
-            rb = random.randint(-2**6, 2**6-1)
-            d = {A: int2vec(ra, 8), B: int2vec(rb, 8)}
-            self.assertEqual(int(A.vsubs(d)), ra)
-            self.assertEqual(int(B.vsubs(d)), rb)
-            self.assertEqual(int(S.vsubs(d)), ra + rb)
-
-
-if __name__ == "__main__":
-    #import profile, pstats
-    #profile.run("unittest.main()", "testprof")
-    #p = pstats.Stats("testprof")
-    #p.sort_stats('cumulative').print_stats(50)
-    unittest.main()
+a, b, c, d = map(var, "abcd")
+
+def test_truth():
+    assert 6 * 9, int("42", 13)
+
+def test_number():
+    assert str(Zero) == "0"
+    assert str(One) == "1"
+
+    # __eq__
+    for val in (Zero, False, 0, 0.0, "0"):
+        assert Zero == val
+        assert One != val
+    for val in (One, True, 1, 1.0, "1"):
+        assert Zero != val
+        assert One == val
+
+    # __lt__
+    assert Zero < One
+    assert One > Zero
+    assert Zero < a
+    assert One < a
+    assert Zero < a + b
+    assert One < a + b
+
+    # __bool__
+    assert bool(Zero) is False
+    assert bool(One) is True
+
+    # depth
+    assert Zero.depth == 1
+    assert One.depth == 1
+
+    # val
+    assert Zero.val == 0
+    assert One.val == 1
+
+    # get_dual
+    assert Zero.get_dual() == One
+    assert One.get_dual() == Zero
+
+    # subs
+    assert Zero.subs({a: 0, b: 1}) == 0
+    assert One.subs({a: 0, b: 1}) == 1
+
+    # factor
+    assert Zero.factor() == Zero
+    assert One.factor() == One
+
+    # simplify
+    assert Zero.simplify() == Zero
+    assert One.simplify() == One
+
+def test_literal():
+    c0 = var("c", 0)
+    c1 = var("c", 1)
+    c2 = var("c", 2)
+    c10 = var("c", 10)
+
+    # __len__
+    assert len(-a) == 1
+    assert len(a) == 1
+
+    # __str__
+    assert str(-a) == "a'"
+    assert str(a) == "a"
+    assert str(c0) == "c[0]"
+    assert str(-c0) == "c[0]'"
+    assert str(c1) == "c[1]"
+    assert str(-c1) == "c[1]'"
+
+    # __eq__
+    assert -a == -a
+    assert a != -a
+    assert -a != a
+    assert a == a
+
+    assert a != b
+    assert b != a
+    assert c0 != c1
+    assert c1 != c0
+
+    # __lt__
+    assert Zero < -a
+    assert Zero < a
+    assert One < -a
+    assert One < a
+    assert -a < a
+    assert a < b
+    assert c0 < c1
+    assert c1 < c10
+    assert c2 < c10
+    assert a < a + b
+    assert b < a + b
+
+    # name
+    assert (-a).name == "a"
+    assert a.name == "a"
+
+    # index
+    assert (-a).index == -1
+    assert a.index == -1
+    assert c0.index == 0
+    assert c1.index == 1
+
+    # get_dual
+    assert (-a).get_dual() == a
+    assert a.get_dual() == -a
+
+    # support
+    assert (-a).support == {a}
+    assert a.support == {a}
+
+    # subs
+    assert a.subs({a: 0}) == 0
+    assert a.subs({a: 1}) == 1
+    assert a.subs({a: -b}) == -b
+    assert a.subs({a: b}) == b
+    assert (-a).subs({a: 0}) == 1
+    assert (-a).subs({a: 1}) == 0
+    assert (-a).subs({a: -b}) == b
+    assert (-a).subs({a: b}) == -b
+
+    # factor
+    assert (-a).factor() == -a
+    assert a.factor() == a
+
+    # simplify
+    assert (-a).simplify() == -a
+    assert a.simplify() == a
+
+def test_buf():
+    assert Buf(0) == 0
+    assert Buf(1) == 1
+    assert Buf(-a) == -a
+    assert Buf(a) == a
+
+    assert Buf(Buf(a)) == a
+    assert Buf(Buf(Buf(a))) == a
+    assert Buf(Buf(Buf(Buf(a)))) == a
+
+    # __str__
+    assert str(Buf(-a + b)) == "Buf(a' + b)"
+    assert str(Buf(a + -b)) == "Buf(a + b')"
+
+    # support
+    assert Buf(-a + b).support == {a, b}
+
+    # subs
+    assert Buf(-a + b).subs({a: 0}) == 1
+    assert Buf(-a + b).subs({a: 1}) == b
+    assert str(Buf(-a + b + c).subs({a: 1})) == "Buf(b + c)"
+
+    # factor
+    assert str(Buf(-a + b).factor()) == "a' + b"
+
+    # simplify
+    assert simplify(Buf(a + -a)) == 1
+    assert simplify(Buf(a * -a)) == 0
+
+def test_not():
+    assert Not(0) == 1
+    assert Not(1) == 0
+    assert Not(-a) == a
+    assert Not(a) == -a
+
+    assert -(-a) == a
+    assert -(-(-a)) == -a
+    assert -(-(-(-a))) == a
+
+    # __str__
+    assert str(-(-a + b)) == "Not(a' + b)"
+    assert str(-(a + -b)) == "Not(a + b')"
+
+    # support
+    assert Not(-a + b).support == {a, b}
+
+    # subs
+    assert Not(-a + b).subs({a: 0}) == 0
+    assert Not(-a + b).subs({a: 1}) == -b
+    assert str(-(-a + b + c).subs({a: 1})) == "Not(b + c)"
+
+    # factor
+    assert str(Not(-a + b).factor()) == "a * b'"
+
+    # simplify
+    assert simplify(-(a + -a)) == 0
+    assert simplify(-(a * -a)) == 1
+
+def test_or():
+    assert Or() == 0
+    assert Or(a) == a
+
+    assert a + 1 == 1
+    assert a + b + 1 == 1
+    assert a + 0 == a
+
+    # __len__
+    assert len(a + b + c) == 3
+
+    # __str__
+    assert str(a + b) == "a + b"
+    assert str(a + b + c) == "a + b + c"
+    assert str(a + b + c + d) == "a + b + c + d"
+
+    # __lt__
+    assert Zero < a + b
+    assert One < a + b
+
+    assert -a < a + b
+    assert  a < a + b
+    assert -b < a + b
+    assert  b < a + b
+
+    assert a +  b <  a + -b # 00 < 01
+    assert a +  b < -a +  b # 00 < 10
+    assert a +  b < -a + -b # 00 < 11
+    assert a + -b < -a +  b # 01 < 10
+    assert a + -b < -a + -b # 01 < 11
+    assert -a + b < -a + -b # 10 < 11
+
+    assert a + b < a + b + c
+
+    # associative
+    assert str((a + b) + c + d)   == "a + b + c + d"
+    assert str(a + (b + c) + d)   == "a + b + c + d"
+    assert str(a + b + (c + d))   == "a + b + c + d"
+    assert str((a + b) + (c + d)) == "a + b + c + d"
+    assert str((a + b + c) + d)   == "a + b + c + d"
+    assert str(a + (b + c + d))   == "a + b + c + d"
+    assert str(a + (b + (c + d))) == "a + b + c + d"
+    assert str(((a + b) + c) + d) == "a + b + c + d"
+
+    # depth
+    assert (a + b).depth == 1
+    assert (a + (b * c)).depth == 2
+    assert (a + (b * (c + d))).depth == 3
+
+    # get_dual
+    assert Or.get_dual() is And
+
+    # support
+    assert (-a + b + (-c * d)).support == {a, b, c, d}
+
+    # subs
+    f = -a * b * c + a * -b * c + a * b * -c
+    fa0, fa1 = f.subs({a: 0}), f.subs({a: 1})
+    assert str(fa0) == "b * c"
+    assert str(fa1) == "b' * c + b * c'"
+
+    assert f.subs({a: 0, b: 0}) == 0
+    assert f.subs({a: 0, b: 1}) == c
+    assert f.subs({a: 1, b: 0}) == c
+    assert f.subs({a: 1, b: 1}) == -c
+
+    # factor
+    assert str(factor(a + -(b * c))) == "a + b' + c'"
+
+    # simplify
+    assert simplify(-a + a) == 1
+    assert simplify(-a + a + b) == 1
+
+    assert simplify(a + a) == a
+    assert simplify(a + a + a) == a
+    assert simplify(a + a + a + a) == a
+    assert simplify((a + a) + (a + a)) == a
+
+    # to_csop
+    f = a * b + a * c + b * c
+    assert str(f.to_csop()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
+
+def test_and():
+    assert And() == One
+    assert And(a) == a
+
+    assert a * 0 == 0
+    assert a * b * 0 == 0
+    assert a * 1 == a
+
+    # __len__
+    assert len(a * b * c) == 3
+
+    # __str__
+    assert str(a * b) == "a * b"
+    assert str(a * b * c) == "a * b * c"
+    assert str(a * b * c * d) == "a * b * c * d"
+
+    # __lt__
+    assert Zero < a * b
+    assert One < a * b
+
+    assert -a < a * b
+    assert  a < a * b
+    assert -b < a * b
+    assert  b < a * b
+
+    assert -a * -b < -a * b # 00 < 01
+    assert -a * -b < a * -b # 00 < 10
+    assert -a * -b < a *  b # 00 < 11
+    assert -a *  b < a * -b # 01 < 10
+    assert -a *  b < a *  b # 01 < 11
+    assert a *  -b < a *  b # 10 < 11
+
+    assert a * b < a * b * c
+
+    # associative
+    assert str((a * b) * c * d)   == "a * b * c * d"
+    assert str(a * (b * c) * d)   == "a * b * c * d"
+    assert str(a * b * (c * d))   == "a * b * c * d"
+    assert str((a * b) * (c * d)) == "a * b * c * d"
+    assert str((a * b * c) * d)   == "a * b * c * d"
+    assert str(a * (b * c * d))   == "a * b * c * d"
+    assert str(a * (b * (c * d))) == "a * b * c * d"
+    assert str(((a * b) * c) * d) == "a * b * c * d"
+
+    # depth
+    assert (a * b).depth == 1
+    assert (a * (b + c)).depth == 2
+    assert (a * (b + (c * d))).depth == 3
+
+    # get_dual
+    assert And.get_dual() is Or
+
+    # support
+    assert (-a * b * (-c + d)).support == {a, b, c, d}
+
+    # subs
+    f = (-a + b + c) * (a + -b + c) * (a + b + -c)
+    fa0, fa1 = f.subs({a: 0}), f.subs({a: 1})
+    assert str(fa0) == "(b + c') * (b' + c)"
+    assert str(fa1) == "b + c"
+
+    assert f.subs({a: 0, b: 0}) == -c
+    assert f.subs({a: 0, b: 1}) == c
+    assert f.subs({a: 1, b: 0}) == c
+    assert f.subs({a: 1, b: 1}) == 1
+
+    # factor
+    assert str(factor(a * -(b + c))) == "a * b' * c'"
+
+    # simplify
+    assert simplify(-a * a) == 0
+    assert simplify(-a * a * b) == 0
+
+    assert simplify(a * a) == a
+    assert simplify(a * a * a) == a
+    assert simplify(a * a * a * a) == a
+    assert simplify((a * a) + (a * a)) == a
+
+    # to_cpos
+    f = a * b + a * c + b * c
+    assert str(f.to_cpos()) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
+
+
+def test_implies():
+    assert str(a >> b) == "a => b"
+    assert str(-a >> b) == "a' => b"
+    assert str(a >> -b) == "a => b'"
+    assert str(-a + b >> a + -b) == "a' + b => a + b'"
+    assert str((-a >> b) >> (a >> -b)) == "(a' => b) => (a => b')"
+    assert simplify(a >> a) == 1
+    assert simplify(a >> -a) == -a
+    assert simplify(-a >> a) == a
+    assert (a >> 0) == -a
+    assert (a >> 1) == 1
+    assert (Zero >> a) == 1
+    assert (One >> a) == a
+    assert str(impliesf(a, b)) == "a' + b"
+    assert str(factor(a >> b)) == "a' + b"
+
+def test_nops():
+    assert str(norf(a, b)) == "a' * b'"
+    assert str(norf(a, b, c, d)) == "a' * b' * c' * d'"
+    assert str(nandf(a, b)) == "a' + b'"
+    assert str(nandf(a, b, c, d)) == "a' + b' + c' + d'"
+
+def test_xor():
+    assert Xor() == 0
+    assert Xor(a) == a
+    assert Xor(0, 0) == 0
+    assert Xor(0, 1) == 1
+    assert Xor(1, 0) == 1
+    #assert Xor(1, 1) == 0
+    assert str(Xor(a, b).to_sop())     == "a' * b + a * b'"
+    assert str(Xnor(a, b).to_sop())    == "a' * b' + a * b"
+    assert str(Xor(a, b, c).to_sop())  == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
+    assert str(Xnor(a, b, c).to_sop()) == "a' * b' * c' + a' * b * c + a * b' * c + a * b * c'"
+
+def test_demorgan():
+    assert str(notf(a * b))  == "a' + b'"
+    assert str(notf(a + b))  == "a' * b'"
+    assert str(notf(a * -b)) == "a' + b"
+    assert str(notf(a * -b)) == "a' + b"
+    assert str(notf(-a * b)) == "a + b'"
+    assert str(notf(-a * b)) == "a + b'"
+
+    assert str(notf(a * b * c))  == "a' + b' + c'"
+    assert str(notf(a + b + c))  == "a' * b' * c'"
+    assert str(notf(-a * b * c)) == "a + b' + c'"
+    assert str(notf(-a + b + c)) == "a * b' * c'"
+    assert str(notf(a * -b * c)) == "a' + b + c'"
+    assert str(notf(a + -b + c)) == "a' * b * c'"
+    assert str(notf(a * b * -c)) == "a' + b' + c"
+    assert str(notf(a + b + -c)) == "a' * b' * c"
+
+def test_absorb():
+    assert str(simplify(a * b + a * b)) == "a * b"
+    assert simplify(a * (a + b)) == a
+    assert simplify(-a * (-a + b)) == -a
+    assert str(simplify(a * b * (a + c))) == "a * b"
+    assert str(simplify(a * b * (a + c) * (a + d))) == "a * b"
+    assert str(simplify(-a * b * (-a + c))) == "a' * b"
+    assert str(simplify(-a * b * (-a + c) * (-a + d))) == "a' * b"
+    assert str(simplify(a * -b + a * -b * c)) == "a * b'"
+    assert str(simplify((a + -b) * (a + -b + c))) == "a + b'"
+
+def test_cofactors():
+    f = a * b + a * c + b * c
+    assert str(f.cofactors()) == "[a * b + a * c + b * c]"
+    assert str(f.cofactors(a)) == "[b * c, b + c + b * c]"
+    assert f.cofactors(a, b) == [0, c, c, 1]
+    assert f.cofactors(a, b, c) == [0, 0, 0, 1, 0, 1, 1, 1]
+    assert str(f.smoothing(a)) == "b + c + b * c + b * c"
+    assert str(f.consensus(a)) == "b * c * (b + c + b * c)"
+    assert str(f.derivative(a).to_sop()) == "b' * c + b * c'"
+
+def test_unate():
+    f = a + b + -c
+    assert f.is_pos_unate(a)
+    assert f.is_pos_unate(b)
+    assert f.is_neg_unate(c)
+    assert not f.is_neg_unate(a)
+    assert not f.is_neg_unate(b)
+    assert f.is_neg_unate(c)
+    assert not f.is_binate(a)
+    assert not f.is_binate(b)
+    assert not f.is_binate(c)
+    assert f.is_binate()
+    g = a * b + a * -c + b * -c
+    assert f.is_pos_unate(a)
+    assert f.is_pos_unate(b)
+    assert f.is_neg_unate(c)
+
+def test_cube():
+    assert str(cube_sop(a, b, c)) == "a' * b' * c' + a' * b' * c + a' * b * c' + a' * b * c + a * b' * c' + a * b' * c + a * b * c' + a * b * c"
+    assert str(cube_pos(a, b, c)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a + b' + c') * (a' + b + c) * (a' + b + c') * (a' + b' + c) * (a' + b' + c')"
+
+def test_rcadd():
+    A, B = vec("A", 8), vec("B", 8)
+    S, C = A.ripple_carry_add(B)
+    S.append(C[-1])
+    for i in range(64):
+        ra = random.randint(0, 2**8-1)
+        rb = random.randint(0, 2**8-1)
+        d = {A: uint2vec(ra, 8), B: uint2vec(rb, 8)}
+        assert int(A.vsubs(d)) == ra
+        assert int(B.vsubs(d)) == rb
+        assert int(S.vsubs(d)) == ra + rb
+
+    A, B = svec("A", 8), svec("B", 8)
+    S, C = A.ripple_carry_add(B)
+    for i in range(64):
+        ra = random.randint(-2**6, 2**6-1)
+        rb = random.randint(-2**6, 2**6-1)
+        d = {A: int2vec(ra, 8), B: int2vec(rb, 8)}
+        assert int(A.vsubs(d)) == ra
+        assert int(B.vsubs(d)) == rb
+        assert int(S.vsubs(d)) == ra + rb
