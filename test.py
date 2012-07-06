@@ -221,8 +221,12 @@ class TestBoolalg(unittest.TestCase):
     def test_or(self):
         a, b, c, d = map(var, "abcd")
 
-        self.assertEqual(Or(), Zero)
+        self.assertEqual(Or(), 0)
         self.assertEqual(Or(a), a)
+
+        self.assertEqual(a + 1, 1)
+        self.assertEqual(a + b + 1, 1)
+        self.assertEqual(a + 0, a)
 
         # __len__
         self.assertEqual(len(a + b + c), 3)
@@ -283,14 +287,9 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(f.subs({a: 1, b: 1}), -c)
 
         # factor
-        self.assertEqual(factor(a + 0), a)
-        self.assertEqual(factor(a + 1), 1)
         self.assertEqual(str(factor(a + -(b * c))), "a + b' + c'")
 
         # simplify
-        self.assertEqual(simplify(a + 1), 1)
-        self.assertEqual(simplify(a + b + 1), 1)
-        self.assertEqual(simplify(a + 0), a)
         self.assertEqual(simplify(-a + a), 1)
         self.assertEqual(simplify(-a + a + b), 1)
 
@@ -308,6 +307,10 @@ class TestBoolalg(unittest.TestCase):
 
         self.assertEqual(And(), One)
         self.assertEqual(And(a), a)
+
+        self.assertEqual(a * 0, 0)
+        self.assertEqual(a * b * 0, 0)
+        self.assertEqual(a * 1, a)
 
         # __len__
         self.assertEqual(len(a * b * c), 3)
@@ -368,14 +371,9 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(f.subs({a: 1, b: 1}), 1)
 
         # factor
-        self.assertEqual(factor(a * 0), 0)
-        self.assertEqual(factor(a * 1), a)
         self.assertEqual(str(factor(a * -(b + c))), "a * b' * c'")
 
         # simplify
-        self.assertEqual(simplify(a * 0), 0)
-        self.assertEqual(simplify(a * b * 0), 0)
-        self.assertEqual(simplify(a * 1), a)
         self.assertEqual(simplify(-a * a), 0)
         self.assertEqual(simplify(-a * a * b), 0)
 

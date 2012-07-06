@@ -671,12 +671,22 @@ class OrAnd(Expression):
     """base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *xs):
-        xs = [x if isinstance(x, Boolean) else num(x) for x in xs]
-        _assoc(cls, xs)
+        temps, xs = list(xs), list()
+        while temps:
+            t = temps.pop()
+            x = t if isinstance(t, Boolean) else num(t)
+            if x == cls.ABSORBER:
+                return cls.ABSORBER
+            elif isinstance(x, cls):
+                temps.extend(x.xs)
+            elif x != cls.IDENTITY:
+                xs.append(x)
+
         if len(xs) == 0:
             return cls.IDENTITY
         if len(xs) == 1:
             return xs.pop()
+
         self = super(OrAnd, cls).__new__(cls)
         self.xs = xs
         return self
@@ -775,20 +785,11 @@ class OrAnd(Expression):
     def _simplify(self):
         xs = [x.simplify() for x in self.xs]
 
-        # x + 1 = 1; x * 0 = 0
-        if self.ABSORBER in xs:
-            return self.ABSORBER
-
         # x + x' = 1; x * x' = 0
         vs = {x for x in xs if isinstance(x, Variable)}
         for v in vs:
             if -v in xs:
                 return self.ABSORBER
-
-        # x + 0 = x; x * 1 = x
-        ident_cnt = xs.count(self.IDENTITY)
-        for i in range(ident_cnt):
-            xs.remove(self.IDENTITY)
 
         # x + x = x; x * x = x
         # x + (x * y) = x; x * (x + y) = x
