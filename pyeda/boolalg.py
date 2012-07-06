@@ -1073,7 +1073,7 @@ class Xor(Expression):
                     xs.remove(old)
                 if new != self.IDENTITY:
                     xs.append(new)
-            if xs.count(1) & 1:
+            if xs.count(One) & 1:
                 return Not(Xor(*[x for x in xs if x is not One]))
             else:
                 return Xor(*[x for x in xs if x is not One])
@@ -1104,7 +1104,7 @@ class Xor(Expression):
                 xs.remove(dup)
                 dup_cnt -= 2
 
-        if xs.count(1) & 1:
+        if xs.count(One) & 1:
             return Not(Xor(*[x for x in xs if x is not One]))
         else:
             return Xor(*[x for x in xs if x is not One])
