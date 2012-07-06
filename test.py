@@ -11,15 +11,15 @@ import unittest
 
 # pyeda
 from pyeda.boolalg import (
+    var, vec, svec,
     Zero, One,
-    Variable, Complement,
     Buf, Not,
     Or, Nor, And, Nand,
     Xor, Xnor,
     Implies,
     factor, simplify, notf, orf, norf, andf, nandf, xorf, xnorf, impliesf,
     cube_sop, cube_pos,
-    vec, svec, int2vec, uint2vec
+    int2vec, uint2vec
 )
 
 class TestBoolalg(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestBoolalg(unittest.TestCase):
         super(TestBoolalg, self).tearDown()
 
     def test_number(self):
-        a, b = map(Variable, "ab")
+        a, b = map(var, "ab")
 
         # __str__
         self.assertEqual(str(Zero), "0")
@@ -82,9 +82,9 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(One.simplify(), One)
 
     def test_literal(self):
-        a, b = map(Variable, "ab")
-        c0 = Variable("c", 0)
-        c1 = Variable("c", 1)
+        a, b = map(var, "ab")
+        c0 = var("c", 0)
+        c1 = var("c", 1)
 
         # __len__
         self.assertEqual(len(-a), 1)
@@ -157,7 +157,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(a.simplify(), a)
 
     def test_buf(self):
-        a, b, c = map(Variable, "abc")
+        a, b, c = map(var, "abc")
 
         self.assertEqual(Buf(0), 0)
         self.assertEqual(Buf(1), 1)
@@ -188,7 +188,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(simplify(Buf(a * -a)), 0)
 
     def test_not(self):
-        a, b, c = map(Variable, "abc")
+        a, b, c = map(var, "abc")
 
         self.assertEqual(Not(0), 1)
         self.assertEqual(Not(1), 0)
@@ -219,7 +219,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(simplify(Not(a * -a)), 1)
 
     def test_or(self):
-        a, b, c, d = map(Variable, "abcd")
+        a, b, c, d = map(var, "abcd")
 
         self.assertEqual(Or(), Zero)
         self.assertEqual(Or(a), a)
@@ -304,7 +304,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(f.to_csop()), "a' * b * c + a * b' * c + a * b * c' + a * b * c")
 
     def test_and(self):
-        a, b, c, d = map(Variable, "abcd")
+        a, b, c, d = map(var, "abcd")
 
         self.assertEqual(And(), One)
         self.assertEqual(And(a), a)
@@ -389,7 +389,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(f.to_cpos()), "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)")
 
     def test_implies(self):
-        a, b, c, d = map(Variable, "abcd")
+        a, b, c, d = map(var, "abcd")
         self.assertEqual(str(a >> b), "a => b")
         self.assertEqual(str(-a >> b), "a' => b")
         self.assertEqual(str(a >> -b), "a => b'")
@@ -404,21 +404,21 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(factor(a >> b)), "a' + b")
 
     def test_nops(self):
-        a, b, c, d = map(Variable, "abcd")
+        a, b, c, d = map(var, "abcd")
         self.assertEqual(str(norf(a, b)), "a' * b'")
         self.assertEqual(str(norf(a, b, c, d)), "a' * b' * c' * d'")
         self.assertEqual(str(nandf(a, b)), "a' + b'")
         self.assertEqual(str(nandf(a, b, c, d)), "a' + b' + c' + d'")
 
     def test_xor(self):
-        a, b, c  = map(Variable, "abc")
+        a, b, c  = map(var, "abc")
         self.assertEqual(str(Xor(a, b).to_sop()),  "a' * b + a * b'")
         self.assertEqual(str(Xnor(a, b).to_sop()), "a' * b' + a * b")
         self.assertEqual(str(Xor(a, b, c).to_sop()),  "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c")
         self.assertEqual(str(Xnor(a, b, c).to_sop()), "a' * b' * c' + a' * b * c + a * b' * c + a * b * c'")
 
     def test_demorgan(self):
-        a, b, c = map(Variable, "abc")
+        a, b, c = map(var, "abc")
 
         self.assertEqual(str(notf(a * b)),  "a' + b'")
         self.assertEqual(str(notf(a + b)),  "a' * b'")
@@ -437,7 +437,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(notf(a + b + -c)), "a' * b' * c")
 
     def test_absorb(self):
-        a, b, c, d = map(Variable, "abcd")
+        a, b, c, d = map(var, "abcd")
         self.assertEqual(str(simplify(a * b + a * b)), "a * b")
         self.assertEqual(simplify(a * (a + b)), a)
         self.assertEqual(simplify(-a * (-a + b)), -a)
@@ -449,7 +449,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(simplify((a + -b) * (a + -b + c))), "a + b'")
 
     def test_cofactors(self):
-        a, b, c, d = map(Variable, "abcd")
+        a, b, c, d = map(var, "abcd")
         f = a * b + a * c + b * c
         self.assertEqual(str(f.cofactors()), "[a * b + a * c + b * c]")
         self.assertEqual(str(f.cofactors(a)), "[b * c, b + c + b * c]")
@@ -460,7 +460,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(f.derivative(a).to_sop()), "b' * c + b * c'")
 
     def test_unate(self):
-        a, b, c, d = map(Variable, "abcd")
+        a, b, c, d = map(var, "abcd")
         f = a + b + -c
         self.assertTrue(f.is_pos_unate(a))
         self.assertTrue(f.is_pos_unate(b))
@@ -478,7 +478,7 @@ class TestBoolalg(unittest.TestCase):
         self.assertTrue(f.is_neg_unate(c))
 
     def test_cube(self):
-        a, b, c = map(Variable, "abc")
+        a, b, c = map(var, "abc")
         self.assertEqual(str(cube_sop(a, b, c)), "a' * b' * c' + a' * b' * c + a' * b * c' + a' * b * c + a * b' * c' + a * b' * c + a * b * c' + a * b * c")
         self.assertEqual(str(cube_pos(a, b, c)), "(a + b + c) * (a + b + c') * (a + b' + c) * (a + b' + c') * (a' + b + c) * (a' + b + c') * (a' + b' + c) * (a' + b' + c')")
 

@@ -3,6 +3,8 @@ Boolean Algebra
 
 Interface Functions:
     num
+    var
+    comp
     vec
     svec
 
@@ -97,6 +99,22 @@ def num(x):
     except KeyError:
         ret = Number(n)
         NUMBERS[n] = ret
+    return ret
+
+def var(name, index=-1):
+    try:
+        ret = VARIABLES[(name, index)]
+    except KeyError:
+        ret = Variable(name, index)
+        VARIABLES[(name, index)] = ret
+    return ret
+
+def comp(var):
+    try:
+        ret = COMPLEMENTS[var]
+    except KeyError:
+        ret = Complement(var)
+        COMPLEMENTS[var] = ret
     return ret
 
 def vec(name, *args, **kwargs):
@@ -544,18 +562,10 @@ class Literal(Expression):
 class Variable(Literal):
     """Boolean variable"""
 
-    def __new__(cls, name, index=-1):
-        try:
-            self = VARIABLES[(name, index)]
-        except KeyError:
-            self = super(Variable, cls).__new__(cls)
-            self._name = name
-            self._index = index
-            VARIABLES[(name, index)] = self
-        return self
-
     def __init__(self, name, index=-1):
         super(Variable, self).__init__()
+        self._name = name
+        self._index = index
 
     def __str__(self):
         if self._index >= 0:
@@ -582,7 +592,7 @@ class Variable(Literal):
         return self._index
 
     def get_dual(self):
-        return Complement(self)
+        return comp(self)
 
     def iter_vars(self):
         yield self
@@ -606,17 +616,9 @@ class Complement(Literal):
     # Postfix symbol used in string representation
     OP = "'"
 
-    def __new__(cls, var):
-        try:
-            self = COMPLEMENTS[var]
-        except KeyError:
-            self = super(Complement, cls).__new__(cls)
-            self._var = var
-            COMPLEMENTS[var] = self
-        return self
-
     def __init__(self, var):
         super(Complement, self).__init__()
+        self._var = var
 
     def __str__(self):
         return str(self._var) + self.OP
