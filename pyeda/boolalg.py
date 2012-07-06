@@ -2,6 +2,8 @@
 Boolean Algebra
 
 Interface Functions:
+    num
+
     factor
     simplify
 
@@ -76,6 +78,8 @@ __license__ = "All rights reserved."
 # Constants
 #==============================================================================
 
+B = {0, 1}
+
 UNSIGNED, TWOS_COMPLEMENT = range(2)
 
 NUMBERS = dict()
@@ -85,6 +89,18 @@ COMPLEMENTS = dict()
 #==============================================================================
 # Interface Functions
 #==============================================================================
+
+def num(x):
+    """Return a unique Boolean Number."""
+    n = int(x)
+    if not n in B:
+        raise ValueError("invalid Boolean number: " + str(n))
+    try:
+        ret = NUMBERS[n]
+    except KeyError:
+        ret = Number(n)
+        NUMBERS[n] = ret
+    return ret
 
 def factor(expr):
     """Return a factored expression."""
@@ -136,8 +152,8 @@ def cube_pos(*vs):
 
 def iter_space(*vs):
     """Return the multi-dimensional space spanned by N Boolean variables."""
-    for num in range(2 ** len(vs)):
-        yield [(v if _bit_on(num, i) else -v) for i, v in enumerate(vs)]
+    for n in range(2 ** len(vs)):
+        yield [(v if _bit_on(n, i) else -v) for i, v in enumerate(vs)]
 
 def iter_points(op, *vs):
     """
@@ -173,40 +189,40 @@ def zeros(length):
         z.append(Zero)
     return z
 
-def uint2vec(num, length=None):
+def uint2vec(n, length=None):
     """Convert an unsigned integer to a Vector."""
-    assert num >= 0
+    assert n >= 0
 
     vv = Vector()
-    if num == 0:
+    if n == 0:
         vv.append(Zero)
     else:
-        while num != 0:
-            vv.append(Number(num & 1))
-            num >>= 1
+        while n != 0:
+            vv.append(num(n & 1))
+            n >>= 1
 
     if length:
         if length < len(vv):
-            raise ValueError("overflow: " + str(num))
+            raise ValueError("overflow: " + str(n))
         else:
             vv.ext(length - len(vv))
 
     return vv
 
-def int2vec(num, length=None):
+def int2vec(n, length=None):
     """Convert a signed integer to a Vector."""
-    if num < 0:
-        req_length = _clog2(abs(num)) + 1
-        vv = uint2vec(2 ** req_length + num)
+    if n < 0:
+        req_length = _clog2(abs(n)) + 1
+        vv = uint2vec(2 ** req_length + n)
     else:
-        req_length = _clog2(num + 1) + 1
-        vv = uint2vec(num)
+        req_length = _clog2(n + 1) + 1
+        vv = uint2vec(n)
         vv.ext(req_length - len(vv))
     vv.bnr = TWOS_COMPLEMENT
 
     if length:
         if length < req_length:
-            raise ValueError("overflow: " + str(num))
+            raise ValueError("overflow: " + str(n))
         else:
             vv.ext(length - req_length)
 
@@ -279,17 +295,8 @@ class Boolean:
 class Number(Boolean):
     """Boolean number"""
 
-    def __new__(cls, val):
-        num = int(val)
-        if not (0 <= num <= 1):
-            raise ValueError("invalid Boolean number: " + str(num))
-        try:
-            self = NUMBERS[num]
-        except KeyError:
-            self = super(Number, cls).__new__(cls)
-            self._val = num
-            NUMBERS[num] = self
-        return self
+    def __init__(self, val):
+        self._val = val
 
     def __hash__(self):
         return self._val
@@ -301,7 +308,7 @@ class Number(Boolean):
         if isinstance(other, Boolean):
             return isinstance(other, Number) and self._val == other.val
         else:
-            return self._val == Number(other).val
+            return self._val == num(other).val
 
     def __lt__(self, other):
         if isinstance(other, Number):
@@ -322,7 +329,7 @@ class Number(Boolean):
         return self._val
 
     def get_dual(self):
-        return Zero if self._val else One
+        return num(1 - self._val)
 
     def subs(self, d): return self
 
@@ -330,8 +337,8 @@ class Number(Boolean):
     def _simplify(self): return self
 
 
-Zero = Number(0)
-One = Number(1)
+Zero = num(0)
+One = num(1)
 
 
 class Expression(Boolean):
@@ -415,8 +422,8 @@ class Expression(Boolean):
 
     def iter_cofactors(self, *vs):
         """Iterate through the cofactors of N variables."""
-        for num in range(2 ** len(vs)):
-            yield self.subs({v: _bit_on(num, i) for i, v in enumerate(vs)})
+        for n in range(2 ** len(vs)):
+            yield self.subs({v: _bit_on(n, i) for i, v in enumerate(vs)})
 
     def cofactors(self, *vs):
         """Return a list of cofactors of N variables.
@@ -594,7 +601,7 @@ class Variable(Literal):
         if self in d:
             val = d[self]
             if not isinstance(val, Boolean):
-                val = Number(val)
+                val = num(val)
             return val
         else:
             return self
@@ -659,7 +666,7 @@ class Complement(Literal):
         if self._var in d:
             val = d[self._var]
             if not isinstance(val, Boolean):
-                val = Number(val)
+                val = num(val)
             return Not(val)
         else:
             return self
@@ -672,7 +679,7 @@ class OrAnd(Expression):
     """base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *xs):
-        xs = [x if isinstance(x, Boolean) else Number(x) for x in xs]
+        xs = [x if isinstance(x, Boolean) else num(x) for x in xs]
         _assoc(cls, xs)
         if len(xs) == 0:
             return cls.IDENTITY
@@ -893,11 +900,11 @@ class Or(OrAnd):
 
     @property
     def term_index(self):
-        num = abs(self) - 1
+        n = abs(self) - 1
         idx = 0
         for i, v in enumerate(sorted(self.support)):
             if -v in self.xs:
-                idx |= 1 << (num - i)
+                idx |= 1 << (n - i)
         return idx
 
     def equal(self, other):
@@ -931,11 +938,11 @@ class And(OrAnd):
 
     @property
     def term_index(self):
-        num = abs(self) - 1
+        n = abs(self) - 1
         idx = 0
         for i, v in enumerate(sorted(self.support)):
             if v in self.xs:
-                idx |= 1 << (num - i)
+                idx |= 1 << (n - i)
         return idx
 
     def equal(self, other):
@@ -949,7 +956,7 @@ class BufNot(Expression):
 
     def __init__(self, x):
         super(BufNot, self).__init__()
-        self.x = x if isinstance(x, Boolean) else Number(x)
+        self.x = x if isinstance(x, Boolean) else num(x)
 
     @property
     def xs(self):
@@ -978,7 +985,7 @@ class Buf(BufNot):
     """buffer operator"""
 
     def __new__(cls, x):
-        x = x if isinstance(x, Boolean) else Number(x)
+        x = x if isinstance(x, Boolean) else num(x)
         # Auto-simplify numbers and literals
         if isinstance(x, Number) or isinstance(x, Literal):
             return x
@@ -996,7 +1003,7 @@ class Not(BufNot):
     """Boolean NOT operator"""
 
     def __new__(cls, x):
-        x = x if isinstance(x, Boolean) else Number(x)
+        x = x if isinstance(x, Boolean) else num(x)
         # Auto-simplify numbers and literals
         if isinstance(x, Number) or isinstance(x, Literal):
             return x.get_dual()
@@ -1025,7 +1032,7 @@ class Xor(Expression):
     IDENTITY = Zero
 
     def __new__(cls, *xs):
-        xs = [x if isinstance(x, Boolean) else Number(x) for x in xs]
+        xs = [x if isinstance(x, Boolean) else num(x) for x in xs]
         _assoc(cls, xs)
         if len(xs) == 0:
             return cls.IDENTITY
@@ -1129,7 +1136,7 @@ class Implies(Expression):
 
     def __init__(self, x0, x1):
         super(Implies, self).__init__()
-        self.xs = [x if isinstance(x, Boolean) else Number(x) for x in (x0, x1)]
+        self.xs = [x if isinstance(x, Boolean) else num(x) for x in (x0, x1)]
 
     def __str__(self):
         s = list()
@@ -1186,7 +1193,7 @@ class Vector:
     """Boolean vector"""
 
     def __init__(self, *fs, **kwargs):
-        self.fs = [f if isinstance(f, Boolean) else Number(f) for f in fs]
+        self.fs = [f if isinstance(f, Boolean) else num(f) for f in fs]
         self._start = kwargs.get("start", 0)
         self._bnr = kwargs.get("bnr", UNSIGNED)
 
@@ -1271,22 +1278,22 @@ class Vector:
 
     def to_uint(self):
         """Convert vector into an unsigned integer."""
-        num = 0
+        n = 0
         for i, f in enumerate(self.fs):
             if isinstance(f, Number):
                 if f is One:
-                    num += 2 ** i
+                    n += 2 ** i
             else:
                 raise ValueError("cannot convert to uint")
-        return num
+        return n
 
     def to_int(self):
         """Convert vector into an integer."""
-        num = self.to_uint()
+        n = self.to_uint()
         if self._bnr == TWOS_COMPLEMENT and self.fs[-1]:
-            return -2 ** self.__len__() + num
+            return -2 ** self.__len__() + n
         else:
-            return num
+            return n
 
     def subs(self, d):
         """Substitute numbers into a Boolean vector."""
@@ -1303,7 +1310,7 @@ class Vector:
         """Append logic function to the end of this vector."""
         self.fs.append(f)
 
-    def ext(self, num):
+    def ext(self, n):
         """Extend this vector by N bits.
 
         If this vector uses two's complement representation, sign extend;
@@ -1313,7 +1320,7 @@ class Vector:
             bit = self.fs[-1]
         else:
             bit = Zero
-        for i in range(num):
+        for i in range(n):
             self.append(bit)
 
     def eq(A, B):
@@ -1370,17 +1377,17 @@ class Vector:
 # Internal Functions
 #==============================================================================
 
-def _clog2(num):
+def _clog2(n):
     """Return the ceiling, log base two of an integer."""
-    assert num >= 1
+    assert n >= 1
     i, x = 0, 1
-    while x < num:
+    while x < n:
         x = x << 1;
         i += 1
     return i
 
-def _bit_on(num, bit):
-    return bool((num >> bit) & 1)
+def _bit_on(n, bit):
+    return bool((n >> bit) & 1)
 
 def _assoc(cls, xs):
     """a op (b op c) = a op b op c"""
@@ -1405,7 +1412,7 @@ def _expand_vectors(d):
         if isinstance(key, Vector):
             assert len(key) == len(val)
             for i, x in enumerate(val):
-                d[key.getifz(i)] = x if isinstance(x, Boolean) else Number(x)
+                d[key.getifz(i)] = x if isinstance(x, Boolean) else num(x)
         elif isinstance(key, Literal):
             d[key] = val
     return d
