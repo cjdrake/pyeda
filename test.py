@@ -394,10 +394,12 @@ class TestBoolalg(unittest.TestCase):
         self.assertEqual(str(-a + b >> a + -b), "a' + b => a + b'")
         self.assertEqual(str((-a >> b) >> (a >> -b)), "(a' => b) => (a => b')")
         self.assertEqual(simplify(a >> a), 1)
-        self.assertEqual(simplify(a >> 0), -a)
-        self.assertEqual(simplify(a >> 1), 1)
-        self.assertEqual(simplify(Zero >> a), 1)
-        self.assertEqual(simplify(One >> a), a)
+        self.assertEqual(simplify(a >> -a), -a)
+        self.assertEqual(simplify(-a >> a), a)
+        self.assertEqual(a >> 0, -a)
+        self.assertEqual(a >> 1, 1)
+        self.assertEqual(Zero >> a, 1)
+        self.assertEqual(One >> a, a)
         self.assertEqual(str(impliesf(a, b)), "a' + b")
         self.assertEqual(str(factor(a >> b)), "a' + b")
 
@@ -410,6 +412,12 @@ class TestBoolalg(unittest.TestCase):
 
     def test_xor(self):
         a, b, c  = map(var, "abc")
+        self.assertEqual(Xor(), 0)
+        self.assertEqual(Xor(a), a)
+        self.assertEqual(Xor(0, 0), 0)
+        self.assertEqual(Xor(0, 1), 1)
+        self.assertEqual(Xor(1, 0), 1)
+        #self.assertEqual(Xor(1, 1), 0)
         self.assertEqual(str(Xor(a, b).to_sop()),  "a' * b + a * b'")
         self.assertEqual(str(Xnor(a, b).to_sop()), "a' * b' + a * b")
         self.assertEqual(str(Xor(a, b, c).to_sop()),  "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c")
@@ -485,7 +493,7 @@ class TestBoolvec(unittest.TestCase):
 
     def setUp(self):
         super(TestBoolvec, self).setUp()
-        self.LOOPS = 32
+        self.LOOPS = 64
 
     def tearDown(self):
         super(TestBoolvec, self).tearDown()

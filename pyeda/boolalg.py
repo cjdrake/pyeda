@@ -45,8 +45,8 @@ Huntington's Postulates
 | x + y = y + x                   | Commutative  |
 | x * y = y * x                   | Commutative  |
 +---------------------------------+--------------+
-| x + (y * c) = (x + y) * (x + c) | Distributive |
-| x * (y + c) = (x * y) + (x * c) | Distributive |
+| x + (y * z) = (x + y) * (x + z) | Distributive |
+| x * (y + z) = (x * y) + (x * z) | Distributive |
 +---------------------------------+--------------+
 | x + x' = 1                      | Complement   |
 | x * x' = 0                      | Complement   |
@@ -54,8 +54,8 @@ Huntington's Postulates
 
 Properties of Boolean Algebraic Systems
 +---------------------------+---------------+
-| x + (y + c) = (x + y) + c | Associativity |
-| x * (y * c) = (x * y) * c | Associativity |
+| x + (y + z) = (x + y) + z | Associativity |
+| x * (y * z) = (x * y) * z | Associativity |
 +---------------------------+---------------+
 | x + x = x                 | Idempotence   |
 | x * x = x                 | Idempotence   |
@@ -672,6 +672,7 @@ class OrAnd(Expression):
 
     def __new__(cls, *xs):
         temps, xs = list(xs), list()
+        # x + (y + z) = (x + y) + z; x * (y * z) = (x * y) * z
         while temps:
             t = temps.pop()
             x = t if isinstance(t, Boolean) else num(t)
@@ -763,17 +764,14 @@ class OrAnd(Expression):
         if replace:
             xs = self.xs[:]
             for old, new in replace:
-                old_cnt = xs.count(old)
-                for i in range(old_cnt):
-                    xs.remove(old)
-                xs.append(new)
-
-            if self.ABSORBER in xs:
-                return self.ABSORBER
-            ident_cnt = xs.count(self.IDENTITY)
-            for i in range(ident_cnt):
-                xs.remove(self.IDENTITY)
-
+                if new == self.ABSORBER:
+                    return self.ABSORBER
+                else:
+                    old_cnt = xs.count(old)
+                    for i in range(old_cnt):
+                        xs.remove(old)
+                    if new != self.IDENTITY:
+                        xs.append(new)
             return self.__class__(*xs)
         else:
             return self
@@ -1025,12 +1023,21 @@ class Xor(Expression):
     IDENTITY = Zero
 
     def __new__(cls, *xs):
-        xs = [x if isinstance(x, Boolean) else num(x) for x in xs]
-        _assoc(cls, xs)
+        temps, xs = list(xs), list()
+        # x + (y + z) = (x + y) + z; x * (y * z) = (x * y) * z
+        while temps:
+            t = temps.pop()
+            x = t if isinstance(t, Boolean) else num(t)
+            if isinstance(x, cls):
+                temps.extend(x.xs)
+            elif x != cls.IDENTITY:
+                xs.append(x)
+
         if len(xs) == 0:
             return cls.IDENTITY
         if len(xs) == 1:
             return xs.pop()
+
         self = super(Xor, cls).__new__(cls)
         self.xs = xs
         return self
@@ -1066,24 +1073,12 @@ class Xor(Expression):
                 old_cnt = xs.count(old)
                 for i in range(old_cnt):
                     xs.remove(old)
-                xs.append(new)
-
-            # XOR(1, 1) = 0
-            one_cnt = xs.count(One)
-            while one_cnt > 1:
-                xs.remove(One)
-                xs.remove(One)
-                one_cnt -= 2
-            # XOR(x, 0) = x
-            ident_cnt = xs.count(self.IDENTITY)
-            for i in range(ident_cnt):
-                xs.remove(self.IDENTITY)
-            # XOR(x, 1) = x'
-            if One in xs:
-                xs.remove(One)
-                return Xnor(*xs)
-
-            return Xor(*xs)
+                if new != self.IDENTITY:
+                    xs.append(new)
+            if xs.count(1) & 1:
+                return Not(Xor(*[x for x in xs if x != 1]))
+            else:
+                return Xor(*[x for x in xs if x != 1])
         else:
             return self
 
@@ -1096,10 +1091,11 @@ class Xor(Expression):
 
         # XOR(x, x') = 1
         for x in xs:
-            # FIXME -- count usage
-            while xs.count(x) > 0 and xs.count(-x) > 0:
-                xs.remove(x)
-                xs.remove(-x)
+            x_cnt = xs.count(x)
+            xn_cnt = xs.count(-x)
+            while x_cnt > 0 and xn_cnt > 0:
+                xs.remove(x); x_cnt -= 1
+                xs.remove(-x); xn_cnt -= 1
                 xs.append(One)
         # XOR(x, x) = 0
         dups = {x for x in xs if xs.count(x) > 1}
@@ -1109,17 +1105,11 @@ class Xor(Expression):
                 xs.remove(dup)
                 xs.remove(dup)
                 dup_cnt -= 2
-        # XOR(x, 0) = x
-        ident_cnt = xs.count(self.IDENTITY)
-        while ident_cnt > 0:
-            xs.remove(self.IDENTITY)
-            ident_cnt -= 1
-        # XOR(x, 1) = x'
-        if One in xs:
-            xs.remove(One)
-            return Xnor(*xs)
 
-        return Xor(*xs)
+        if xs.count(1) & 1:
+            return Not(Xor(*[x for x in xs if x != 1]))
+        else:
+            return Xor(*[x for x in xs if x != 1])
 
 
 class Implies(Expression):
@@ -1127,9 +1117,24 @@ class Implies(Expression):
 
     OP = "=>"
 
+    def __new__(cls, x0, x1):
+        xs = [x if isinstance(x, Boolean) else num(x) for x in (x0, x1)]
+        # 0 => x = 1; x => 1 = 1
+        if xs[0] is Zero or xs[1] is One:
+            return One
+        # 1 => x = x
+        elif xs[0] is One:
+            return xs[1]
+        # x => 0 = x'
+        elif xs[1] is Zero:
+            return Not(xs[0])
+        else:
+            self = super(Implies, cls).__new__(cls)
+            self.xs = xs
+            return self
+
     def __init__(self, x0, x1):
         super(Implies, self).__init__()
-        self.xs = [x if isinstance(x, Boolean) else num(x) for x in (x0, x1)]
 
     def __str__(self):
         s = list()
@@ -1152,15 +1157,12 @@ class Implies(Expression):
     def _simplify(self):
         xs = [x.simplify() for x in self.xs]
 
-        # 0 => x = 1; x => 1 = 1; x => x = 1
-        if xs[0] == Zero or xs[1] == One or xs[0] == xs[1]:
+        # x => x = 1
+        if xs[0] == xs[1]:
             return One
-        # 1 => x = x; -x => x = x
-        elif xs[0] == One or -xs[0] == xs[1]:
+        # -x => x = x; x => -x = -x
+        elif -xs[0] == xs[1] or xs[0] == -xs[1]:
             return xs[1]
-        # x => 0 = x'; x => -x = -x
-        elif xs[1] == Zero or xs[0] == -xs[1]:
-            return Not(xs[0])
 
         return Implies(xs[0], xs[1])
 
@@ -1381,20 +1383,6 @@ def _clog2(n):
 
 def _bit_on(n, bit):
     return bool((n >> bit) & 1)
-
-def _assoc(cls, xs):
-    """a op (b op c) = a op b op c"""
-    temps = list()
-    for x in xs:
-        if isinstance(x, cls):
-            temps.append(x)
-            xs.remove(x)
-    while temps:
-        t = temps.pop()
-        if isinstance(t, cls):
-            temps.extend(t.xs)
-        else:
-            xs.append(t)
 
 def _expand_vectors(d):
     """Expand all vectors in a substitution dict."""
