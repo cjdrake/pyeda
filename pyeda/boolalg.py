@@ -17,8 +17,6 @@ Interface Functions:
     vec
     svec
 
-    zeros
-
     uint2vec
     int2vec
 
@@ -181,13 +179,6 @@ def vec(name, *args, **kwargs):
 def svec(name, *args, **kwargs):
     """Return a signed vector of variables."""
     return vec(name, *args, bnr=TWOS_COMPLEMENT, **kwargs)
-
-def zeros(length):
-    """Return a vector of zeros."""
-    z = Vector()
-    for i in range(length):
-        z.append(Zero)
-    return z
 
 def uint2vec(n, length=None):
     """Convert an unsigned integer to a Vector."""
