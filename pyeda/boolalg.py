@@ -686,7 +686,7 @@ class OrAnd(Expression):
         if len(xs) == 0:
             return cls.IDENTITY
         if len(xs) == 1:
-            return xs.pop()
+            return xs[0]
 
         self = super(OrAnd, cls).__new__(cls)
         self.xs = xs
@@ -784,10 +784,8 @@ class OrAnd(Expression):
         xs = [x.simplify() for x in self.xs]
 
         # x + x' = 1; x * x' = 0
-        vs = {x for x in xs if isinstance(x, Variable)}
-        for v in vs:
-            if -v in xs:
-                return self.ABSORBER
+        if any(-v in xs for v in xs if isinstance(v, Variable)):
+            return self.ABSORBER
 
         # x + x = x; x * x = x
         # x + (x * y) = x; x * (x + y) = x
@@ -1036,7 +1034,7 @@ class Xor(Expression):
         if len(xs) == 0:
             return cls.IDENTITY
         if len(xs) == 1:
-            return xs.pop()
+            return xs[0]
 
         self = super(Xor, cls).__new__(cls)
         self.xs = xs
@@ -1076,9 +1074,9 @@ class Xor(Expression):
                 if new != self.IDENTITY:
                     xs.append(new)
             if xs.count(1) & 1:
-                return Not(Xor(*[x for x in xs if x != 1]))
+                return Not(Xor(*[x for x in xs if x is not One]))
             else:
-                return Xor(*[x for x in xs if x != 1])
+                return Xor(*[x for x in xs if x is not One])
         else:
             return self
 
@@ -1107,9 +1105,9 @@ class Xor(Expression):
                 dup_cnt -= 2
 
         if xs.count(1) & 1:
-            return Not(Xor(*[x for x in xs if x != 1]))
+            return Not(Xor(*[x for x in xs if x is not One]))
         else:
-            return Xor(*[x for x in xs if x != 1])
+            return Xor(*[x for x in xs if x is not One])
 
 
 class Implies(Expression):
