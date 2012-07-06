@@ -3,6 +3,8 @@ Boolean Algebra
 
 Interface Functions:
     num
+    vec
+    svec
 
     factor
     simplify
@@ -13,9 +15,6 @@ Interface Functions:
     cube_pos
     iter_space
     iter_points
-
-    vec
-    svec
 
     uint2vec
     int2vec
@@ -100,6 +99,23 @@ def num(x):
         NUMBERS[n] = ret
     return ret
 
+def vec(name, *args, **kwargs):
+    """Return a vector of variables."""
+    if len(args) == 0:
+        raise TypeError("vec() expected at least two argument")
+    elif len(args) == 1:
+        start, stop = 0, args[0]
+    elif len(args) == 2:
+        start, stop = args
+    else:
+        raise TypeError("vec() expected at most three arguments")
+    fs = [Variable(name, index=i) for i in range(start, stop)]
+    return Vector(*fs, start=start, **kwargs)
+
+def svec(name, *args, **kwargs):
+    """Return a signed vector of variables."""
+    return vec(name, *args, bnr=TWOS_COMPLEMENT, **kwargs)
+
 def factor(expr):
     """Return a factored expression."""
     return expr.factor()
@@ -162,23 +178,6 @@ def iter_points(op, *vs):
         raise TypeError("iter_points() expected op type OR/AND")
     for s in iter_space(*vs):
         yield op(*s)
-
-def vec(name, *args, **kwargs):
-    """Return a vector of variables."""
-    if len(args) == 0:
-        raise TypeError("vec() expected at least two argument")
-    elif len(args) == 1:
-        start, stop = 0, args[0]
-    elif len(args) == 2:
-        start, stop = args
-    else:
-        raise TypeError("vec() expected at most three arguments")
-    fs = [Variable(name, index=i) for i in range(start, stop)]
-    return Vector(*fs, start=start, **kwargs)
-
-def svec(name, *args, **kwargs):
-    """Return a signed vector of variables."""
-    return vec(name, *args, bnr=TWOS_COMPLEMENT, **kwargs)
 
 def uint2vec(n, length=None):
     """Convert an unsigned integer to a Vector."""
