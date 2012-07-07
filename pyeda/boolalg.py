@@ -21,7 +21,7 @@ Interface Functions:
     uint2vec
     int2vec
 
-    Nor, Nand, Xnor
+    Nor, Nand
 
 Classes:
     Boolean
@@ -36,7 +36,9 @@ Classes:
             BufNot
                 Buf
                 Not
-            Xor
+            Exclusive
+                Xor
+                Xnor
             Implies
     Vector
 
@@ -307,6 +309,9 @@ class Number(Boolean):
         self._val = val
 
     def __hash__(self):
+        return self._val
+
+    def __int__(self):
         return self._val
 
     def __str__(self):
@@ -767,8 +772,7 @@ class OrAnd(Expression):
                 if new == self.ABSORBER:
                     return self.ABSORBER
                 else:
-                    old_cnt = xs.count(old)
-                    for i in range(old_cnt):
+                    for i in range(xs.count(old)):
                         xs.remove(old)
                     if new != self.IDENTITY:
                         xs.append(new)
@@ -804,7 +808,7 @@ class OrAnd(Expression):
             elif isinstance(xs[i], dual_op) and xs[i].depth == 1:
                 terms.append(xs.pop(i))
             i -= 1
-        # Drop all terms that are a subset of other terms.
+        # Drop all terms that are a subset of other terms
         while terms:
             fst, rst, terms = terms[0], terms[1:], list()
             drop_fst = False
@@ -1015,33 +1019,36 @@ class Not(BufNot):
             raise Exception("factor() returned unfactored expression")
 
 
-class Xor(Expression):
-    """Boolean XOR (exclusive or) operator"""
+class Exclusive(Expression):
+    """Boolean exclusive (XOR, XNOR) operator"""
 
     IDENTITY = Zero
 
     def __new__(cls, *xs):
+        parity = cls.PARITY
         temps, xs = list(xs), list()
-        # x + (y + z) = (x + y) + z; x * (y * z) = (x * y) * z
         while temps:
             t = temps.pop()
             x = t if isinstance(t, Boolean) else num(t)
-            if isinstance(x, cls):
+            if x is One:
+                parity ^= 1
+            elif isinstance(x, cls):
                 temps.extend(x.xs)
             elif x != cls.IDENTITY:
                 xs.append(x)
 
         if len(xs) == 0:
-            return cls.IDENTITY
+            return Not(cls.IDENTITY) if parity else cls.IDENTITY
         if len(xs) == 1:
-            return xs[0]
+            return Not(xs[0]) if parity else xs[0]
 
-        self = super(Xor, cls).__new__(cls)
+        self = super(Exclusive, cls).__new__(cls)
         self.xs = xs
+        self._parity = parity
         return self
 
     def __init__(self, *xs):
-        super(Xor, self).__init__()
+        super(Exclusive, self).__init__()
 
     def __iter__(self):
         return iter(self.xs)
@@ -1051,7 +1058,10 @@ class Xor(Expression):
 
     def __str__(self):
         args = ", ".join(str(x) for x in self.xs)
-        return "Xor(" + args + ")"
+        if self._parity:
+            return "Xnor(" + args + ")"
+        else:
+            return "Xor(" + args + ")"
 
     def iter_vars(self):
         for x in self.xs:
@@ -1067,47 +1077,58 @@ class Xor(Expression):
                 replace.append((x, _x))
         if replace:
             xs = self.xs[:]
+            parity = self._parity
             for old, new in replace:
-                old_cnt = xs.count(old)
-                for i in range(old_cnt):
+                for i in range(xs.count(old)):
                     xs.remove(old)
-                if new != self.IDENTITY:
+                if new is One:
+                    parity ^= 1
+                elif new != self.IDENTITY:
                     xs.append(new)
-            if xs.count(One) & 1:
-                return Not(Xor(*[x for x in xs if x is not One]))
-            else:
-                return Xor(*[x for x in xs if x is not One])
+            return Xnor(*xs) if parity else Xor(*xs)
         else:
             return self
 
     def _factor(self):
         x, xs = self.xs[0], self.xs[1:]
-        return Or(And(Not(x), Xor(*xs)), And(x, Xnor(*xs))).factor()
+        expr = Or(And(Not(x), Xor(*xs)), And(x, Xnor(*xs)))
+        if self._parity:
+            return Not(expr).factor()
+        else:
+            return expr.factor()
 
     def _simplify(self):
-        xs = [x.simplify() for x in self.xs]
+        parity = self._parity
 
-        # XOR(x, x') = 1
-        for x in xs:
-            x_cnt = xs.count(x)
-            xn_cnt = xs.count(-x)
-            while x_cnt > 0 and xn_cnt > 0:
-                xs.remove(x); x_cnt -= 1
-                xs.remove(-x); xn_cnt -= 1
-                xs.append(One)
-        # XOR(x, x) = 0
-        dups = {x for x in xs if xs.count(x) > 1}
-        for dup in dups:
-            dup_cnt = xs.count(dup)
-            while dup_cnt > 1:
-                xs.remove(dup)
-                xs.remove(dup)
-                dup_cnt -= 2
+        lits, xs = list(), list()
+        for x in self.xs:
+            x = x.simplify()
+            if isinstance(x, Literal):
+                lits.append(x)
+            else:
+                xs.append(x)
 
-        if xs.count(One) & 1:
-            return Not(Xor(*[x for x in xs if x is not One]))
-        else:
-            return Xor(*[x for x in xs if x is not One])
+        while lits:
+            x = lits.pop()
+            # XOR(x, x) = 0
+            if x in lits:
+                lits.remove(x)
+            # XOR(x, x') = 1
+            elif -x in lits:
+                lits.remove(-x)
+                parity ^= 1
+            else:
+                xs.append(x)
+
+        return Xnor(*xs) if parity else Xor(*xs)
+
+
+class Xor(Exclusive):
+    PARITY = 0
+
+
+class Xnor(Exclusive):
+    PARITY = 1
 
 
 class Implies(Expression):
@@ -1175,11 +1196,6 @@ class Nand:
     """Boolean NAND (not and) operator"""
     def __new__(cls, *xs):
         return Not(And(*xs))
-
-class Xnor:
-    """Boolean XNOR (exclusive nor) operator"""
-    def __new__(cls, *xs):
-        return Not(Xor(*xs))
 
 
 class Vector:

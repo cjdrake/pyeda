@@ -403,7 +403,13 @@ def test_xor():
     assert Xor(0, 0) == 0
     assert Xor(0, 1) == 1
     assert Xor(1, 0) == 1
-    #assert Xor(1, 1) == 0
+    assert Xor(1, 1) == 0
+    assert Xnor(0, 0) == 1
+    assert Xnor(0, 1) == 0
+    assert Xnor(1, 0) == 0
+    assert Xnor(1, 1) == 1
+    assert simplify(Xor(a, a)) == 0
+    assert simplify(Xor(a, -a)) == 1
     assert str(Xor(a, b).to_sop())     == "a' * b + a * b'"
     assert str(Xnor(a, b).to_sop())    == "a' * b' + a * b"
     assert str(Xor(a, b, c).to_sop())  == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
