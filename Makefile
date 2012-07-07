@@ -3,6 +3,7 @@
 .PHONY: clean init test
 
 clean:
+	rm -rf __pycache__ pyeda/__pycache__
 	rm -rf build dist
 
 init:
