@@ -785,30 +785,29 @@ class OrAnd(Expression):
         return expr.simplify()
 
     def _simplify(self):
-        xs = [x.simplify() for x in self.xs]
+        lits, terms, xs = list(), list(), list()
+
+        dual_op = self.get_dual()
+        for x in self.xs:
+            x = x.simplify()
+            if isinstance(x, Literal):
+                lits.append(x)
+            elif isinstance(x, dual_op) and x.depth == 1:
+                terms.append(x)
+            else:
+                xs.append(x)
 
         # x + x' = 1; x * x' = 0
-        if any(-v in xs for v in xs if isinstance(v, Variable)):
-            return self.ABSORBER
+        while lits:
+            lit = lits.pop()
+            if -lit in lits:
+                return self.ABSORBER
+            else:
+                terms.append(lit)
 
+        # Drop all terms that are a subset of other terms
         # x + x = x; x * x = x
         # x + (x * y) = x; x * (x + y) = x
-        self._absorb(xs)
-
-        return self.__class__(*xs)
-
-    def _absorb(self, xs):
-        dual_op = self.get_dual()
-        # Find all min/max terms
-        terms = list()
-        i = len(xs) - 1
-        while i >= 0:
-            if isinstance(xs[i], Literal):
-                terms.append(xs.pop(i))
-            elif isinstance(xs[i], dual_op) and xs[i].depth == 1:
-                terms.append(xs.pop(i))
-            i -= 1
-        # Drop all terms that are a subset of other terms
         while terms:
             fst, rst, terms = terms[0], terms[1:], list()
             drop_fst = False
@@ -825,6 +824,8 @@ class OrAnd(Expression):
                     terms.append(term)
             if not drop_fst:
                 xs.append(fst)
+
+        return self.__class__(*xs)
 
     def _flatten(self, op):
         dual_op = op.get_dual()

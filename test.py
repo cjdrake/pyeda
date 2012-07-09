@@ -435,6 +435,7 @@ def test_demorgan():
 def test_absorb():
     assert str(simplify(a * b + a * b)) == "a * b"
     assert simplify(a * (a + b)) == a
+    assert simplify((a + b) * a) == a
     assert simplify(-a * (-a + b)) == -a
     assert str(simplify(a * b * (a + c))) == "a * b"
     assert str(simplify(a * b * (a + c) * (a + d))) == "a * b"
@@ -442,6 +443,7 @@ def test_absorb():
     assert str(simplify(-a * b * (-a + c) * (-a + d))) == "a' * b"
     assert str(simplify(a * -b + a * -b * c)) == "a * b'"
     assert str(simplify((a + -b) * (a + -b + c))) == "a + b'"
+    assert str(simplify((a + -b + c) * (a + -b))) == "a + b'"
 
 def test_cofactors():
     f = a * b + a * c + b * c
