@@ -269,8 +269,7 @@ class Boolean:
     @property
     def depth(self):
         """The number of levels in the expression tree."""
-        expr = self.factor()
-        return expr._depth
+        raise NotImplementedError()
 
     def subs(self, d):
         """Substitute numbers into a Boolean expression."""
@@ -334,8 +333,8 @@ class Number(Boolean):
         return bool(self._val)
 
     @property
-    def _depth(self):
-        return 1
+    def depth(self):
+        return 0
 
     @property
     def val(self):
@@ -550,8 +549,8 @@ class Literal(Expression):
         return 1
 
     @property
-    def _depth(self):
-        return 1
+    def depth(self):
+        return 0
 
     @property
     def xs(self):
@@ -733,11 +732,10 @@ class OrAnd(Expression):
         return id(self) < id(other)
 
     @property
-    def _depth(self):
+    def depth(self):
         val = self.cache.get("depth", None)
         if val is None:
-            val = max((x.depth + 1 if isinstance(x, OrAnd) else x.depth)
-                      for x in self.xs)
+            val = max(x.depth + 1 for x in self.xs)
             self.cache["depth"] = val
         return val
 
@@ -816,9 +814,11 @@ class OrAnd(Expression):
                 if fst.equal(term):
                     drop_term = True
                 else:
-                    if all(any(fx.equal(tx) for tx in term.xs) for fx in fst.xs):
+                    if all(any(fx.equal(tx) for tx in term.xs)
+                           for fx in fst.xs):
                         drop_term = True
-                    if all(any(fx.equal(tx) for tx in fst.xs) for fx in term.xs):
+                    if all(any(fx.equal(tx) for tx in fst.xs)
+                           for fx in term.xs):
                         drop_fst = True
                 if not drop_term:
                     terms.append(term)
@@ -953,6 +953,10 @@ class BufNot(Expression):
         self.x = x if isinstance(x, Boolean) else num(x)
 
     @property
+    def depth(self):
+        return self.x.depth
+
+    @property
     def xs(self):
         return {self.x}
 
@@ -1064,6 +1068,14 @@ class Exclusive(Expression):
         else:
             return "Xor(" + args + ")"
 
+    @property
+    def depth(self):
+        val = self.cache.get("depth", None)
+        if val is None:
+            val = max(x.depth + 2 for x in self.xs)
+            self.cache["depth"] = val
+        return val
+
     def iter_vars(self):
         for x in self.xs:
             if not isinstance(x, Number):
@@ -1165,6 +1177,14 @@ class Implies(Expression):
                 s.append(str(x))
         sep = " " + self.OP + " "
         return sep.join(s)
+
+    @property
+    def depth(self):
+        val = self.cache.get("depth", None)
+        if val is None:
+            val = max(x.depth + 1 for x in self.xs)
+            self.cache["depth"] = val
+        return val
 
     def iter_vars(self):
         for x in self.xs:

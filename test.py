@@ -21,7 +21,7 @@ from pyeda.boolalg import (
     int2vec, uint2vec
 )
 
-a, b, c, d = map(var, "abcd")
+a, b, c, d, e = map(var, "abcde")
 
 def test_truth():
     assert 6 * 9, int("42", 13)
@@ -51,8 +51,8 @@ def test_number():
     assert bool(One) is True
 
     # depth
-    assert Zero.depth == 1
-    assert One.depth == 1
+    assert Zero.depth == 0
+    assert One.depth == 0
 
     # val
     assert Zero.val == 0
@@ -115,6 +115,9 @@ def test_literal():
     assert c2 < c10
     assert a < a + b
     assert b < a + b
+
+    # depth
+    assert a.depth == 0
 
     # name
     assert (-a).name == "a"
@@ -408,6 +411,9 @@ def test_xor():
     assert Xnor(0, 1) == 0
     assert Xnor(1, 0) == 0
     assert Xnor(1, 1) == 1
+    assert Xor(a, b, c).depth == 2
+    assert Xor(a, b, c + d).depth == 3
+    assert Xor(a, b, c + Xor(d, e)).depth == 5
     assert simplify(Xor(a, a)) == 0
     assert simplify(Xor(a, -a)) == 1
     assert str(Xor(a, b).to_sop())     == "a' * b + a * b'"
