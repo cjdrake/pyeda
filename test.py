@@ -58,9 +58,9 @@ def test_number():
     assert Zero.val == 0
     assert One.val == 1
 
-    # get_dual
-    assert Zero.get_dual() == One
-    assert One.get_dual() == Zero
+    # invert
+    assert Zero.invert() == One
+    assert One.invert() == Zero
 
     # subs
     assert Zero.subs({a: 0, b: 1}) == 0
@@ -129,9 +129,9 @@ def test_literal():
     assert c0.index == 0
     assert c1.index == 1
 
-    # get_dual
-    assert (-a).get_dual() == a
-    assert a.get_dual() == -a
+    # invert
+    assert (-a).invert() == a
+    assert a.invert() == -a
 
     # support
     assert (-a).support == {a}
@@ -262,8 +262,8 @@ def test_or():
     assert (a + (b * c)).depth == 2
     assert (a + (b * (c + d))).depth == 3
 
-    # get_dual
-    assert Or.get_dual() is And
+    # DUAL
+    assert Or.DUAL is And
 
     # support
     assert (-a + b + (-c * d)).support == {a, b, c, d}
@@ -344,8 +344,8 @@ def test_and():
     assert (a * (b + c)).depth == 2
     assert (a * (b + (c * d))).depth == 3
 
-    # get_dual
-    assert And.get_dual() is Or
+    # DUAL
+    assert And.DUAL is Or
 
     # support
     assert (-a * b * (-c + d)).support == {a, b, c, d}

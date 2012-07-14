@@ -271,6 +271,10 @@ class Boolean:
         """The number of levels in the expression tree."""
         raise NotImplementedError()
 
+    def invert(self):
+        """Return an inverted Boolean expression."""
+        raise NotImplementedError()
+
     def subs(self, d):
         """Substitute numbers into a Boolean expression."""
         raise NotImplementedError()
@@ -340,7 +344,7 @@ class Number(Boolean):
     def val(self):
         return self._val
 
-    def get_dual(self):
+    def invert(self):
         return num(1 - self._val)
 
     def subs(self, d): return self
@@ -556,9 +560,6 @@ class Literal(Expression):
     def xs(self):
         return {self}
 
-    def get_dual(self):
-        raise NotImplementedError()
-
     def _factor(self): return self
     def _simplify(self): return self
 
@@ -595,7 +596,7 @@ class Variable(Literal):
     def index(self):
         return self._index
 
-    def get_dual(self):
+    def invert(self):
         return comp(self)
 
     def iter_vars(self):
@@ -652,7 +653,7 @@ class Complement(Literal):
     def var(self):
         return self._var
 
-    def get_dual(self):
+    def invert(self):
         return self._var
 
     def iter_vars(self):
@@ -743,20 +744,18 @@ class OrAnd(Expression):
     def _duals(self):
         val = self.cache.get("duals", None)
         if val is None:
-            val = [x for x in self.xs if isinstance(x, self.get_dual())]
+            val = [x for x in self.xs if isinstance(x, self.DUAL)]
             self.cache["duals"] = val
         return val
-
-    @staticmethod
-    def get_dual():
-        """The dual of OR is AND, and the dual of AND is OR."""
-        raise NotImplementedError()
 
     def iter_vars(self):
         for x in self.xs:
             if not isinstance(x, Number):
                 for v in x.iter_vars():
                     yield v
+
+    def invert(self):
+        return self.DUAL(*[Not(x) for x in self.xs])
 
     def subs(self, d):
         replace = list()
@@ -785,12 +784,11 @@ class OrAnd(Expression):
     def _simplify(self):
         lits, terms, xs = list(), list(), list()
 
-        dual_op = self.get_dual()
         for x in self.xs:
             x = x.simplify()
             if isinstance(x, Literal):
                 lits.append(x)
-            elif isinstance(x, dual_op) and x.depth == 1:
+            elif isinstance(x, self.DUAL) and x.depth == 1:
                 terms.append(x)
             else:
                 xs.append(x)
@@ -828,12 +826,11 @@ class OrAnd(Expression):
         return self.__class__(*xs)
 
     def _flatten(self, op):
-        dual_op = op.get_dual()
         if isinstance(self, op):
             if self._duals:
                 dual = self._duals[0]
                 others = [x for x in self.xs if x != dual]
-                expr = dual_op(*[op(x, *others) for x in dual.xs])
+                expr = op.DUAL(*[op(x, *others) for x in dual.xs])
                 if isinstance(expr, OrAnd):
                     return expr.flatten(op)
                 else:
@@ -848,7 +845,7 @@ class OrAnd(Expression):
                 else:
                     others.append(x)
             xs = [x.flatten(op) for x in nested] + others
-            return dual_op(*xs)
+            return op.DUAL(*xs)
 
     def _canonize(self, op):
         if isinstance(self, op):
@@ -888,10 +885,6 @@ class Or(OrAnd):
         sep = " " + self.OP + " "
         return sep.join(str(x) for x in sorted(self.xs))
 
-    @staticmethod
-    def get_dual():
-        return And
-
     @property
     def term_index(self):
         n = abs(self) - 1
@@ -926,10 +919,6 @@ class And(OrAnd):
         sep = " " + self.OP + " "
         return sep.join(s)
 
-    @staticmethod
-    def get_dual():
-        return Or
-
     @property
     def term_index(self):
         n = abs(self) - 1
@@ -943,6 +932,10 @@ class And(OrAnd):
         assert self.depth == 1
         return (isinstance(other, And) and self.support == other.support and
                 self.term_index == other.term_index)
+
+
+Or.DUAL = And
+And.DUAL = Or
 
 
 class BufNot(Expression):
@@ -1004,7 +997,7 @@ class Not(BufNot):
         x = x if isinstance(x, Boolean) else num(x)
         # Auto-simplify numbers and literals
         if isinstance(x, Number) or isinstance(x, Literal):
-            return x.get_dual()
+            return x.invert()
         else:
             return super(Not, cls).__new__(cls)
 
@@ -1012,16 +1005,8 @@ class Not(BufNot):
         return "Not({0.x})".format(self)
 
     def _factor(self):
-        expr = self.x.factor()
-        # 0' = 1; 1' = 0; x', (x')'
-        if isinstance(expr, Number) or isinstance(expr, Literal):
-            return expr.get_dual()
-        # (x + y)' = x' * y'; (x * y)' = x' + y'
-        elif isinstance(expr, OrAnd):
-            expr = expr.get_dual()(*[Not(x) for x in expr.xs])
-            return expr.factor()
-        else:
-            raise Exception("factor() returned unfactored expression")
+        # Get rid of unfactored expressions first, then invert and refactor.
+        return self.x.factor().invert().factor()
 
 
 class Exclusive(Expression):
