@@ -290,8 +290,7 @@ class Boolean:
         * A literal.
         * A sum / product of factored expressions.
         """
-        expr = self._factor()
-        return expr
+        raise NotImplementedError()
 
     def simplify(self):
         """Return a simplifed expression.
@@ -301,8 +300,7 @@ class Boolean:
         numbers, eliminate literals that combine into numbers. For factored
         expressions, also absorb terms.
         """
-        expr = self._simplify()
-        return expr
+        raise NotImplementedError()
 
 
 class Number(Boolean):
@@ -349,8 +347,8 @@ class Number(Boolean):
 
     def subs(self, d): return self
 
-    def _factor(self): return self
-    def _simplify(self): return self
+    def factor(self): return self
+    def simplify(self): return self
 
 
 Zero = num(0)
@@ -560,8 +558,8 @@ class Literal(Expression):
     def xs(self):
         return {self}
 
-    def _factor(self): return self
-    def _simplify(self): return self
+    def factor(self): return self
+    def simplify(self): return self
 
 
 class Variable(Literal):
@@ -777,11 +775,11 @@ class OrAnd(Expression):
         else:
             return self
 
-    def _factor(self):
+    def factor(self):
         expr = self.__class__(*[x.factor() for x in self.xs])
         return expr.simplify()
 
-    def _simplify(self):
+    def simplify(self):
         lits, terms, xs = list(), list(), list()
 
         for x in self.xs:
@@ -964,7 +962,7 @@ class BufNot(Expression):
         else:
             return self.__class__(expr)
 
-    def _simplify(self):
+    def simplify(self):
         expr = self.x.simplify()
         if id(expr) == id(self.x):
             return self
@@ -986,7 +984,7 @@ class Buf(BufNot):
     def __str__(self):
         return "Buf({0.x})".format(self)
 
-    def _factor(self):
+    def factor(self):
         return self.x.factor()
 
 
@@ -1004,7 +1002,7 @@ class Not(BufNot):
     def __str__(self):
         return "Not({0.x})".format(self)
 
-    def _factor(self):
+    def factor(self):
         # Get rid of unfactored expressions first, then invert and refactor.
         return self.x.factor().invert().factor()
 
@@ -1087,7 +1085,7 @@ class Exclusive(Expression):
         else:
             return self
 
-    def _factor(self):
+    def factor(self):
         x, xs = self.xs[0], self.xs[1:]
         expr = Or(And(Not(x), Xor(*xs)), And(x, Xnor(*xs)))
         if self._parity:
@@ -1095,7 +1093,7 @@ class Exclusive(Expression):
         else:
             return expr.factor()
 
-    def _simplify(self):
+    def simplify(self):
         parity = self._parity
 
         lits, xs = list(), list()
@@ -1176,10 +1174,10 @@ class Implies(Expression):
             for v in x.iter_vars():
                 yield v
 
-    def _factor(self):
+    def factor(self):
         return Or(Not(self.xs[0]), self.xs[1]).factor()
 
-    def _simplify(self):
+    def simplify(self):
         xs = [x.simplify() for x in self.xs]
 
         # x => x = 1
