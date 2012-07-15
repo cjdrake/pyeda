@@ -13,10 +13,12 @@ from pyeda.boolalg import (
     var, vec, svec,
     Zero, One,
     Buf, Not,
-    Or, Nor, And, Nand,
+    Or, And,
     Xor, Xnor,
     Implies,
-    factor, simplify, notf, orf, norf, andf, nandf, xorf, xnorf, impliesf,
+    factor, simplify,
+    nor, nand,
+    f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor, f_implies,
     cube_sop, cube_pos,
     int2vec, uint2vec
 )
@@ -391,14 +393,14 @@ def test_implies():
     assert (a >> 1) == 1
     assert (Zero >> a) == 1
     assert (One >> a) == a
-    assert str(impliesf(a, b)) == "a' + b"
+    assert str(f_implies(a, b)) == "a' + b"
     assert str(factor(a >> b)) == "a' + b"
 
 def test_nops():
-    assert str(norf(a, b)) == "a' * b'"
-    assert str(norf(a, b, c, d)) == "a' * b' * c' * d'"
-    assert str(nandf(a, b)) == "a' + b'"
-    assert str(nandf(a, b, c, d)) == "a' + b' + c' + d'"
+    assert str(f_nor(a, b)) == "a' * b'"
+    assert str(f_nor(a, b, c, d)) == "a' * b' * c' * d'"
+    assert str(f_nand(a, b)) == "a' + b'"
+    assert str(f_nand(a, b, c, d)) == "a' + b' + c' + d'"
 
 def test_xor():
     assert Xor() == 0
@@ -422,21 +424,21 @@ def test_xor():
     assert str(Xnor(a, b, c).to_sop()) == "a' * b' * c' + a' * b * c + a * b' * c + a * b * c'"
 
 def test_demorgan():
-    assert str(notf(a * b))  == "a' + b'"
-    assert str(notf(a + b))  == "a' * b'"
-    assert str(notf(a * -b)) == "a' + b"
-    assert str(notf(a * -b)) == "a' + b"
-    assert str(notf(-a * b)) == "a + b'"
-    assert str(notf(-a * b)) == "a + b'"
+    assert str(f_not(a * b))  == "a' + b'"
+    assert str(f_not(a + b))  == "a' * b'"
+    assert str(f_not(a * -b)) == "a' + b"
+    assert str(f_not(a * -b)) == "a' + b"
+    assert str(f_not(-a * b)) == "a + b'"
+    assert str(f_not(-a * b)) == "a + b'"
 
-    assert str(notf(a * b * c))  == "a' + b' + c'"
-    assert str(notf(a + b + c))  == "a' * b' * c'"
-    assert str(notf(-a * b * c)) == "a + b' + c'"
-    assert str(notf(-a + b + c)) == "a * b' * c'"
-    assert str(notf(a * -b * c)) == "a' + b + c'"
-    assert str(notf(a + -b + c)) == "a' * b * c'"
-    assert str(notf(a * b * -c)) == "a' + b' + c"
-    assert str(notf(a + b + -c)) == "a' * b' * c"
+    assert str(f_not(a * b * c))  == "a' + b' + c'"
+    assert str(f_not(a + b + c))  == "a' * b' * c'"
+    assert str(f_not(-a * b * c)) == "a + b' + c'"
+    assert str(f_not(-a + b + c)) == "a * b' * c'"
+    assert str(f_not(a * -b * c)) == "a' + b + c'"
+    assert str(f_not(a + -b + c)) == "a' * b * c'"
+    assert str(f_not(a * b * -c)) == "a' + b' + c"
+    assert str(f_not(a + b + -c)) == "a' * b' * c"
 
 def test_absorb():
     assert str(simplify(a * b + a * b)) == "a * b"

@@ -11,7 +11,9 @@ Interface Functions:
     factor
     simplify
 
-    notf, org, norf, andf, nandf, xorf, xnorf, impliesf
+    nor, nand
+
+    f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor, f_implies
 
     cube_sop
     cube_pos
@@ -20,8 +22,6 @@ Interface Functions:
 
     uint2vec
     int2vec
-
-    Nor, Nand
 
 Classes:
     Boolean
@@ -129,6 +129,8 @@ def vec(name, *args, **kwargs):
         start, stop = args
     else:
         raise TypeError("vec() expected at most three arguments")
+    if not 0 <= start < stop:
+        raise ValueError("invalid range: [{}:{}]".format(start, stop))
     fs = [Variable(name, index=i) for i in range(start, stop)]
     return Vector(*fs, start=start, **kwargs)
 
@@ -144,28 +146,42 @@ def simplify(expr):
     """Return a simplified expression."""
     return expr.simplify()
 
-def notf(x):
+# operators
+def nor(*xs):
+    """Boolean NOR (not or) operator"""
+    return Not(Or(*xs))
+
+def nand(*xs):
+    """Boolean NAND (not and) operator"""
+    return Not(And(*xs))
+
+def ite(f, g, h):
+    """Boolean ITE (if then else) operator"""
+    return Or(And(f, g), And(Not(f), h))
+
+# factored operators
+def f_not(x):
     return Not(x).factor()
 
-def orf(*xs):
+def f_or(*xs):
     return Or(*xs).factor()
 
-def norf(*xs):
-    return Nor(*xs).factor()
+def f_nor(*xs):
+    return nor(*xs).factor()
 
-def andf(*xs):
+def f_and(*xs):
     return And(*xs).factor()
 
-def nandf(*xs):
-    return Nand(*xs).factor()
+def f_nand(*xs):
+    return nand(*xs).factor()
 
-def xorf(*xs):
+def f_xor(*xs):
     return Xor(*xs).factor()
 
-def xnorf(*xs):
+def f_xnor(*xs):
     return Xnor(*xs).factor()
 
-def impliesf(x0, x1):
+def f_implies(x0, x1):
     return Implies(x0, x1).factor()
 
 def cube_sop(*vs):
@@ -1214,18 +1230,6 @@ class Implies(Expression):
             return xs[1]
 
         return Implies(xs[0], xs[1])
-
-
-# Miscellaneous operators
-class Nor:
-    """Boolean NOR (not or) operator"""
-    def __new__(cls, *xs):
-        return Not(Or(*xs))
-
-class Nand:
-    """Boolean NAND (not and) operator"""
-    def __new__(cls, *xs):
-        return Not(And(*xs))
 
 
 class Vector:
