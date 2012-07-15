@@ -29,6 +29,11 @@ def test_truth():
     assert 6 * 9, int("42", 13)
 
 def test_number():
+    # __abs__
+    assert abs(Zero) == 0
+    assert abs(One) == 0
+
+    # __str__
     assert str(Zero) == "0"
     assert str(One) == "1"
 

@@ -24,7 +24,7 @@ Interface Functions:
     int2vec
 
 Classes:
-    Boolean
+    Scalar
         Number: Zero, One
         Expression
             Literal
@@ -81,6 +81,8 @@ __license__ = "All rights reserved."
 
 B = {0, 1}
 
+EMPTY_SET = set()
+
 UNSIGNED, TWOS_COMPLEMENT = range(2)
 
 NUMBERS = dict()
@@ -92,7 +94,7 @@ COMPLEMENTS = dict()
 #==============================================================================
 
 def num(x):
-    """Return a unique Boolean Number."""
+    """Return a unique Boolean number."""
     n = int(x)
     if not n in B:
         raise ValueError("invalid Boolean number: " + str(n))
@@ -258,8 +260,11 @@ def int2vec(n, length=None):
 # Classes
 #==============================================================================
 
-class Boolean:
-    """Base class for Boolean objects"""
+class Scalar:
+    """Scalar Boolean function"""
+
+    def __abs__(self):
+        return len(self.support)
 
     def __str__(self):
         raise NotImplementedError()
@@ -283,16 +288,30 @@ class Boolean:
         return Implies(self, other)
 
     @property
+    def support(self):
+        """Return the support of a function.
+
+        Let f(x1, x2, ..., xn) be a Boolean function of N variables. The set
+        {x1, x2, ..., xn} is called the *support* of the function.
+        """
+        raise NotImplementedError()
+
+    @property
+    def vs(self):
+        """Return the support as an ordered list."""
+        return sorted(self.support)
+
+    @property
     def depth(self):
         """The number of levels in the expression tree."""
         raise NotImplementedError()
 
     def invert(self):
-        """Return an inverted Boolean expression."""
+        """Return an inverted expression."""
         raise NotImplementedError()
 
     def subs(self, d):
-        """Substitute numbers into a Boolean expression."""
+        """Substitute numbers into an expression."""
         raise NotImplementedError()
 
     def vsubs(self, d):
@@ -319,7 +338,7 @@ class Boolean:
         raise NotImplementedError()
 
 
-class Number(Boolean):
+class Number(Scalar):
     """Boolean number"""
 
     def __init__(self, val):
@@ -335,8 +354,10 @@ class Number(Boolean):
         return str(self._val)
 
     def __eq__(self, other):
-        if isinstance(other, Boolean):
+        if isinstance(other, Scalar):
             return isinstance(other, Number) and self._val == other.val
+        elif isinstance(other, Vector):
+            return False
         else:
             return self._val == num(other).val
 
@@ -349,6 +370,10 @@ class Number(Boolean):
 
     def __bool__(self):
         return bool(self._val)
+
+    @property
+    def support(self):
+        return EMPTY_SET
 
     @property
     def depth(self):
@@ -371,26 +396,18 @@ Zero = num(0)
 One = num(1)
 
 
-class Expression(Boolean):
-    """Boolean expression"""
+class Expression(Scalar):
+    """Logic expression"""
 
     def __init__(self):
         super(Expression, self).__init__()
         self.cache = dict()
-
-    def __abs__(self):
-        return len(self.support)
 
     def __iter__(self):
         raise NotImplementedError()
 
     @property
     def support(self):
-        """Return the support of a function.
-
-        Let f(x1, x2, ..., xn) be a Boolean function of N variables. The set
-        {x1, x2, ..., xn} is called the *support* of the function.
-        """
         val = self.cache.get("support", None)
         if val is None:
             val = {v for v in self.iter_vars()}
@@ -399,7 +416,6 @@ class Expression(Boolean):
 
     @property
     def vs(self):
-        """Return the support as an ordered list."""
         val = self.cache.get("vs", None)
         if val is None:
             val = sorted(self.support)
@@ -653,7 +669,7 @@ class Variable(Literal):
     def subs(self, d):
         if self in d:
             val = d[self]
-            if not isinstance(val, Boolean):
+            if not isinstance(val, Scalar):
                 val = num(val)
             return val
         else:
@@ -710,7 +726,7 @@ class Complement(Literal):
     def subs(self, d):
         if self._var in d:
             val = d[self._var]
-            if not isinstance(val, Boolean):
+            if not isinstance(val, Scalar):
                 val = num(val)
             return Not(val)
         else:
@@ -728,7 +744,7 @@ class OrAnd(Expression):
         # x + (y + z) = (x + y) + z; x * (y * z) = (x * y) * z
         while temps:
             t = temps.pop()
-            x = t if isinstance(t, Boolean) else num(t)
+            x = t if isinstance(t, Scalar) else num(t)
             if x == cls.ABSORBER:
                 return cls.ABSORBER
             elif isinstance(x, cls):
@@ -988,7 +1004,7 @@ class BufNot(Expression):
 
     def __init__(self, x):
         super(BufNot, self).__init__()
-        self.x = x if isinstance(x, Boolean) else num(x)
+        self.x = x if isinstance(x, Scalar) else num(x)
 
     @property
     def depth(self):
@@ -1021,7 +1037,7 @@ class Buf(BufNot):
     """buffer operator"""
 
     def __new__(cls, x):
-        x = x if isinstance(x, Boolean) else num(x)
+        x = x if isinstance(x, Scalar) else num(x)
         # Auto-simplify numbers and literals
         if isinstance(x, Number) or isinstance(x, Literal):
             return x
@@ -1039,7 +1055,7 @@ class Not(BufNot):
     """Boolean NOT operator"""
 
     def __new__(cls, x):
-        x = x if isinstance(x, Boolean) else num(x)
+        x = x if isinstance(x, Scalar) else num(x)
         # Auto-simplify numbers and literals
         if isinstance(x, Number) or isinstance(x, Literal):
             return x.invert()
@@ -1064,7 +1080,7 @@ class Exclusive(Expression):
         temps, xs = list(xs), list()
         while temps:
             t = temps.pop()
-            x = t if isinstance(t, Boolean) else num(t)
+            x = t if isinstance(t, Scalar) else num(t)
             if x is One:
                 parity ^= 1
             elif isinstance(x, cls):
@@ -1180,7 +1196,7 @@ class Implies(Expression):
     OP = "=>"
 
     def __new__(cls, x0, x1):
-        xs = [x if isinstance(x, Boolean) else num(x) for x in (x0, x1)]
+        xs = [x if isinstance(x, Scalar) else num(x) for x in (x0, x1)]
         # 0 => x = 1; x => 1 = 1
         if xs[0] is Zero or xs[1] is One:
             return One
@@ -1241,7 +1257,7 @@ class Vector:
     """Boolean vector"""
 
     def __init__(self, *fs, **kwargs):
-        self.fs = [f if isinstance(f, Boolean) else num(f) for f in fs]
+        self.fs = [f if isinstance(f, Scalar) else num(f) for f in fs]
         self._start = kwargs.get("start", 0)
         self._bnr = kwargs.get("bnr", UNSIGNED)
 
@@ -1446,7 +1462,7 @@ def _expand_vectors(d):
         if isinstance(key, Vector):
             assert len(key) == len(val)
             for i, x in enumerate(val):
-                d[key.getifz(i)] = x if isinstance(x, Boolean) else num(x)
+                d[key.getifz(i)] = x if isinstance(x, Scalar) else num(x)
         elif isinstance(key, Literal):
             d[key] = val
     return d
