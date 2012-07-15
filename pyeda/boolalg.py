@@ -399,12 +399,17 @@ class Expression(Boolean):
 
     @property
     def vs(self):
-        """Return the support as a sorted list."""
+        """Return the support as an ordered list."""
         val = self.cache.get("vs", None)
         if val is None:
             val = sorted(self.support)
             self.cache["vs"] = val
         return val
+
+    @property
+    def top(self):
+        """Return the first variable in the ordered support."""
+        return self.vs[0]
 
     @property
     def minterms(self):
