@@ -362,6 +362,9 @@ class Expression(Boolean):
         super(Expression, self).__init__()
         self.cache = dict()
 
+    def __abs__(self):
+        return len(self.support)
+
     def __iter__(self):
         raise NotImplementedError()
 
@@ -376,6 +379,15 @@ class Expression(Boolean):
         if val is None:
             val = {v for v in self.iter_vars()}
             self.cache["support"] = val
+        return val
+
+    @property
+    def vs(self):
+        """Return the support as a sorted list."""
+        val = self.cache.get("vs", None)
+        if val is None:
+            val = sorted(self.support)
+            self.cache["vs"] = val
         return val
 
     @property
@@ -402,19 +414,29 @@ class Expression(Boolean):
 
     def iter_minterms(self):
         """Iterate through the sum of products of N literals."""
-        for term in self.to_csop():
-            yield term
+        for n in range(2 ** abs(self)):
+            d = dict()
+            space = list()
+            for i, v in enumerate(self.vs):
+                on = _bit_on(n, i)
+                d[v] = on
+                space.append(v if on else -v)
+            output = self.subs(d)
+            if output:
+                yield And(*space)
 
     def iter_maxterms(self):
         """Iterate through the product of sums of N literals."""
-        for term in self.to_cpos():
-            yield term
-
-    def to_pos(self):
-        """Return the expression as a product of sums."""
-        expr = self.factor()
-        expr = expr.flatten(Or)
-        return expr
+        for n in range(2 ** abs(self)):
+            d = dict()
+            space = list()
+            for i, v in enumerate(self.vs):
+                on = _bit_on(n, i)
+                d[v] = on
+                space.append(-v if on else v)
+            output = self.subs(d)
+            if not output:
+                yield Or(*space)
 
     def to_sop(self):
         """Return the expression as a sum of products."""
@@ -422,17 +444,24 @@ class Expression(Boolean):
         expr = expr.flatten(And)
         return expr
 
-    def to_cpos(self):
-        """Return the expression as a product of sums of N literals."""
-        expr = self.to_pos()
-        expr = expr.canonize(Or)
+    def to_pos(self):
+        """Return the expression as a product of sums."""
+        expr = self.factor()
+        expr = expr.flatten(Or)
         return expr
 
     def to_csop(self):
         """Return the expression as a sum of products of N literals."""
-        expr = self.to_sop()
-        expr = expr.canonize(And)
-        return expr
+        return Or(*[term for term in self.iter_minterms()])
+
+    def to_cpos(self):
+        """Return the expression as a product of sums of N literals."""
+        return And(*[term for term in self.iter_maxterms()])
+
+    def iter_outputs(self):
+        for n in range(2 ** abs(self)):
+            d = {v: _bit_on(n, i) for i, v in enumerate(self.vs)}
+            yield self.subs(d)
 
     def iter_cofactors(self, *vs):
         """Iterate through the cofactors of N variables."""
@@ -697,9 +726,6 @@ class OrAnd(Expression):
 
     def __init__(self, *xs):
         super(OrAnd, self).__init__()
-
-    def __abs__(self):
-        return len(self.support)
 
     def __iter__(self):
         return iter(self.xs)
