@@ -48,10 +48,6 @@ def test_number():
     # __lt__
     assert Zero < One
     assert One > Zero
-    assert Zero < a
-    assert One < a
-    assert Zero < a + b
-    assert One < a + b
 
     # __bool__
     assert bool(Zero) is False
@@ -111,10 +107,6 @@ def test_literal():
     assert c1 != c0
 
     # __lt__
-    assert Zero < -a
-    assert Zero < a
-    assert One < -a
-    assert One < a
     assert -a < a
     assert a < b
     assert c0 < c1
@@ -237,9 +229,6 @@ def test_or():
     assert str(a + b + c + d) == "a + b + c + d"
 
     # __lt__
-    assert Zero < a + b
-    assert One < a + b
-
     assert -a < a + b
     assert  a < a + b
     assert -b < a + b
@@ -319,9 +308,6 @@ def test_and():
     assert str(a * b * c * d) == "a * b * c * d"
 
     # __lt__
-    assert Zero < a * b
-    assert One < a * b
-
     assert -a < a * b
     assert  a < a * b
     assert -b < a * b

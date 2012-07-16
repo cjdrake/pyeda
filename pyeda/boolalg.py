@@ -26,6 +26,9 @@ Interface Functions:
 Classes:
     Scalar
         Number: Zero, One
+        Table
+            TruthTable
+            ImplicantTable
         Expression
             Literal
                 Variable
@@ -81,13 +84,20 @@ __license__ = "All rights reserved."
 
 B = {0, 1}
 
-EMPTY_SET = set()
-
 UNSIGNED, TWOS_COMPLEMENT = range(2)
 
 NUMBERS = dict()
 VARIABLES = dict()
 COMPLEMENTS = dict()
+
+# Positional Cube Notation
+PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
+
+PC_STR = {
+    PC_ZERO : "0",
+    PC_ONE  : "1",
+    PC_DC   : "*"
+}
 
 #==============================================================================
 # Interface Functions
@@ -273,19 +283,13 @@ class Scalar:
         return self.__str__()
 
     def __neg__(self):
-        return Not(self)
+        raise NotImplementedError()
 
     def __add__(self, other):
-        return Or(self, other)
+        raise NotImplementedError()
 
     def __mul__(self, other):
-        return And(self, other)
-
-    def __lshift__(self, other):
-        return Implies(other, self)
-
-    def __rshift__(self, other):
-        return Implies(self, other)
+        raise NotImplementedError()
 
     @property
     def support(self):
@@ -297,9 +301,9 @@ class Scalar:
         raise NotImplementedError()
 
     @property
-    def vs(self):
+    def inputs(self):
         """Return the support as an ordered list."""
-        return sorted(self.support)
+        raise NotImplementedError()
 
     @property
     def depth(self):
@@ -344,8 +348,8 @@ class Number(Scalar):
     def __init__(self, val):
         self._val = val
 
-    def __hash__(self):
-        return self._val
+    def __bool__(self):
+        return bool(self._val)
 
     def __int__(self):
         return self._val
@@ -353,27 +357,40 @@ class Number(Scalar):
     def __str__(self):
         return str(self._val)
 
+    def __neg__(self):
+        return Not(self)
+
+    def __add__(self, other):
+        return Or(self, other)
+
+    def __mul__(self, other):
+        return And(self, other)
+
+    def __lshift__(self, other):
+        return Implies(other, self)
+
+    def __rshift__(self, other):
+        return Implies(self, other)
+
     def __eq__(self, other):
         if isinstance(other, Scalar):
             return isinstance(other, Number) and self._val == other.val
-        elif isinstance(other, Vector):
-            return False
         else:
             return self._val == num(other).val
 
     def __lt__(self, other):
-        if isinstance(other, Number):
-            return self.val < other.val
-        if isinstance(other, Expression):
-            return True
-        return id(self) < id(other)
-
-    def __bool__(self):
-        return bool(self._val)
+        if isinstance(other, Scalar):
+            return isinstance(other, Number) and self._val < other.val
+        else:
+            return self._val < num(other).val
 
     @property
     def support(self):
-        return EMPTY_SET
+        return set()
+
+    @property
+    def inputs(self):
+        return list()
 
     @property
     def depth(self):
@@ -396,6 +413,46 @@ Zero = num(0)
 One = num(1)
 
 
+class Table(Scalar):
+    pass
+
+
+class TruthTable(Table):
+
+    def __init__(self, inputs, outputs):
+        self._inputs = inputs
+        self._data = bytearray()
+        self._len = 0
+        pos = 0
+        for pc_val in outputs:
+            if pos == 0:
+                self._data.append(0)
+            self._data[-1] += pc_val << pos
+            self._len += 1
+            pos = (pos + 2) & 0x07
+        assert self._len == 2 ** len(self._inputs)
+
+    def __len__(self):
+        return self._len
+
+    def __str__(self):
+        s = ["f(" + ", ".join(str(v) for v in self._inputs) + ") = "]
+        for i in range(self._len):
+            pos = (i & 0x03) << 1
+            byte = self._data[(i >> 2)] >> pos
+            pc_val = byte & 0x03
+            s.append(PC_STR[pc_val])
+        return "".join(s)
+
+    @property
+    def support(self):
+        return set(self._inputs)
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+
 class Expression(Scalar):
     """Logic expression"""
 
@@ -406,6 +463,21 @@ class Expression(Scalar):
     def __iter__(self):
         raise NotImplementedError()
 
+    def __neg__(self):
+        return Not(self)
+
+    def __add__(self, other):
+        return Or(self, other)
+
+    def __mul__(self, other):
+        return And(self, other)
+
+    def __lshift__(self, other):
+        return Implies(other, self)
+
+    def __rshift__(self, other):
+        return Implies(self, other)
+
     @property
     def support(self):
         val = self.cache.get("support", None)
@@ -415,17 +487,17 @@ class Expression(Scalar):
         return val
 
     @property
-    def vs(self):
-        val = self.cache.get("vs", None)
+    def inputs(self):
+        val = self.cache.get("inputs", None)
         if val is None:
             val = sorted(self.support)
-            self.cache["vs"] = val
+            self.cache["inputs"] = val
         return val
 
     @property
     def top(self):
         """Return the first variable in the ordered support."""
-        return self.vs[0]
+        return self.inputs[0]
 
     @property
     def minterms(self):
@@ -454,7 +526,7 @@ class Expression(Scalar):
         for n in range(2 ** abs(self)):
             d = dict()
             space = list()
-            for i, v in enumerate(self.vs):
+            for i, v in enumerate(self.inputs):
                 on = _bit_on(n, i)
                 d[v] = on
                 space.append(v if on else -v)
@@ -467,7 +539,7 @@ class Expression(Scalar):
         for n in range(2 ** abs(self)):
             d = dict()
             space = list()
-            for i, v in enumerate(self.vs):
+            for i, v in enumerate(self.inputs):
                 on = _bit_on(n, i)
                 d[v] = on
                 space.append(-v if on else v)
@@ -497,13 +569,17 @@ class Expression(Scalar):
 
     def iter_outputs(self):
         for n in range(2 ** abs(self)):
-            d = {v: _bit_on(n, i) for i, v in enumerate(self.vs)}
+            d = {v: _bit_on(n, i) for i, v in enumerate(self.inputs)}
             yield self.subs(d)
 
     def iter_cofactors(self, *vs):
         """Iterate through the cofactors of N variables."""
         for n in range(2 ** len(vs)):
             yield self.subs({v: _bit_on(n, i) for i, v in enumerate(vs)})
+
+    def to_truth_table(self):
+        outputs = ((PC_ONE if x else PC_ZERO) for x in self.iter_outputs())
+        return TruthTable(self.inputs, outputs)
 
     def cofactors(self, *vs):
         """Return a list of cofactors of N variables.
@@ -522,7 +598,7 @@ class Expression(Scalar):
         A function f(x1, x2, ..., xi, ..., xn) is negative unate in variable
         xi if f[xi'] >= f[xi].
         """
-        vs = vs or self.support
+        vs = vs or self.inputs
         for v in vs:
             fv0, fv1 = self.cofactors(v)
             if isinstance(fv0, Number) or isinstance(fv1, Number):
@@ -538,7 +614,7 @@ class Expression(Scalar):
         A function f(x1, x2, ..., xi, ..., xn) is positive unate in variable
         xi if f[xi] >= f[xi'].
         """
-        vs = vs or self.support
+        vs = vs or self.inputs
         for v in vs:
             fv0, fv1 = self.cofactors(v)
             if isinstance(fv0, Number) or isinstance(fv1, Number):
@@ -554,7 +630,7 @@ class Expression(Scalar):
         A function f(x1, x2, ..., xi, ..., xn) is binate in variable xi if it
         is neither negative nor positive unate in xi.
         """
-        vs = vs or self.support
+        vs = vs or self.inputs
         return not (self.is_neg_unate(*vs) or self.is_pos_unate(*vs))
 
     def smoothing(self, *vs):
@@ -920,9 +996,9 @@ class OrAnd(Expression):
                     xs.append(x)
             while terms:
                 term = terms.pop()
-                vs = self.support - term.support
-                if vs:
-                    v = vs.pop()
+                support = self.support - term.support
+                if support:
+                    v = support.pop()
                     terms += [op(-v, term), op(v, term)]
                 else:
                     if all(term.term_index != x.term_index for x in xs):
