@@ -698,6 +698,9 @@ class Literal(Symbolic):
     def simplify(self):
         return self
 
+    def equal(self, other):
+        return self == other
+
 
 class Variable(Literal):
     """Boolean variable"""
@@ -745,9 +748,6 @@ class Variable(Literal):
             return val
         else:
             return self
-
-    def equal(self, other):
-        return self == other
 
 
 class Complement(Literal):
@@ -802,9 +802,6 @@ class Complement(Literal):
             return Not(val)
         else:
             return self
-
-    def equal(self, other):
-        return self == other
 
 
 class OrAnd(Symbolic):
@@ -979,6 +976,11 @@ class OrAnd(Symbolic):
             xs = [x.flatten(op) for x in nested] + others
             return op.DUAL(*xs)
 
+    def equal(self, other):
+        assert self.depth == 1
+        return (isinstance(other, self.__class__) and self.support == other.support and
+                self.term_index == other.term_index)
+
 
 class Or(OrAnd):
     """Boolean addition (or) operator"""
@@ -1001,11 +1003,6 @@ class Or(OrAnd):
             if -v in self.xs:
                 idx |= 1 << (n - i)
         return idx
-
-    def equal(self, other):
-        assert self.depth == 1
-        return (isinstance(other, Or) and self.support == other.support and
-                self.term_index == other.term_index)
 
 
 class And(OrAnd):
@@ -1035,11 +1032,6 @@ class And(OrAnd):
             if v in self.xs:
                 idx |= 1 << (n - i)
         return idx
-
-    def equal(self, other):
-        assert self.depth == 1
-        return (isinstance(other, And) and self.support == other.support and
-                self.term_index == other.term_index)
 
 
 Or.DUAL = And
