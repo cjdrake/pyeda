@@ -24,26 +24,28 @@ Interface Functions:
     int2vec
 
 Classes:
-    Scalar
-        Number: Zero, One
-        Table
-            TruthTable
-            ImplicantTable
-        Expression
-            Literal
-                Variable
-                Complement
-            OrAnd
-                Or
-                And
-            BufNot
-                Buf
-                Not
-            Exclusive
-                Xor
-                Xnor
-            Implies
-    Vector
+    Function
+        Scalar
+            Table
+                TruthTable
+                ImplicantTable
+            Expression
+                Numeric: Zero, One
+                Symbolic:
+                    Literal
+                        Variable
+                        Complement
+                    OrAnd
+                        Or
+                        And
+                    BufNot
+                        Buf
+                        Not
+                    Exclusive
+                        Xor
+                        Xnor
+                    Implies
+        Vector
 
 Huntington's Postulates
 +---------------------------------+--------------+
@@ -111,7 +113,7 @@ def num(x):
     try:
         ret = NUMBERS[n]
     except KeyError:
-        ret = Number(n)
+        ret = Numeric(n)
         NUMBERS[n] = ret
     return ret
 
@@ -270,25 +272,16 @@ def int2vec(n, length=None):
 # Classes
 #==============================================================================
 
-class Scalar:
-    """Scalar Boolean function"""
+class Function:
+    """Boolean function"""
 
     def __abs__(self):
         return len(self.support)
 
-    def __str__(self):
-        raise NotImplementedError()
-
     def __repr__(self):
         return self.__str__()
 
-    def __neg__(self):
-        raise NotImplementedError()
-
-    def __add__(self, other):
-        raise NotImplementedError()
-
-    def __mul__(self, other):
+    def __str__(self):
         raise NotImplementedError()
 
     @property
@@ -305,112 +298,18 @@ class Scalar:
         """Return the support as an ordered list."""
         raise NotImplementedError()
 
-    @property
-    def depth(self):
-        """The number of levels in the expression tree."""
-        raise NotImplementedError()
 
-    def invert(self):
-        """Return an inverted expression."""
-        raise NotImplementedError()
-
-    def subs(self, d):
-        """Substitute numbers into an expression."""
-        raise NotImplementedError()
-
-    def vsubs(self, d):
-        """Expand all vectors before doing a substitution."""
-        return self.subs(_expand_vectors(d))
-
-    def factor(self):
-        """Return a factored expression.
-
-        A factored expression is one and only one of the following:
-        * A literal.
-        * A sum / product of factored expressions.
-        """
-        raise NotImplementedError()
-
-    def simplify(self):
-        """Return a simplifed expression.
-
-        The meaning of the word "simplified" is not strictly defined here.
-        At a bare minimum, operators should apply idempotence, eliminate all
-        numbers, eliminate literals that combine into numbers. For factored
-        expressions, also absorb terms.
-        """
-        raise NotImplementedError()
-
-
-class Number(Scalar):
-    """Boolean number"""
-
-    def __init__(self, val):
-        self._val = val
-
-    def __bool__(self):
-        return bool(self._val)
-
-    def __int__(self):
-        return self._val
-
-    def __str__(self):
-        return str(self._val)
+class Scalar(Function):
+    """Scalar Boolean function"""
 
     def __neg__(self):
-        return Not(self)
+        raise NotImplementedError()
 
     def __add__(self, other):
-        return Or(self, other)
+        raise NotImplementedError()
 
     def __mul__(self, other):
-        return And(self, other)
-
-    def __lshift__(self, other):
-        return Implies(other, self)
-
-    def __rshift__(self, other):
-        return Implies(self, other)
-
-    def __eq__(self, other):
-        if isinstance(other, Scalar):
-            return isinstance(other, Number) and self._val == other.val
-        else:
-            return self._val == num(other).val
-
-    def __lt__(self, other):
-        if isinstance(other, Scalar):
-            return isinstance(other, Number) and self._val < other.val
-        else:
-            return self._val < num(other).val
-
-    @property
-    def support(self):
-        return set()
-
-    @property
-    def inputs(self):
-        return list()
-
-    @property
-    def depth(self):
-        return 0
-
-    @property
-    def val(self):
-        return self._val
-
-    def invert(self):
-        return num(1 - self._val)
-
-    def subs(self, d): return self
-
-    def factor(self): return self
-    def simplify(self): return self
-
-
-Zero = num(0)
-One = num(1)
+        raise NotImplementedError()
 
 
 class Table(Scalar):
@@ -457,11 +356,7 @@ class Expression(Scalar):
     """Logic expression"""
 
     def __init__(self):
-        super(Expression, self).__init__()
-        self.cache = dict()
-
-    def __iter__(self):
-        raise NotImplementedError()
+        self._cache = dict()
 
     def __neg__(self):
         return Not(self)
@@ -479,107 +374,54 @@ class Expression(Scalar):
         return Implies(self, other)
 
     @property
-    def support(self):
-        val = self.cache.get("support", None)
-        if val is None:
-            val = {v for v in self.iter_vars()}
-            self.cache["support"] = val
-        return val
-
-    @property
-    def inputs(self):
-        val = self.cache.get("inputs", None)
-        if val is None:
-            val = sorted(self.support)
-            self.cache["inputs"] = val
-        return val
-
-    @property
-    def top(self):
-        """Return the first variable in the ordered support."""
-        return self.inputs[0]
-
-    @property
-    def minterms(self):
-        """The sum of products of N literals"""
-        val = self.cache.get("minterms", None)
-        if val is None:
-            val = {x for x in self.iter_minterms()}
-            self.cache["minterms"] = val
-        return val
-
-    @property
-    def maxterms(self):
-        """The product of sums of N literals"""
-        val = self.cache.get("maxterms", None)
-        if val is None:
-            val = {x for x in self.iter_maxterms()}
-            self.cache["maxterms"] = val
-        return val
-
-    def iter_vars(self):
-        """Recursively iterate through all variables in the expression."""
+    def depth(self):
+        """The number of levels in the expression tree."""
         raise NotImplementedError()
 
-    def iter_minterms(self):
-        """Iterate through the sum of products of N literals."""
-        for n in range(2 ** abs(self)):
-            d = dict()
-            space = list()
-            for i, v in enumerate(self.inputs):
-                on = _bit_on(n, i)
-                d[v] = on
-                space.append(v if on else -v)
-            output = self.subs(d)
-            if output:
-                yield And(*space)
+    def invert(self):
+        """Return an inverted expression."""
+        raise NotImplementedError()
 
-    def iter_maxterms(self):
-        """Iterate through the product of sums of N literals."""
-        for n in range(2 ** abs(self)):
-            d = dict()
-            space = list()
-            for i, v in enumerate(self.inputs):
-                on = _bit_on(n, i)
-                d[v] = on
-                space.append(-v if on else v)
-            output = self.subs(d)
-            if not output:
-                yield Or(*space)
+    def subs(self, d):
+        """Substitute numbers into an expression."""
+        raise NotImplementedError()
 
-    def to_sop(self):
-        """Return the expression as a sum of products."""
-        expr = self.factor()
-        expr = expr.flatten(And)
-        return expr
-
-    def to_pos(self):
-        """Return the expression as a product of sums."""
-        expr = self.factor()
-        expr = expr.flatten(Or)
-        return expr
-
-    def to_csop(self):
-        """Return the expression as a sum of products of N literals."""
-        return Or(*[term for term in self.iter_minterms()])
-
-    def to_cpos(self):
-        """Return the expression as a product of sums of N literals."""
-        return And(*[term for term in self.iter_maxterms()])
+    def vsubs(self, d):
+        """Expand all vectors before doing a substitution."""
+        return self.subs(_expand_vectors(d))
 
     def iter_outputs(self):
         for n in range(2 ** abs(self)):
             d = {v: _bit_on(n, i) for i, v in enumerate(self.inputs)}
             yield self.subs(d)
 
+    def to_truth_table(self):
+        outputs = ((PC_ONE if x else PC_ZERO) for x in self.iter_outputs())
+        return TruthTable(self.inputs, outputs)
+
+    def factor(self):
+        """Return a factored expression.
+
+        A factored expression is one and only one of the following:
+        * A literal.
+        * A sum / product of factored expressions.
+        """
+        raise NotImplementedError()
+
+    def simplify(self):
+        """Return a simplifed expression.
+
+        The meaning of the word "simplified" is not strictly defined here.
+        At a bare minimum, operators should apply idempotence, eliminate all
+        numbers, eliminate literals that combine into numbers. For factored
+        expressions, also absorb terms.
+        """
+        raise NotImplementedError()
+
     def iter_cofactors(self, *vs):
         """Iterate through the cofactors of N variables."""
         for n in range(2 ** len(vs)):
             yield self.subs({v: _bit_on(n, i) for i, v in enumerate(vs)})
-
-    def to_truth_table(self):
-        outputs = ((PC_ONE if x else PC_ZERO) for x in self.iter_outputs())
-        return TruthTable(self.inputs, outputs)
 
     def cofactors(self, *vs):
         """Return a list of cofactors of N variables.
@@ -601,7 +443,7 @@ class Expression(Scalar):
         vs = vs or self.inputs
         for v in vs:
             fv0, fv1 = self.cofactors(v)
-            if isinstance(fv0, Number) or isinstance(fv1, Number):
+            if isinstance(fv0, Numeric) or isinstance(fv1, Numeric):
                 if not (fv0 is One or fv1 is Zero):
                     return False
             elif not (fv0.minterms >= fv1.minterms):
@@ -617,7 +459,7 @@ class Expression(Scalar):
         vs = vs or self.inputs
         for v in vs:
             fv0, fv1 = self.cofactors(v)
-            if isinstance(fv0, Number) or isinstance(fv1, Number):
+            if isinstance(fv0, Numeric) or isinstance(fv1, Numeric):
                 if not (fv1 is One or fv0 is Zero):
                     return False
             elif not (fv1.minterms >= fv0.minterms):
@@ -657,9 +499,144 @@ class Expression(Scalar):
         """
         return Xor(*self.cofactors(*vs))
 
-    def difference(self, *vs):
-        """Alias for derivative"""
-        return self.derivative(*vs)
+
+class Numeric(Expression):
+    """Boolean number"""
+
+    def __init__(self, val):
+        super(Numeric, self).__init__()
+        self._val = val
+
+    def __bool__(self):
+        return bool(self._val)
+
+    def __int__(self):
+        return self._val
+
+    def __str__(self):
+        return str(self._val)
+
+    def __eq__(self, other):
+        if isinstance(other, Expression):
+            return isinstance(other, Numeric) and self._val == other.val
+        else:
+            return self._val == num(other).val
+
+    def __lt__(self, other):
+        if isinstance(other, Expression):
+            return isinstance(other, Numeric) and self._val < other.val
+        else:
+            return self._val < num(other).val
+
+    @property
+    def support(self):
+        return set()
+
+    @property
+    def inputs(self):
+        return list()
+
+    @property
+    def depth(self):
+        return 0
+
+    @property
+    def val(self):
+        return self._val
+
+    def invert(self):
+        return num(1 - self._val)
+
+    def subs(self, d):
+        return self
+
+    def factor(self):
+        return self
+
+    def simplify(self):
+        return self
+
+
+Zero = num(0)
+One = num(1)
+
+
+class Symbolic(Expression):
+
+    def __init__(self):
+        super(Symbolic, self).__init__()
+
+    def __iter__(self):
+        raise NotImplementedError()
+
+    @property
+    def support(self):
+        val = self._cache.get("support", None)
+        if val is None:
+            val = {v for v in self.iter_vars()}
+            self._cache["support"] = val
+        return val
+
+    @property
+    def inputs(self):
+        val = self._cache.get("inputs", None)
+        if val is None:
+            val = sorted(self.support)
+            self._cache["inputs"] = val
+        return val
+
+    @property
+    def top(self):
+        """Return the first variable in the ordered support."""
+        return self.inputs[0]
+
+    def iter_vars(self):
+        """Recursively iterate through all variables in the expression."""
+        raise NotImplementedError()
+
+    def iter_minterms(self):
+        """Iterate through the sum of products of N literals."""
+        for n in range(2 ** abs(self)):
+            d = dict()
+            space = list()
+            for i, v in enumerate(self.inputs):
+                on = _bit_on(n, i)
+                d[v] = on
+                space.append(v if on else -v)
+            output = self.subs(d)
+            if output:
+                yield And(*space)
+
+    def iter_maxterms(self):
+        """Iterate through the product of sums of N literals."""
+        for n in range(2 ** abs(self)):
+            d = dict()
+            space = list()
+            for i, v in enumerate(self.inputs):
+                on = _bit_on(n, i)
+                d[v] = on
+                space.append(-v if on else v)
+            output = self.subs(d)
+            if not output:
+                yield Or(*space)
+
+    @property
+    def minterms(self):
+        """The sum of products of N literals"""
+        val = self._cache.get("minterms", None)
+        if val is None:
+            val = {term for term in self.iter_minterms()}
+            self._cache["minterms"] = val
+        return val
+
+    @property
+    def maxterms(self):
+        """The product of sums of N literals"""
+        val = self._cache.get("maxterms", None)
+        if val is None:
+            val = {term for term in self.iter_maxterms()}
+            self._cache["maxterms"] = val
+        return val
 
     def flatten(self, op):
         """Return expression after flattening OR/AND."""
@@ -667,10 +644,25 @@ class Expression(Scalar):
         expr = expr.simplify()
         return expr
 
-    def canonize(self, op):
-        """Return an expression with all terms expanded to length N."""
-        expr = self._canonize(op)
+    def to_sop(self):
+        """Return the expression as a sum of products."""
+        expr = self.factor()
+        expr = expr.flatten(And)
         return expr
+
+    def to_pos(self):
+        """Return the expression as a product of sums."""
+        expr = self.factor()
+        expr = expr.flatten(Or)
+        return expr
+
+    def to_csop(self):
+        """Return the expression as a sum of products of N literals."""
+        return Or(*[term for term in self.iter_minterms()])
+
+    def to_cpos(self):
+        """Return the expression as a product of sums of N literals."""
+        return And(*[term for term in self.iter_maxterms()])
 
     def equal(self, other):
         """Return whether this expression is equivalent to another.
@@ -683,7 +675,7 @@ class Expression(Scalar):
         raise NotImplementedError()
 
 
-class Literal(Expression):
+class Literal(Symbolic):
     """An instance of a variable or of its complement"""
 
     def __iter__(self):
@@ -700,8 +692,11 @@ class Literal(Expression):
     def xs(self):
         return {self}
 
-    def factor(self): return self
-    def simplify(self): return self
+    def factor(self):
+        return self
+
+    def simplify(self):
+        return self
 
 
 class Variable(Literal):
@@ -719,12 +714,12 @@ class Variable(Literal):
             return self._name
 
     def __lt__(self, other):
-        if isinstance(other, Number):
+        if isinstance(other, Numeric):
             return False
         if isinstance(other, Literal):
             return (self.name < other.name or
                     self.name == other.name and self.index < other.index)
-        if isinstance(other, Expression):
+        if isinstance(other, Symbolic):
             return True
         return id(self) < id(other)
 
@@ -736,11 +731,11 @@ class Variable(Literal):
     def index(self):
         return self._index
 
-    def invert(self):
-        return comp(self)
-
     def iter_vars(self):
         yield self
+
+    def invert(self):
+        return comp(self)
 
     def subs(self, d):
         if self in d:
@@ -769,7 +764,7 @@ class Complement(Literal):
         return str(self._var) + self.OP
 
     def __lt__(self, other):
-        if isinstance(other, Number):
+        if isinstance(other, Numeric):
             return False
         if isinstance(other, Variable):
             return (self.name < other.name or
@@ -777,7 +772,7 @@ class Complement(Literal):
         if isinstance(other, Complement):
             return (self.name < other.name or
                     self.name == other.name and self.index < other.index)
-        if isinstance(other, Expression):
+        if isinstance(other, Symbolic):
             return True
         return id(self) < id(other)
 
@@ -793,11 +788,11 @@ class Complement(Literal):
     def var(self):
         return self._var
 
-    def invert(self):
-        return self._var
-
     def iter_vars(self):
         yield self._var
+
+    def invert(self):
+        return self._var
 
     def subs(self, d):
         if self._var in d:
@@ -812,7 +807,7 @@ class Complement(Literal):
         return self == other
 
 
-class OrAnd(Expression):
+class OrAnd(Symbolic):
     """base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *xs):
@@ -847,7 +842,7 @@ class OrAnd(Expression):
         return len(self.xs)
 
     def __lt__(self, other):
-        if isinstance(other, Number):
+        if isinstance(other, Numeric):
             return False
         if isinstance(other, Literal):
             return self.support < other.support
@@ -871,23 +866,23 @@ class OrAnd(Expression):
 
     @property
     def depth(self):
-        val = self.cache.get("depth", None)
+        val = self._cache.get("depth", None)
         if val is None:
             val = max(x.depth + 1 for x in self.xs)
-            self.cache["depth"] = val
+            self._cache["depth"] = val
         return val
 
     @property
     def _duals(self):
-        val = self.cache.get("duals", None)
+        val = self._cache.get("duals", None)
         if val is None:
             val = [x for x in self.xs if isinstance(x, self.DUAL)]
-            self.cache["duals"] = val
+            self._cache["duals"] = val
         return val
 
     def iter_vars(self):
         for x in self.xs:
-            if not isinstance(x, Number):
+            if not isinstance(x, Numeric):
                 for v in x.iter_vars():
                     yield v
 
@@ -984,30 +979,6 @@ class OrAnd(Expression):
             xs = [x.flatten(op) for x in nested] + others
             return op.DUAL(*xs)
 
-    def _canonize(self, op):
-        if isinstance(self, op):
-            return self
-        else:
-            terms, xs = list(), list()
-            for x in self.xs:
-                if len(x) < abs(self):
-                    terms.append(x)
-                else:
-                    xs.append(x)
-            while terms:
-                term = terms.pop()
-                support = self.support - term.support
-                if support:
-                    v = support.pop()
-                    terms += [op(-v, term), op(v, term)]
-                else:
-                    if all(term.term_index != x.term_index for x in xs):
-                        xs.append(term)
-            return self.__class__(*xs)
-
-    def equal(self, other):
-        raise NotImplementedError()
-
 
 class Or(OrAnd):
     """Boolean addition (or) operator"""
@@ -1075,7 +1046,7 @@ Or.DUAL = And
 And.DUAL = Or
 
 
-class BufNot(Expression):
+class BufNot(Symbolic):
     """base class for BUF/NOT operators"""
 
     def __init__(self, x):
@@ -1115,7 +1086,7 @@ class Buf(BufNot):
     def __new__(cls, x):
         x = x if isinstance(x, Scalar) else num(x)
         # Auto-simplify numbers and literals
-        if isinstance(x, Number) or isinstance(x, Literal):
+        if isinstance(x, Numeric) or isinstance(x, Literal):
             return x
         else:
             return super(Buf, cls).__new__(cls)
@@ -1133,7 +1104,7 @@ class Not(BufNot):
     def __new__(cls, x):
         x = x if isinstance(x, Scalar) else num(x)
         # Auto-simplify numbers and literals
-        if isinstance(x, Number) or isinstance(x, Literal):
+        if isinstance(x, Numeric) or isinstance(x, Literal):
             return x.invert()
         else:
             return super(Not, cls).__new__(cls)
@@ -1146,7 +1117,7 @@ class Not(BufNot):
         return self.x.factor().invert().factor()
 
 
-class Exclusive(Expression):
+class Exclusive(Symbolic):
     """Boolean exclusive (XOR, XNOR) operator"""
 
     IDENTITY = Zero
@@ -1192,15 +1163,15 @@ class Exclusive(Expression):
 
     @property
     def depth(self):
-        val = self.cache.get("depth", None)
+        val = self._cache.get("depth", None)
         if val is None:
             val = max(x.depth + 2 for x in self.xs)
-            self.cache["depth"] = val
+            self._cache["depth"] = val
         return val
 
     def iter_vars(self):
         for x in self.xs:
-            if not isinstance(x, Number):
+            if not isinstance(x, Numeric):
                 for v in x.iter_vars():
                     yield v
 
@@ -1266,7 +1237,7 @@ class Xnor(Exclusive):
     PARITY = 1
 
 
-class Implies(Expression):
+class Implies(Symbolic):
     """Boolean implication operator"""
 
     OP = "=>"
@@ -1302,10 +1273,10 @@ class Implies(Expression):
 
     @property
     def depth(self):
-        val = self.cache.get("depth", None)
+        val = self._cache.get("depth", None)
         if val is None:
             val = max(x.depth + 1 for x in self.xs)
-            self.cache["depth"] = val
+            self._cache["depth"] = val
         return val
 
     def iter_vars(self):
@@ -1329,8 +1300,8 @@ class Implies(Expression):
         return Implies(xs[0], xs[1])
 
 
-class Vector:
-    """Boolean vector"""
+class Vector(Function):
+    """Vector Boolean function"""
 
     def __init__(self, *fs, **kwargs):
         self.fs = [f if isinstance(f, Scalar) else num(f) for f in fs]
@@ -1345,9 +1316,6 @@ class Vector:
 
     def __str__(self):
         return str(self.fs)
-
-    def __repr__(self):
-        return self.__str__()
 
     def __iter__(self):
         for f in self.fs:
@@ -1420,7 +1388,7 @@ class Vector:
         """Convert vector into an unsigned integer."""
         n = 0
         for i, f in enumerate(self.fs):
-            if isinstance(f, Number):
+            if isinstance(f, Numeric):
                 if f is One:
                     n += 2 ** i
             else:
