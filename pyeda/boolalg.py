@@ -217,7 +217,7 @@ def cube_pos(*vs):
 def iter_space(*vs):
     """Return the multi-dimensional space spanned by N Boolean variables."""
     for n in range(2 ** len(vs)):
-        yield [(v if _bit_on(n, i) else -v) for i, v in enumerate(vs)]
+        yield tuple((v if _bit_on(n, i) else -v) for i, v in enumerate(vs))
 
 def iter_points(op, *vs):
     """
@@ -226,8 +226,8 @@ def iter_points(op, *vs):
     """
     if not issubclass(op, OrAnd):
         raise TypeError("iter_points() expected op type OR/AND")
-    for s in iter_space(*vs):
-        yield op(*s)
+    for space in iter_space(*vs):
+        yield op(*space)
 
 def uint2vec(n, length=None):
     """Convert an unsigned integer to a Vector."""
@@ -321,22 +321,22 @@ class TruthTable(Table):
     def __init__(self, inputs, outputs):
         self._inputs = inputs
         self._data = bytearray()
-        self._len = 0
+        self._length = 0
         pos = 0
         for pc_val in outputs:
             if pos == 0:
                 self._data.append(0)
             self._data[-1] += pc_val << pos
-            self._len += 1
+            self._length += 1
             pos = (pos + 2) & 0x07
-        assert self._len == 2 ** len(self._inputs)
+        assert self._length == 2 ** len(self._inputs)
 
     def __len__(self):
-        return self._len
+        return self._length
 
     def __str__(self):
         s = ["f(" + ", ".join(str(v) for v in self._inputs) + ") = "]
-        for i in range(self._len):
+        for i in range(self._length):
             pos = (i & 0x03) << 1
             byte = self._data[(i >> 2)] >> pos
             pc_val = byte & 0x03
