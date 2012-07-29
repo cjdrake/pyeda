@@ -9,6 +9,7 @@ currently require any external libraries.
 
 * `Synthesis and Optimization of Digital Circuits <http://www.amazon.com/Synthesis-Optimization-Digital-Circuits-Giovanni/dp/0070163332>`_, by Giovanni De Micheli
 * `Logic Synthesis and Verification Algorithms <http://www.amazon.com/Logic-Synthesis-Verification-Algorithms-Hachtel/dp/0387310045>`_, by Gary D. Hatchel, and Fabio Somenzi
+* `Decision Procedures <http://www.decision-procedures.org>`_, by  Daniel Kroening, and Ofer Strichman
 
 **Resources:**
 
