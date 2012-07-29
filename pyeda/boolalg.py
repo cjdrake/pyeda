@@ -78,7 +78,6 @@ Properties of Boolean Algebraic Systems
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
-__license__ = "All rights reserved."
 
 #==============================================================================
 # Constants
