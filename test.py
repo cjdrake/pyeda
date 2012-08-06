@@ -65,9 +65,9 @@ def test_number():
     assert Zero.invert() == One
     assert One.invert() == Zero
 
-    # subs
-    assert Zero.subs({a: 0, b: 1}) == 0
-    assert One.subs({a: 0, b: 1}) == 1
+    # restrict
+    assert Zero.restrict({a: 0, b: 1}) == 0
+    assert One.restrict({a: 0, b: 1}) == 1
 
     # factor
     assert Zero.factor() == Zero
@@ -136,15 +136,15 @@ def test_literal():
     assert (-a).support == {a}
     assert a.support == {a}
 
-    # subs
-    assert a.subs({a: 0}) == 0
-    assert a.subs({a: 1}) == 1
-    assert a.subs({a: -b}) == -b
-    assert a.subs({a: b}) == b
-    assert (-a).subs({a: 0}) == 1
-    assert (-a).subs({a: 1}) == 0
-    assert (-a).subs({a: -b}) == b
-    assert (-a).subs({a: b}) == -b
+    # restrict
+    assert a.restrict({a: 0}) == 0
+    assert a.restrict({a: 1}) == 1
+    assert a.restrict({a: -b}) == -b
+    assert a.restrict({a: b}) == b
+    assert (-a).restrict({a: 0}) == 1
+    assert (-a).restrict({a: 1}) == 0
+    assert (-a).restrict({a: -b}) == b
+    assert (-a).restrict({a: b}) == -b
 
     # factor
     assert (-a).factor() == -a
@@ -171,10 +171,10 @@ def test_buf():
     # support
     assert Buf(-a + b).support == {a, b}
 
-    # subs
-    assert Buf(-a + b).subs({a: 0}) == 1
-    assert Buf(-a + b).subs({a: 1}) == b
-    assert str(Buf(-a + b + c).subs({a: 1})) == "Buf(b + c)"
+    # restrict
+    assert Buf(-a + b).restrict({a: 0}) == 1
+    assert Buf(-a + b).restrict({a: 1}) == b
+    assert str(Buf(-a + b + c).restrict({a: 1})) == "Buf(b + c)"
 
     # factor
     assert str(Buf(-a + b).factor()) == "a' + b"
@@ -200,10 +200,10 @@ def test_not():
     # support
     assert Not(-a + b).support == {a, b}
 
-    # subs
-    assert Not(-a + b).subs({a: 0}) == 0
-    assert Not(-a + b).subs({a: 1}) == -b
-    assert str(-(-a + b + c).subs({a: 1})) == "Not(b + c)"
+    # restrict
+    assert Not(-a + b).restrict({a: 0}) == 0
+    assert Not(-a + b).restrict({a: 1}) == -b
+    assert str(-(-a + b + c).restrict({a: 1})) == "Not(b + c)"
 
     # factor
     assert str(Not(-a + b).factor()) == "a * b'"
@@ -264,16 +264,16 @@ def test_or():
     # support
     assert (-a + b + (-c * d)).support == {a, b, c, d}
 
-    # subs
+    # restrict
     f = -a * b * c + a * -b * c + a * b * -c
-    fa0, fa1 = f.subs({a: 0}), f.subs({a: 1})
+    fa0, fa1 = f.restrict({a: 0}), f.restrict({a: 1})
     assert str(fa0) == "b * c"
     assert str(fa1) == "b' * c + b * c'"
 
-    assert f.subs({a: 0, b: 0}) == 0
-    assert f.subs({a: 0, b: 1}) == c
-    assert f.subs({a: 1, b: 0}) == c
-    assert f.subs({a: 1, b: 1}) == -c
+    assert f.restrict({a: 0, b: 0}) == 0
+    assert f.restrict({a: 0, b: 1}) == c
+    assert f.restrict({a: 1, b: 0}) == c
+    assert f.restrict({a: 1, b: 1}) == -c
 
     # factor
     assert str(factor(a + -(b * c))) == "a + b' + c'"
@@ -343,16 +343,16 @@ def test_and():
     # support
     assert (-a * b * (-c + d)).support == {a, b, c, d}
 
-    # subs
+    # restrict
     f = (-a + b + c) * (a + -b + c) * (a + b + -c)
-    fa0, fa1 = f.subs({a: 0}), f.subs({a: 1})
+    fa0, fa1 = f.restrict({a: 0}), f.restrict({a: 1})
     assert str(fa0) == "(b + c') * (b' + c)"
     assert str(fa1) == "b + c"
 
-    assert f.subs({a: 0, b: 0}) == -c
-    assert f.subs({a: 0, b: 1}) == c
-    assert f.subs({a: 1, b: 0}) == c
-    assert f.subs({a: 1, b: 1}) == 1
+    assert f.restrict({a: 0, b: 0}) == -c
+    assert f.restrict({a: 0, b: 1}) == c
+    assert f.restrict({a: 1, b: 0}) == c
+    assert f.restrict({a: 1, b: 1}) == 1
 
     # factor
     assert str(factor(a * -(b + c))) == "a * b' * c'"
