@@ -25,9 +25,6 @@ Interface Functions:
 
 Classes:
     Function
-        Table
-            TruthTable
-            ImplicantTable
         Expression
             Numeric: Zero, One
             Symbolic:
@@ -91,13 +88,13 @@ VARIABLES = dict()
 COMPLEMENTS = dict()
 
 # Positional Cube Notation
-PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
+#PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
 
-PC_STR = {
-    PC_ZERO : "0",
-    PC_ONE  : "1",
-    PC_DC   : "*"
-}
+#PC_STR = {
+#    PC_ZERO : "0",
+#    PC_ONE  : "1",
+#    PC_DC   : "*"
+#}
 
 #===============================================================================
 # Interface Functions
@@ -528,9 +525,9 @@ class Expression(Function):
             d = {v: _bit_on(n, i) for i, v in enumerate(self.inputs)}
             yield self.restrict(d)
 
-    def to_truth_table(self):
-        outputs = ((PC_ONE if x else PC_ZERO) for x in self.iter_outputs())
-        return TruthTable(self.inputs, outputs)
+    #def to_truth_table(self):
+    #    outputs = ((PC_ONE if x else PC_ZERO) for x in self.iter_outputs())
+    #    return TruthTable(self.inputs, outputs)
 
     def factor(self):
         """Return a factored expression.
