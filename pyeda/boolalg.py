@@ -27,20 +27,19 @@ Classes:
     Function
         Expression
             Numeric: Zero, One
-            Symbolic:
-                Literal
-                    Variable
-                    Complement
-                OrAnd
-                    Or
-                    And
-                BufNot
-                    Buf
-                    Not
-                Exclusive
-                    Xor
-                    Xnor
-                Implies
+            Literal
+                Variable
+                Complement
+            OrAnd
+                Or
+                And
+            BufNot
+                Buf
+                Not
+            Exclusive
+                Xor
+                Xnor
+            Implies
     VectorFunction
 
 Huntington's Postulates
@@ -286,7 +285,7 @@ class Function:
         raise NotImplementedError()
 
     def __abs__(self):
-        """Return the length of the support set."""
+        """Return the cardinality of the support set."""
         return len(self.support)
 
     # Operators
@@ -410,21 +409,21 @@ class Function:
     #    """
     #    raise NotImplementedError()
 
-    #def __le__(self, other):
-    #    """Return symbolic "less than or equal to" of two functions.
+    def __le__(self, other):
+        """Return symbolic "less than or equal to" of two functions.
 
-    #    +---+---+--------+
-    #    | f | g | f <= g |
-    #    +---+---+--------+
-    #    | 0 | 0 |    1   |
-    #    | 0 | 1 |    1   |
-    #    | 1 | 0 |    0   |
-    #    | 1 | 1 |    1   |
-    #    +---+---+--------+
+        +---+---+--------+
+        | f | g | f <= g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    1   |
+        | 1 | 0 |    0   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
 
-    #    Also known as: implies (f -> g)
-    #    """
-    #    raise NotImplementedError()
+        Also known as: implies (f -> g)
+        """
+        raise NotImplementedError()
 
     def restrict(self, d):
         """
@@ -491,7 +490,15 @@ class Expression(Function):
     def __init__(self):
         self._cache = dict()
 
-    # Operators
+    # From Function
+    @property
+    def support(self):
+        val = self._cache.get("support", None)
+        if val is None:
+            val = {v for v in self.iter_vars()}
+            self._cache["support"] = val
+        return val
+
     def __neg__(self):
         return Not(self)
 
@@ -501,12 +508,10 @@ class Expression(Function):
     def __mul__(self, other):
         return And(self, other)
 
-    def __lshift__(self, other):
-        return Implies(other, self)
-
     def __rshift__(self, other):
         return Implies(self, other)
 
+    # Specific to Expressions
     @property
     def depth(self):
         """The number of levels in the expression tree."""
@@ -629,84 +634,6 @@ class Expression(Function):
         """
         return Xor(*self.cofactors(*vs))
 
-
-class Numeric(Expression):
-    """Boolean number"""
-
-    def __init__(self, val):
-        super(Numeric, self).__init__()
-        self._val = val
-
-    def __bool__(self):
-        return bool(self._val)
-
-    def __int__(self):
-        return self._val
-
-    def __str__(self):
-        return str(self._val)
-
-    def __eq__(self, other):
-        if isinstance(other, Expression):
-            return isinstance(other, Numeric) and self._val == other.val
-        else:
-            return self._val == num(other).val
-
-    def __lt__(self, other):
-        if isinstance(other, Expression):
-            return isinstance(other, Numeric) and self._val < other.val
-        else:
-            return self._val < num(other).val
-
-    @property
-    def support(self):
-        return set()
-
-    @property
-    def inputs(self):
-        return list()
-
-    @property
-    def depth(self):
-        return 0
-
-    @property
-    def val(self):
-        return self._val
-
-    def invert(self):
-        return num(1 - self._val)
-
-    def restrict(self, d):
-        return self
-
-    def factor(self):
-        return self
-
-    def simplify(self):
-        return self
-
-
-Zero = num(0)
-One = num(1)
-
-
-class Symbolic(Expression):
-
-    def __init__(self):
-        super(Symbolic, self).__init__()
-
-    def __iter__(self):
-        raise NotImplementedError()
-
-    @property
-    def support(self):
-        val = self._cache.get("support", None)
-        if val is None:
-            val = {v for v in self.iter_vars()}
-            self._cache["support"] = val
-        return val
-
     @property
     def inputs(self):
         val = self._cache.get("inputs", None)
@@ -805,7 +732,68 @@ class Symbolic(Expression):
         raise NotImplementedError()
 
 
-class Literal(Symbolic):
+class Numeric(Expression):
+    """Boolean number"""
+
+    def __init__(self, val):
+        super(Numeric, self).__init__()
+        self._val = val
+
+    def __bool__(self):
+        return bool(self._val)
+
+    def __int__(self):
+        return self._val
+
+    def __str__(self):
+        return str(self._val)
+
+    def __eq__(self, other):
+        if isinstance(other, Expression):
+            return isinstance(other, Numeric) and self._val == other.val
+        else:
+            return self._val == num(other).val
+
+    def __lt__(self, other):
+        if isinstance(other, Expression):
+            return isinstance(other, Numeric) and self._val < other.val
+        else:
+            return self._val < num(other).val
+
+    @property
+    def support(self):
+        return set()
+
+    @property
+    def inputs(self):
+        return list()
+
+    @property
+    def depth(self):
+        return 0
+
+    @property
+    def val(self):
+        return self._val
+
+    def invert(self):
+        return num(1 - self._val)
+
+    def restrict(self, d):
+        return self
+
+    def factor(self):
+        return self
+
+    def simplify(self):
+        return self
+
+
+Zero = num(0)
+One = num(1)
+
+
+class Literal(Expression):
     """An instance of a variable or of its complement"""
 
     def __iter__(self):
@@ -852,7 +840,7 @@ class Variable(Literal):
         if isinstance(other, Literal):
             return (self.name < other.name or
                     self.name == other.name and self.index < other.index)
-        if isinstance(other, Symbolic):
+        if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
@@ -902,7 +890,7 @@ class Complement(Literal):
         if isinstance(other, Complement):
             return (self.name < other.name or
                     self.name == other.name and self.index < other.index)
-        if isinstance(other, Symbolic):
+        if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
@@ -934,7 +922,7 @@ class Complement(Literal):
             return self
 
 
-class OrAnd(Symbolic):
+class OrAnd(Expression):
     """base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *xs):
@@ -1168,7 +1156,7 @@ Or.DUAL = And
 And.DUAL = Or
 
 
-class BufNot(Symbolic):
+class BufNot(Expression):
     """base class for BUF/NOT operators"""
 
     def __init__(self, x):
@@ -1239,7 +1227,7 @@ class Not(BufNot):
         return self.x.factor().invert().factor()
 
 
-class Exclusive(Symbolic):
+class Exclusive(Expression):
     """Boolean exclusive (XOR, XNOR) operator"""
 
     IDENTITY = Zero
@@ -1359,7 +1347,7 @@ class Xnor(Exclusive):
     PARITY = 1
 
 
-class Implies(Symbolic):
+class Implies(Expression):
     """Boolean implication operator"""
 
     OP = "=>"
