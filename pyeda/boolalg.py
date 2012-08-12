@@ -23,64 +23,31 @@ Interface Functions:
     uint2vec
     int2vec
 
-Classes:
-    Function
-        Expression
-            Numeric: Zero, One
-            Literal
-                Variable
-                Complement
-            OrAnd
-                Or
-                And
-            BufNot
-                Buf
-                Not
-            Exclusive
-                Xor
-                Xnor
-            Implies
-    VectorFunction
-
-Huntington's Postulates
-+---------------------------------+--------------+
-| x + y = y + x                   | Commutative  |
-| x * y = y * x                   | Commutative  |
-+---------------------------------+--------------+
-| x + (y * z) = (x + y) * (x + z) | Distributive |
-| x * (y + z) = (x * y) + (x * z) | Distributive |
-+---------------------------------+--------------+
-| x + x' = 1                      | Complement   |
-| x * x' = 0                      | Complement   |
-+---------------------------------+--------------+
-
-Properties of Boolean Algebraic Systems
-+---------------------------+---------------+
-| x + (y + z) = (x + y) + z | Associativity |
-| x * (y * z) = (x * y) * z | Associativity |
-+---------------------------+---------------+
-| x + x = x                 | Idempotence   |
-| x * x = x                 | Idempotence   |
-+---------------------------+---------------+
-| x + (x * y) = x           | Absorption    |
-| x * (x + y) = x           | Absorption    |
-+---------------------------+---------------+
-| (x + y)' = x' * y'        | De Morgan     |
-| (x * y)' = x' + y'        | De Morgan     |
-+---------------------------+---------------+
-| (x')' = x                 | Involution    |
-+---------------------------+---------------+
+Interface Classes:
+    Expression
+        Numeric: Zero, One
+        Literal
+            Variable
+            Complement
+        OrAnd
+            Or
+            And
+        BufNot
+            Buf
+            Not
+        Exclusive
+            Xor
+            Xnor
+        Implies
+    VectorExpression
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-#===============================================================================
-# Constants
-#===============================================================================
+from .boolfunc import Function, VectorFunction
+from .boolfunc import UNSIGNED, TWOS_COMPLEMENT
 
 B = {0, 1}
-
-UNSIGNED, TWOS_COMPLEMENT = range(2)
 
 NUMBERS = dict()
 VARIABLES = dict()
@@ -94,10 +61,6 @@ COMPLEMENTS = dict()
 #    PC_ONE  : "1",
 #    PC_DC   : "*"
 #}
-
-#===============================================================================
-# Interface Functions
-#===============================================================================
 
 def num(x):
     """Return a unique Boolean number."""
@@ -140,7 +103,7 @@ def vec(name, *args, **kwargs):
     if not 0 <= start < stop:
         raise ValueError("invalid range: [{}:{}]".format(start, stop))
     fs = [Variable(name, index=i) for i in range(start, stop)]
-    return VectorFunction(*fs, start=start, **kwargs)
+    return VectorExpression(*fs, start=start, **kwargs)
 
 def svec(name, *args, **kwargs):
     """Return a signed vector of variables."""
@@ -224,10 +187,10 @@ def iter_points(op, *vs):
         yield op(*space)
 
 def uint2vec(n, length=None):
-    """Convert an unsigned integer to a VectorFunction."""
+    """Convert an unsigned integer to a VectorExpression."""
     assert n >= 0
 
-    vv = VectorFunction()
+    vv = VectorExpression()
     if n == 0:
         vv.append(Zero)
     else:
@@ -244,7 +207,7 @@ def uint2vec(n, length=None):
     return vv
 
 def int2vec(n, length=None):
-    """Convert a signed integer to a VectorFunction."""
+    """Convert a signed integer to a VectorExpression."""
     if n < 0:
         req_length = _clog2(abs(n)) + 1
         vv = uint2vec(2 ** req_length + n)
@@ -261,187 +224,6 @@ def int2vec(n, length=None):
             vv.ext(length - req_length)
 
     return vv
-
-#===============================================================================
-# Classes
-#===============================================================================
-
-class Function:
-    """
-    Abstract base class that defines an interface for a scalar Boolean function
-    of N variables.
-    """
-    def __repr__(self):
-        """Return a function's printable representation."""
-        return self.__str__()
-
-    @property
-    def support(self):
-        """Return the support set of a function.
-
-        Let f(x1, x2, ..., xn) be a Boolean function of N variables. The set
-        {x1, x2, ..., xn} is called the *support* of the function.
-        """
-        raise NotImplementedError()
-
-    def __abs__(self):
-        """Return the cardinality of the support set."""
-        return len(self.support)
-
-    # Operators
-    def __neg__(self):
-        """Return symbolic complement of a Boolean function.
-
-        +---+----+
-        | f | -f |
-        +---+----+
-        | 0 |  1 |
-        | 1 |  0 |
-        +---+----+
-
-        Also known as: NOT
-        """
-        raise NotImplementedError()
-
-    def __add__(self, other):
-        """Return symbolic disjunction of two functions.
-
-        +---+---+-------+
-        | f | g | f + g |
-        +---+---+-------+
-        | 0 | 0 |   0   |
-        | 0 | 1 |   1   |
-        | 1 | 0 |   1   |
-        | 1 | 1 |   1   |
-        +---+---+-------+
-
-        Also known as: sum, OR
-        """
-        raise NotImplementedError()
-
-    def __mul__(self, other):
-        """Return symbolic conjunction of two functions.
-
-        +---+---+-------+
-        | f | g | f * g |
-        +---+---+-------+
-        | 0 | 0 |   0   |
-        | 0 | 1 |   0   |
-        | 1 | 0 |   0   |
-        | 1 | 1 |   1   |
-        +---+---+-------+
-
-        Also known as: product, AND
-        """
-        raise NotImplementedError()
-
-    #def __eq__(self, other):
-    #    """Return symbolic "equal to" of two functions.
-
-    #    +---+---+-------+
-    #    | f | g | f = g |
-    #    +---+---+-------+
-    #    | 0 | 0 |   1   |
-    #    | 0 | 1 |   0   |
-    #    | 1 | 0 |   0   |
-    #    | 1 | 1 |   1   |
-    #    +---+---+-------+
-
-    #    Also known as: Exclusive OR (XOR), even parity
-    #    """
-    #    raise NotImplementedError()
-
-    #def __ne__(self, other):
-    #    """Return symbolic "not equal to" of two functions.
-
-    #    +---+---+--------+
-    #    | f | g | f != g |
-    #    +---+---+--------+
-    #    | 0 | 0 |    0   |
-    #    | 0 | 1 |    1   |
-    #    | 1 | 0 |    1   |
-    #    | 1 | 1 |    0   |
-    #    +---+---+--------+
-
-    #    Also known as: Exclusive NOR (XNOR), odd parity
-    #    """
-    #    raise NotImplementedError()
-
-    #def __gt__(self, other):
-    #    """Return symbolic "greater than" of two functions.
-
-    #    +---+---+-------+
-    #    | f | g | f > g |
-    #    +---+---+-------+
-    #    | 0 | 0 |   0   |
-    #    | 0 | 1 |   0   |
-    #    | 1 | 0 |   1   |
-    #    | 1 | 1 |   0   |
-    #    +---+---+-------+
-    #    """
-    #    raise NotImplementedError()
-
-    #def __lt__(self, other):
-    #    """Return symbolic "less than" of two functions.
-
-    #    +---+---+-------+
-    #    | f | g | f < g |
-    #    +---+---+-------+
-    #    | 0 | 0 |   0   |
-    #    | 0 | 1 |   1   |
-    #    | 1 | 0 |   0   |
-    #    | 1 | 1 |   0   |
-    #    +---+---+-------+
-    #    """
-    #    raise NotImplementedError()
-
-    #def __ge__(self, other):
-    #    """Return symbolic "greater than or equal to" of two functions.
-
-    #    +---+---+--------+
-    #    | f | g | f >= g |
-    #    +---+---+--------+
-    #    | 0 | 0 |    1   |
-    #    | 0 | 1 |    0   |
-    #    | 1 | 0 |    1   |
-    #    | 1 | 1 |    1   |
-    #    +---+---+--------+
-    #    """
-    #    raise NotImplementedError()
-
-    def __le__(self, other):
-        """Return symbolic "less than or equal to" of two functions.
-
-        +---+---+--------+
-        | f | g | f <= g |
-        +---+---+--------+
-        | 0 | 0 |    1   |
-        | 0 | 1 |    1   |
-        | 1 | 0 |    0   |
-        | 1 | 1 |    1   |
-        +---+---+--------+
-
-        Also known as: implies (f -> g)
-        """
-        raise NotImplementedError()
-
-    def restrict(self, d):
-        """
-        Return the Boolean function that results after restricting a subset of
-        its input variables to {0, 1}.
-
-        g = f | xi=b
-        """
-        raise NotImplementedError()
-
-    def compose(self, d):
-        """
-        Return the Boolean function that results after substituting a subset of
-        its input variables for other Boolean functions.
-
-        g = f1 | xi=f2
-        """
-        raise NotImplementedError()
 
 
 #class Table(Scalar):
@@ -489,6 +271,10 @@ class Expression(Function):
 
     def __init__(self):
         self._cache = dict()
+
+    def __repr__(self):
+        """Return a printable representation."""
+        return self.__str__()
 
     # From Function
     @property
@@ -1410,7 +1196,7 @@ class Implies(Expression):
         return Implies(xs[0], xs[1])
 
 
-class VectorFunction:
+class VectorExpression(VectorFunction):
     """Vector Boolean function"""
 
     def __init__(self, *fs, **kwargs):
@@ -1418,23 +1204,13 @@ class VectorFunction:
         self._start = kwargs.get("start", 0)
         self._bnr = kwargs.get("bnr", UNSIGNED)
 
-    def __len__(self):
-        return len(self.fs)
-
-    def __int__(self):
-        return self.to_int()
-
     def __str__(self):
         return str(self.fs)
 
-    def __iter__(self):
-        for f in self.fs:
-            yield f
-
     # unary operators
-    def __invert__(self):
+    def unot(self):
         fs = [Not(v) for v in self.fs]
-        return VectorFunction(*fs, start=self._start, bnr=self._bnr)
+        return VectorExpression(*fs, start=self._start, bnr=self._bnr)
 
     def uor(self):
         return Or(*list(self.fs))
@@ -1447,55 +1223,19 @@ class VectorFunction:
 
     # binary operators
     def __or__(self, other):
-        assert isinstance(other, VectorFunction) and len(self) == len(other)
-        return VectorFunction(*[Or(*t) for t in zip(self.fs, other.fs)])
+        assert isinstance(other, VectorExpression) and len(self) == len(other)
+        return VectorExpression(*[Or(*t) for t in zip(self.fs, other.fs)])
 
     def __and__(self, other):
-        assert isinstance(other, VectorFunction) and len(self) == len(other)
-        return VectorFunction(*[And(*t) for t in zip(self.fs, other.fs)])
+        assert isinstance(other, VectorExpression) and len(self) == len(other)
+        return VectorExpression(*[And(*t) for t in zip(self.fs, other.fs)])
 
     def __xor__(self, other):
-        assert isinstance(other, VectorFunction) and len(self) == len(other)
-        return VectorFunction(*[Xor(*t) for t in zip(self.fs, other.fs)])
-
-    def getifz(self, i):
-        """Get item from zero-based index."""
-        return self.__getitem__(i + self.start)
-
-    def __getitem__(self, sl):
-        if isinstance(sl, int):
-            return self.fs[self._norm_idx(sl)]
-        else:
-            norm = self._norm_slice(sl)
-            return VectorFunction(*self.fs.__getitem__(norm),
-                                  start=(norm.start + self._start),
-                                  bnr=self._bnr)
-
-    def __setitem__(self, sl, f):
-        if isinstance(sl, int):
-            self.fs.__setitem__(sl, f)
-        else:
-            norm = self._norm_slice(sl)
-            self.fs.__setitem__(norm, f)
-
-    @property
-    def start(self):
-        return self._start
-
-    @property
-    def bnr(self):
-        return self._bnr
-
-    @bnr.setter
-    def bnr(self, value):
-        self._bnr = value
-
-    @property
-    def sl(self):
-        return slice(self._start, len(self.fs) + self._start)
+        assert isinstance(other, VectorExpression) and len(self) == len(other)
+        return VectorExpression(*[Xor(*t) for t in zip(self.fs, other.fs)])
 
     def to_uint(self):
-        """Convert vector into an unsigned integer."""
+        """Convert vector to an unsigned integer."""
         n = 0
         for i, f in enumerate(self.fs):
             if isinstance(f, Numeric):
@@ -1506,7 +1246,7 @@ class VectorFunction:
         return n
 
     def to_int(self):
-        """Convert vector into an integer."""
+        """Convert vector to an integer."""
         n = self.to_uint()
         if self._bnr == TWOS_COMPLEMENT and self.fs[-1]:
             return -2 ** self.__len__() + n
@@ -1523,10 +1263,6 @@ class VectorFunction:
     def vsubs(self, d):
         """Expand all vectors before doing a substitution."""
         return self.subs(_expand_vectors(d))
-
-    def append(self, f):
-        """Append logic function to the end of this vector."""
-        self.fs.append(f)
 
     def ext(self, n):
         """Extend this vector by N bits.
@@ -1551,49 +1287,19 @@ class VectorFunction:
     #                    for i in range(2 ** len(A))])
 
     def ripple_carry_add(A, B, ci=Zero):
-        assert isinstance(B, VectorFunction) and len(A) == len(B)
+        assert isinstance(B, VectorExpression) and len(A) == len(B)
         if A.bnr == TWOS_COMPLEMENT or B.bnr == TWOS_COMPLEMENT:
             sum_bnr = TWOS_COMPLEMENT
         else:
             sum_bnr = UNSIGNED
-        S = VectorFunction(bnr=sum_bnr)
-        C = VectorFunction()
+        S = VectorExpression(bnr=sum_bnr)
+        C = VectorExpression()
         for i, A in enumerate(A.fs):
             carry = (ci if i == 0 else C[i-1])
             S.append(Xor(A, B.getifz(i), carry))
             C.append(A * B.getifz(i) + A * carry + B.getifz(i) * carry)
         return S, C
 
-    def _norm_idx(self, i):
-        """Return an index normalized to vector start index."""
-        if i >= 0:
-            if i < self._start:
-                raise IndexError("list index out of range")
-            else:
-                idx = i - self._start
-        else:
-            idx = i + self._start
-        return idx
-
-    def _norm_slice(self, sl):
-        """Return a slice normalized to vector start index."""
-        d = dict()
-        for k in ("start", "stop"):
-            idx = getattr(sl, k)
-            if idx is not None:
-                d[k] = (idx if idx >= 0 else self.sl.stop + idx)
-            else:
-                d[k] = getattr(self.sl, k)
-        if d["start"] < self.sl.start or d["stop"] > self.sl.stop:
-            raise IndexError("list index out of range")
-        elif d["start"] >= d["stop"]:
-            raise IndexError("zero-sized slice")
-        return slice(d["start"] - self._start, d["stop"] - self._start)
-
-
-#===============================================================================
-# Internal Functions
-#===============================================================================
 
 def _clog2(n):
     """Return the ceiling, log base two of an integer."""
@@ -1609,11 +1315,11 @@ def _bit_on(n, bit):
 
 def _expand_vectors(d):
     """Expand all vectors in a substitution dict."""
-    temp = {k: v for k, v in d.items() if isinstance(k, VectorFunction)}
+    temp = {k: v for k, v in d.items() if isinstance(k, VectorExpression)}
     d = {k: v for k, v in d.items() if k not in temp}
     while temp:
         key, val = temp.popitem()
-        if isinstance(key, VectorFunction):
+        if isinstance(key, VectorExpression):
             assert len(key) == len(val)
             for i, x in enumerate(val):
                 d[key.getifz(i)] = x if isinstance(x, Function) else num(x)

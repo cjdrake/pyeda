@@ -1,7 +1,8 @@
 """
 Python EDA Package
 
-boolalg.py
+boolfunc.py -- Boolean Functions
+boolexpr.py -- Boolean Expressions
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
