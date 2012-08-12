@@ -1,5 +1,5 @@
 """
-Boolean Algebra
+Boolean Expressions
 
 Interface Functions:
     num
@@ -1207,11 +1207,7 @@ class VectorExpression(VectorFunction):
     def __str__(self):
         return str(self.fs)
 
-    # unary operators
-    def unot(self):
-        fs = [Not(v) for v in self.fs]
-        return VectorExpression(*fs, start=self._start, bnr=self._bnr)
-
+    # Operators
     def uor(self):
         return Or(*list(self.fs))
 
@@ -1221,7 +1217,10 @@ class VectorExpression(VectorFunction):
     def uxor(self):
         return Xor(*list(self.fs))
 
-    # binary operators
+    def __invert__(self):
+        fs = [Not(v) for v in self.fs]
+        return VectorExpression(*fs, start=self._start, bnr=self._bnr)
+
     def __or__(self, other):
         assert isinstance(other, VectorExpression) and len(self) == len(other)
         return VectorExpression(*[Or(*t) for t in zip(self.fs, other.fs)])

@@ -249,9 +249,6 @@ class VectorFunction:
         return slice(self._start, len(self.fs) + self._start)
 
     # Operators
-    def unot(self):
-        raise NotImplementedError()
-
     def uor(self):
         raise NotImplementedError()
 
@@ -262,7 +259,7 @@ class VectorFunction:
         raise NotImplementedError()
 
     def __invert__(self):
-        return self.unot()
+        raise NotImplementedError()
 
     def __or__(self, other):
         raise NotImplementedError()

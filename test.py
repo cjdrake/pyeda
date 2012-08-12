@@ -9,7 +9,7 @@ __license__ = "All rights reserved."
 import random
 
 # pyeda
-from pyeda.boolalg import (
+from pyeda.boolexpr import (
     var, vec, svec,
     Zero, One,
     Buf, Not,
