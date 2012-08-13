@@ -285,16 +285,19 @@ class Expression(Function):
             self._cache["support"] = val
         return val
 
-    def __neg__(self):
+    def op_not(self):
         return Not(self)
 
-    def __add__(self, other):
+    def op_or(self, other):
         return Or(self, other)
 
-    def __mul__(self, other):
+    def op_and(self, other):
         return And(self, other)
 
-    def __rshift__(self, other):
+    def op_ge(self, other):
+        return Implies(other, self)
+
+    def op_le(self, other):
         return Implies(self, other)
 
     # Specific to Expressions

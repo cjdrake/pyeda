@@ -3,6 +3,7 @@ Boolean Functions
 
 Interface Classes:
     Function
+    VectorFunction
 
 Huntington's Postulates
 +---------------------------------+--------------+
@@ -56,8 +57,32 @@ class Function:
         """Return the cardinality of the support set."""
         return len(self.support)
 
-    # Operators
+    # Overloaded operators
     def __neg__(self):
+        return self.op_not()
+
+    def __add__(self, other):
+        return self.op_or(other)
+
+    #def __radd__(self, other):
+    #    return self.op_or(other)
+
+    def __mul__(self, other):
+        return self.op_and(other)
+
+    #def __rmul__(self, other):
+    #    return self.op_and(other)
+
+    def __lshift__(self, other):
+        """Return a << b, equivalent to b -> a."""
+        return self.op_ge(other)
+
+    def __rshift__(self, other):
+        """Return a >> b, equivalent to a -> b."""
+        return self.op_le(other)
+
+    # Operators
+    def op_not(self):
         """Return symbolic complement of a Boolean function.
 
         +---+----+
@@ -71,8 +96,8 @@ class Function:
         """
         raise NotImplementedError()
 
-    def __add__(self, other):
-        """Return symbolic disjunction of two functions.
+    def op_or(self, *args):
+        """Return symbolic disjunction of functions.
 
         +---+---+-------+
         | f | g | f + g |
@@ -87,8 +112,8 @@ class Function:
         """
         raise NotImplementedError()
 
-    def __mul__(self, other):
-        """Return symbolic conjunction of two functions.
+    def op_and(self, *args):
+        """Return symbolic conjunction of functions.
 
         +---+---+-------+
         | f | g | f * g |
@@ -103,81 +128,81 @@ class Function:
         """
         raise NotImplementedError()
 
-    #def __eq__(self, other):
-    #    """Return symbolic "equal to" of two functions.
+    def op_xor(self, *args):
+        """Return symbolic "equal to" of functions.
 
-    #    +---+---+-------+
-    #    | f | g | f = g |
-    #    +---+---+-------+
-    #    | 0 | 0 |   1   |
-    #    | 0 | 1 |   0   |
-    #    | 1 | 0 |   0   |
-    #    | 1 | 1 |   1   |
-    #    +---+---+-------+
+        +---+---+-------+
+        | f | g | f = g |
+        +---+---+-------+
+        | 0 | 0 |   1   |
+        | 0 | 1 |   0   |
+        | 1 | 0 |   0   |
+        | 1 | 1 |   1   |
+        +---+---+-------+
 
-    #    Also known as: Exclusive OR (XOR), even parity
-    #    """
-    #    raise NotImplementedError()
+        Also known as: Exclusive OR (XOR), even parity
+        """
+        raise NotImplementedError()
 
-    #def __ne__(self, other):
-    #    """Return symbolic "not equal to" of two functions.
+    def op_xnor(self, *args):
+        """Return symbolic "not equal to" of functions.
 
-    #    +---+---+--------+
-    #    | f | g | f != g |
-    #    +---+---+--------+
-    #    | 0 | 0 |    0   |
-    #    | 0 | 1 |    1   |
-    #    | 1 | 0 |    1   |
-    #    | 1 | 1 |    0   |
-    #    +---+---+--------+
+        +---+---+--------+
+        | f | g | f != g |
+        +---+---+--------+
+        | 0 | 0 |    0   |
+        | 0 | 1 |    1   |
+        | 1 | 0 |    1   |
+        | 1 | 1 |    0   |
+        +---+---+--------+
 
-    #    Also known as: Exclusive NOR (XNOR), odd parity
-    #    """
-    #    raise NotImplementedError()
+        Also known as: Exclusive NOR (XNOR), odd parity
+        """
+        raise NotImplementedError()
 
-    #def __gt__(self, other):
-    #    """Return symbolic "greater than" of two functions.
+    def op_gt(self, other):
+        """Return symbolic "greater than" of two functions.
 
-    #    +---+---+-------+
-    #    | f | g | f > g |
-    #    +---+---+-------+
-    #    | 0 | 0 |   0   |
-    #    | 0 | 1 |   0   |
-    #    | 1 | 0 |   1   |
-    #    | 1 | 1 |   0   |
-    #    +---+---+-------+
-    #    """
-    #    raise NotImplementedError()
+        +---+---+-------+
+        | f | g | f > g |
+        +---+---+-------+
+        | 0 | 0 |   0   |
+        | 0 | 1 |   0   |
+        | 1 | 0 |   1   |
+        | 1 | 1 |   0   |
+        +---+---+-------+
+        """
+        raise NotImplementedError()
 
-    #def __lt__(self, other):
-    #    """Return symbolic "less than" of two functions.
+    def op_lt(self, other):
+        """Return symbolic "less than" of two functions.
 
-    #    +---+---+-------+
-    #    | f | g | f < g |
-    #    +---+---+-------+
-    #    | 0 | 0 |   0   |
-    #    | 0 | 1 |   1   |
-    #    | 1 | 0 |   0   |
-    #    | 1 | 1 |   0   |
-    #    +---+---+-------+
-    #    """
-    #    raise NotImplementedError()
+        +---+---+-------+
+        | f | g | f < g |
+        +---+---+-------+
+        | 0 | 0 |   0   |
+        | 0 | 1 |   1   |
+        | 1 | 0 |   0   |
+        | 1 | 1 |   0   |
+        +---+---+-------+
+        """
+        raise NotImplementedError()
 
-    #def __ge__(self, other):
-    #    """Return symbolic "greater than or equal to" of two functions.
+    def op_ge(self, other):
+        """Return symbolic "greater than or equal to" of two functions.
 
-    #    +---+---+--------+
-    #    | f | g | f >= g |
-    #    +---+---+--------+
-    #    | 0 | 0 |    1   |
-    #    | 0 | 1 |    0   |
-    #    | 1 | 0 |    1   |
-    #    | 1 | 1 |    1   |
-    #    +---+---+--------+
-    #    """
-    #    raise NotImplementedError()
+        +---+---+--------+
+        | f | g | f >= g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    0   |
+        | 1 | 0 |    1   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
+        """
+        raise NotImplementedError()
 
-    def __le__(self, other):
+    def op_le(self, other):
         """Return symbolic "less than or equal to" of two functions.
 
         +---+---+--------+
