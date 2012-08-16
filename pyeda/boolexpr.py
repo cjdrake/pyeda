@@ -27,7 +27,7 @@ Interface Classes:
     Expression
         Numeric: Zero, One
         Literal
-            Variable
+            VariableEx
             Complement
         OrAnd
             Or
@@ -44,8 +44,9 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from .boolfunc import Function, VectorFunction
+from .boolfunc import Variable, Function, VectorFunction
 from .boolfunc import UNSIGNED, TWOS_COMPLEMENT
+from .common import bit_on
 
 B = {0, 1}
 
@@ -65,11 +66,11 @@ def num(x):
         NUMBERS[n] = ret
     return ret
 
-def var(name, index=-1):
+def var(name, index=None):
     try:
         ret = VARIABLES[(name, index)]
     except KeyError:
-        ret = Variable(name, index)
+        ret = VariableEx(name, index)
         VARIABLES[(name, index)] = ret
     return ret
 
@@ -93,7 +94,7 @@ def vec(name, *args, **kwargs):
         raise TypeError("vec() expected at most three arguments")
     if not 0 <= start < stop:
         raise ValueError("invalid range: [{}:{}]".format(start, stop))
-    fs = [Variable(name, index=i) for i in range(start, stop)]
+    fs = [VariableEx(name, index=i) for i in range(start, stop)]
     return VectorExpression(*fs, start=start, **kwargs)
 
 def svec(name, *args, **kwargs):
@@ -165,7 +166,7 @@ def cube_pos(*vs):
 def iter_space(*vs):
     """Return the multi-dimensional space spanned by N Boolean variables."""
     for n in range(2 ** len(vs)):
-        yield tuple((v if _bit_on(n, i) else -v) for i, v in enumerate(vs))
+        yield tuple((v if bit_on(n, i) else -v) for i, v in enumerate(vs))
 
 def iter_points(op, *vs):
     """
@@ -239,11 +240,11 @@ class Expression(Function):
     def op_not(self):
         return Not(self)
 
-    def op_or(self, other):
-        return Or(self, other)
+    def op_or(self, *args):
+        return Or(self, *args)
 
-    def op_and(self, other):
-        return And(self, other)
+    def op_and(self, *args):
+        return And(self, *args)
 
     def op_ge(self, other):
         return Implies(other, self)
@@ -267,7 +268,7 @@ class Expression(Function):
 
     def iter_outputs(self):
         for n in range(2 ** abs(self)):
-            d = {v: _bit_on(n, i) for i, v in enumerate(self.inputs)}
+            d = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
             yield self.restrict(d)
 
     def factor(self):
@@ -289,22 +290,6 @@ class Expression(Function):
         """
         raise NotImplementedError()
 
-    def iter_cofactors(self, *vs):
-        """Iterate through the cofactors of N variables."""
-        for n in range(2 ** len(vs)):
-            yield self.restrict({v: _bit_on(n, i) for i, v in enumerate(vs)})
-
-    def cofactors(self, *vs):
-        """Return a list of cofactors of N variables.
-
-        The *cofactor* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi is f[xi] = f(x1, x2, ..., 1, ..., xn)
-
-        The *cofactor* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi' is f[xi'] = f(x1, x2, ..., 0, ..., xn)
-        """
-        return [cf for cf in self.iter_cofactors(*vs)]
-
     def is_neg_unate(self, *vs):
         """Return whether a function is negative unate.
 
@@ -313,7 +298,7 @@ class Expression(Function):
         """
         vs = vs or self.inputs
         for v in vs:
-            fv0, fv1 = self.cofactors(v)
+            fv0, fv1 = self.cofactors([v])
             if isinstance(fv0, Numeric) or isinstance(fv1, Numeric):
                 if not (fv0 is One or fv1 is Zero):
                     return False
@@ -329,7 +314,7 @@ class Expression(Function):
         """
         vs = vs or self.inputs
         for v in vs:
-            fv0, fv1 = self.cofactors(v)
+            fv0, fv1 = self.cofactors([v])
             if isinstance(fv0, Numeric) or isinstance(fv1, Numeric):
                 if not (fv1 is One or fv0 is Zero):
                     return False
@@ -352,7 +337,7 @@ class Expression(Function):
         The *smoothing* of f(x1, x2, ..., xi, ..., xn) with respect to
         variable xi is S[xi](f) = f[xi] + f[xi']
         """
-        return Or(*self.cofactors(*vs))
+        return Or(*self.cofactors(vs))
 
     def consensus(self, *vs):
         """Return the consensus of a function.
@@ -360,7 +345,7 @@ class Expression(Function):
         The *consensus* of f(x1, x2, ..., xi, ..., xn) with respect to
         variable xi is C[xi](f) = f[xi] * f[xi']
         """
-        return And(*self.cofactors(*vs))
+        return And(*self.cofactors(vs))
 
     def derivative(self, *vs):
         """Return the derivative of a function.
@@ -368,7 +353,7 @@ class Expression(Function):
         The *derivate* of f(x1, x2, ..., xi, ..., xn) with respect to
         variable xi is df/dxi = f[xi] (xor) f[xi']
         """
-        return Xor(*self.cofactors(*vs))
+        return Xor(*self.cofactors(vs))
 
     @property
     def inputs(self):
@@ -393,7 +378,7 @@ class Expression(Function):
             d = dict()
             space = list()
             for i, v in enumerate(self.inputs):
-                on = _bit_on(n, i)
+                on = bit_on(n, i)
                 d[v] = on
                 space.append(v if on else -v)
             output = self.restrict(d)
@@ -406,7 +391,7 @@ class Expression(Function):
             d = dict()
             space = list()
             for i, v in enumerate(self.inputs):
-                on = _bit_on(n, i)
+                on = bit_on(n, i)
                 d[v] = on
                 space.append(-v if on else v)
             output = self.restrict(d)
@@ -556,37 +541,27 @@ class Literal(Expression):
         return self == other
 
 
-class Variable(Literal):
-    """Boolean variable"""
+class VariableEx(Variable, Literal):
+    """Boolean variable (expression)"""
 
-    def __init__(self, name, index=-1):
-        super(Variable, self).__init__()
-        self._name = name
-        self._index = index
-
-    def __str__(self):
-        if self._index >= 0:
-            return "{0._name}[{0.index}]".format(self)
-        else:
-            return self._name
+    def __init__(self, name, index=None):
+        Variable.__init__(self, name, index)
+        Literal.__init__(self)
 
     def __lt__(self, other):
         if isinstance(other, Numeric):
             return False
         if isinstance(other, Literal):
             return (self.name < other.name or
-                    self.name == other.name and self.index < other.index)
+                    self.name == other.name and self.idx < other.idx)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
     @property
-    def name(self):
-        return self._name
-
-    @property
-    def index(self):
-        return self._index
+    def idx(self):
+        """Return an index for ordering comparison."""
+        return (-1 if self.index is None else self.index)
 
     def iter_vars(self):
         yield self
@@ -620,12 +595,12 @@ class Complement(Literal):
     def __lt__(self, other):
         if isinstance(other, Numeric):
             return False
-        if isinstance(other, Variable):
+        if isinstance(other, VariableEx):
             return (self.name < other.name or
-                    self.name == other.name and self.index <= other.index)
+                    self.name == other.name and self._var.idx <= other.idx)
         if isinstance(other, Complement):
             return (self.name < other.name or
-                    self.name == other.name and self.index < other.index)
+                    self.name == other.name and self._var.idx < other.var.idx)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
@@ -1231,7 +1206,7 @@ class VectorExpression(VectorFunction):
     #    return And(*[Xnor(*t) for t in zip(A.fs, B.fs)])
 
     #def decode(A):
-    #    return Vector(*[And(*[f if _bit_on(i, j) else -f
+    #    return Vector(*[And(*[f if bit_on(i, j) else -f
     #                          for j, f in enumerate(A.fs)])
     #                    for i in range(2 ** len(A))])
 
@@ -1258,9 +1233,6 @@ def _clog2(n):
         x = x << 1;
         i += 1
     return i
-
-def _bit_on(n, bit):
-    return bool((n >> bit) & 1)
 
 def _expand_vectors(d):
     """Expand all vectors in a substitution dict."""

@@ -123,8 +123,8 @@ def test_literal():
     assert a.name == "a"
 
     # index
-    assert (-a).index == -1
-    assert a.index == -1
+    assert (-a).index is None
+    assert a.index is None
     assert c0.index == 0
     assert c1.index == 1
 
@@ -446,10 +446,10 @@ def test_absorb():
 
 def test_cofactors():
     f = a * b + a * c + b * c
-    assert str(f.cofactors()) == "[a * b + a * c + b * c]"
-    assert str(f.cofactors(a)) == "[b * c, b + c + b * c]"
-    assert f.cofactors(a, b) == [0, c, c, 1]
-    assert f.cofactors(a, b, c) == [0, 0, 0, 1, 0, 1, 1, 1]
+    assert str(f.cofactors()) == "(a * b + a * c + b * c,)"
+    assert str(f.cofactors([a])) == "(b * c, b + c + b * c)"
+    assert f.cofactors([a, b]) == (0, c, c, 1)
+    assert f.cofactors([a, b, c]) == (0, 0, 0, 1, 0, 1, 1, 1)
     assert str(f.smoothing(a)) == "b + c + b * c + b * c"
     assert str(f.consensus(a)) == "b * c * (b + c + b * c)"
     assert str(f.derivative(a).to_sop()) == "b' * c + b * c'"

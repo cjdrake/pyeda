@@ -2,6 +2,7 @@
 Boolean Functions
 
 Interface Classes:
+    Variable
     Function
     VectorFunction
 
@@ -37,7 +38,32 @@ Properties of Boolean Algebraic Systems
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
+from .common import bit_on
+
 UNSIGNED, TWOS_COMPLEMENT = range(2)
+
+
+class Variable:
+    """Boolean variable base class"""
+
+    def __init__(self, name, index=None):
+        self._name = name
+        self._index = index
+
+    def __str__(self):
+        if self._index is None:
+            return self._name
+        else:
+            return "{0._name}[{0._index}]".format(self)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def index(self):
+        return self._index
+
 
 class Function:
     """
@@ -77,9 +103,15 @@ class Function:
         """Return a << b, equivalent to b -> a."""
         return self.op_ge(other)
 
+    #def __rlshift(self, other):
+    #    return self.op_ge(other):
+
     def __rshift__(self, other):
         """Return a >> b, equivalent to a -> b."""
         return self.op_le(other)
+
+    #def __rrshift__(self, other):
+    #    return self.op_le(other)
 
     # Operators
     def op_not(self):
@@ -128,7 +160,7 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_xor(self, *args):
+    def op_eq(self, *args):
         """Return symbolic "equal to" of functions.
 
         +---+---+-------+
@@ -140,11 +172,11 @@ class Function:
         | 1 | 1 |   1   |
         +---+---+-------+
 
-        Also known as: Exclusive OR (XOR), even parity
+        Also known as: Exclusive NOR (XNOR), even parity
         """
         raise NotImplementedError()
 
-    def op_xnor(self, *args):
+    def op_ne(self, *args):
         """Return symbolic "not equal to" of functions.
 
         +---+---+--------+
@@ -156,7 +188,7 @@ class Function:
         | 1 | 1 |    0   |
         +---+---+--------+
 
-        Also known as: Exclusive NOR (XNOR), odd parity
+        Also known as: Exclusive OR (XOR), odd parity
         """
         raise NotImplementedError()
 
@@ -235,6 +267,23 @@ class Function:
         g = f1 | xi=f2
         """
         raise NotImplementedError()
+
+    def iter_cofactors(self, vs=None):
+        """Iterate through the cofactors of N variables."""
+        vs = vs or list()
+        for n in range(2 ** len(vs)):
+            yield self.restrict({v: bit_on(n, i) for i, v in enumerate(vs)})
+
+    def cofactors(self, vs=None):
+        """Return a tuple of cofactors of N variables.
+
+        The *cofactor* of f(x1, x2, ..., xi, ..., xn) with respect to
+        variable xi is f[xi] = f(x1, x2, ..., 1, ..., xn)
+
+        The *cofactor* of f(x1, x2, ..., xi, ..., xn) with respect to
+        variable xi' is f[xi'] = f(x1, x2, ..., 0, ..., xn)
+        """
+        return tuple(cf for cf in self.iter_cofactors(vs))
 
 
 class VectorFunction:

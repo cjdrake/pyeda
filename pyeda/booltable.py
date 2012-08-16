@@ -2,6 +2,8 @@
 Boolean Tables
 """
 
+__copyright__ = "Copyright (c) 2012, Chris Drake"
+
 # Positional Cube Notation
 #PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
 
