@@ -2,7 +2,6 @@
 Boolean Expressions
 
 Interface Functions:
-    num
     var
     comp
     vec
@@ -25,7 +24,6 @@ Interface Functions:
 
 Interface Classes:
     Expression
-        Numeric: Zero, One
         Literal
             VariableEx
             Complement
@@ -44,27 +42,15 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from .boolfunc import Variable, Function, VectorFunction
-from .boolfunc import UNSIGNED, TWOS_COMPLEMENT
-from .common import bit_on
+from .common import bit_on, cached_property
+
+from .boolfunc import Variable, Function
+from .boolfunc import VectorFunction as VF
 
 B = {0, 1}
 
-NUMBERS = dict()
 VARIABLES = dict()
 COMPLEMENTS = dict()
-
-def num(x):
-    """Return a unique Boolean number."""
-    n = int(x)
-    if not n in B:
-        raise ValueError("invalid Boolean number: " + str(n))
-    try:
-        ret = NUMBERS[n]
-    except KeyError:
-        ret = Numeric(n)
-        NUMBERS[n] = ret
-    return ret
 
 def var(name, index=None):
     try:
@@ -99,7 +85,7 @@ def vec(name, *args, **kwargs):
 
 def svec(name, *args, **kwargs):
     """Return a signed vector of variables."""
-    return vec(name, *args, bnr=TWOS_COMPLEMENT, **kwargs)
+    return vec(name, *args, bnr=VF.TWOS_COMPLEMENT, **kwargs)
 
 def factor(expr):
     """Return a factored expression."""
@@ -110,17 +96,17 @@ def simplify(expr):
     return expr.simplify()
 
 # operators
-def nor(*xs):
+def nor(*args):
     """Boolean NOR (not or) operator"""
-    return Not(Or(*xs))
+    return Not(Or(*args))
 
-def nand(*xs):
+def nand(*args):
     """Boolean NAND (not and) operator"""
-    return Not(And(*xs))
+    return Not(And(*args))
 
-def ite(f, g, h):
-    """Boolean ITE (if then else) operator"""
-    return Or(And(f, g), And(Not(f), h))
+#def ite(f, g, h):
+#    """Boolean ITE (if then else) operator"""
+#    return Or(And(f, g), And(Not(f), h))
 
 # factored operators
 def f_not(x):
@@ -147,52 +133,49 @@ def f_xnor(*xs):
 def f_implies(x0, x1):
     return Implies(x0, x1).factor()
 
-def cube_sop(*vs):
+def cube_sop(vs):
     """
     Return the multi-dimensional space spanned by N Boolean variables as a
     sum of products.
     """
-    points = [p for p in iter_points(And, *vs)]
+    points = [p for p in iter_points(And, vs)]
     return Or(*points)
 
-def cube_pos(*vs):
+def cube_pos(vs):
     """
     Return the multi-dimensional space spanned by N Boolean variables as a
     product of sums.
     """
-    points = [p for p in iter_points(Or, *vs)]
+    points = [p for p in iter_points(Or, vs)]
     return And(*points)
 
-def iter_space(*vs):
+def iter_space(vs):
     """Return the multi-dimensional space spanned by N Boolean variables."""
     for n in range(2 ** len(vs)):
         yield tuple((v if bit_on(n, i) else -v) for i, v in enumerate(vs))
 
-def iter_points(op, *vs):
+def iter_points(op, vs):
     """
     Iterate through all OR/AND points in the multi-dimensional space spanned
     by N Boolean variables.
     """
     if not issubclass(op, OrAnd):
         raise TypeError("iter_points() expected op type OR/AND")
-    for space in iter_space(*vs):
+    for space in iter_space(vs):
         yield op(*space)
 
-def uint2vec(n, length=None):
+def uint2vec(num, length=None):
     """Convert an unsigned integer to a VectorExpression."""
-    assert n >= 0
+    assert num >= 0
 
     vv = VectorExpression()
-    if n == 0:
-        vv.append(Zero)
-    else:
-        while n != 0:
-            vv.append(num(n & 1))
-            n >>= 1
+    while num != 0:
+        vv.append(num & 1)
+        num >>= 1
 
     if length:
         if length < len(vv):
-            raise ValueError("overflow: " + str(n))
+            raise ValueError("overflow: " + str(num))
         else:
             vv.ext(length - len(vv))
 
@@ -207,7 +190,7 @@ def int2vec(n, length=None):
         req_length = _clog2(n + 1) + 1
         vv = uint2vec(n)
         vv.ext(req_length - len(vv))
-    vv.bnr = TWOS_COMPLEMENT
+    vv.bnr = VF.TWOS_COMPLEMENT
 
     if length:
         if length < req_length:
@@ -221,21 +204,18 @@ def int2vec(n, length=None):
 class Expression(Function):
     """Boolean function represented by a logic expression"""
 
-    def __init__(self):
-        self._cache = dict()
+    def __lt__(self, other):
+        """Implementing this function makes expressions sortable."""
+        raise NotImplementedError()
 
     def __repr__(self):
         """Return a printable representation."""
         return self.__str__()
 
     # From Function
-    @property
+    @cached_property
     def support(self):
-        val = self._cache.get("support", None)
-        if val is None:
-            val = {v for v in self.iter_vars()}
-            self._cache["support"] = val
-        return val
+        return {v for v in self.iter_vars()}
 
     def op_not(self):
         return Not(self)
@@ -252,6 +232,44 @@ class Expression(Function):
     def op_le(self, other):
         return Implies(self, other)
 
+    def is_neg_unate(self, vs=None):
+        if vs is None:
+            vs = self.support
+        for v in vs:
+            fv0, fv1 = self.cofactors([v])
+            if fv0 in B or fv1 in B:
+                if not (fv0 == 1 or fv1 == 0):
+                    return False
+            # FIXME -- broken
+            elif not (fv0.minterms >= fv1.minterms):
+                return False
+        return True
+
+    def is_pos_unate(self, vs=None):
+        if vs is None:
+            vs = self.support
+        for v in vs:
+            fv0, fv1 = self.cofactors([v])
+            if fv0 in B or fv1 in B:
+                if not (fv1 == 1 or fv0 == 0):
+                    return False
+            # FIXME -- broken
+            elif not (fv1.minterms >= fv0.minterms):
+                return False
+        return True
+
+    def is_binate(self, vs=None):
+        return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
+
+    def smoothing(self, *vs):
+        return Or(*self.cofactors(vs))
+
+    def consensus(self, *vs):
+        return And(*self.cofactors(vs))
+
+    def derivative(self, *vs):
+        return Xor(*self.cofactors(vs))
+
     # Specific to Expressions
     @property
     def depth(self):
@@ -266,10 +284,10 @@ class Expression(Function):
         """Expand all vectors before doing a substitution."""
         return self.restrict(_expand_vectors(d))
 
-    def iter_outputs(self):
-        for n in range(2 ** abs(self)):
-            d = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
-            yield self.restrict(d)
+    #def iter_outputs(self):
+    #    for n in range(2 ** abs(self)):
+    #        d = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
+    #        yield self.restrict(d)
 
     def factor(self):
         """Return a factored expression.
@@ -290,83 +308,14 @@ class Expression(Function):
         """
         raise NotImplementedError()
 
-    def is_neg_unate(self, *vs):
-        """Return whether a function is negative unate.
-
-        A function f(x1, x2, ..., xi, ..., xn) is negative unate in variable
-        xi if f[xi'] >= f[xi].
-        """
-        vs = vs or self.inputs
-        for v in vs:
-            fv0, fv1 = self.cofactors([v])
-            if isinstance(fv0, Numeric) or isinstance(fv1, Numeric):
-                if not (fv0 is One or fv1 is Zero):
-                    return False
-            elif not (fv0.minterms >= fv1.minterms):
-                return False
-        return True
-
-    def is_pos_unate(self, *vs):
-        """Return whether a function is positive unate.
-
-        A function f(x1, x2, ..., xi, ..., xn) is positive unate in variable
-        xi if f[xi] >= f[xi'].
-        """
-        vs = vs or self.inputs
-        for v in vs:
-            fv0, fv1 = self.cofactors([v])
-            if isinstance(fv0, Numeric) or isinstance(fv1, Numeric):
-                if not (fv1 is One or fv0 is Zero):
-                    return False
-            elif not (fv1.minterms >= fv0.minterms):
-                return False
-        return True
-
-    def is_binate(self, *vs):
-        """Return whether a function is binate.
-
-        A function f(x1, x2, ..., xi, ..., xn) is binate in variable xi if it
-        is neither negative nor positive unate in xi.
-        """
-        vs = vs or self.inputs
-        return not (self.is_neg_unate(*vs) or self.is_pos_unate(*vs))
-
-    def smoothing(self, *vs):
-        """Return the smoothing of a function.
-
-        The *smoothing* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi is S[xi](f) = f[xi] + f[xi']
-        """
-        return Or(*self.cofactors(vs))
-
-    def consensus(self, *vs):
-        """Return the consensus of a function.
-
-        The *consensus* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi is C[xi](f) = f[xi] * f[xi']
-        """
-        return And(*self.cofactors(vs))
-
-    def derivative(self, *vs):
-        """Return the derivative of a function.
-
-        The *derivate* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi is df/dxi = f[xi] (xor) f[xi']
-        """
-        return Xor(*self.cofactors(vs))
-
-    @property
+    @cached_property
     def inputs(self):
-        val = self._cache.get("inputs", None)
-        if val is None:
-            val = sorted(self.support)
-            self._cache["inputs"] = val
-        return val
+        return sorted(self.support)
 
-    @property
-    def top(self):
-        """Return the first variable in the ordered support."""
-        return self.inputs[0]
+    #@property
+    #def top(self):
+    #    """Return the first variable in the ordered support."""
+    #    return self.inputs[0]
 
     def iter_vars(self):
         """Recursively iterate through all variables in the expression."""
@@ -398,23 +347,15 @@ class Expression(Function):
             if not output:
                 yield Or(*space)
 
-    @property
+    @cached_property
     def minterms(self):
         """The sum of products of N literals"""
-        val = self._cache.get("minterms", None)
-        if val is None:
-            val = {term for term in self.iter_minterms()}
-            self._cache["minterms"] = val
-        return val
+        return {term for term in self.iter_minterms()}
 
-    @property
+    @cached_property
     def maxterms(self):
         """The product of sums of N literals"""
-        val = self._cache.get("maxterms", None)
-        if val is None:
-            val = {term for term in self.iter_maxterms()}
-            self._cache["maxterms"] = val
-        return val
+        return {term for term in self.iter_maxterms()}
 
     def flatten(self, op):
         """Return expression after flattening OR/AND."""
@@ -453,67 +394,6 @@ class Expression(Function):
         raise NotImplementedError()
 
 
-class Numeric(Expression):
-    """Boolean number"""
-
-    def __init__(self, val):
-        super(Numeric, self).__init__()
-        self._val = val
-
-    def __bool__(self):
-        return bool(self._val)
-
-    def __int__(self):
-        return self._val
-
-    def __str__(self):
-        return str(self._val)
-
-    def __eq__(self, other):
-        if isinstance(other, Expression):
-            return isinstance(other, Numeric) and self._val == other.val
-        else:
-            return self._val == num(other).val
-
-    def __lt__(self, other):
-        if isinstance(other, Expression):
-            return isinstance(other, Numeric) and self._val < other.val
-        else:
-            return self._val < num(other).val
-
-    @property
-    def support(self):
-        return set()
-
-    @property
-    def inputs(self):
-        return list()
-
-    @property
-    def depth(self):
-        return 0
-
-    @property
-    def val(self):
-        return self._val
-
-    def invert(self):
-        return num(1 - self._val)
-
-    def restrict(self, d):
-        return self
-
-    def factor(self):
-        return self
-
-    def simplify(self):
-        return self
-
-
-Zero = num(0)
-One = num(1)
-
-
 class Literal(Expression):
     """An instance of a variable or of its complement"""
 
@@ -528,7 +408,7 @@ class Literal(Expression):
         return 0
 
     @property
-    def xs(self):
+    def args(self):
         return {self}
 
     def factor(self):
@@ -549,7 +429,7 @@ class VariableEx(Variable, Literal):
         Literal.__init__(self)
 
     def __lt__(self, other):
-        if isinstance(other, Numeric):
+        if other in B:
             return False
         if isinstance(other, Literal):
             return (self.name < other.name or
@@ -570,12 +450,12 @@ class VariableEx(Variable, Literal):
         return comp(self)
 
     def restrict(self, d):
-        if self in d:
-            val = d[self]
-            if not isinstance(val, Function):
-                val = num(val)
-            return val
-        else:
+        return self.compose(d)
+
+    def compose(self, d):
+        try:
+            return d[self]
+        except KeyError:
             return self
 
 
@@ -586,14 +466,13 @@ class Complement(Literal):
     OP = "'"
 
     def __init__(self, var):
-        super(Complement, self).__init__()
         self._var = var
 
     def __str__(self):
         return str(self._var) + self.OP
 
     def __lt__(self, other):
-        if isinstance(other, Numeric):
+        if other in B:
             return False
         if isinstance(other, VariableEx):
             return (self.name < other.name or
@@ -624,58 +503,54 @@ class Complement(Literal):
         return self._var
 
     def restrict(self, d):
-        if self._var in d:
-            val = d[self._var]
-            if not isinstance(val, Function):
-                val = num(val)
-            return Not(val)
-        else:
+        return self.compose(d)
+
+    def compose(self, d):
+        try:
+            return Not(d[self._var])
+        except KeyError:
             return self
 
 
 class OrAnd(Expression):
     """base class for Boolean OR/AND expressions"""
 
-    def __new__(cls, *xs):
-        temps, xs = list(xs), list()
+    def __new__(cls, *args):
+        temps, args = list(args), list()
         # x + (y + z) = (x + y) + z; x * (y * z) = (x * y) * z
         while temps:
             t = temps.pop()
-            x = t if isinstance(t, Function) else num(t)
-            if x == cls.ABSORBER:
+            if t == cls.ABSORBER:
                 return cls.ABSORBER
-            elif isinstance(x, cls):
-                temps.extend(x.xs)
-            elif x != cls.IDENTITY:
-                xs.append(x)
+            elif isinstance(t, cls):
+                temps.extend(t.args)
+            elif t != cls.IDENTITY:
+                args.append(t)
 
-        if len(xs) == 0:
+        if len(args) == 0:
             return cls.IDENTITY
-        if len(xs) == 1:
-            return xs[0]
+        if len(args) == 1:
+            return args[0]
 
         self = super(OrAnd, cls).__new__(cls)
-        self.xs = xs
+        self.args = args
         return self
 
-    def __init__(self, *xs):
-        super(OrAnd, self).__init__()
-
     def __iter__(self):
-        return iter(self.xs)
+        return iter(self.args)
 
     def __len__(self):
-        return len(self.xs)
+        return len(self.args)
 
     def __lt__(self, other):
-        if isinstance(other, Numeric):
+        if other in B:
             return False
         if isinstance(other, Literal):
             return self.support < other.support
         if isinstance(other, self.__class__) and self.depth == other.depth == 1:
             # min/max term
             if self.support == other.support:
-                return self.term_index < other.term_index
+                return self.index < other.index
             else:
                 # support containment
                 if self.support < other.support:
@@ -690,66 +565,60 @@ class OrAnd(Expression):
                     return False
         return id(self) < id(other)
 
-    @property
+    @cached_property
     def depth(self):
-        val = self._cache.get("depth", None)
-        if val is None:
-            val = max(x.depth + 1 for x in self.xs)
-            self._cache["depth"] = val
-        return val
+        return max(arg.depth + 1 for arg in self.args)
 
     @property
     def _duals(self):
-        val = self._cache.get("duals", None)
-        if val is None:
-            val = [x for x in self.xs if isinstance(x, self.DUAL)]
-            self._cache["duals"] = val
-        return val
+        return [arg for arg in self.args if isinstance(arg, self.DUAL)]
 
     def iter_vars(self):
-        for x in self.xs:
-            if not isinstance(x, Numeric):
-                for v in x.iter_vars():
-                    yield v
+        for arg in self.args:
+            for v in arg.iter_vars():
+                yield v
 
     def invert(self):
-        return self.DUAL(*[Not(x) for x in self.xs])
+        return self.DUAL(*[Not(arg) for arg in self.args])
 
     def restrict(self, d):
+        return self.compose(d)
+
+    def compose(self, d):
         replace = list()
-        for x in self.xs:
-            _x = x.restrict(d)
-            if id(x) != id(_x):
-                replace.append((x, _x))
+        for arg in self.args:
+            _arg = arg.compose(d)
+            if id(arg) != id(_arg):
+                replace.append((arg, _arg))
         if replace:
-            xs = self.xs[:]
+            args = self.args[:]
             for old, new in replace:
                 if new == self.ABSORBER:
                     return self.ABSORBER
                 else:
-                    for i in range(xs.count(old)):
-                        xs.remove(old)
+                    for i in range(args.count(old)):
+                        args.remove(old)
                     if new != self.IDENTITY:
-                        xs.append(new)
-            return self.__class__(*xs)
+                        args.append(new)
+            return self.__class__(*args)
         else:
             return self
 
     def factor(self):
-        expr = self.__class__(*[x.factor() for x in self.xs])
+        expr = self.__class__(*[arg.factor() for arg in self.args])
         return expr.simplify()
 
     def simplify(self):
-        lits, terms, xs = list(), list(), list()
+        lits, terms, args = list(), list(), list()
 
-        for x in self.xs:
-            x = x.simplify()
-            if isinstance(x, Literal):
-                lits.append(x)
-            elif isinstance(x, self.DUAL) and x.depth == 1:
-                terms.append(x)
+        for arg in self.args:
+            arg = arg.simplify()
+            if isinstance(arg, Literal):
+                lits.append(arg)
+            elif isinstance(arg, self.DUAL) and arg.depth == 1:
+                terms.append(arg)
             else:
-                xs.append(x)
+                args.append(arg)
 
         # x + x' = 1; x * x' = 0
         while lits:
@@ -770,25 +639,25 @@ class OrAnd(Expression):
                 if fst.equal(term):
                     drop_term = True
                 else:
-                    if all(any(fx.equal(tx) for tx in term.xs)
-                           for fx in fst.xs):
+                    if all(any(fx.equal(tx) for tx in term.args)
+                           for fx in fst.args):
                         drop_term = True
-                    if all(any(fx.equal(tx) for tx in fst.xs)
-                           for fx in term.xs):
+                    if all(any(fx.equal(tx) for tx in fst.args)
+                           for fx in term.args):
                         drop_fst = True
                 if not drop_term:
                     terms.append(term)
             if not drop_fst:
-                xs.append(fst)
+                args.append(fst)
 
-        return self.__class__(*xs)
+        return self.__class__(*args)
 
     def _flatten(self, op):
         if isinstance(self, op):
             if self._duals:
                 dual = self._duals[0]
-                others = [x for x in self.xs if x != dual]
-                expr = op.DUAL(*[op(x, *others) for x in dual.xs])
+                others = [arg for arg in self.args if arg != dual]
+                expr = op.DUAL(*[op(arg, *others) for arg in dual.args])
                 if isinstance(expr, OrAnd):
                     return expr.flatten(op)
                 else:
@@ -797,18 +666,18 @@ class OrAnd(Expression):
                 return self
         else:
             nested, others = list(), list()
-            for x in self.xs:
-                if x.depth > 1:
-                    nested.append(x)
+            for arg in self.args:
+                if arg.depth > 1:
+                    nested.append(arg)
                 else:
-                    others.append(x)
-            xs = [x.flatten(op) for x in nested] + others
-            return op.DUAL(*xs)
+                    others.append(arg)
+            args = [arg.flatten(op) for arg in nested] + others
+            return op.DUAL(*args)
 
     def equal(self, other):
         assert self.depth == 1
         return (isinstance(other, self.__class__) and self.support == other.support and
-                self.term_index == other.term_index)
+                self.index == other.index)
 
 
 class Or(OrAnd):
@@ -817,19 +686,19 @@ class Or(OrAnd):
     # Infix symbol used in string representation
     OP = "+"
 
-    IDENTITY = Zero
-    ABSORBER = One
+    IDENTITY = 0
+    ABSORBER = 1
 
     def __str__(self):
         sep = " " + self.OP + " "
-        return sep.join(str(x) for x in sorted(self.xs))
+        return sep.join(str(arg) for arg in sorted(self.args))
 
-    @property
-    def term_index(self):
+    @cached_property
+    def index(self):
         n = abs(self) - 1
         idx = 0
         for i, v in enumerate(sorted(self.support)):
-            if -v in self.xs:
+            if -v in self.args:
                 idx |= 1 << (n - i)
         return idx
 
@@ -840,25 +709,25 @@ class And(OrAnd):
     # Infix symbol used in string representation
     OP = "*"
 
-    IDENTITY = One
-    ABSORBER = Zero
+    IDENTITY = 1
+    ABSORBER = 0
 
     def __str__(self):
         s = list()
-        for x in sorted(self.xs):
-            if isinstance(x, Or):
-                s.append("(" + str(x) + ")")
+        for arg in sorted(self.args):
+            if isinstance(arg, Or):
+                s.append("(" + str(arg) + ")")
             else:
-                s.append(str(x))
+                s.append(str(arg))
         sep = " " + self.OP + " "
         return sep.join(s)
 
-    @property
-    def term_index(self):
+    @cached_property
+    def index(self):
         n = abs(self) - 1
         idx = 0
         for i, v in enumerate(sorted(self.support)):
-            if v in self.xs:
+            if v in self.args:
                 idx |= 1 << (n - i)
         return idx
 
@@ -870,32 +739,31 @@ And.DUAL = Or
 class BufNot(Expression):
     """base class for BUF/NOT operators"""
 
-    def __init__(self, x):
-        super(BufNot, self).__init__()
-        self.x = x if isinstance(x, Function) else num(x)
+    def __init__(self, arg):
+        self.arg = arg
 
     @property
     def depth(self):
-        return self.x.depth
+        return self.arg.depth
 
     @property
-    def xs(self):
-        return {self.x}
+    def args(self):
+        return {self.arg}
 
     def iter_vars(self):
-        for v in self.x.iter_vars():
+        for v in self.arg.iter_vars():
             yield v
 
     def restrict(self, d):
-        expr = self.x.restrict(d)
-        if id(expr) == id(self.x):
+        expr = self.arg.restrict(d)
+        if id(expr) == id(self.arg):
             return self
         else:
             return self.__class__(expr)
 
     def simplify(self):
-        expr = self.x.simplify()
-        if id(expr) == id(self.x):
+        expr = self.arg.simplify()
+        if id(expr) == id(self.arg):
             return self
         else:
             return self.__class__(expr)
@@ -904,79 +772,74 @@ class BufNot(Expression):
 class Buf(BufNot):
     """buffer operator"""
 
-    def __new__(cls, x):
-        x = x if isinstance(x, Function) else num(x)
+    def __new__(cls, arg):
         # Auto-simplify numbers and literals
-        if isinstance(x, Numeric) or isinstance(x, Literal):
-            return x
+        if arg in B or isinstance(arg, Literal):
+            return arg
         else:
             return super(Buf, cls).__new__(cls)
 
     def __str__(self):
-        return "Buf({0.x})".format(self)
+        return "Buf({0.arg})".format(self)
 
     def factor(self):
-        return self.x.factor()
+        return self.arg.factor()
 
 
 class Not(BufNot):
     """Boolean NOT operator"""
 
-    def __new__(cls, x):
-        x = x if isinstance(x, Function) else num(x)
+    def __new__(cls, arg):
         # Auto-simplify numbers and literals
-        if isinstance(x, Numeric) or isinstance(x, Literal):
-            return x.invert()
+        if arg in B:
+            return 1 - arg
+        elif isinstance(arg, Literal):
+            return arg.invert()
         else:
             return super(Not, cls).__new__(cls)
 
     def __str__(self):
-        return "Not({0.x})".format(self)
+        return "Not({0.arg})".format(self)
 
     def factor(self):
-        # Get rid of unfactored expressions first, then invert and refactor.
-        return self.x.factor().invert().factor()
+        return self.arg.invert().factor()
 
 
 class Exclusive(Expression):
     """Boolean exclusive (XOR, XNOR) operator"""
 
-    IDENTITY = Zero
+    IDENTITY = 0
 
-    def __new__(cls, *xs):
+    def __new__(cls, *args):
         parity = cls.PARITY
-        temps, xs = list(xs), list()
+        temps, args = list(args), list()
         while temps:
             t = temps.pop()
-            x = t if isinstance(t, Function) else num(t)
-            if x is One:
+            if t == 1:
                 parity ^= 1
-            elif isinstance(x, cls):
-                temps.extend(x.xs)
-            elif x != cls.IDENTITY:
-                xs.append(x)
+            elif isinstance(t, cls):
+                temps.extend(t.args)
+            elif t != cls.IDENTITY:
+                args.append(t)
 
-        if len(xs) == 0:
+        if len(args) == 0:
             return Not(cls.IDENTITY) if parity else cls.IDENTITY
-        if len(xs) == 1:
-            return Not(xs[0]) if parity else xs[0]
+        if len(args) == 1:
+            return Not(args[0]) if parity else args[0]
 
         self = super(Exclusive, cls).__new__(cls)
-        self.xs = xs
+        self.args = args
         self._parity = parity
         return self
 
-    def __init__(self, *xs):
-        super(Exclusive, self).__init__()
-
     def __iter__(self):
-        return iter(self.xs)
+        return iter(self.args)
 
     def __len__(self):
-        return len(self.xs)
+        return len(self.args)
 
     def __str__(self):
-        args = ", ".join(str(x) for x in self.xs)
+        args = ", ".join(str(arg) for arg in self.args)
         if self._parity:
             return "Xnor(" + args + ")"
         else:
@@ -984,41 +847,36 @@ class Exclusive(Expression):
 
     @property
     def depth(self):
-        val = self._cache.get("depth", None)
-        if val is None:
-            val = max(x.depth + 2 for x in self.xs)
-            self._cache["depth"] = val
-        return val
+        return max(arg.depth + 2 for arg in self.args)
 
     def iter_vars(self):
-        for x in self.xs:
-            if not isinstance(x, Numeric):
-                for v in x.iter_vars():
-                    yield v
+        for arg in self.args:
+            for v in arg.iter_vars():
+                yield v
 
     def restrict(self, d):
         replace = list()
-        for x in self.xs:
-            _x = x.restrict(d)
-            if id(x) != id(_x):
-                replace.append((x, _x))
+        for arg in self.args:
+            _arg = arg.restrict(d)
+            if id(arg) != id(_arg):
+                replace.append((arg, _arg))
         if replace:
-            xs = self.xs[:]
+            args = self.args[:]
             parity = self._parity
             for old, new in replace:
-                for i in range(xs.count(old)):
-                    xs.remove(old)
-                if new is One:
+                for i in range(args.count(old)):
+                    args.remove(old)
+                if new == 1:
                     parity ^= 1
                 elif new != self.IDENTITY:
-                    xs.append(new)
-            return Xnor(*xs) if parity else Xor(*xs)
+                    args.append(new)
+            return Xnor(*args) if parity else Xor(*args)
         else:
             return self
 
     def factor(self):
-        x, xs = self.xs[0], self.xs[1:]
-        expr = Or(And(Not(x), Xor(*xs)), And(x, Xnor(*xs)))
+        arg, args = self.args[0], self.args[1:]
+        expr = Or(And(Not(arg), Xor(*args)), And(arg, Xnor(*args)))
         if self._parity:
             return Not(expr).factor()
         else:
@@ -1027,27 +885,27 @@ class Exclusive(Expression):
     def simplify(self):
         parity = self._parity
 
-        lits, xs = list(), list()
-        for x in self.xs:
-            x = x.simplify()
-            if isinstance(x, Literal):
-                lits.append(x)
+        lits, args = list(), list()
+        for arg in self.args:
+            arg = arg.simplify()
+            if isinstance(arg, Literal):
+                lits.append(arg)
             else:
-                xs.append(x)
+                args.append(arg)
 
         while lits:
-            x = lits.pop()
+            arg = lits.pop()
             # XOR(x, x) = 0
-            if x in lits:
-                lits.remove(x)
+            if arg in lits:
+                lits.remove(arg)
             # XOR(x, x') = 1
-            elif -x in lits:
-                lits.remove(-x)
+            elif -arg in lits:
+                lits.remove(-arg)
                 parity ^= 1
             else:
-                xs.append(x)
+                args.append(arg)
 
-        return Xnor(*xs) if parity else Xor(*xs)
+        return Xnor(*args) if parity else Xor(*args)
 
 
 class Xor(Exclusive):
@@ -1061,73 +919,66 @@ class Xnor(Exclusive):
 class Implies(Expression):
     """Boolean implication operator"""
 
-    OP = "=>"
+    OP = "->"
 
     def __new__(cls, x0, x1):
-        xs = [x if isinstance(x, Function) else num(x) for x in (x0, x1)]
+        args = [x0, x1]
         # 0 => x = 1; x => 1 = 1
-        if xs[0] is Zero or xs[1] is One:
-            return One
+        if args[0] == 0 or args[1] == 1:
+            return 1
         # 1 => x = x
-        elif xs[0] is One:
-            return xs[1]
+        elif args[0] == 1:
+            return args[1]
         # x => 0 = x'
-        elif xs[1] is Zero:
-            return Not(xs[0])
+        elif args[1] == 0:
+            return Not(args[0])
         else:
             self = super(Implies, cls).__new__(cls)
-            self.xs = xs
+            self.args = args
             return self
-
-    def __init__(self, x0, x1):
-        super(Implies, self).__init__()
 
     def __str__(self):
         s = list()
-        for x in self.xs:
-            if isinstance(x, Implies):
-                s.append("(" + str(x) + ")")
+        for arg in self.args:
+            if isinstance(arg, Implies):
+                s.append("(" + str(arg) + ")")
             else:
-                s.append(str(x))
+                s.append(str(arg))
         sep = " " + self.OP + " "
         return sep.join(s)
 
     @property
     def depth(self):
-        val = self._cache.get("depth", None)
-        if val is None:
-            val = max(x.depth + 1 for x in self.xs)
-            self._cache["depth"] = val
-        return val
+        return max(arg.depth + 1 for arg in self.args)
 
     def iter_vars(self):
-        for x in self.xs:
-            for v in x.iter_vars():
+        for arg in self.args:
+            for v in arg.iter_vars():
                 yield v
 
     def factor(self):
-        return Or(Not(self.xs[0]), self.xs[1]).factor()
+        return Or(Not(self.args[0]), self.args[1]).factor()
 
     def simplify(self):
-        xs = [x.simplify() for x in self.xs]
+        args = [arg.simplify() for arg in self.args]
 
         # x => x = 1
-        if xs[0] == xs[1]:
-            return One
+        if args[0] == args[1]:
+            return 1
         # -x => x = x; x => -x = -x
-        elif -xs[0] == xs[1] or xs[0] == -xs[1]:
-            return xs[1]
+        elif -args[0] == args[1] or args[0] == -args[1]:
+            return args[1]
 
-        return Implies(xs[0], xs[1])
+        return Implies(args[0], args[1])
 
 
-class VectorExpression(VectorFunction):
+class VectorExpression(VF):
     """Vector Boolean function"""
 
     def __init__(self, *fs, **kwargs):
-        self.fs = [f if isinstance(f, Function) else num(f) for f in fs]
+        self.fs = list(fs)
         self._start = kwargs.get("start", 0)
-        self._bnr = kwargs.get("bnr", UNSIGNED)
+        self._bnr = kwargs.get("bnr", VF.UNSIGNED)
 
     def __str__(self):
         return str(self.fs)
@@ -1162,8 +1013,8 @@ class VectorExpression(VectorFunction):
         """Convert vector to an unsigned integer."""
         n = 0
         for i, f in enumerate(self.fs):
-            if isinstance(f, Numeric):
-                if f is One:
+            if type(f) is int:
+                if f:
                     n += 2 ** i
             else:
                 raise ValueError("cannot convert to uint")
@@ -1172,7 +1023,7 @@ class VectorExpression(VectorFunction):
     def to_int(self):
         """Convert vector to an integer."""
         n = self.to_uint()
-        if self._bnr == TWOS_COMPLEMENT and self.fs[-1]:
+        if self._bnr == VF.TWOS_COMPLEMENT and self.fs[-1]:
             return -2 ** self.__len__() + n
         else:
             return n
@@ -1194,10 +1045,10 @@ class VectorExpression(VectorFunction):
         If this vector uses two's complement representation, sign extend;
         otherwise, zero extend.
         """
-        if self.bnr == TWOS_COMPLEMENT:
+        if self.bnr == VF.TWOS_COMPLEMENT:
             bit = self.fs[-1]
         else:
-            bit = Zero
+            bit = 0
         for i in range(n):
             self.append(bit)
 
@@ -1210,12 +1061,12 @@ class VectorExpression(VectorFunction):
     #                          for j, f in enumerate(A.fs)])
     #                    for i in range(2 ** len(A))])
 
-    def ripple_carry_add(A, B, ci=Zero):
+    def ripple_carry_add(A, B, ci=0):
         assert isinstance(B, VectorExpression) and len(A) == len(B)
-        if A.bnr == TWOS_COMPLEMENT or B.bnr == TWOS_COMPLEMENT:
-            sum_bnr = TWOS_COMPLEMENT
+        if A.bnr == VF.TWOS_COMPLEMENT or B.bnr == VF.TWOS_COMPLEMENT:
+            sum_bnr = VF.TWOS_COMPLEMENT
         else:
-            sum_bnr = UNSIGNED
+            sum_bnr = VF.UNSIGNED
         S = VectorExpression(bnr=sum_bnr)
         C = VectorExpression()
         for i, A in enumerate(A.fs):
@@ -1243,7 +1094,7 @@ def _expand_vectors(d):
         if isinstance(key, VectorExpression):
             assert len(key) == len(val)
             for i, x in enumerate(val):
-                d[key.getifz(i)] = x if isinstance(x, Function) else num(x)
+                d[key.getifz(i)] = x
         elif isinstance(key, Literal):
             d[key] = val
     return d

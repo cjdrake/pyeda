@@ -4,6 +4,9 @@ Boolean Functions
 Interface Classes:
     Variable
     Function
+        Constant
+            Zero
+            One
     VectorFunction
 
 Huntington's Postulates
@@ -40,8 +43,6 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 from .common import bit_on
 
-UNSIGNED, TWOS_COMPLEMENT = range(2)
-
 
 class Variable:
     """Boolean variable base class"""
@@ -49,6 +50,9 @@ class Variable:
     def __init__(self, name, index=None):
         self._name = name
         self._index = index
+
+    def __repr__(self):
+        return self.__str__()
 
     def __str__(self):
         if self._index is None:
@@ -90,28 +94,28 @@ class Function:
     def __add__(self, other):
         return self.op_or(other)
 
-    #def __radd__(self, other):
-    #    return self.op_or(other)
+    def __radd__(self, other):
+        return self.op_or(other)
 
     def __mul__(self, other):
         return self.op_and(other)
 
-    #def __rmul__(self, other):
-    #    return self.op_and(other)
+    def __rmul__(self, other):
+        return self.op_and(other)
 
     def __lshift__(self, other):
         """Return a << b, equivalent to b -> a."""
         return self.op_ge(other)
 
-    #def __rlshift(self, other):
-    #    return self.op_ge(other):
+    def __rlshift__(self, other):
+        return self.op_le(other)
 
     def __rshift__(self, other):
         """Return a >> b, equivalent to a -> b."""
         return self.op_le(other)
 
-    #def __rrshift__(self, other):
-    #    return self.op_le(other)
+    def __rrshift__(self, other):
+        return self.op_ge(other)
 
     # Operators
     def op_not(self):
@@ -192,8 +196,8 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_gt(self, other):
-        """Return symbolic "greater than" of two functions.
+    def op_gt(self, *args):
+        """Return symbolic "greater than" of functions.
 
         +---+---+-------+
         | f | g | f > g |
@@ -206,8 +210,8 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_lt(self, other):
-        """Return symbolic "less than" of two functions.
+    def op_lt(self, *args):
+        """Return symbolic "less than" of functions.
 
         +---+---+-------+
         | f | g | f < g |
@@ -220,8 +224,8 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_ge(self, other):
-        """Return symbolic "greater than or equal to" of two functions.
+    def op_ge(self, *args):
+        """Return symbolic "greater than or equal to" of functions.
 
         +---+---+--------+
         | f | g | f >= g |
@@ -231,11 +235,13 @@ class Function:
         | 1 | 0 |    1   |
         | 1 | 1 |    1   |
         +---+---+--------+
+
+        Also known as: reverse implies (f <- g)
         """
         raise NotImplementedError()
 
-    def op_le(self, other):
-        """Return symbolic "less than or equal to" of two functions.
+    def op_le(self, *args):
+        """Return symbolic "less than or equal to" of functions.
 
         +---+---+--------+
         | f | g | f <= g |
@@ -268,9 +274,19 @@ class Function:
         """
         raise NotImplementedError()
 
+    def satisfy_one(self):
+        raise NotImplementedError()
+
+    def satisfy_all(self):
+        raise NotImplementedError()
+
+    def satisfy_count(self):
+        raise NotImplementedError()
+
     def iter_cofactors(self, vs=None):
         """Iterate through the cofactors of N variables."""
-        vs = vs or list()
+        if vs is None:
+            vs = list()
         for n in range(2 ** len(vs)):
             yield self.restrict({v: bit_on(n, i) for i, v in enumerate(vs)})
 
@@ -285,11 +301,98 @@ class Function:
         """
         return tuple(cf for cf in self.iter_cofactors(vs))
 
+    def is_neg_unate(self, vs=None):
+        """Return whether a function is negative unate.
+
+        A function f(x1, x2, ..., xi, ..., xn) is negative unate in variable
+        xi if f[xi'] >= f[xi].
+        """
+        raise NotImplementedError()
+
+    def is_pos_unate(self, vs=None):
+        """Return whether a function is positive unate.
+
+        A function f(x1, x2, ..., xi, ..., xn) is positive unate in variable
+        xi if f[xi] >= f[xi'].
+        """
+        raise NotImplementedError()
+
+    def is_binate(self, vs=None):
+        """Return whether a function is binate.
+
+        A function f(x1, x2, ..., xi, ..., xn) is binate in variable xi if it
+        is neither negative nor positive unate in xi.
+        """
+        raise NotImplementedError()
+
+    def smoothing(self, *vs):
+        """Return the smoothing of a function.
+
+        The *smoothing* of f(x1, x2, ..., xi, ..., xn) with respect to
+        variable xi is S[xi](f) = f[xi] + f[xi']
+        """
+        raise NotImplementedError()
+
+    def consensus(self, *vs):
+        """Return the consensus of a function.
+
+        The *consensus* of f(x1, x2, ..., xi, ..., xn) with respect to
+        variable xi is C[xi](f) = f[xi] * f[xi']
+        """
+        raise NotImplementedError()
+
+    def derivative(self, *vs):
+        """Return the derivative of a function.
+
+        The *derivate* of f(x1, x2, ..., xi, ..., xn) with respect to
+        variable xi is df/dxi = f[xi] (xor) f[xi']
+        """
+        raise NotImplementedError()
+
+
+class Constant(Function):
+    """Constant Boolean Function, either Zero or One."""
+    def __init__(self, support=None):
+        if support is None:
+            self._support = set()
+        else:
+            self._support = support
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return str(self._val)
+
+    @property
+    def support(self):
+        return self._support
+
+    def restrict(self, d):
+        return self
+
+    def compose(self, d):
+        return self
+
+
+class Zero(Constant):
+    def __init__(self, support=None):
+        super(Zero, self).__init__(support)
+        self._val = 0
+
+
+class One(Constant):
+    def __init__(self, support=None):
+        super(One, self).__init__(support)
+        self._val = 1
+
 
 class VectorFunction:
     """
     Abstract base class that defines an interface for a vector Boolean function.
     """
+    UNSIGNED, TWOS_COMPLEMENT = range(2)
+
     def __init__(self, *fs, **kwargs):
         self.fs = list(fs)
         self._start = kwargs.get("start", 0)
