@@ -87,13 +87,13 @@ class VectorExpression(VF):
 
     # Operators
     def uor(self):
-        return Or(*list(self.fs))
+        return Or(*self.fs)
 
     def uand(self):
-        return And(*list(self.fs))
+        return And(*self.fs)
 
     def uxor(self):
-        return Xor(*list(self.fs))
+        return Xor(*self.fs)
 
     def __invert__(self):
         fs = [Not(v) for v in self.fs]
