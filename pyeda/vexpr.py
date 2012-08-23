@@ -14,9 +14,9 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from .common import clog2
+from .common import clog2, bit_on
 from .boolfunc import VectorFunction as VF
-from .expr import var, Not, Or, And, Xor
+from .expr import var, Not, Or, And, Xor, Xnor
 
 def vec(name, *args, **kwargs):
     """Return a vector of variables."""
@@ -41,37 +41,37 @@ def uint2vec(num, length=None):
     """Convert an unsigned integer to a LogicVector."""
     assert num >= 0
 
-    vv = LogicVector()
+    logvec = LogicVector()
     while num != 0:
-        vv.append(num & 1)
+        logvec.append(num & 1)
         num >>= 1
 
     if length:
-        if length < len(vv):
+        if length < len(logvec):
             raise ValueError("overflow: " + str(num))
         else:
-            vv.ext(length - len(vv))
+            logvec.ext(length - len(logvec))
 
-    return vv
+    return logvec
 
 def int2vec(num, length=None):
     """Convert a signed integer to a LogicVector."""
     if num < 0:
         req_length = clog2(abs(num)) + 1
-        vv = uint2vec(2 ** req_length + num)
+        logvec = uint2vec(2 ** req_length + num)
     else:
         req_length = clog2(num + 1) + 1
-        vv = uint2vec(num)
-        vv.ext(req_length - len(vv))
-    vv.bnr = VF.TWOS_COMPLEMENT
+        logvec = uint2vec(num)
+        logvec.ext(req_length - len(logvec))
+    logvec.bnr = VF.TWOS_COMPLEMENT
 
     if length:
         if length < req_length:
             raise ValueError("overflow: " + str(num))
         else:
-            vv.ext(length - req_length)
+            logvec.ext(length - req_length)
 
-    return vv
+    return logvec
 
 
 class VectorExpression(VF):
@@ -130,11 +130,11 @@ class VectorExpression(VF):
         else:
             return n
 
-    def restrict(self, d):
+    def restrict(self, constraints):
         """Substitute numbers into a Boolean vector."""
         cpy = self[:]
-        for i, f in enumerate(cpy.fs):
-            cpy[i] = cpy[i].restrict(d)
+        for i, _ in enumerate(cpy.fs):
+            cpy[i] = cpy[i].restrict(constraints)
         return cpy
 
     def ext(self, n):
@@ -147,32 +147,35 @@ class VectorExpression(VF):
             bit = self.fs[-1]
         else:
             bit = 0
-        for i in range(n):
+        for _ in range(n):
             self.append(bit)
 
 
 class LogicVector(VectorExpression):
     """Vector Expression with logical functions."""
 
-    def eq(A, B):
-        assert isinstance(B, LogicVector) and len(A) == len(B)
-        return And(*[Xnor(*t) for t in zip(A.fs, B.fs)])
+    def eq(self, B):
+        """banana banana banana"""
+        assert isinstance(B, LogicVector) and len(self) == len(B)
+        return And(*[Xnor(*t) for t in zip(self.fs, B.fs)])
 
-    def decode(A):
+    def decode(self):
+        """banana banana banana"""
         fs = [ And(*[f if bit_on(i, j) else -f
-                     for j, f in enumerate(A.fs)])
-               for i in range(2 ** len(A)) ]
+                        for j, f in enumerate(self.fs)])
+                  for i in range(2 ** len(self)) ]
         return LogicVector(*fs)
 
-    def ripple_carry_add(A, B, ci=0):
-        assert isinstance(B, LogicVector) and len(A) == len(B)
-        if A.bnr == VF.TWOS_COMPLEMENT or B.bnr == VF.TWOS_COMPLEMENT:
+    def ripple_carry_add(self, B, ci=0):
+        """banana banana banana"""
+        assert isinstance(B, LogicVector) and len(self) == len(B)
+        if self.bnr == VF.TWOS_COMPLEMENT or B.bnr == VF.TWOS_COMPLEMENT:
             sum_bnr = VF.TWOS_COMPLEMENT
         else:
             sum_bnr = VF.UNSIGNED
         S = LogicVector(bnr=sum_bnr)
         C = LogicVector()
-        for i, A in enumerate(A.fs):
+        for i, A in enumerate(self.fs):
             carry = (ci if i == 0 else C[i-1])
             S.append(Xor(A, B.getifz(i), carry))
             C.append(A * B.getifz(i) + A * carry + B.getifz(i) * carry)

@@ -65,10 +65,16 @@ class Variable:
 
     @property
     def name(self):
+        """Return the variable name string.
+
+        """
         return self._name
 
     @property
     def index(self):
+        """Return the variable index integer.
+
+        """
         return self._index
 
 
@@ -228,7 +234,7 @@ class Function:
         """
         raise NotImplementedError()
 
-    def restrict(self, d):
+    def restrict(self, constraints):
         """
         Return the Boolean function that results after restricting a subset of
         its input variables to {0, 1}.
@@ -237,11 +243,11 @@ class Function:
         """
         raise NotImplementedError()
 
-    def vrestrict(self, d):
+    def vrestrict(self, constraints):
         """Expand all vectors before doing a substitution."""
-        return self.restrict(_expand_vectors(d))
+        return self.restrict(_expand_vectors(constraints))
 
-    def compose(self, d):
+    def compose(self, constraints):
         """
         Return the Boolean function that results after substituting a subset of
         its input variables for other Boolean functions.
@@ -251,12 +257,15 @@ class Function:
         raise NotImplementedError()
 
     def satisfy_one(self):
+        """banana banana banana"""
         raise NotImplementedError()
 
     def satisfy_all(self):
+        """banana banana banana"""
         raise NotImplementedError()
 
     def satisfy_count(self):
+        """banana banana banana"""
         raise NotImplementedError()
 
     def iter_cofactors(self, vs=None):
@@ -328,7 +337,9 @@ class Function:
 
 class Constant(Function):
     """Constant Boolean Function, either Zero or One."""
-    def __init__(self, support=None):
+
+    def __init__(self, val, support=None):
+        self._val = val
         if support is None:
             self._support = set()
         else:
@@ -344,35 +355,31 @@ class Constant(Function):
     def support(self):
         return self._support
 
-    def restrict(self, d):
+    def restrict(self, constraints):
         return self
 
-    def compose(self, d):
+    def compose(self, constraints):
         return self
+
+    def __bool__(self):
+        return bool(self._val)
+
+    def __int__(self):
+        return self._val
 
 
 class Zero(Constant):
+    """banana banana banana"""
+
     def __init__(self, support=None):
-        super(Zero, self).__init__(support)
-        self._val = 0
-
-    def __bool__(self):
-        return False
-
-    def __int__(self):
-        return 0
+        super(Zero, self).__init__(0, support)
 
 
 class One(Constant):
+    """banana banana banana"""
+
     def __init__(self, support=None):
-        super(One, self).__init__(support)
-        self._val = 1
-
-    def __bool__(self):
-        return True
-
-    def __int__(self):
-        return 1
+        super(One, self).__init__(1, support)
 
 
 class VectorFunction:
@@ -405,22 +412,27 @@ class VectorFunction:
         return self._bnr
 
     def _set_bnr(self, value):
+        """banana banana banana"""
         self._bnr = value
 
     bnr = property(fget=_get_bnr, fset=_set_bnr)
 
     @property
     def sl(self):
+        """banana banana banana"""
         return slice(self._start, len(self.fs) + self._start)
 
     # Operators
     def uor(self):
+        """banana banana banana"""
         raise NotImplementedError()
 
     def uand(self):
+        """banana banana banana"""
         raise NotImplementedError()
 
     def uxor(self):
+        """banana banana banana"""
         raise NotImplementedError()
 
     def __invert__(self):
@@ -435,9 +447,13 @@ class VectorFunction:
     def __xor__(self, other):
         raise NotImplementedError()
 
-    def vrestrict(self, d):
+    def restrict(self, constraints):
+        """banana banana banana"""
+        raise NotImplementedError()
+
+    def vrestrict(self, constraints):
         """Expand all vectors before doing a substitution."""
-        return self.restrict(_expand_vectors(d))
+        return self.restrict(_expand_vectors(constraints))
 
     def to_uint(self):
         """Convert vector to an unsigned integer."""
@@ -480,34 +496,36 @@ class VectorFunction:
 
     def _norm_slice(self, sl):
         """Return a slice normalized to vector start index."""
-        d = dict()
+        limits = dict()
         for k in ("start", "stop"):
             idx = getattr(sl, k)
             if idx is not None:
-                d[k] = (idx if idx >= 0 else self.sl.stop + idx)
+                limits[k] = (idx if idx >= 0 else self.sl.stop + idx)
             else:
-                d[k] = getattr(self.sl, k)
-        if d["start"] < self.sl.start or d["stop"] > self.sl.stop:
+                limits[k] = getattr(self.sl, k)
+        if limits["start"] < self.sl.start or limits["stop"] > self.sl.stop:
             raise IndexError("list index out of range")
-        elif d["start"] >= d["stop"]:
+        elif limits["start"] >= limits["stop"]:
             raise IndexError("zero-sized slice")
-        return slice(d["start"] - self._start, d["stop"] - self._start)
+        return slice(limits["start"] - self._start,
+                     limits["stop"] - self._start)
 
     def append(self, f):
         """Append a function to the end of this vector."""
         self.fs.append(f)
 
 
-def _expand_vectors(d):
+def _expand_vectors(constraints):
     """Expand all vectors in a substitution dict."""
-    temp = {k: v for k, v in d.items() if isinstance(k, VectorFunction)}
-    d = {k: v for k, v in d.items() if k not in temp}
+    temp = { k: v for k, v in constraints.items() if
+             isinstance(k, VectorFunction) }
+    constraints = {k: v for k, v in constraints.items() if k not in temp}
     while temp:
         key, val = temp.popitem()
         if isinstance(key, VectorFunction):
             assert len(key) == len(val)
-            for i, x in enumerate(val):
-                d[key.getifz(i)] = x
+            for i, f in enumerate(val):
+                constraints[key.getifz(i)] = f
         else:
-            d[key] = val
-    return d
+            constraints[key] = val
+    return constraints

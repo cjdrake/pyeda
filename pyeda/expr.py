@@ -46,13 +46,13 @@ def var(name, index=None):
         VARIABLES[(name, index)] = ret
     return ret
 
-def comp(var):
+def comp(v):
     """Return a single complement expression."""
     try:
-        ret = COMPLEMENTS[var]
+        ret = COMPLEMENTS[v]
     except KeyError:
-        ret = _Complement(var)
-        COMPLEMENTS[var] = ret
+        ret = _Complement(v)
+        COMPLEMENTS[v] = ret
     return ret
 
 def factor(expr):
@@ -60,25 +60,32 @@ def factor(expr):
     return expr.factor()
 
 # factored operators
-def f_not(x):
-    return Not(x).factor()
+def f_not(arg):
+    """banana banana banana"""
+    return Not(arg).factor()
 
 def f_or(*args):
+    """banana banana banana"""
     return Or(*args).factor()
 
 def f_nor(*args):
+    """banana banana banana"""
     return Not(Or(*args)).factor()
 
 def f_and(*args):
+    """banana banana banana"""
     return And(*args).factor()
 
 def f_nand(*args):
+    """banana banana banana"""
     return Not(And(*args)).factor()
 
 def f_xor(*args):
+    """banana banana banana"""
     return Xor(*args).factor()
 
 def f_xnor(*args):
+    """banana banana banana"""
     return Xnor(*args).factor()
 
 def cube_sop(vs):
@@ -129,14 +136,14 @@ class Expression(Function):
     def op_or(self, *args):
         return Or(self, *args)
 
-    def op_nor(self, *args):
-        return Not(Or(self, *args))
+    #def op_nor(self, *args):
+    #    return Not(Or(self, *args))
 
     def op_and(self, *args):
         return And(self, *args)
 
-    def op_nand(self, *args):
-        return Not(And(self, *args))
+    #def op_nand(self, *args):
+    #    return Not(And(self, *args))
 
     def op_xor(self, *args):
         return Xor(self, *args)
@@ -211,8 +218,8 @@ class Expression(Function):
 
     #def iter_outputs(self):
     #    for n in range(2 ** abs(self)):
-    #        d = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
-    #        yield self.restrict(d)
+    #        constraints = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
+    #        yield self.restrict(constraints)
 
     def factor(self):
         """Return a factored expression.
@@ -235,26 +242,26 @@ class Expression(Function):
     def iter_minterms(self):
         """Iterate through the sum of products of N literals."""
         for n in range(2 ** self.degree):
-            d = dict()
+            constraints = dict()
             space = list()
             for i, v in enumerate(self.inputs):
-                on = bit_on(n, i)
-                d[v] = on
-                space.append(v if on else -v)
-            output = self.restrict(d)
+                var_on = bit_on(n, i)
+                constraints[v] = var_on
+                space.append(v if var_on else -v)
+            output = self.restrict(constraints)
             if output:
                 yield And(*space)
 
     def iter_maxterms(self):
         """Iterate through the product of sums of N literals."""
         for n in range(2 ** self.degree):
-            d = dict()
+            constraints = dict()
             space = list()
             for i, v in enumerate(self.inputs):
-                on = bit_on(n, i)
-                d[v] = on
-                space.append(-v if on else v)
-            output = self.restrict(d)
+                var_on = bit_on(n, i)
+                constraints[v] = var_on
+                space.append(-v if var_on else v)
+            output = self.restrict(constraints)
             if not output:
                 yield Or(*space)
 
@@ -302,10 +309,10 @@ class Expression(Function):
         else:
             return False
 
-    def _get_replace(self, d):
+    def _get_replace(self, constraints):
         replace = dict()
         for i, arg in enumerate(self.args):
-            new_arg = arg.restrict(d)
+            new_arg = arg.restrict(constraints)
             if id(new_arg) != id(arg):
                 replace[i] = new_arg
         return replace
@@ -344,16 +351,16 @@ class _Variable(Variable, Literal):
         Literal.__init__(self)
 
     # From Function
-    def restrict(self, d):
+    def restrict(self, constraints):
         try:
             # FIXME -- check this input
-            return int(d[self])
+            return int(constraints[self])
         except KeyError:
             return self
 
-    def compose(self, d):
+    def compose(self, constraints):
         try:
-            return d[self]
+            return constraints[self]
         except KeyError:
             return self
 
@@ -384,20 +391,20 @@ class _Complement(Literal):
     # Postfix symbol used in string representation
     OP = "'"
 
-    def __init__(self, var):
-        self._var = var
+    def __init__(self, v):
+        self._var = v
 
     # From Function
-    def restrict(self, d):
+    def restrict(self, constraints):
         try:
             # FIXME -- check this input
-            return Not(int(d[self._var]))
+            return Not(int(constraints[self._var]))
         except KeyError:
             return self
 
-    def compose(self, d):
+    def compose(self, constraints):
         try:
-            return Not(d[self._var])
+            return Not(constraints[self._var])
         except KeyError:
             return self
 
@@ -478,8 +485,8 @@ class OrAnd(Expression):
         return self
 
     # From Function
-    def restrict(self, d):
-        replace = self._get_replace(d)
+    def restrict(self, constraints):
+        replace = self._get_replace(constraints)
         if replace:
             args = self.args[:]
             for i, new_arg in replace.items():
@@ -492,8 +499,8 @@ class OrAnd(Expression):
         else:
             return self
 
-    def compose(self, d):
-        replace = self._get_replace(d)
+    def compose(self, constraints):
+        replace = self._get_replace(constraints)
         if replace:
             args = self.args[:]
             for i, new_arg in replace.items():
@@ -535,6 +542,7 @@ class OrAnd(Expression):
         return self.__class__(*[arg.factor() for arg in self.args])
 
     def absorb(self):
+        """banana banana banana"""
         terms, args = list(), list()
         for arg in self.args:
             if arg.is_term():
@@ -572,9 +580,11 @@ class OrAnd(Expression):
     # Specific to OrAnd
     @cached_property
     def _duals(self):
+        """banana banana banana"""
         return [arg for arg in self.args if isinstance(arg, self.DUAL)]
 
     def _flatten(self, op):
+        """banana banana banana"""
         if isinstance(self, op):
             if self._duals:
                 dual = self._duals[0]
@@ -667,8 +677,8 @@ class BufNot(Expression):
         self.arg = arg
 
     # From Function
-    def compose(self, d):
-        expr = self.arg.restrict(d)
+    def compose(self, constraints):
+        expr = self.arg.restrict(constraints)
         if id(expr) == id(self.arg):
             return self
         else:
@@ -710,8 +720,8 @@ class Buf(BufNot):
         return "Buf({0.arg})".format(self)
 
     # From Function
-    def restrict(self, d):
-        arg = self.arg.restrict(d)
+    def restrict(self, constraints):
+        arg = self.arg.restrict(constraints)
         # speed hack
         if arg in {0, 1}:
             return arg
@@ -749,8 +759,8 @@ class Not(BufNot):
         return "Not({0.arg})".format(self)
 
     # From Function
-    def restrict(self, d):
-        arg = self.arg.restrict(d)
+    def restrict(self, constraints):
+        arg = self.arg.restrict(constraints)
         # speed hack
         if arg in {0, 1}:
             return 1 - arg
@@ -815,11 +825,11 @@ class Exclusive(Expression):
             return "Xor(" + args + ")"
 
     # From Function
-    def restrict(self, d):
-        return self.compose(d)
+    def restrict(self, constraints):
+        return self.compose(constraints)
 
-    def compose(self, d):
-        replace = self._get_replace(d)
+    def compose(self, constraints):
+        replace = self._get_replace(constraints)
         if replace:
             args = self.args[:]
             for i, new_arg in replace.items():
@@ -832,6 +842,9 @@ class Exclusive(Expression):
     @property
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
+
+    def invert(self):
+        self._parity ^= 1
 
     def factor(self):
         arg, args = self.args[0], self.args[1:]
@@ -847,19 +860,23 @@ class Exclusive(Expression):
                 yield v
 
 class Xor(Exclusive):
+    """banana banana banana"""
     PARITY = 0
 
 class Xnor(Exclusive):
+    """banana banana banana"""
     PARITY = 1
 
 
 def _le(*args):
+    """banana banana banana"""
     if len(args) == 1:
         return args[0]
     else:
         return Or(Not(args[0]), _le(*args[1:]))
 
 def _ge(*args):
+    """banana banana banana"""
     if len(args) == 1:
         return Not(args[0])
     else:

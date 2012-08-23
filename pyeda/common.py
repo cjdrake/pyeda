@@ -10,9 +10,9 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 def clog2(num):
     """Return the ceiling, log base two of an integer."""
     assert num >= 1
-    i, x = 0, 1
-    while x < num:
-        x = x << 1;
+    i, shifter = 0, 1
+    while num > shifter:
+        shifter <<= 1
         i += 1
     return i
 
@@ -27,9 +27,9 @@ def cached_property(func):
             return self._property_cache[func]
         except AttributeError:
             self._property_cache = {}
-            x = self._property_cache[func] = func(self)
-            return x
+            prop = self._property_cache[func] = func(self)
+            return prop
         except KeyError:
-            x = self._property_cache[func] = func(self)
-            return x
+            prop = self._property_cache[func] = func(self)
+            return prop
     return property(get)
