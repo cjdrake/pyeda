@@ -9,34 +9,37 @@ Interface Classes:
             One
     VectorFunction
 
-Huntington's Postulates
+Boolean Identities
++---------------------------------+--------------+
+| (x')' = x                       | Involution   |
++---------------------------------+--------------+
+| x + x = x                       | Idempotent   |
+| x * x = x                       |              |
++---------------------------------+--------------+
+| x + 0 = x                       | Identity     |
+| x * 1 = x                       |              |
++---------------------------------+--------------+
+| x + 1 = 1                       | Domination   |
+| x * 0 = 0                       |              |
 +---------------------------------+--------------+
 | x + y = y + x                   | Commutative  |
-| x * y = y * x                   | Commutative  |
+| x * y = y * x                   |              |
++---------------------------------+--------------+
+| x + (y + z) = (x + y) + z       | Associative  |
+| x * (y * z) = (x * y) * z       |              |
 +---------------------------------+--------------+
 | x + (y * z) = (x + y) * (x + z) | Distributive |
-| x * (y + z) = (x * y) + (x * z) | Distributive |
+| x * (y + z) = (x * y) + (x * z) |              |
++---------------------------------+--------------+
+| (x + y)' = x' * y'              | De Morgan    |
+| (x * y)' = x' + y'              |              |
++---------------------------------+--------------+
+| x + (x * y) = x                 | Absorption   |
+| x * (x + y) = x                 |              |
 +---------------------------------+--------------+
 | x + x' = 1                      | Complement   |
-| x * x' = 0                      | Complement   |
+| x * x' = 0                      |              |
 +---------------------------------+--------------+
-
-Properties of Boolean Algebraic Systems
-+---------------------------+---------------+
-| x + (y + z) = (x + y) + z | Associativity |
-| x * (y * z) = (x * y) * z | Associativity |
-+---------------------------+---------------+
-| x + x = x                 | Idempotence   |
-| x * x = x                 | Idempotence   |
-+---------------------------+---------------+
-| x + (x * y) = x           | Absorption    |
-| x * (x + y) = x           | Absorption    |
-+---------------------------+---------------+
-| (x + y)' = x' * y'        | De Morgan     |
-| (x * y)' = x' + y'        | De Morgan     |
-+---------------------------+---------------+
-| (x')' = x                 | Involution    |
-+---------------------------+---------------+
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
@@ -83,8 +86,12 @@ class Function:
         """
         raise NotImplementedError()
 
-    def __abs__(self):
-        """Return the cardinality of the support set."""
+    @property
+    def degree(self):
+        """Return the degree of a function.
+
+        A function from B^N onto B is called a Boolean function of *degree* N.
+        """
         return len(self.support)
 
     # Overloaded operators
@@ -102,13 +109,6 @@ class Function:
 
     def __rmul__(self, other):
         return self.op_and(other)
-
-    def __lshift__(self, other):
-        """Return a << b, equivalent to b -> a."""
-        return self.op_ge(other)
-
-    def __rlshift__(self, other):
-        return self.op_le(other)
 
     def __rshift__(self, other):
         """Return a >> b, equivalent to a -> b."""
@@ -164,24 +164,8 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_eq(self, *args):
-        """Return symbolic "equal to" of functions.
-
-        +---+---+-------+
-        | f | g | f = g |
-        +---+---+-------+
-        | 0 | 0 |   1   |
-        | 0 | 1 |   0   |
-        | 1 | 0 |   0   |
-        | 1 | 1 |   1   |
-        +---+---+-------+
-
-        Also known as: Exclusive NOR (XNOR), even parity
-        """
-        raise NotImplementedError()
-
-    def op_ne(self, *args):
-        """Return symbolic "not equal to" of functions.
+    def op_xor(self, *args):
+        """Return symbolic XOR of functions.
 
         +---+---+--------+
         | f | g | f != g |
@@ -192,51 +176,23 @@ class Function:
         | 1 | 1 |    0   |
         +---+---+--------+
 
-        Also known as: Exclusive OR (XOR), odd parity
+        Also known as: odd parity
         """
         raise NotImplementedError()
 
-    def op_gt(self, *args):
-        """Return symbolic "greater than" of functions.
+    def op_xnor(self, *args):
+        """Return symbolic XNOR of functions.
 
         +---+---+-------+
-        | f | g | f > g |
+        | f | g | f = g |
         +---+---+-------+
-        | 0 | 0 |   0   |
+        | 0 | 0 |   1   |
         | 0 | 1 |   0   |
-        | 1 | 0 |   1   |
-        | 1 | 1 |   0   |
-        +---+---+-------+
-        """
-        raise NotImplementedError()
-
-    def op_lt(self, *args):
-        """Return symbolic "less than" of functions.
-
-        +---+---+-------+
-        | f | g | f < g |
-        +---+---+-------+
-        | 0 | 0 |   0   |
-        | 0 | 1 |   1   |
         | 1 | 0 |   0   |
-        | 1 | 1 |   0   |
+        | 1 | 1 |   1   |
         +---+---+-------+
-        """
-        raise NotImplementedError()
 
-    def op_ge(self, *args):
-        """Return symbolic "greater than or equal to" of functions.
-
-        +---+---+--------+
-        | f | g | f >= g |
-        +---+---+--------+
-        | 0 | 0 |    1   |
-        | 0 | 1 |    0   |
-        | 1 | 0 |    1   |
-        | 1 | 1 |    1   |
-        +---+---+--------+
-
-        Also known as: reverse implies (f <- g)
+        Also known as: even parity
         """
         raise NotImplementedError()
 
@@ -256,6 +212,22 @@ class Function:
         """
         raise NotImplementedError()
 
+    def op_ge(self, *args):
+        """Return symbolic "greater than or equal to" of functions.
+
+        +---+---+--------+
+        | f | g | f >= g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    0   |
+        | 1 | 0 |    1   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
+
+        Also known as: reverse implies (g -> f)
+        """
+        raise NotImplementedError()
+
     def restrict(self, d):
         """
         Return the Boolean function that results after restricting a subset of
@@ -264,6 +236,10 @@ class Function:
         g = f | xi=b
         """
         raise NotImplementedError()
+
+    def vrestrict(self, d):
+        """Expand all vectors before doing a substitution."""
+        return self.restrict(_expand_vectors(d))
 
     def compose(self, d):
         """
@@ -323,7 +299,7 @@ class Function:
         A function f(x1, x2, ..., xi, ..., xn) is binate in variable xi if it
         is neither negative nor positive unate in xi.
         """
-        raise NotImplementedError()
+        return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
 
     def smoothing(self, *vs):
         """Return the smoothing of a function.
@@ -356,7 +332,7 @@ class Constant(Function):
         if support is None:
             self._support = set()
         else:
-            self._support = support
+            self._support = set(support)
 
     def __repr__(self):
         return self.__str__()
@@ -380,11 +356,23 @@ class Zero(Constant):
         super(Zero, self).__init__(support)
         self._val = 0
 
+    def __bool__(self):
+        return False
+
+    def __int__(self):
+        return 0
+
 
 class One(Constant):
     def __init__(self, support=None):
         super(One, self).__init__(support)
         self._val = 1
+
+    def __bool__(self):
+        return True
+
+    def __int__(self):
+        return 1
 
 
 class VectorFunction:
@@ -447,6 +435,10 @@ class VectorFunction:
     def __xor__(self, other):
         raise NotImplementedError()
 
+    def vrestrict(self, d):
+        """Expand all vectors before doing a substitution."""
+        return self.restrict(_expand_vectors(d))
+
     def to_uint(self):
         """Convert vector to an unsigned integer."""
         raise NotImplementedError()
@@ -504,3 +496,18 @@ class VectorFunction:
     def append(self, f):
         """Append a function to the end of this vector."""
         self.fs.append(f)
+
+
+def _expand_vectors(d):
+    """Expand all vectors in a substitution dict."""
+    temp = {k: v for k, v in d.items() if isinstance(k, VectorFunction)}
+    d = {k: v for k, v in d.items() if k not in temp}
+    while temp:
+        key, val = temp.popitem()
+        if isinstance(key, VectorFunction):
+            assert len(key) == len(val)
+            for i, x in enumerate(val):
+                d[key.getifz(i)] = x
+        else:
+            d[key] = val
+    return d

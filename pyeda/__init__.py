@@ -1,8 +1,9 @@
 """
 Python EDA Package
 
+common.py -- Convenient place to put common functions
 boolfunc.py -- Boolean Functions
-boolexpr.py -- Boolean Expressions
+expr.py -- Boolean Expressions
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
