@@ -1,5 +1,5 @@
 """
-Boolean Vector Expressions
+Boolean Vector Logic Expressions
 
 Interface Functions:
     vec

@@ -1,11 +1,9 @@
 """
-Boolean Expressions
+Boolean Logic Expressions
 
 Interface Functions:
     var
     comp
-    vec
-    svec
 
     factor
 
