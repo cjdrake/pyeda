@@ -24,7 +24,7 @@ setup(
     long_description=README,
     author="Chris Drake",
     author_email="cjdrake AT gmail DOT com",
-    url="",
+    url="https://github.com/cjdrake/pyeda",
     license=LICENSE,
     packages=PACKAGES
 )
