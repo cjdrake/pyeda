@@ -3,6 +3,8 @@
 Python EDA Documentation
 ========================
 
+PyEDA is a Python library for electronic design automation.
+
 Contents:
 
 .. toctree::

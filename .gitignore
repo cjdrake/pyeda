@@ -1,5 +1,6 @@
 # Filename: .gitignore
 
+MANIFEST
 build/
 dist/
 

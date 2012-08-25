@@ -4,6 +4,7 @@
 
 clean:
 	rm -rf `find . -name __pycache__`
+	rm -f MANIFEST
 	rm -rf build dist
 	rm -rf doc/build
 
