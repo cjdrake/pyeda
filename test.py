@@ -15,8 +15,7 @@ from pyeda.expr import (
     Or, And,
     Xor, Xnor,
     factor,
-    f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor,
-    cube_sop, cube_pos
+    f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor
 )
 
 from pyeda.vexpr import (
@@ -351,9 +350,9 @@ def test_xor():
     assert Xor(a, -a) == 1
 
     assert str(Xor(a, b).to_sop())     == "a' * b + a * b'"
-    #assert str(Xnor(a, b).to_sop())    == "a' * b' + a * b"
-    #assert str(Xor(a, b, c).to_sop())  == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
-    #assert str(Xnor(a, b, c).to_sop()) == "a' * b' * c' + a' * b * c + a * b' * c + a * b * c'"
+    assert str(Xnor(a, b).to_sop())    == "a' * b' + a * b"
+    assert str(Xor(a, b, c).to_sop())  == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
+    assert str(Xnor(a, b, c).to_sop()) == "a' * b' * c' + a' * b * c + a * b' * c + a * b * c'"
 
 def test_demorgan():
     assert str(f_not(a * b))  == "a' + b'"
@@ -393,7 +392,7 @@ def test_cofactors():
     assert f.cofactors([a, b, c]) == (0, 0, 0, 1, 0, 1, 1, 1)
     assert str(f.smoothing(a)) == "b + c + b * c"
     assert str(f.consensus(a)) == "b * c * (b + c + b * c)"
-    #assert str(f.derivative(a).to_sop()) == "b' * c + b * c'"
+    assert str(f.derivative(a).to_sop()) == "b' * c + b * c'"
 
 def test_unate():
     f = a + b + -c
@@ -407,10 +406,6 @@ def test_unate():
     assert not f.is_binate([b])
     assert not f.is_binate([c])
     assert f.is_binate()
-
-def test_cube():
-    assert str(cube_sop([a, b, c])) == "a' * b' * c' + a' * b' * c + a' * b * c' + a' * b * c + a * b' * c' + a * b' * c + a * b * c' + a * b * c"
-    assert str(cube_pos([a, b, c])) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a + b' + c') * (a' + b + c) * (a' + b + c') * (a' + b' + c) * (a' + b' + c')"
 
 def test_rcadd():
     A, B = vec("A", 8), vec("B", 8)

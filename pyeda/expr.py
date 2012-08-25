@@ -9,11 +9,6 @@ Interface Functions:
 
     f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor
 
-    cube_sop
-    cube_pos
-    iter_space
-    iter_points
-
 Interface Classes:
     Expression
         Literal
@@ -88,37 +83,6 @@ def f_xnor(*args):
     """banana banana banana"""
     return Xnor(*args).factor()
 
-def cube_sop(vs):
-    """
-    Return the multi-dimensional space spanned by N Boolean variables as a
-    sum of products.
-    """
-    points = [p for p in iter_points(And, vs)]
-    return Or(*points)
-
-def cube_pos(vs):
-    """
-    Return the multi-dimensional space spanned by N Boolean variables as a
-    product of sums.
-    """
-    points = [p for p in iter_points(Or, vs)]
-    return And(*points)
-
-def iter_space(vs):
-    """Return the multi-dimensional space spanned by N Boolean variables."""
-    for n in range(2 ** len(vs)):
-        yield tuple((v if bit_on(n, i) else -v) for i, v in enumerate(vs))
-
-def iter_points(op, vs):
-    """
-    Iterate through all OR/AND points in the multi-dimensional space spanned
-    by N Boolean variables.
-    """
-    if not issubclass(op, OrAnd):
-        raise TypeError("iter_points() expected op type OR/AND")
-    for space in iter_space(vs):
-        yield op(*space)
-
 
 class Expression(Function):
     """Boolean function represented by a logic expression"""
@@ -152,10 +116,10 @@ class Expression(Function):
         return Xnor(self, *args)
 
     def op_le(self, *args):
-        return self if len(args) == 0 else _le(self, *args)
+        return _le(self, *args) if args else self
 
     def op_ge(self, *args):
-        return self if len(args) == 0 else _ge(self, *args)
+        return _ge(self, *args) if args else self
 
     def is_neg_unate(self, vs=None):
         if vs is None:
@@ -216,11 +180,6 @@ class Expression(Function):
         """Return an inverted expression."""
         raise NotImplementedError()
 
-    #def iter_outputs(self):
-    #    for n in range(2 ** abs(self)):
-    #        constraints = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
-    #        yield self.restrict(constraints)
-
     def factor(self):
         """Return a factored expression.
 
@@ -235,34 +194,27 @@ class Expression(Function):
         """Return the support set in name/index order."""
         return sorted(self.support)
 
+    def iter_outputs(self):
+        for n in range(2 ** self.degree):
+            point = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
+            yield point, self.restrict(point)
+
     def iter_vars(self):
         """Recursively iterate through all variables in the expression."""
         raise NotImplementedError()
 
     def iter_minterms(self):
         """Iterate through the sum of products of N literals."""
-        for n in range(2 ** self.degree):
-            constraints = dict()
-            space = list()
-            for i, v in enumerate(self.inputs):
-                var_on = bit_on(n, i)
-                constraints[v] = var_on
-                space.append(v if var_on else -v)
-            output = self.restrict(constraints)
+        for point, output in self.iter_outputs():
             if output:
+                space = [(v if on else -v) for v, on in point.items()]
                 yield And(*space)
 
     def iter_maxterms(self):
         """Iterate through the product of sums of N literals."""
-        for n in range(2 ** self.degree):
-            constraints = dict()
-            space = list()
-            for i, v in enumerate(self.inputs):
-                var_on = bit_on(n, i)
-                constraints[v] = var_on
-                space.append(-v if var_on else v)
-            output = self.restrict(constraints)
+        for point, output in self.iter_outputs():
             if not output:
+                space = [(-v if on else v) for v, on in point.items()]
                 yield Or(*space)
 
     @cached_property
@@ -297,15 +249,17 @@ class Expression(Function):
     def term_index(self):
         return None
 
+    @cached_property
+    def indices(self):
+        return {term.term_index for term in self.minterms}
+
     def equals(self, other):
         """Return whether this expression is equivalent to another.
 
         NOTE: This algorithm uses exponential time and memory.
         """
         if self.support == other.support:
-            self_idxs = {term.term_index for term in self.minterms}
-            other_idxs = {term.term_index for term in other.minterms}
-            return self_idxs == other_idxs
+            return self.indices == other.indices
         else:
             return False
 
@@ -542,7 +496,15 @@ class OrAnd(Expression):
         return self.__class__(*[arg.factor() for arg in self.args])
 
     def absorb(self):
-        """banana banana banana"""
+        """Return the OR/AND expression after absorption.
+
+        x + (x * y) = x
+        x * (x + y) = x
+
+        The reason this is not included as an automatic simplification is that
+        it is too expensive to put into the constructor. We have to check
+        whether each term is a subset of another term, which is N^3.
+        """
         terms, args = list(), list()
         for arg in self.args:
             if arg.is_term():
@@ -578,22 +540,26 @@ class OrAnd(Expression):
                 yield v
 
     # Specific to OrAnd
-    @cached_property
-    def _duals(self):
-        """banana banana banana"""
-        return [arg for arg in self.args if isinstance(arg, self.DUAL)]
-
     def _flatten(self, op):
-        """banana banana banana"""
+        """Return a flattened OR/AND expression.
+
+        Use the distributive law to flatten all nested expressions:
+        x + (y * z) = (x + y) * (x + z)
+        x * (y + z) = (x * y) + (x * z)
+
+        NOTE: This function assumes the expression is already factored. Do NOT
+              call this method directly -- use the "to_sop" or "to_pos" methods
+              instead.
+        """
         if isinstance(self, op):
-            if self._duals:
-                dual = self._duals[0]
-                others = [arg for arg in self.args if arg != dual]
-                expr = op.DUAL(*[op(arg, *others) for arg in dual.args])
-                if isinstance(expr, OrAnd):
-                    return expr._flatten(op)
-                else:
-                    return expr
+            for arg in self.args:
+                if isinstance(arg, self.DUAL):
+                    others = [a for a in self.args if a != arg]
+                    expr = op.DUAL(*[op(a, *others) for a in arg.args])
+                    if isinstance(expr, OrAnd):
+                        return expr._flatten(op)
+                    else:
+                        return expr
             else:
                 return self
         else:
@@ -774,7 +740,7 @@ class Not(BufNot):
         return self.arg
 
     def factor(self):
-        return self.arg.invert().factor()
+        return self.arg.factor().invert().factor()
 
 
 class Exclusive(Expression):
@@ -860,23 +826,23 @@ class Exclusive(Expression):
                 yield v
 
 class Xor(Exclusive):
-    """banana banana banana"""
+    """Boolean Exclusive OR (XOR) operator"""
     PARITY = 0
 
 class Xnor(Exclusive):
-    """banana banana banana"""
+    """Boolean Exclusive NOR (XNOR) operator"""
     PARITY = 1
 
 
 def _le(*args):
-    """banana banana banana"""
+    """Return factored form of Boolean less than or equal operator."""
     if len(args) == 1:
         return args[0]
     else:
         return Or(Not(args[0]), _le(*args[1:]))
 
 def _ge(*args):
-    """banana banana banana"""
+    """Return factored form of Boolean greater than or equal operator."""
     if len(args) == 1:
         return Not(args[0])
     else:
