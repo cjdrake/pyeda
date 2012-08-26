@@ -154,6 +154,10 @@ class Function:
         """
         raise NotImplementedError()
 
+    def op_nor(self, *args):
+        """Return symbolic NOR (NOT AND) of functions."""
+        raise NotImplementedError()
+
     def op_and(self, *args):
         """Return symbolic conjunction of functions.
 
@@ -168,6 +172,10 @@ class Function:
 
         Also known as: product, AND
         """
+        raise NotImplementedError()
+
+    def op_nand(self, *args):
+        """Return symbolic NAND (NOT AND) of functions."""
         raise NotImplementedError()
 
     def op_xor(self, *args):
@@ -257,15 +265,18 @@ class Function:
         raise NotImplementedError()
 
     def satisfy_one(self):
-        """banana banana banana"""
+        """
+        If this function is satisfiable, return a satisfying input point.
+        Otherwise, return None.
+        """
         raise NotImplementedError()
 
     def satisfy_all(self):
-        """banana banana banana"""
+        """Return the set of all satisfying input points."""
         raise NotImplementedError()
 
     def satisfy_count(self):
-        """banana banana banana"""
+        """Return the cardinality of the set of all satisfying input points."""
         raise NotImplementedError()
 
     def iter_cofactors(self, vs=None):
@@ -310,7 +321,7 @@ class Function:
         """
         return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
 
-    def smoothing(self, *vs):
+    def smoothing(self, vs=None):
         """Return the smoothing of a function.
 
         The *smoothing* of f(x1, x2, ..., xi, ..., xn) with respect to
@@ -318,7 +329,7 @@ class Function:
         """
         raise NotImplementedError()
 
-    def consensus(self, *vs):
+    def consensus(self, vs=None):
         """Return the consensus of a function.
 
         The *consensus* of f(x1, x2, ..., xi, ..., xn) with respect to
@@ -326,7 +337,7 @@ class Function:
         """
         raise NotImplementedError()
 
-    def derivative(self, *vs):
+    def derivative(self, vs=None):
         """Return the derivative of a function.
 
         The *derivate* of f(x1, x2, ..., xi, ..., xn) with respect to

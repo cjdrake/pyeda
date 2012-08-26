@@ -100,14 +100,14 @@ class Expression(Function):
     def op_or(self, *args):
         return Or(self, *args)
 
-    #def op_nor(self, *args):
-    #    return Not(Or(self, *args))
+    def op_nor(self, *args):
+        return Not(Or(self, *args))
 
     def op_and(self, *args):
         return And(self, *args)
 
-    #def op_nand(self, *args):
-    #    return Not(And(self, *args))
+    def op_nand(self, *args):
+        return Not(And(self, *args))
 
     def op_xor(self, *args):
         return Xor(self, *args)
@@ -125,12 +125,11 @@ class Expression(Function):
         if vs is None:
             vs = self.support
         for v in vs:
-            fv0, fv1 = self.cofactors([v])
+            fv0, fv1 = self.cofactors(v)
             if fv0 in {0, 1} or fv1 in {0, 1}:
                 if not (fv0 == 1 or fv1 == 0):
                     return False
-            # FIXME -- broken
-            elif not (fv0.minterms >= fv1.minterms):
+            elif not fv0.indices >= fv1.indices:
                 return False
         return True
 
@@ -138,22 +137,21 @@ class Expression(Function):
         if vs is None:
             vs = self.support
         for v in vs:
-            fv0, fv1 = self.cofactors([v])
+            fv0, fv1 = self.cofactors(v)
             if fv0 in {0, 1} or fv1 in {0, 1}:
                 if not (fv1 == 1 or fv0 == 0):
                     return False
-            # FIXME -- broken
-            elif not (fv1.minterms >= fv0.minterms):
+            elif not fv1.indices >= fv0.indices:
                 return False
         return True
 
-    def smoothing(self, *vs):
+    def smoothing(self, vs=None):
         return Or(*self.cofactors(vs))
 
-    def consensus(self, *vs):
+    def consensus(self, vs=None):
         return And(*self.cofactors(vs))
 
-    def derivative(self, *vs):
+    def derivative(self, vs=None):
         return Xor(*self.cofactors(vs))
 
     # Specific to Expression
@@ -229,11 +227,11 @@ class Expression(Function):
 
     def to_sop(self):
         """Return the expression as a sum of products."""
-        return self.factor()._flatten(And)
+        return self.factor()._flatten(And).absorb()
 
     def to_pos(self):
         """Return the expression as a product of sums."""
-        return self.factor()._flatten(Or)
+        return self.factor()._flatten(Or).absorb()
 
     def to_csop(self):
         """Return the expression as a sum of products of N literals."""
@@ -244,10 +242,12 @@ class Expression(Function):
         return And(*[term for term in self.iter_maxterms()])
 
     def is_term(self):
-        return False
+        """Return whether this expression is a min/max term."""
+        raise NotImplementedError()
 
     def term_index(self):
-        return None
+        """Return the min/max term index."""
+        raise NotImplementedError()
 
     @cached_property
     def indices(self):
@@ -652,6 +652,12 @@ class BufNot(Expression):
         for v in self.arg.iter_vars():
             yield v
 
+    def is_term(self):
+        return False
+
+    def term_index(self):
+        return None
+
     # Specific to BufNot
     @property
     def args(self):
@@ -791,21 +797,29 @@ class Exclusive(Expression):
         return max(arg.depth + 2 for arg in self.args)
 
     def invert(self):
-        return { Xor.PARITY: Xnor(*self.args),
-                 Xnor.PARITY: Xor(*self.args) }[self._parity]
+        if self._parity == Xor.PARITY:
+            return Xnor(*self.args)
+        else:
+            return Xor(*self.args)
 
     def factor(self):
         arg, args = self.args[0], self.args[1:]
-        expr = Or(And(Not(arg), Xor(*args)), And(arg, Xnor(*args)))
-        if self._parity:
-            return Not(expr).factor()
+        if self._parity == Xor.PARITY:
+            return Or(And(Not(arg), Xor(*args)), And(arg, Xnor(*args))).factor()
         else:
-            return expr.factor()
+            return Or(And(Not(arg), Xnor(*args)), And(arg, Xor(*args))).factor()
 
     def iter_vars(self):
         for arg in self.args:
             for v in arg.iter_vars():
                 yield v
+
+    def is_term(self):
+        return False
+
+    def term_index(self):
+        return None
+
 
 class Xor(Exclusive):
     """Boolean Exclusive OR (XOR) operator"""
