@@ -25,7 +25,7 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from .common import bit_on, cached_property
+from .common import boolify, bit_on, cached_property
 
 from .boolfunc import Variable, Function
 
@@ -56,31 +56,31 @@ def factor(expr):
 
 # factored operators
 def f_not(arg):
-    """banana banana banana"""
+    """Return factorized NOT expression."""
     return Not(arg).factor()
 
 def f_or(*args):
-    """banana banana banana"""
+    """Return factorized OR expression."""
     return Or(*args).factor()
 
 def f_nor(*args):
-    """banana banana banana"""
+    """Return factorized NOR expression."""
     return Not(Or(*args)).factor()
 
 def f_and(*args):
-    """banana banana banana"""
+    """Return factorized AND expression."""
     return And(*args).factor()
 
 def f_nand(*args):
-    """banana banana banana"""
+    """Return factorized NAND expression."""
     return Not(And(*args)).factor()
 
 def f_xor(*args):
-    """banana banana banana"""
+    """Return factorized XOR expression."""
     return Xor(*args).factor()
 
 def f_xnor(*args):
-    """banana banana banana"""
+    """Return factorized XNOR expression."""
     return Xnor(*args).factor()
 
 
@@ -307,8 +307,7 @@ class _Variable(Variable, Literal):
     # From Function
     def restrict(self, constraints):
         try:
-            # FIXME -- check this input
-            return int(constraints[self])
+            return boolify(constraints[self])
         except KeyError:
             return self
 
@@ -351,8 +350,7 @@ class _Complement(Literal):
     # From Function
     def restrict(self, constraints):
         try:
-            # FIXME -- check this input
-            return Not(int(constraints[self._var]))
+            return Not(constraints[self._var])
         except KeyError:
             return self
 
@@ -419,15 +417,10 @@ class OrAnd(Expression):
                 elif arg not in args:
                     args.append(arg)
             else:
-                num = int(arg)
+                num = boolify(arg)
                 # domination
                 if num == cls.DOMINATOR:
                     return cls.DOMINATOR
-                # identity
-                elif num == cls.IDENTITY:
-                    pass
-                else:
-                    raise ValueError("input not in {0, 1}: " + str(num))
 
         if len(args) == 0:
             return cls.IDENTITY
@@ -676,11 +669,7 @@ class Buf(BufNot):
             else:
                 return super(Buf, cls).__new__(cls)
         else:
-            num = int(arg)
-            if num in {0, 1}:
-                return num
-            else:
-                raise ValueError("input not in {0, 1}: " + str(num))
+            return boolify(arg)
 
     def __str__(self):
         return "Buf({0.arg})".format(self)
@@ -715,11 +704,7 @@ class Not(BufNot):
             else:
                 return super(Not, cls).__new__(cls)
         else:
-            num = int(arg)
-            if num in {0, 1}:
-                return 1 - num
-            else:
-                raise ValueError("input not in {0, 1}: " + str(num))
+            return 1 - boolify(arg)
 
     def __str__(self):
         return "Not({0.arg})".format(self)
@@ -740,7 +725,7 @@ class Not(BufNot):
         return self.arg
 
     def factor(self):
-        return self.arg.factor().invert().factor()
+        return self.arg.invert().factor()
 
 
 class Exclusive(Expression):
@@ -767,11 +752,7 @@ class Exclusive(Expression):
                 else:
                     args.append(arg)
             else:
-                num = int(arg)
-                if num in {0, 1}:
-                    parity ^= num
-                else:
-                    raise ValueError("input not in {0, 1}: " + str(num))
+                parity ^= boolify(arg)
 
         if len(args) == 0:
             return Not(cls.IDENTITY) if parity else cls.IDENTITY
@@ -810,7 +791,8 @@ class Exclusive(Expression):
         return max(arg.depth + 2 for arg in self.args)
 
     def invert(self):
-        self._parity ^= 1
+        return { Xor.PARITY: Xnor(*self.args),
+                 Xnor.PARITY: Xor(*self.args) }[self._parity]
 
     def factor(self):
         arg, args = self.args[0], self.args[1:]

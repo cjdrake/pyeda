@@ -1,11 +1,21 @@
 """
 Interface Functions:
+    boolify
     clog2
     bit_on
     cached_property
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
+
+def boolify(arg):
+    """Return an integer in {0, 1}."""
+    if arg in {0, 1}:
+        return arg
+    num = int(arg)
+    if num not in {0, 1}:
+        raise ValueError("not a Boolean integer: " + str(num))
+    return num
 
 def clog2(num):
     """Return the ceiling, log base two of an integer."""

@@ -9,7 +9,7 @@ Interface Functions:
 
 Interface Classes:
     VectorExpression
-    LogicVector
+        LogicVector
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
