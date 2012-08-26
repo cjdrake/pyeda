@@ -251,7 +251,7 @@ class Expression(Function):
 
     @cached_property
     def indices(self):
-        return {term.term_index for term in self.minterms}
+        return {term.term_index for term in self.iter_minterms()}
 
     def equals(self, other):
         """Return whether this expression is equivalent to another.
