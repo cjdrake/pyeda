@@ -8,4 +8,4 @@ vexpr.py -- Boolean vector logic expressions
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
