@@ -2,14 +2,14 @@
 Boolean Vector Logic Expressions
 
 Interface Functions:
-    vec
-    svec
+    bitvec
+    sbitvec
     uint2vec
     int2vec
 
 Interface Classes:
     VectorExpression
-        LogicVector
+        BitVector
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
@@ -18,30 +18,30 @@ from .common import clog2, bit_on
 from .boolfunc import VectorFunction as VF
 from .expr import var, Not, Or, And, Xor, Xnor
 
-def vec(name, *args, **kwargs):
+def bitvec(name, *args, **kwargs):
     """Return a vector of variables."""
     if len(args) == 0:
-        raise TypeError("vec() expected at least two argument")
+        raise TypeError("bitvec() expected at least two argument")
     elif len(args) == 1:
         start, stop = 0, args[0]
     elif len(args) == 2:
         start, stop = args
     else:
-        raise TypeError("vec() expected at most three arguments")
+        raise TypeError("bitvec() expected at most three arguments")
     if not 0 <= start < stop:
         raise ValueError("invalid range: [{}:{}]".format(start, stop))
     fs = [var(name, index=i) for i in range(start, stop)]
-    return LogicVector(*fs, start=start, **kwargs)
+    return BitVector(*fs, start=start, **kwargs)
 
-def svec(name, *args, **kwargs):
+def sbitvec(name, *args, **kwargs):
     """Return a signed vector of variables."""
-    return vec(name, *args, bnr=VF.TWOS_COMPLEMENT, **kwargs)
+    return bitvec(name, *args, bnr=VF.TWOS_COMPLEMENT, **kwargs)
 
 def uint2vec(num, length=None):
-    """Convert an unsigned integer to a LogicVector."""
+    """Convert an unsigned integer to a BitVector."""
     assert num >= 0
 
-    logvec = LogicVector()
+    logvec = BitVector()
     while num != 0:
         logvec.append(num & 1)
         num >>= 1
@@ -55,7 +55,7 @@ def uint2vec(num, length=None):
     return logvec
 
 def int2vec(num, length=None):
-    """Convert a signed integer to a LogicVector."""
+    """Convert a signed integer to a BitVector."""
     if num < 0:
         req_length = clog2(abs(num)) + 1
         logvec = uint2vec(2 ** req_length + num)
@@ -151,30 +151,42 @@ class VectorExpression(VF):
             self.append(bit)
 
 
-class LogicVector(VectorExpression):
+class BitVector(VectorExpression):
     """Vector Expression with logical functions."""
 
     def eq(self, B):
-        """banana banana banana"""
-        assert isinstance(B, LogicVector) and len(self) == len(B)
+        """Return symbolic logic for equivalence of two bit vectors."""
+        assert isinstance(B, BitVector) and len(self) == len(B)
         return And(*[Xnor(*t) for t in zip(self.fs, B.fs)])
 
     def decode(self):
-        """banana banana banana"""
-        fs = [ And(*[f if bit_on(i, j) else -f
-                        for j, f in enumerate(self.fs)])
-                  for i in range(2 ** len(self)) ]
-        return LogicVector(*fs)
+        """Return symbolic logic for an N-2^N binary decoder.
+
+        Example Truth Table for a 2:4 decoder:
+
+            +===========+=====================+
+            | A[1] A[0] | D[3] D[2] D[1] D[0] |
+            +===========+=====================+
+            |   0    0  |   0    0    0    1  |
+            |   0    1  |   0    0    1    0  |
+            |   1    0  |   0    1    0    0  |
+            |   1    1  |   1    0    0    0  |
+            +===========+=====================+
+        """
+        fs = [ And(*[ f if bit_on(i, j) else -f
+                      for j, f in enumerate(self.fs) ])
+               for i in range(2 ** len(self)) ]
+        return BitVector(*fs)
 
     def ripple_carry_add(self, B, ci=0):
-        """banana banana banana"""
-        assert isinstance(B, LogicVector) and len(self) == len(B)
+        """Return symbolic logic for an N-bit ripple carry adder."""
+        assert isinstance(B, BitVector) and len(self) == len(B)
         if self.bnr == VF.TWOS_COMPLEMENT or B.bnr == VF.TWOS_COMPLEMENT:
             sum_bnr = VF.TWOS_COMPLEMENT
         else:
             sum_bnr = VF.UNSIGNED
-        S = LogicVector(bnr=sum_bnr)
-        C = LogicVector()
+        S = BitVector(bnr=sum_bnr)
+        C = BitVector()
         for i, A in enumerate(self.fs):
             carry = (ci if i == 0 else C[i-1])
             S.append(Xor(A, B.getifz(i), carry))

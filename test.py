@@ -19,7 +19,7 @@ from pyeda.expr import (
 )
 
 from pyeda.vexpr import (
-    vec, svec,
+    bitvec, sbitvec,
     int2vec, uint2vec
 )
 
@@ -408,7 +408,7 @@ def test_unate():
     assert f.is_binate()
 
 def test_rcadd():
-    A, B = vec("A", 8), vec("B", 8)
+    A, B = bitvec("A", 8), bitvec("B", 8)
     S, C = A.ripple_carry_add(B)
     S.append(C[-1])
     for i in range(64):
@@ -419,7 +419,7 @@ def test_rcadd():
         assert int(B.vrestrict(d)) == rb
         assert int(S.vrestrict(d)) == ra + rb
 
-    A, B = svec("A", 8), svec("B", 8)
+    A, B = sbitvec("A", 8), sbitvec("B", 8)
     S, C = A.ripple_carry_add(B)
     for i in range(64):
         ra = random.randint(-2**6, 2**6-1)
