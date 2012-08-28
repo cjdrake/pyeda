@@ -48,8 +48,13 @@ from .common import bit_on
 
 
 class Variable:
-    """Boolean variable base class"""
+    """
+    A Boolean variable is a numerical quantity that may assume any value in the
+    set B = {0, 1}.
 
+    This implementation includes an optional "index", a nonnegative integer
+    that is convenient for bit vectors.
+    """
     def __init__(self, name, index=None):
         self._name = name
         self._index = index
@@ -58,6 +63,13 @@ class Variable:
         return self.__str__()
 
     def __str__(self):
+        """Return the string representation.
+
+        >>> str(Variable('a'))
+        'a'
+        >>> str(Variable('v', 42))
+        'v[42]'
+        """
         if self._index is None:
             return self._name
         else:
@@ -65,16 +77,10 @@ class Variable:
 
     @property
     def name(self):
-        """Return the variable name string.
-
-        """
         return self._name
 
     @property
     def index(self):
-        """Return the variable index integer.
-
-        """
         return self._index
 
 
@@ -96,7 +102,7 @@ class Function:
     def degree(self):
         """Return the degree of a function.
 
-        A function from B^N onto B is called a Boolean function of *degree* N.
+        A function from B^N => B is called a Boolean function of *degree* N.
         """
         return len(self.support)
 
@@ -242,7 +248,7 @@ class Function:
         """
         raise NotImplementedError()
 
-    def restrict(self, constraints):
+    def restrict(self, mapping):
         """
         Return the Boolean function that results after restricting a subset of
         its input variables to {0, 1}.
@@ -251,11 +257,11 @@ class Function:
         """
         raise NotImplementedError()
 
-    def vrestrict(self, constraints):
-        """Expand all vectors before doing a substitution."""
-        return self.restrict(_expand_vectors(constraints))
+    def vrestrict(self, mapping):
+        """Expand all vectors before applying 'restrict'."""
+        return self.restrict(_expand_vectors(mapping))
 
-    def compose(self, constraints):
+    def compose(self, mapping):
         """
         Return the Boolean function that results after substituting a subset of
         its input variables for other Boolean functions.
@@ -362,33 +368,31 @@ class Constant(Function):
     def __str__(self):
         return str(self._val)
 
-    @property
-    def support(self):
-        return self._support
-
-    def restrict(self, constraints):
-        return self
-
-    def compose(self, constraints):
-        return self
-
     def __bool__(self):
         return bool(self._val)
 
     def __int__(self):
         return self._val
 
+    @property
+    def support(self):
+        return self._support
+
+    def restrict(self, mapping):
+        return self
+
+    def compose(self, mapping):
+        return self
+
 
 class Zero(Constant):
-    """banana banana banana"""
-
+    """Proxy class for the number zero."""
     def __init__(self, support=None):
         super(Zero, self).__init__(0, support)
 
 
 class One(Constant):
-    """banana banana banana"""
-
+    """Proxy class for the number one."""
     def __init__(self, support=None):
         super(One, self).__init__(1, support)
 
@@ -402,7 +406,7 @@ class VectorFunction:
     def __init__(self, *fs, **kwargs):
         self.fs = list(fs)
         self._start = kwargs.get("start", 0)
-        self._bnr = kwargs.get("bnr", UNSIGNED)
+        self._bnr = kwargs.get("bnr", self.UNSIGNED)
 
     def __int__(self):
         return self.to_int()
@@ -419,31 +423,26 @@ class VectorFunction:
         return self._start
 
     def _get_bnr(self):
-        """Return the binary number representation."""
+        """Get the binary number representation."""
         return self._bnr
 
     def _set_bnr(self, value):
-        """banana banana banana"""
+        """Set the binary number representation."""
         self._bnr = value
 
     bnr = property(fget=_get_bnr, fset=_set_bnr)
 
-    @property
-    def sl(self):
-        """banana banana banana"""
-        return slice(self._start, len(self.fs) + self._start)
-
     # Operators
     def uor(self):
-        """banana banana banana"""
+        """Return the unary OR reduction."""
         raise NotImplementedError()
 
     def uand(self):
-        """banana banana banana"""
+        """Return the unary AND reduction."""
         raise NotImplementedError()
 
     def uxor(self):
-        """banana banana banana"""
+        """Return the unary XOR reduction."""
         raise NotImplementedError()
 
     def __invert__(self):
@@ -458,21 +457,51 @@ class VectorFunction:
     def __xor__(self, other):
         raise NotImplementedError()
 
-    def restrict(self, constraints):
-        """banana banana banana"""
-        raise NotImplementedError()
+    def restrict(self, mapping):
+        """
+        Return the vector that results from applying the 'restrict' method to
+        all functions.
+        """
+        cpy = self[:]
+        for i, _ in enumerate(cpy.fs):
+            cpy[i] = cpy[i].restrict(mapping)
+        return cpy
 
-    def vrestrict(self, constraints):
-        """Expand all vectors before doing a substitution."""
-        return self.restrict(_expand_vectors(constraints))
+    def vrestrict(self, mapping):
+        """Expand all vectors before applying 'restrict'."""
+        return self.restrict(_expand_vectors(mapping))
 
     def to_uint(self):
-        """Convert vector to an unsigned integer."""
-        raise NotImplementedError()
+        """Convert vector to an unsigned integer, if possible."""
+        num = 0
+        for i, f in enumerate(self.fs):
+            if type(f) is int:
+                if f:
+                    num += 2 ** i
+            else:
+                raise ValueError("cannot convert to uint")
+        return num
 
     def to_int(self):
-        """Convert vector to an integer."""
-        raise NotImplementedError()
+        """Convert vector to an integer, if possible."""
+        num = self.to_uint()
+        if self._bnr == self.TWOS_COMPLEMENT and self.fs[-1]:
+            return -2 ** self.__len__() + num
+        else:
+            return num
+
+    def ext(self, num):
+        """Extend this vector by N bits.
+
+        If this vector uses two's complement representation, sign extend;
+        otherwise, zero extend.
+        """
+        if self.bnr == self.TWOS_COMPLEMENT:
+            bit = self.fs[-1]
+        else:
+            bit = 0
+        for _ in range(num):
+            self.append(bit)
 
     def getifz(self, i):
         """Get item from zero-based index."""
@@ -505,16 +534,21 @@ class VectorFunction:
             idx = i + self._start
         return idx
 
+    @property
+    def _sl(self):
+        """Return a slice object that represents the vector's index range."""
+        return slice(self._start, len(self.fs) + self._start)
+
     def _norm_slice(self, sl):
         """Return a slice normalized to vector start index."""
         limits = dict()
         for k in ("start", "stop"):
             idx = getattr(sl, k)
             if idx is not None:
-                limits[k] = (idx if idx >= 0 else self.sl.stop + idx)
+                limits[k] = (idx if idx >= 0 else self._sl.stop + idx)
             else:
-                limits[k] = getattr(self.sl, k)
-        if limits["start"] < self.sl.start or limits["stop"] > self.sl.stop:
+                limits[k] = getattr(self._sl, k)
+        if limits["start"] < self._sl.start or limits["stop"] > self._sl.stop:
             raise IndexError("list index out of range")
         elif limits["start"] >= limits["stop"]:
             raise IndexError("zero-sized slice")
@@ -526,17 +560,17 @@ class VectorFunction:
         self.fs.append(f)
 
 
-def _expand_vectors(constraints):
+def _expand_vectors(mapping):
     """Expand all vectors in a substitution dict."""
-    temp = { k: v for k, v in constraints.items() if
+    temp = { k: v for k, v in mapping.items() if
              isinstance(k, VectorFunction) }
-    constraints = {k: v for k, v in constraints.items() if k not in temp}
+    mapping = {k: v for k, v in mapping.items() if k not in temp}
     while temp:
         key, val = temp.popitem()
         if isinstance(key, VectorFunction):
             assert len(key) == len(val)
             for i, f in enumerate(val):
-                constraints[key.getifz(i)] = f
+                mapping[key.getifz(i)] = f
         else:
-            constraints[key] = val
-    return constraints
+            mapping[key] = val
+    return mapping

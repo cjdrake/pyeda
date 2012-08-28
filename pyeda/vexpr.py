@@ -77,11 +77,6 @@ def int2vec(num, length=None):
 class VectorExpression(VF):
     """Vector Boolean function"""
 
-    def __init__(self, *fs, **kwargs):
-        self.fs = list(fs)
-        self._start = kwargs.get("start", 0)
-        self._bnr = kwargs.get("bnr", VF.UNSIGNED)
-
     def __str__(self):
         return str(self.fs)
 
@@ -110,45 +105,6 @@ class VectorExpression(VF):
     def __xor__(self, other):
         assert isinstance(other, VectorExpression) and len(self) == len(other)
         return self.__class__(*[Xor(*t) for t in zip(self.fs, other.fs)])
-
-    def to_uint(self):
-        """Convert vector to an unsigned integer."""
-        n = 0
-        for i, f in enumerate(self.fs):
-            if type(f) is int:
-                if f:
-                    n += 2 ** i
-            else:
-                raise ValueError("cannot convert to uint")
-        return n
-
-    def to_int(self):
-        """Convert vector to an integer."""
-        n = self.to_uint()
-        if self._bnr == VF.TWOS_COMPLEMENT and self.fs[-1]:
-            return -2 ** self.__len__() + n
-        else:
-            return n
-
-    def restrict(self, constraints):
-        """Substitute numbers into a Boolean vector."""
-        cpy = self[:]
-        for i, _ in enumerate(cpy.fs):
-            cpy[i] = cpy[i].restrict(constraints)
-        return cpy
-
-    def ext(self, n):
-        """Extend this vector by N bits.
-
-        If this vector uses two's complement representation, sign extend;
-        otherwise, zero extend.
-        """
-        if self.bnr == VF.TWOS_COMPLEMENT:
-            bit = self.fs[-1]
-        else:
-            bit = 0
-        for _ in range(n):
-            self.append(bit)
 
 
 class BitVector(VectorExpression):
