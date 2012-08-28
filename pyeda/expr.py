@@ -56,31 +56,31 @@ def factor(expr):
 
 # factored operators
 def f_not(arg):
-    """Return factorized NOT expression."""
+    """Return factored NOT expression."""
     return Not(arg).factor()
 
 def f_or(*args):
-    """Return factorized OR expression."""
+    """Return factored OR expression."""
     return Or(*args).factor()
 
 def f_nor(*args):
-    """Return factorized NOR expression."""
+    """Return factored NOR expression."""
     return Not(Or(*args)).factor()
 
 def f_and(*args):
-    """Return factorized AND expression."""
+    """Return factored AND expression."""
     return And(*args).factor()
 
 def f_nand(*args):
-    """Return factorized NAND expression."""
+    """Return factored NAND expression."""
     return Not(And(*args)).factor()
 
 def f_xor(*args):
-    """Return factorized XOR expression."""
+    """Return factored XOR expression."""
     return Xor(*args).factor()
 
 def f_xnor(*args):
-    """Return factorized XNOR expression."""
+    """Return factored XNOR expression."""
     return Xnor(*args).factor()
 
 
