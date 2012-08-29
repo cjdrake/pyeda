@@ -44,7 +44,7 @@ Boolean Identities
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from .common import bit_on
+from pyeda.common import bit_on
 
 
 class Variable:
@@ -376,8 +376,8 @@ class VectorFunction:
 
     def __init__(self, *fs, **kwargs):
         self.fs = list(fs)
-        self._start = kwargs.get("start", 0)
-        self._bnr = kwargs.get("bnr", self.UNSIGNED)
+        self._start = kwargs.get('start', 0)
+        self._bnr = kwargs.get('bnr', self.UNSIGNED)
 
     def __int__(self):
         return self.to_int()
@@ -513,18 +513,18 @@ class VectorFunction:
     def _norm_slice(self, sl):
         """Return a slice normalized to vector start index."""
         limits = dict()
-        for k in ("start", "stop"):
+        for k in ('start', 'stop'):
             idx = getattr(sl, k)
             if idx is not None:
                 limits[k] = (idx if idx >= 0 else self._sl.stop + idx)
             else:
                 limits[k] = getattr(self._sl, k)
-        if limits["start"] < self._sl.start or limits["stop"] > self._sl.stop:
+        if limits['start'] < self._sl.start or limits['stop'] > self._sl.stop:
             raise IndexError("list index out of range")
-        elif limits["start"] >= limits["stop"]:
+        elif limits['start'] >= limits['stop']:
             raise IndexError("zero-sized slice")
-        return slice(limits["start"] - self._start,
-                     limits["stop"] - self._start)
+        return slice(limits['start'] - self._start,
+                     limits['stop'] - self._start)
 
     def append(self, f):
         """Append a function to the end of this vector."""

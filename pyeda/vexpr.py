@@ -14,9 +14,9 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from .common import clog2, bit_on
-from .boolfunc import VectorFunction as VF
-from .expr import var, Not, Or, And, Xor, Xnor
+from pyeda.common import clog2, bit_on
+from pyeda.boolfunc import VectorFunction as VF
+from pyeda.expr import var, Not, Or, And, Xor, Xnor
 
 def bitvec(name, *args, **kwargs):
     """Return a vector of variables."""

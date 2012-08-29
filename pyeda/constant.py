@@ -14,8 +14,8 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 import random
 
-from .common import bit_on
-from .boolfunc import Function
+from pyeda.common import bit_on
+from pyeda.boolfunc import Function
 
 _bool_dict = {
     0: 0,

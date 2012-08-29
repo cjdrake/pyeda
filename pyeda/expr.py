@@ -31,10 +31,10 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from .common import bit_on, cached_property
+from pyeda.common import bit_on, cached_property
 
-from .boolfunc import Variable, Function
-from .constant import boolify
+from pyeda.boolfunc import Variable, Function
+from pyeda.constant import boolify
 
 VARIABLES = dict()
 COMPLEMENTS = dict()

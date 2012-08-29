@@ -5,6 +5,7 @@ common.py
 boolfunc.py -- Boolean functions
 expr.py -- Boolean logic expressions
 vexpr.py -- Boolean vector logic expressions
+table.py -- Boolean tables
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
