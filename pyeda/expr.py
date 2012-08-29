@@ -7,7 +7,13 @@ Interface Functions:
 
     factor
 
-    f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor
+    f_not
+    f_or, f_nor
+    f_and, f_nand
+    f_xor, f_xnor
+
+    less_equal
+    greater_equal
 
 Interface Classes:
     Expression
@@ -116,10 +122,10 @@ class Expression(Function):
         return Xnor(self, *args)
 
     def op_le(self, *args):
-        return _le(self, *args) if args else self
+        return less_equal(self, *args) if args else self
 
     def op_ge(self, *args):
-        return _ge(self, *args) if args else self
+        return greater_equal(self, *args) if args else self
 
     def is_neg_unate(self, vs=None):
         if vs is None:
@@ -830,16 +836,20 @@ class Xnor(Exclusive):
     PARITY = 1
 
 
-def _le(*args):
+def less_equal(*args):
     """Return factored form of Boolean less than or equal operator."""
-    if len(args) == 1:
+    if len(args) == 0:
+        return Or.IDENTITY
+    elif len(args) == 1:
         return args[0]
     else:
-        return Or(Not(args[0]), _le(*args[1:]))
+        return Or(Not(args[0]), less_equal(*args[1:]))
 
-def _ge(*args):
+def greater_equal(*args):
     """Return factored form of Boolean greater than or equal operator."""
-    if len(args) == 1:
+    if len(args) == 0:
+        return Or.IDENTITY
+    elif len(args) == 1:
         return Not(args[0])
     else:
-        return Or(args[0], _ge(*args[1:]))
+        return Or(args[0], greater_equal(*args[1:]))

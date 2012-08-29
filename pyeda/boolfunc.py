@@ -75,6 +75,22 @@ class Variable:
         else:
             return "{0._name}[{0._index}]".format(self)
 
+    def __lt__(self, other):
+        """Return rich "less than" result, for ordering.
+
+        >>> a, b = map(Variable, 'ab')
+        >>> a < b, b < a
+        (True, False)
+
+        >>> c1, c2, c10 = Variable('c', 1), Variable('c', 2), Variable('c', 10)
+        >>> c1 < c2, c1 < c10, c2 < c10
+        (True, True, True)
+        """
+        if self.name == other.name:
+            return self.index < other.index
+        else:
+            return self.name < other.name
+
     @property
     def name(self):
         return self._name
@@ -278,7 +294,7 @@ class Function:
         raise NotImplementedError()
 
     def satisfy_all(self):
-        """Return the set of all satisfying input points."""
+        """Return the list of all satisfying input points."""
         raise NotImplementedError()
 
     def satisfy_count(self):
@@ -350,51 +366,6 @@ class Function:
         variable xi is df/dxi = f[xi] (xor) f[xi']
         """
         raise NotImplementedError()
-
-
-class Constant(Function):
-    """Constant Boolean Function, either Zero or One."""
-
-    def __init__(self, val, support=None):
-        self._val = val
-        if support is None:
-            self._support = set()
-        else:
-            self._support = set(support)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __str__(self):
-        return str(self._val)
-
-    def __bool__(self):
-        return bool(self._val)
-
-    def __int__(self):
-        return self._val
-
-    @property
-    def support(self):
-        return self._support
-
-    def restrict(self, mapping):
-        return self
-
-    def compose(self, mapping):
-        return self
-
-
-class Zero(Constant):
-    """Proxy class for the number zero."""
-    def __init__(self, support=None):
-        super(Zero, self).__init__(0, support)
-
-
-class One(Constant):
-    """Proxy class for the number one."""
-    def __init__(self, support=None):
-        super(One, self).__init__(1, support)
 
 
 class VectorFunction:
