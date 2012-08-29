@@ -1,6 +1,9 @@
 """
 Boolean Constant Functions
 
+Interface Functions:
+    boolify
+
 Interface Classes:
     Constant
         Zero
@@ -13,6 +16,30 @@ import random
 
 from .common import bit_on
 from .boolfunc import Function
+
+_bool_dict = {
+    0: 0,
+    1: 1,
+    "0": 0,
+    "1": 1
+}
+
+def boolify(arg):
+    """Convert 'arg' to an integer in B = {0, 1}.
+
+    >>> [boolify(x) for x in (False, True, 0, 1, "0", "1")]
+    [0, 1, 0, 1, 0, 1]
+
+    >>> boolify(42)
+    Traceback (most recent call last):
+        ...
+    ValueError: arg not in {0, 1}
+    """
+    try:
+        return _bool_dict[arg]
+    except KeyError:
+        raise ValueError("arg not in {0, 1}")
+
 
 class Constant(Function):
     """Constant Boolean Function, either Zero or One."""

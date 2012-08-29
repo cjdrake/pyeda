@@ -1,35 +1,11 @@
 """
 Interface Functions:
-    boolify
     clog2
     bit_on
     cached_property
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
-
-_bool_dict = {
-    0: 0,
-    1: 1,
-    "0": 0,
-    "1": 1
-}
-
-def boolify(arg):
-    """Convert 'arg' to an integer in B = {0, 1}.
-
-    >>> [boolify(x) for x in (False, True, 0, 1, "0", "1")]
-    [0, 1, 0, 1, 0, 1]
-
-    >>> boolify(42)
-    Traceback (most recent call last):
-        ...
-    ValueError: arg not in {0, 1}
-    """
-    try:
-        return _bool_dict[arg]
-    except KeyError:
-        raise ValueError("arg not in {0, 1}")
 
 def clog2(num):
     """Return the ceiling log base two of an integer >= 1.

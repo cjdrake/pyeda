@@ -31,9 +31,10 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from .common import boolify, bit_on, cached_property
+from .common import bit_on, cached_property
 
 from .boolfunc import Variable, Function
+from .constant import boolify
 
 VARIABLES = dict()
 COMPLEMENTS = dict()
