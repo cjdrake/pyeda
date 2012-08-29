@@ -349,11 +349,6 @@ def test_xor():
     assert Xor(a, a) == 0
     assert Xor(a, -a) == 1
 
-    assert str(Xor(a, b).to_sop())     == "a' * b + a * b'"
-    assert str(Xnor(a, b).to_sop())    == "a' * b' + a * b"
-    assert str(Xor(a, b, c).to_sop())  == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
-    assert str(Xnor(a, b, c).to_sop()) == "a' * b' * c' + a' * b * c + a * b' * c + a * b * c'"
-
 def test_demorgan():
     assert str(f_not(a * b))  == "a' + b'"
     assert str(f_not(a + b))  == "a' * b'"

@@ -136,7 +136,7 @@ class Expression(Function):
             if fv0 in {0, 1} or fv1 in {0, 1}:
                 if not (fv0 == 1 or fv1 == 0):
                     return False
-            elif not fv0.indices >= fv1.indices:
+            elif not fv0.min_indices >= fv1.min_indices:
                 return False
         return True
 
@@ -148,7 +148,7 @@ class Expression(Function):
             if fv0 in {0, 1} or fv1 in {0, 1}:
                 if not (fv1 == 1 or fv0 == 0):
                     return False
-            elif not fv1.indices >= fv0.indices:
+            elif not fv1.min_indices >= fv0.min_indices:
                 return False
         return True
 
@@ -212,53 +212,83 @@ class Expression(Function):
         """Iterate through the sum of products of N literals."""
         for point, output in self.iter_outputs():
             if output:
-                space = [(v if on else -v) for v, on in point.items()]
+                space = [(v if v_on else -v) for v, v_on in point.items()]
                 yield And(*space)
-
-    def iter_maxterms(self):
-        """Iterate through the product of sums of N literals."""
-        for point, output in self.iter_outputs():
-            if not output:
-                space = [(-v if on else v) for v, on in point.items()]
-                yield Or(*space)
 
     @cached_property
     def minterms(self):
         """The sum of products of N literals"""
         return {term for term in self.iter_minterms()}
 
+    def iter_maxterms(self):
+        """Iterate through the product of sums of N literals."""
+        for point, output in self.iter_outputs():
+            if not output:
+                space = [(-v if v_on else v) for v, v_on in point.items()]
+                yield Or(*space)
+
     @cached_property
     def maxterms(self):
         """The product of sums of N literals"""
         return {term for term in self.iter_maxterms()}
 
-    def to_sop(self):
-        """Return the expression as a sum of products."""
-        return self.factor()._flatten(And).absorb()
+    def is_sop(self):
+        """Return whether this expression is a sum of products."""
+        return False
 
-    def to_pos(self):
-        """Return the expression as a product of sums."""
-        return self.factor()._flatten(Or).absorb()
+    def to_sop(self):
+        """Return the expression as a sum of products.
+
+        >>> a, b, c = map(var, "abc")
+        >>> Xor(a, b, c).to_sop()
+        a' * b' * c + a' * b * c' + a * b' * c' + a * b * c
+        >>> Xnor(a, b, c).to_sop()
+        a' * b' * c' + a' * b * c + a * b' * c + a * b * c'
+        """
+        return self.factor()._flatten(And).absorb()
 
     def to_csop(self):
         """Return the expression as a sum of products of N literals."""
         return Or(*[term for term in self.iter_minterms()])
 
+    def is_pos(self):
+        """Return whether this expression is a products of sums."""
+        return False
+
+    def to_pos(self):
+        """Return the expression as a product of sums.
+
+        >>> a, b, c = map(var, "abc")
+        >>> Xor(a, b, c).to_pos()
+        (a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)
+        >>> Xnor(a, b, c).to_pos()
+        (a + b + c') * (a + b' + c) * (a' + b + c) * (a' + b' + c')
+        """
+        return self.factor()._flatten(Or).absorb()
+
     def to_cpos(self):
         """Return the expression as a product of sums of N literals."""
         return And(*[term for term in self.iter_maxterms()])
 
-    def is_term(self):
-        """Return whether this expression is a min/max term."""
-        raise NotImplementedError()
+    @cached_property
+    def min_indices(self):
+        """Return the minterm indices.
 
-    def term_index(self):
-        """Return the min/max term index."""
-        raise NotImplementedError()
+        >>> a, b, c = map(var, "abc")
+        >>> (a * b + a * c + b * c).min_indices
+        set([3, 5, 6, 7])
+        """
+        return {term.minterm_index for term in self.iter_minterms()}
 
     @cached_property
-    def indices(self):
-        return {term.term_index for term in self.iter_minterms()}
+    def max_indices(self):
+        """Return the maxterm indices.
+
+        >>> a, b, c = map(var, "abc")
+        >>> (a * b + a * c + b * c).max_indices
+        set([0, 1, 2, 4])
+        """
+        return {term.maxterm_index for term in self.iter_maxterms()}
 
     def equals(self, other):
         """Return whether this expression is equivalent to another.
@@ -266,7 +296,7 @@ class Expression(Function):
         NOTE: This algorithm uses exponential time and memory.
         """
         if self.support == other.support:
-            return self.indices == other.indices
+            return self.min_indices == other.min_indices
         else:
             return False
 
@@ -294,9 +324,6 @@ class Literal(Expression):
     @property
     def args(self):
         return {self}
-
-    def is_term(self):
-        return True
 
     @property
     def _oidx(self):
@@ -341,8 +368,12 @@ class _Variable(Variable, Literal):
 
     # Specific to _Variable
     @property
-    def term_index(self):
+    def minterm_index(self):
         return 1
+
+    @property
+    def maxterm_index(self):
+        return 0
 
 
 class _Complement(Literal):
@@ -401,9 +432,14 @@ class _Complement(Literal):
     def index(self):
         return self._var.index
 
+    # Specific to _Complement
     @property
-    def term_index(self):
+    def minterm_index(self):
         return 0
+
+    @property
+    def maxterm_index(self):
+        return 1
 
 
 class OrAnd(Expression):
@@ -495,6 +531,12 @@ class OrAnd(Expression):
     def factor(self):
         return self.__class__(*[arg.factor() for arg in self.args])
 
+    def iter_vars(self):
+        for arg in self.args:
+            for v in arg.iter_vars():
+                yield v
+
+    # Specific to OrAnd
     def absorb(self):
         """Return the OR/AND expression after absorption.
 
@@ -505,41 +547,35 @@ class OrAnd(Expression):
         it is too expensive to put into the constructor. We have to check
         whether each term is a subset of another term, which is N^3.
         """
-        terms, args = list(), list()
+        clauses, args = list(), list()
         for arg in self.args:
-            if arg.is_term():
-                terms.append(arg)
+            if isinstance(arg, Literal) or arg.depth == 1:
+                clauses.append(arg)
             else:
                 args.append(arg)
 
-        # Drop all terms that are a subset of other terms
-        while terms:
-            fst, rst, terms = terms[0], terms[1:], list()
+        # Drop all clauses that are a subset of other clauses
+        while clauses:
+            fst, rst, clauses = clauses[0], clauses[1:], list()
             drop_fst = False
             for term in rst:
-                drop_term = False
+                drop_clause = False
                 if fst.equals(term):
-                    drop_term = True
+                    drop_clause = True
                 else:
                     if all(any(farg.equals(targ) for targ in term.args)
                            for farg in fst.args):
-                        drop_term = True
+                        drop_clause = True
                     if all(any(farg.equals(targ) for targ in fst.args)
                            for farg in term.args):
                         drop_fst = True
-                if not drop_term:
-                    terms.append(term)
+                if not drop_clause:
+                    clauses.append(term)
             if not drop_fst:
                 args.append(fst)
 
         return self.__class__(*args)
 
-    def iter_vars(self):
-        for arg in self.args:
-            for v in arg.iter_vars():
-                yield v
-
-    # Specific to OrAnd
     def _flatten(self, op):
         """Return a flattened OR/AND expression.
 
@@ -572,9 +608,6 @@ class OrAnd(Expression):
             args = [arg._flatten(op) for arg in nested] + others
             return op.DUAL(*args)
 
-    def is_term(self):
-        return self.depth == 1
-
 
 class Or(OrAnd):
     """Boolean addition (or) operator"""
@@ -589,16 +622,24 @@ class Or(OrAnd):
         sep = " " + self.OP + " "
         return sep.join(str(arg) for arg in sorted(self.args))
 
-    @cached_property
+    def is_sop(self):
+        return self.depth == 1
+
+    # Specific to Or
+    @property
     def term_index(self):
+        return self.maxterm_index
+
+    @cached_property
+    def maxterm_index(self):
         if self.depth > 1:
             return None
         n = self.degree - 1
-        idx = 0
+        index = 0
         for i, v in enumerate(self.inputs):
             if -v in self.args:
-                idx |= 1 << (n - i)
-        return idx
+                index |= 1 << (n - i)
+        return index
 
 
 class And(OrAnd):
@@ -620,16 +661,24 @@ class And(OrAnd):
         sep = " " + self.OP + " "
         return sep.join(s)
 
-    @cached_property
+    def is_pos(self):
+        return self.depth == 1
+
+    # Specific to And
+    @property
     def term_index(self):
+        return self.minterm_index
+
+    @cached_property
+    def minterm_index(self):
         if self.depth > 1:
             return None
         n = self.degree - 1
-        idx = 0
+        index = 0
         for i, v in enumerate(self.inputs):
             if v in self.args:
-                idx |= 1 << (n - i)
-        return idx
+                index |= 1 << (n - i)
+        return index
 
 
 Or.DUAL = And
@@ -658,12 +707,6 @@ class BufNot(Expression):
     def iter_vars(self):
         for v in self.arg.iter_vars():
             yield v
-
-    def is_term(self):
-        return False
-
-    def term_index(self):
-        return None
 
     # Specific to BufNot
     @property
@@ -820,12 +863,6 @@ class Exclusive(Expression):
         for arg in self.args:
             for v in arg.iter_vars():
                 yield v
-
-    def is_term(self):
-        return False
-
-    def term_index(self):
-        return None
 
 
 class Xor(Exclusive):
