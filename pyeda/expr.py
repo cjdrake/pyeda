@@ -618,9 +618,9 @@ class OrAnd(Expression):
               instead.
         """
         if isinstance(self, op):
-            for arg in self.args:
+            for i, arg in enumerate(self.args):
                 if isinstance(arg, self.DUAL):
-                    others = [a for a in self.args if a != arg]
+                    others = self.args[:i] + self.args[i+1:]
                     expr = op.DUAL(*[op(a, *others) for a in arg.args])
                     if isinstance(expr, OrAnd):
                         return expr._flatten(op)
