@@ -12,9 +12,6 @@ Interface Functions:
     f_and, f_nand
     f_xor, f_xnor
 
-    less_equal
-    greater_equal
-
 Interface Classes:
     Expression
         Literal
@@ -144,10 +141,10 @@ class Expression(Function):
         return Xnor(self, *args)
 
     def op_le(self, *args):
-        return less_equal(self, *args) if args else self
+        return _less_equal(self, *args) if args else self
 
     def op_ge(self, *args):
-        return greater_equal(self, *args) if args else self
+        return _greater_equal(self, *args) if args else self
 
     def satisfy_one(self, algorithm='naive'):
         if algorithm == 'naive':
@@ -975,23 +972,19 @@ class Xnor(Exclusive):
     PARITY = 1
 
 
-def less_equal(*args):
+def _less_equal(*args):
     """Return factored form of Boolean less than or equal operator."""
-    if len(args) == 0:
-        return Or.IDENTITY
-    elif len(args) == 1:
+    if len(args) == 1:
         return args[0]
     else:
-        return Or(Not(args[0]), less_equal(*args[1:]))
+        return Or(Not(args[0]), _less_equal(*args[1:]))
 
-def greater_equal(*args):
+def _greater_equal(*args):
     """Return factored form of Boolean greater than or equal operator."""
-    if len(args) == 0:
-        return Or.IDENTITY
-    elif len(args) == 1:
+    if len(args) == 1:
         return Not(args[0])
     else:
-        return Or(args[0], greater_equal(*args[1:]))
+        return Or(args[0], _greater_equal(*args[1:]))
 
 def naive_sat_one(expr):
     """
