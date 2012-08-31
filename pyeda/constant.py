@@ -12,8 +12,6 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-import random
-
 from pyeda.common import bit_on
 from pyeda.boolfunc import Function
 
@@ -127,7 +125,7 @@ class Zero(Constant):
             return Zero(support)
 
     def satisfy_one(self):
-        return {}
+        return None
 
     def satisfy_all(self):
         return []
@@ -177,7 +175,7 @@ class One(Constant):
             return self
 
     def satisfy_one(self):
-        return {v: random.randint(0, 1) for v in self.support}
+        return {}
 
     def satisfy_all(self):
         vs = sorted(self.support)

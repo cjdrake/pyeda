@@ -149,6 +149,15 @@ class Expression(Function):
     def op_ge(self, *args):
         return greater_equal(self, *args) if args else self
 
+    def satisfy_one(self, algorithm='naive'):
+        if algorithm == 'naive':
+            return naive_sat_one(self)
+        else:
+            raise ValueError("invalid algorithm")
+
+    def satisfy_count(self, algorithm='naive'):
+        return len(self.satisfy_all(algorithm))
+
     def is_neg_unate(self, vs=None):
         if vs is None:
             vs = self.support
@@ -983,3 +992,35 @@ def greater_equal(*args):
         return Not(args[0])
     else:
         return Or(args[0], greater_equal(*args[1:]))
+
+def naive_sat_one(expr):
+    """
+    >>> a, b = map(var, "ab")
+    >>> point = (-a * b).satisfy_one(algorithm='naive')
+    >>> point[a], point[b]
+    (0, 1)
+    >>> (-a * -b + -a * b + a * -b + a * b).satisfy_one(algorithm='naive')
+    {}
+    >>> (a * b * (-a + -b)).satisfy_one(algorithm='naive')
+    """
+    fst, rst = expr.inputs[0], expr.inputs[1:]
+    cf0, cf1 = expr.cofactors(fst)
+    if cf0 == 0:
+        if cf1 == 0:
+            point = None
+        elif cf1 == 1:
+            point = {fst: 1}
+        else:
+            point = naive_sat_one(cf1)
+            if point is not None:
+                point[fst] = 1
+    elif cf0 == 1:
+        if cf1 == 1:
+            point = {}
+        else:
+            point = {fst: 0}
+    else:
+        point = naive_sat_one(cf0)
+        if point is not None:
+            point[fst] = 0
+    return point

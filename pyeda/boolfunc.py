@@ -288,8 +288,8 @@ class Function:
 
     def satisfy_one(self):
         """
-        If this function is satisfiable, return a satisfying input point.
-        Otherwise, return None.
+        If this function is satisfiable, return a satisfying input point. A
+        tautology returns an empty dictionary; a contradiction returns None.
         """
         raise NotImplementedError()
 
