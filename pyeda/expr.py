@@ -63,7 +63,14 @@ def factor(expr):
 
 # factored operators
 def f_not(arg):
-    """Return factored NOT expression."""
+    """Return factored NOT expression.
+
+    >>> a, b, c = map(var, "abc")
+    >>> f_not(a * b * c), f_not(a + b + c)
+    (a' + b' + c', a' * b' * c')
+    >>> f_not(-a * b * c), f_not(-a + b + c)
+    (a + b' + c', a * b' * c')
+    """
     return Not(arg).factor()
 
 def f_or(*args):
@@ -71,7 +78,14 @@ def f_or(*args):
     return Or(*args).factor()
 
 def f_nor(*args):
-    """Return factored NOR expression."""
+    """Return factored NOR expression.
+
+    >>> a, b, c, d = map(var, "abcd")
+    >>> f_nor(a, b, c, d)
+    a' * b' * c' * d'
+    >>> f_nor(-a, b, -c, d)
+    a * b' * c * d'
+    """
     return Not(Or(*args)).factor()
 
 def f_and(*args):
@@ -79,7 +93,14 @@ def f_and(*args):
     return And(*args).factor()
 
 def f_nand(*args):
-    """Return factored NAND expression."""
+    """Return factored NAND expression.
+
+    >>> a, b, c, d = map(var, "abcd")
+    >>> f_nand(a, b, c, d)
+    a' + b' + c' + d'
+    >>> f_nand(-a, b, -c, d)
+    a + b' + c + d'
+    """
     return Not(And(*args)).factor()
 
 def f_xor(*args):
@@ -443,7 +464,7 @@ class _Complement(Literal):
 
 
 class OrAnd(Expression):
-    """base class for Boolean OR/AND expressions"""
+    """Base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *args):
         temps, args = list(args), list()
@@ -610,7 +631,18 @@ class OrAnd(Expression):
 
 
 class Or(OrAnd):
-    """Boolean addition (or) operator"""
+    """Boolean addition (or) operator
+
+    >>> a, b, c = map(var, "abc")
+    >>> Or(), Or(a)
+    (0, a)
+    >>> a + 1, a + b + 1, a + 0
+    (1, 1, a)
+    >>> -a + a, -a + a + b
+    (1, 1)
+    >>> Or.DUAL is And
+    True
+    """
 
     # Infix symbol used in string representation
     OP = "+"
@@ -643,7 +675,18 @@ class Or(OrAnd):
 
 
 class And(OrAnd):
-    """Boolean multiplication (and) operator"""
+    """Boolean multiplication (and) operator
+
+    >>> a, b, c = map(var, "abc")
+    >>> And(), And(a)
+    (1, a)
+    >>> a * 0, a * b * 0, a * 1
+    (0, 0, a)
+    >>> -a * a, -a * a * b
+    (0, 0)
+    >>> And.DUAL is Or
+    True
+    """
 
     # Infix symbol used in string representation
     OP = "*"
@@ -686,7 +729,7 @@ And.DUAL = Or
 
 
 class BufNot(Expression):
-    """base class for BUF/NOT operators"""
+    """Base class for BUF/NOT operators"""
 
     def __init__(self, arg):
         self.arg = arg
@@ -715,7 +758,18 @@ class BufNot(Expression):
 
 
 class Buf(BufNot):
-    """buffer operator"""
+    """buffer operator
+
+    >>> a = var('a')
+    >>> Buf(0), Buf(1)
+    (0, 1)
+    >>> Buf(-a), Buf(a)
+    (a', a)
+    >>> Buf(Buf(a)), Buf(Buf(Buf(a))), Buf(Buf(Buf(Buf(a))))
+    (a, a, a)
+    >>> Buf(a + -a), Buf(a * -a)
+    (1, 0)
+    """
 
     def __new__(cls, arg):
         # Auto-simplify numbers and literals
@@ -750,7 +804,18 @@ class Buf(BufNot):
 
 
 class Not(BufNot):
-    """Boolean NOT operator"""
+    """Boolean NOT operator
+
+    >>> a = var('a')
+    >>> Not(0), Not(1)
+    (1, 0)
+    >>> Not(-a), Not(a)
+    (a, a')
+    >>> -(-a), -(-(-a)), -(-(-(-a)))
+    (a, a', a)
+    >>> Not(a + -a), Not(a * -a)
+    (0, 1)
+    """
 
     def __new__(cls, arg):
         # Auto-simplify numbers and literals
@@ -844,6 +909,15 @@ class Exclusive(Expression):
     # From Expression
     @property
     def depth(self):
+        """
+        >>> a, b, c, d, e = map(var, "abcde")
+        >>> Xor(a, b, c).depth
+        2
+        >>> Xor(a, b, c + d).depth
+        3
+        >>> Xor(a, b, c + Xor(d, e)).depth
+        5
+        """
         return max(arg.depth + 2 for arg in self.args)
 
     def invert(self):
@@ -866,11 +940,29 @@ class Exclusive(Expression):
 
 
 class Xor(Exclusive):
-    """Boolean Exclusive OR (XOR) operator"""
+    """Boolean Exclusive OR (XOR) operator
+
+    >>> a, b, c = map(var, "abc")
+    >>> Xor(), Xor(a)
+    (0, a)
+    >>> Xor(0, 0), Xor(0, 1), Xor(1, 0), Xor(1, 1)
+    (0, 1, 1, 0)
+    >>> Xor(a, a), Xor(a, -a)
+    (0, 1)
+    """
     PARITY = 0
 
 class Xnor(Exclusive):
-    """Boolean Exclusive NOR (XNOR) operator"""
+    """Boolean Exclusive NOR (XNOR) operator
+
+    >>> a, b, c = map(var, "abc")
+    >>> Xnor(), Xnor(a)
+    (1, a')
+    >>> Xnor(0, 0), Xnor(0, 1), Xnor(1, 0), Xnor(1, 1)
+    (1, 0, 0, 1)
+    >>> Xnor(a, a), Xnor(a, -a)
+    (1, 0)
+    """
     PARITY = 1
 
 

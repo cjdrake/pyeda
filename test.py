@@ -15,7 +15,7 @@ from pyeda.expr import (
     Or, And,
     Xor, Xnor,
     factor,
-    f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor
+    f_nor, f_nand, f_xor, f_xnor
 )
 
 from pyeda.vexpr import (
@@ -104,18 +104,6 @@ def test_literal():
     assert a.factor() == a
 
 def test_buf():
-    assert Buf(0) == 0
-    assert Buf(1) == 1
-    assert Buf(-a) == -a
-    assert Buf(a) == a
-
-    assert Buf(Buf(a)) == a
-    assert Buf(Buf(Buf(a))) == a
-    assert Buf(Buf(Buf(Buf(a)))) == a
-
-    assert Buf(a + -a) == 1
-    assert Buf(a * -a) == 0
-
     # __str__
     assert str(Buf(-a + b)) == "Buf(a' + b)"
     assert str(Buf(a + -b)) == "Buf(a + b')"
@@ -132,18 +120,6 @@ def test_buf():
     assert str(Buf(-a + b).factor()) == "a' + b"
 
 def test_not():
-    assert Not(0) == 1
-    assert Not(1) == 0
-    assert Not(-a) == a
-    assert Not(a) == -a
-
-    assert -(-a) == a
-    assert -(-(-a)) == -a
-    assert -(-(-(-a))) == a
-
-    assert Not(a + -a) == 0
-    assert Not(a * -a) == 1
-
     # __str__
     assert str(-(-a + b)) == "Not(a' + b)"
     assert str(-(a + -b)) == "Not(a + b')"
@@ -160,16 +136,6 @@ def test_not():
     assert str(Not(-a + b).factor()) == "a * b'"
 
 def test_or():
-    assert Or() == 0
-    assert Or(a) == a
-
-    assert a + 1 == 1
-    assert a + b + 1 == 1
-    assert a + 0 == a
-
-    assert -a + a == 1
-    assert -a + a + b == 1
-
     # __len__
     assert len(a + b + c) == 3
 
@@ -213,9 +179,6 @@ def test_or():
     assert (a + (b * c)).depth == 2
     assert (a + (b * (c + d))).depth == 3
 
-    # DUAL
-    assert Or.DUAL is And
-
     # support
     assert (-a + b + (-c * d)).support == {a, b, c, d}
 
@@ -238,16 +201,6 @@ def test_or():
     assert str(f.to_csop()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
 
 def test_and():
-    assert And() == 1
-    assert And(a) == a
-
-    assert a * 0 == 0
-    assert a * b * 0 == 0
-    assert a * 1 == a
-
-    assert -a * a == 0
-    assert -a * a * b == 0
-
     # __len__
     assert len(a * b * c) == 3
 
@@ -291,9 +244,6 @@ def test_and():
     assert (a * (b + c)).depth == 2
     assert (a * (b + (c * d))).depth == 3
 
-    # DUAL
-    assert And.DUAL is Or
-
     # support
     assert (-a * b * (-c + d)).support == {a, b, c, d}
 
@@ -323,48 +273,6 @@ def test_implies():
     assert (a >> 1) == 1
     assert (0 >> a) == 1
     assert (1 >> a) == a
-
-def test_nops():
-    assert str(f_nor(a, b)) == "a' * b'"
-    assert str(f_nor(a, b, c, d)) == "a' * b' * c' * d'"
-    assert str(f_nand(a, b)) == "a' + b'"
-    assert str(f_nand(a, b, c, d)) == "a' + b' + c' + d'"
-
-def test_xor():
-    assert Xor() == 0
-    assert Xor(a) == a
-    assert Xor(0, 0) == 0
-    assert Xor(0, 1) == 1
-    assert Xor(1, 0) == 1
-    assert Xor(1, 1) == 0
-    assert Xnor(0, 0) == 1
-    assert Xnor(0, 1) == 0
-    assert Xnor(1, 0) == 0
-    assert Xnor(1, 1) == 1
-
-    assert Xor(a, b, c).depth == 2
-    assert Xor(a, b, c + d).depth == 3
-    assert Xor(a, b, c + Xor(d, e)).depth == 5
-
-    assert Xor(a, a) == 0
-    assert Xor(a, -a) == 1
-
-def test_demorgan():
-    assert str(f_not(a * b))  == "a' + b'"
-    assert str(f_not(a + b))  == "a' * b'"
-    assert str(f_not(a * -b)) == "a' + b"
-    assert str(f_not(a * -b)) == "a' + b"
-    assert str(f_not(-a * b)) == "a + b'"
-    assert str(f_not(-a * b)) == "a + b'"
-
-    assert str(f_not(a * b * c))  == "a' + b' + c'"
-    assert str(f_not(a + b + c))  == "a' * b' * c'"
-    assert str(f_not(-a * b * c)) == "a + b' + c'"
-    assert str(f_not(-a + b + c)) == "a * b' * c'"
-    assert str(f_not(a * -b * c)) == "a' + b + c'"
-    assert str(f_not(a + -b + c)) == "a' * b * c'"
-    assert str(f_not(a * b * -c)) == "a' + b' + c"
-    assert str(f_not(a + b + -c)) == "a' * b' * c"
 
 def test_absorb():
     assert str((a * b + a * b).absorb()) == "a * b"
