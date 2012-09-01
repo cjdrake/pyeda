@@ -1024,12 +1024,17 @@ def naive_sat_one(expr):
             # var=0 satisfies the formula
             point = {var: 0}
     else:
-        if cf1 == 1:
-            # var=1 satisfies the formula
-            point = {var: 1}
-        else:
+        if cf1 == 0:
             # var=0 results in a simpler formula
             point = naive_sat_one(cf0)
             if point is not None:
                 point[var] = 0
+        elif cf1 == 1:
+            # var=1 satisfies the formula
+            point = {var: 1}
+        else:
+            # var=0 and var=1 both result in a simpler formula
+            point = naive_sat_one(cf0)
+            if point is None:
+                point = naive_sat_one(cf1)
     return point
