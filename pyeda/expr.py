@@ -1035,6 +1035,10 @@ def naive_sat_one(expr):
         else:
             # var=0 and var=1 both result in a simpler formula
             point = naive_sat_one(cf0)
-            if point is None:
+            if point is not None:
+                point[var] = 0
+            else:
                 point = naive_sat_one(cf1)
+                if point is not None:
+                    point[var] = 1
     return point
