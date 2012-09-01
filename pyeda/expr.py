@@ -226,6 +226,10 @@ class Expression(Function):
         """Return the support set in name/index order."""
         return sorted(self.support)
 
+    @property
+    def top(self):
+        return self.inputs[0] if self.inputs else None
+
     def iter_outputs(self):
         for n in range(2 ** self.degree):
             point = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
@@ -996,24 +1000,36 @@ def naive_sat_one(expr):
     {}
     >>> (a * b * (-a + -b)).satisfy_one(algorithm='naive')
     """
-    fst, rst = expr.inputs[0], expr.inputs[1:]
-    cf0, cf1 = expr.cofactors(fst)
+    var = expr.top
+    # Split the formula into var=0 and var=1 cofactors
+    cf0, cf1 = expr.cofactors(var)
     if cf0 == 0:
+        # var=0 is a dead-end; consider var=1
         if cf1 == 0:
+            # var=1 is also a dead-end
             point = None
         elif cf1 == 1:
-            point = {fst: 1}
+            # var=1 satisfies the formula
+            point = {var: 1}
         else:
+            # var=1 results in a simpler formula
             point = naive_sat_one(cf1)
             if point is not None:
-                point[fst] = 1
+                point[var] = 1
     elif cf0 == 1:
         if cf1 == 1:
+            # var=0 and var=1 both satisfy the formula; this is a tautology
             point = {}
         else:
-            point = {fst: 0}
+            # var=0 satisfies the formula
+            point = {var: 0}
     else:
-        point = naive_sat_one(cf0)
-        if point is not None:
-            point[fst] = 0
+        if cf1 == 1:
+            # var=1 satisfies the formula
+            point = {var: 1}
+        else:
+            # var=0 results in a simpler formula
+            point = naive_sat_one(cf0)
+            if point is not None:
+                point[var] = 0
     return point
