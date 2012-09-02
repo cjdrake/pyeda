@@ -177,7 +177,7 @@ class Function:
         raise NotImplementedError()
 
     def op_nor(self, *args):
-        """Return symbolic NOR (NOT AND) of functions."""
+        """Return symbolic NOR (NOT OR) of functions."""
         raise NotImplementedError()
 
     def op_and(self, *args):
