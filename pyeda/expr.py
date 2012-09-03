@@ -140,11 +140,17 @@ class Expression(Function):
     def op_xnor(self, *args):
         return Xnor(self, *args)
 
-    def op_le(self, *args):
-        return _less_equal(self, *args) if args else self
+    #def op_eq(self, *args):
+    #    return Equal(self, *args)
 
-    def op_ge(self, *args):
-        return _greater_equal(self, *args) if args else self
+    #def op_ne(self, *args):
+    #    return Not(Equal(self, *args))
+
+    def op_le(self, arg):
+        return Or(Not(self), arg)
+
+    def op_ge(self, arg):
+        return Or(self, Not(arg))
 
     def satisfy_one(self, algorithm='naive'):
         if algorithm == 'naive':
@@ -975,20 +981,6 @@ class Xnor(Exclusive):
     """
     PARITY = 1
 
-
-def _less_equal(*args):
-    """Return factored form of Boolean less than or equal operator."""
-    if len(args) == 1:
-        return args[0]
-    else:
-        return Or(Not(args[0]), _less_equal(*args[1:]))
-
-def _greater_equal(*args):
-    """Return factored form of Boolean greater than or equal operator."""
-    if len(args) == 1:
-        return Not(args[0])
-    else:
-        return Or(args[0], _greater_equal(*args[1:]))
 
 def naive_sat_one(expr):
     """

@@ -147,7 +147,9 @@ class Function:
 
     # Operators
     def op_not(self):
-        """Return symbolic complement of a Boolean function.
+        """Return symbolic complement of a function.
+
+        DIMACS SAT format: -f
 
         +---+----+
         | f | -f |
@@ -162,6 +164,8 @@ class Function:
 
     def op_or(self, *args):
         """Return symbolic disjunction of functions.
+
+        DIMACS SAT format: +(f1, f2, ..., fn)
 
         +---+---+-------+
         | f | g | f + g |
@@ -183,6 +187,8 @@ class Function:
     def op_and(self, *args):
         """Return symbolic conjunction of functions.
 
+        DIMACS SAT format: *(f1, f2, ..., fn)
+
         +---+---+-------+
         | f | g | f * g |
         +---+---+-------+
@@ -203,14 +209,16 @@ class Function:
     def op_xor(self, *args):
         """Return symbolic XOR of functions.
 
-        +---+---+--------+
-        | f | g | f != g |
-        +---+---+--------+
-        | 0 | 0 |    0   |
-        | 0 | 1 |    1   |
-        | 1 | 0 |    1   |
-        | 1 | 1 |    0   |
-        +---+---+--------+
+        DIMACS SAT format: xor(f1, f2, ..., fn)
+
+        +---+---+----------+
+        | f | g | XOR(f,g) |
+        +---+---+----------+
+        | 0 | 0 |     0    |
+        | 0 | 1 |     1    |
+        | 1 | 0 |     1    |
+        | 1 | 1 |     0    |
+        +---+---+----------+
 
         Also known as: odd parity
         """
@@ -219,21 +227,59 @@ class Function:
     def op_xnor(self, *args):
         """Return symbolic XNOR of functions.
 
-        +---+---+-------+
-        | f | g | f = g |
-        +---+---+-------+
-        | 0 | 0 |   1   |
-        | 0 | 1 |   0   |
-        | 1 | 0 |   0   |
-        | 1 | 1 |   1   |
-        +---+---+-------+
+        +---+---+-----------+
+        | f | g | XNOR(f,g) |
+        +---+---+-----------+
+        | 0 | 0 |     1     |
+        | 0 | 1 |     0     |
+        | 1 | 0 |     0     |
+        | 1 | 1 |     1     |
+        +---+---+-----------+
 
         Also known as: even parity
         """
         raise NotImplementedError()
 
-    def op_le(self, *args):
-        """Return symbolic "less than or equal to" of functions.
+    def op_eq(self, *args):
+        """Return symbolic EQUAL of functions.
+
+        DIMACS SAT format: =(f1, f2, ..., fn)
+
+        +-------+-----------+
+        | f g h | EQ(f,g,h) |
+        +-------+-----------+
+        | 0 0 0 |     1     |
+        | 0 0 1 |     0     |
+        | 0 1 0 |     0     |
+        | 0 1 1 |     0     |
+        | 1 0 0 |     0     |
+        | 1 0 1 |     0     |
+        | 1 1 0 |     0     |
+        | 1 1 1 |     1     |
+        +-------+-----------+
+        """
+        raise NotImplementedError()
+
+    def op_ne(self, *args):
+        """Return symbolic NOT EQUAL of functions.
+
+        +-------+-----------+
+        | f g h | NE(f,g,h) |
+        +-------+-----------+
+        | 0 0 0 |     0     |
+        | 0 0 1 |     1     |
+        | 0 1 0 |     1     |
+        | 0 1 1 |     1     |
+        | 1 0 0 |     1     |
+        | 1 0 1 |     1     |
+        | 1 1 0 |     1     |
+        | 1 1 1 |     0     |
+        +-------+-----------+
+        """
+        raise NotImplementedError()
+
+    def op_le(self, arg):
+        """Return symbolic "less than or equal to" of two functions.
 
         +---+---+--------+
         | f | g | f <= g |
@@ -248,8 +294,8 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_ge(self, *args):
-        """Return symbolic "greater than or equal to" of functions.
+    def op_ge(self, arg):
+        """Return symbolic "greater than or equal to" of two functions.
 
         +---+---+--------+
         | f | g | f >= g |
