@@ -22,6 +22,7 @@ Interface Classes:
         Exclusive
             Xor
             Xnor
+        Implies
         Equal
 """
 
@@ -154,6 +155,13 @@ class Expression(Function):
     def satisfy_one(self, algorithm='naive'):
         if algorithm == 'naive':
             return naive_sat_one(self)
+        else:
+            raise ValueError("invalid algorithm")
+
+    def satisfy_all(self, algorithm='naive'):
+        if algorithm == 'naive':
+            for point in naive_sat_all(self):
+                yield point
         else:
             raise ValueError("invalid algorithm")
 
@@ -1099,7 +1107,7 @@ class Equal(Expression):
 
 def naive_sat_one(expr):
     """
-    >>> a, b = map(var, "ab")
+    >>> a, b, c = map(var, "abc")
     >>> point = (-a * b).satisfy_one(algorithm='naive')
     >>> point[a], point[b]
     (0, 1)
@@ -1120,28 +1128,35 @@ def naive_sat_one(expr):
     elif cf1 == 1:
         # var=1 satisfies the formula
         point = {var: 1}
-    elif cf0 == 0:
-        # var=0 is a dead-end; consider var=1
-        if cf1 == 0:
-            # contradiction
-            point = None
-        else:
-            # var=1 results in a simpler formula
-            point = naive_sat_one(cf1)
-            if point is not None:
-                point[var] = 1
-    elif cf1 == 0:
-        # var=0 results in a simpler formula
-        point = naive_sat_one(cf0)
-        if point is not None:
-            point[var] = 0
     else:
-        # var=0 and var=1 both result in a simpler formula
-        point = naive_sat_one(cf0)
-        if point is not None:
-            point[var] = 0
+        for num, cf in [(0, cf0), (1, cf1)]:
+            if cf != 0:
+                point = naive_sat_one(cf)
+                if point is not None:
+                    point[var] = num
+                    break
         else:
-            point = naive_sat_one(cf1)
-            if point is not None:
-                point[var] = 1
+            point = None
     return point
+
+def naive_sat_all(expr):
+    var = expr.top
+    # Split the formula into var=0 and var=1 cofactors
+    cf0, cf1 = expr.cofactors(var)
+    if cf0 == 1:
+        if cf1 == 1:
+            # tautology
+            yield {}
+        else:
+            # var=0 satisfies the formula
+            yield {var: 0}
+    elif cf1 == 1:
+        # var=1 satisfies the formula
+        yield {var: 1}
+    else:
+        for num, cf in [(0, cf0), (1, cf1)]:
+            if cf != 0:
+                for point in naive_sat_all(cf):
+                    if point is not None:
+                        point[var] = num
+                        yield point
