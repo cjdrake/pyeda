@@ -18,12 +18,11 @@ Interface Classes:
         OrAnd
             Or
             And
-        BufNot
-            Buf
-            Not
+        Not
         Exclusive
             Xor
             Xnor
+        Equal
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
@@ -140,17 +139,17 @@ class Expression(Function):
     def op_xnor(self, *args):
         return Xnor(self, *args)
 
-    #def op_eq(self, *args):
-    #    return Equal(self, *args)
+    def op_eq(self, *args):
+        return Equal(self, *args)
 
-    #def op_ne(self, *args):
-    #    return Not(Equal(self, *args))
+    def op_ne(self, *args):
+        return Not(Equal(self, *args))
 
     def op_le(self, arg):
-        return Or(Not(self), arg)
+        return Implies(self, arg)
 
     def op_ge(self, arg):
-        return Or(self, Not(arg))
+        return Implies(arg, self)
 
     def satisfy_one(self, algorithm='naive'):
         if algorithm == 'naive':
@@ -197,7 +196,7 @@ class Expression(Function):
     # Specific to Expression
     def __lt__(self, other):
         """Implementing this function makes expressions sortable."""
-        raise NotImplementedError()
+        return id(self) < id(other)
 
     def __repr__(self):
         """Return a printable representation."""
@@ -337,13 +336,28 @@ class Expression(Function):
         else:
             return False
 
-    def _get_replace(self, constraints):
-        replace = dict()
+    # Convenience methods
+    def _get_restrictions(self, mapping):
+        restrictions = dict()
         for i, arg in enumerate(self.args):
-            new_arg = arg.restrict(constraints)
+            new_arg = arg.restrict(mapping)
             if id(new_arg) != id(arg):
-                replace[i] = new_arg
-        return replace
+                restrictions[i] = new_arg
+        return restrictions
+
+    def _get_compositions(self, mapping):
+        compositions = dict()
+        for i, arg in enumerate(self.args):
+            new_arg = arg.compose(mapping)
+            if id(new_arg) != id(arg):
+                compositions[i] = new_arg
+        return compositions
+
+    def _subs(self, idx_arg):
+        args = self.args[:]
+        for i, arg in idx_arg.items():
+            args[i] = arg
+        return self.__class__(*args)
 
 
 class Literal(Expression):
@@ -376,15 +390,15 @@ class _Variable(Variable, Literal):
         Literal.__init__(self)
 
     # From Function
-    def restrict(self, constraints):
+    def restrict(self, mapping):
         try:
-            return boolify(constraints[self])
+            return boolify(mapping[self])
         except KeyError:
             return self
 
-    def compose(self, constraints):
+    def compose(self, mapping):
         try:
-            return constraints[self]
+            return mapping[self]
         except KeyError:
             return self
 
@@ -423,15 +437,12 @@ class _Complement(Literal):
         self._var = v
 
     # From Function
-    def restrict(self, constraints):
-        try:
-            return Not(constraints[self._var])
-        except KeyError:
-            return self
+    def restrict(self, mapping):
+        return self.compose(mapping)
 
-    def compose(self, constraints):
+    def compose(self, mapping):
         try:
-            return Not(constraints[self._var])
+            return Not(mapping[self._var])
         except KeyError:
             return self
 
@@ -491,7 +502,7 @@ class OrAnd(Expression):
                 if isinstance(arg, cls):
                     temps.extend(arg.args)
                 # complement
-                elif -arg in args:
+                elif isinstance(arg, Literal) and -arg in args:
                     return cls.DOMINATOR
                 # idempotent
                 elif arg not in args:
@@ -512,29 +523,23 @@ class OrAnd(Expression):
         return self
 
     # From Function
-    def restrict(self, constraints):
-        replace = self._get_replace(constraints)
-        if replace:
+    def restrict(self, mapping):
+        idx_arg = self._get_restrictions(mapping)
+        if idx_arg:
             args = self.args[:]
-            for i, new_arg in replace.items():
+            for i, arg in idx_arg.items():
                 # speed hack
-                if new_arg == self.DOMINATOR:
+                if arg == self.DOMINATOR:
                     return self.DOMINATOR
                 else:
-                    args[i] = new_arg
+                    args[i] = arg
             return self.__class__(*args)
         else:
             return self
 
-    def compose(self, constraints):
-        replace = self._get_replace(constraints)
-        if replace:
-            args = self.args[:]
-            for i, new_arg in replace.items():
-                args[i] = new_arg
-            return self.__class__(*args)
-        else:
-            return self
+    def compose(self, mapping):
+        idx_arg = self._get_compositions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
 
     # From Expression
     def __lt__(self, other):
@@ -647,7 +652,7 @@ class OrAnd(Expression):
 
 
 class Or(OrAnd):
-    """Boolean addition (or) operator
+    """Boolean OR operator
 
     >>> a, b, c = map(var, "abc")
     >>> Or(), Or(a)
@@ -691,7 +696,7 @@ class Or(OrAnd):
 
 
 class And(OrAnd):
-    """Boolean multiplication (and) operator
+    """Boolean AND operator
 
     >>> a, b, c = map(var, "abc")
     >>> And(), And(a)
@@ -744,82 +749,7 @@ Or.DUAL = And
 And.DUAL = Or
 
 
-class BufNot(Expression):
-    """Base class for BUF/NOT operators"""
-
-    def __init__(self, arg):
-        self.arg = arg
-
-    # From Function
-    def compose(self, constraints):
-        expr = self.arg.restrict(constraints)
-        if id(expr) == id(self.arg):
-            return self
-        else:
-            return self.__class__(expr)
-
-    # From Expression
-    @property
-    def depth(self):
-        return self.arg.depth
-
-    def iter_vars(self):
-        for v in self.arg.iter_vars():
-            yield v
-
-    # Specific to BufNot
-    @property
-    def args(self):
-        return {self.arg}
-
-
-class Buf(BufNot):
-    """buffer operator
-
-    >>> a = var('a')
-    >>> Buf(0), Buf(1)
-    (0, 1)
-    >>> Buf(-a), Buf(a)
-    (a', a)
-    >>> Buf(Buf(a)), Buf(Buf(Buf(a))), Buf(Buf(Buf(Buf(a))))
-    (a, a, a)
-    >>> Buf(a + -a), Buf(a * -a)
-    (1, 0)
-    """
-
-    def __new__(cls, arg):
-        # Auto-simplify numbers and literals
-        if isinstance(arg, Expression):
-            if isinstance(arg, Literal):
-                return arg
-            else:
-                return super(Buf, cls).__new__(cls)
-        else:
-            return boolify(arg)
-
-    def __str__(self):
-        return "Buf({0.arg})".format(self)
-
-    # From Function
-    def restrict(self, constraints):
-        arg = self.arg.restrict(constraints)
-        # speed hack
-        if arg in {0, 1}:
-            return arg
-        elif id(arg) == id(self.arg):
-            return self
-        else:
-            return self.__class__(arg)
-
-    # From Expression
-    def invert(self):
-        return Not(self.arg)
-
-    def factor(self):
-        return self.arg.factor()
-
-
-class Not(BufNot):
+class Not(Expression):
     """Boolean NOT operator
 
     >>> a = var('a')
@@ -832,14 +762,15 @@ class Not(BufNot):
     >>> Not(a + -a), Not(a * -a)
     (0, 1)
     """
-
     def __new__(cls, arg):
         # Auto-simplify numbers and literals
         if isinstance(arg, Expression):
             if isinstance(arg, Literal):
                 return arg.invert()
             else:
-                return super(Not, cls).__new__(cls)
+                self = super(Not, cls).__new__(cls)
+                self.arg = arg
+                return self
         else:
             return 1 - boolify(arg)
 
@@ -847,8 +778,8 @@ class Not(BufNot):
         return "Not({0.arg})".format(self)
 
     # From Function
-    def restrict(self, constraints):
-        arg = self.arg.restrict(constraints)
+    def restrict(self, mapping):
+        arg = self.arg.restrict(mapping)
         # speed hack
         if arg in {0, 1}:
             return 1 - arg
@@ -857,12 +788,32 @@ class Not(BufNot):
         else:
             return self.__class__(arg)
 
+    def compose(self, mapping):
+        expr = self.arg.compose(mapping)
+        if id(expr) == id(self.arg):
+            return self
+        else:
+            return self.__class__(expr)
+
     # From Expression
+    @cached_property
+    def depth(self):
+        return self.arg.depth
+
     def invert(self):
         return self.arg
 
     def factor(self):
         return self.arg.invert().factor()
+
+    def iter_vars(self):
+        for v in self.arg.iter_vars():
+            yield v
+
+    # Specific to Not
+    @property
+    def args(self):
+        return {self.arg}
 
 
 class Exclusive(Expression):
@@ -880,7 +831,7 @@ class Exclusive(Expression):
                 if isinstance(arg, cls):
                     temps.extend(arg.args)
                 # XOR(x, x') = 1
-                elif -arg in args:
+                elif isinstance(arg, Literal) and -arg in args:
                     args.remove(-arg)
                     parity ^= 1
                 # XOR(x, x) = 0
@@ -909,15 +860,22 @@ class Exclusive(Expression):
             return "Xor(" + args + ")"
 
     # From Function
-    def restrict(self, constraints):
-        return self.compose(constraints)
-
-    def compose(self, constraints):
-        replace = self._get_replace(constraints)
-        if replace:
+    def restrict(self, mapping):
+        idx_arg = self._get_restrictions(mapping)
+        if idx_arg:
             args = self.args[:]
-            for i, new_arg in replace.items():
-                args[i] = new_arg
+            for i, arg in idx_arg.items():
+                args[i] = arg
+            return Xnor(*args) if self._parity else Xor(*args)
+        else:
+            return self
+
+    def compose(self, mapping):
+        idx_arg = self._get_compositions(mapping)
+        if idx_arg:
+            args = self.args[:]
+            for i, arg in idx_arg.items():
+                args[i] = arg
             return Xnor(*args) if self._parity else Xor(*args)
         else:
             return self
@@ -980,6 +938,163 @@ class Xnor(Exclusive):
     (1, 0)
     """
     PARITY = 1
+
+
+class Implies(Expression):
+    """Boolean implication operator
+
+    >>> a, b = map(var, "ab")
+    >>> 0 >> a, 1 >> a, a >> 0, a >> 1
+    (1, a, a', 1)
+    >>> a >> a, a >> -a, -a >> a
+    (1, a', a)
+    >>> (a >> b).factor()
+    a' + b
+    """
+
+    OP = "=>"
+
+    def __new__(cls, antecedent, consequence):
+        args = [arg if isinstance(arg, Expression) else boolify(arg)
+                for arg in (antecedent, consequence)]
+        # 0 => x = 1; x => 1 = 1
+        if args[0] == 0 or args[1] == 1:
+            return 1
+        # 1 => x = x
+        elif args[0] == 1:
+            return args[1]
+        # x => 0 = x'
+        elif args[1] == 0:
+            return Not(args[0])
+        elif isinstance(args[0], Literal):
+            # x -> x = 1
+            if args[0] == args[1]:
+                return 1
+            # -x -> x = x
+            elif args[0] == -args[1]:
+                return args[1]
+        self = super(Implies, cls).__new__(cls)
+        self.args = args
+        return self
+
+    def __str__(self):
+        s = list()
+        for arg in self.args:
+            if isinstance(arg, Literal):
+                s.append(str(arg))
+            else:
+                s.append("(" + str(arg) + ")")
+        sep = " " + self.OP + " "
+        return sep.join(s)
+
+    # From Function
+    def restrict(self, mapping):
+        idx_arg = self._get_restrictions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    def compose(self, mapping):
+        idx_arg = self._get_compositions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    # From Expression
+    @property
+    def depth(self):
+        return max(arg.depth + 1 for arg in self.args)
+
+    def invert(self):
+        return And(self.args[0], Not(self.args[1]))
+
+    def factor(self):
+        return Or(Not(self.args[0]), self.args[1]).factor()
+
+    def iter_vars(self):
+        for arg in self.args:
+            for v in arg.iter_vars():
+                yield v
+
+
+class Equal(Expression):
+    """Boolean EQUAL operator
+
+    >>> a, b, c = map(var, "abc")
+    >>> Equal(0, 0), Equal(0, 1), Equal(1, 0), Equal(1, 1)
+    (1, 0, 0, 1)
+    >>> Equal(0, a), Equal(a, 0), Equal(1, a), Equal(a, 1)
+    (a', a', a, a)
+    >>> Equal(a, a), Equal(a, -a)
+    (1, 0)
+    >>> Equal(a, b, c).invert()
+    (a + b + c) * (a' + b' + c')
+    >>> Equal(a, b, c).factor()
+    a' * b' * c' + a * b * c
+    """
+
+    OP = "="
+
+    def __new__(cls, *args):
+        args = [ (arg if isinstance(arg, Expression) else boolify(arg))
+                 for arg in args ]
+
+        if 0 in args:
+            if 1 in args:
+                return 0
+            else:
+                return And(*[Not(arg) for arg in args])
+        if 1 in args:
+            return And(*args)
+
+        temps, args = args, list()
+        while temps:
+            arg = temps.pop()
+            # complement
+            if isinstance(arg, Literal) and -arg in args:
+                return 0
+            # idempotent
+            elif arg not in args:
+                args.append(arg)
+
+        if len(args) <= 1:
+            return 1
+
+        self = super(Equal, cls).__new__(cls)
+        self.args = args
+        return self
+
+    def __str__(self):
+        s = list()
+        for arg in self.args:
+            if isinstance(arg, Literal):
+                s.append(str(arg))
+            else:
+                s.append("(" + str(arg) + ")")
+        sep = " " + self.OP + " "
+        return sep.join(s)
+
+    # From Function
+    def restrict(self, mapping):
+        idx_arg = self._get_restrictions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    def compose(self, mapping):
+        idx_arg = self._get_compositions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    # From Expression
+    @property
+    def depth(self):
+        return max(arg.depth + 2 for arg in self.args)
+
+    def invert(self):
+        return And(Or(*self.args), Or(*[Not(arg) for arg in self.args]))
+
+    def factor(self):
+        return Or(And(*[Not(arg) for arg in self.args]),
+                  And(*self.args)).factor()
+
+    def iter_vars(self):
+        for arg in self.args:
+            for v in arg.iter_vars():
+                yield v
 
 
 def naive_sat_one(expr):

@@ -11,7 +11,7 @@ import random
 # pyeda
 from pyeda.expr import (
     var,
-    Buf, Not,
+    Not,
     Or, And,
     Xor, Xnor,
     factor,
@@ -102,22 +102,6 @@ def test_literal():
     # factor
     assert (-a).factor() == -a
     assert a.factor() == a
-
-def test_buf():
-    # __str__
-    assert str(Buf(-a + b)) == "Buf(a' + b)"
-    assert str(Buf(a + -b)) == "Buf(a + b')"
-
-    # support
-    assert Buf(-a + b).support == {a, b}
-
-    # restrict
-    assert Buf(-a + b).restrict({a: 0}) == 1
-    assert Buf(-a + b).restrict({a: 1}) == b
-    assert str(Buf(-a + b + c).restrict({a: 1})) == "Buf(b + c)"
-
-    # factor
-    assert str(Buf(-a + b).factor()) == "a' + b"
 
 def test_not():
     # __str__
@@ -264,15 +248,6 @@ def test_and():
     # to_cpos
     f = a * b + a * c + b * c
     assert str(f.to_cpos()) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
-
-def test_implies():
-    assert (a >> a) == 1
-    assert (a >> -a) == -a
-    assert (-a >> a) == a
-    assert (a >> 0) == -a
-    assert (a >> 1) == 1
-    assert (0 >> a) == 1
-    assert (1 >> a) == a
 
 def test_absorb():
     assert str((a * b + a * b).absorb()) == "a * b"
