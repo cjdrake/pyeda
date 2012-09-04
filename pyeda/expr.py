@@ -7,6 +7,8 @@ Interface Functions:
 
     factor
 
+    Nor, Nand
+
     f_not
     f_or, f_nor
     f_and, f_nand
@@ -57,6 +59,13 @@ def comp(v):
 def factor(expr):
     """Return a factored expression."""
     return expr.factor()
+
+# convenience functions
+def Nor(*args):
+    return Not(Or(*args))
+
+def Nand(*args):
+    return Not(And(*args))
 
 # factored operators
 def f_not(arg):
@@ -126,13 +135,13 @@ class Expression(Function):
         return Or(self, *args)
 
     def op_nor(self, *args):
-        return Not(Or(self, *args))
+        return Nor(self, *args)
 
     def op_and(self, *args):
         return And(self, *args)
 
     def op_nand(self, *args):
-        return Not(And(self, *args))
+        return Nand(self, *args)
 
     def op_xor(self, *args):
         return Xor(self, *args)
