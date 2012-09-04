@@ -126,7 +126,10 @@ class Expression(Function):
     # From Function
     @cached_property
     def support(self):
-        return {v for v in self.iter_vars()}
+        s = set()
+        for arg in self._args:
+            s |= arg.support
+        return s
 
     def op_not(self):
         return Not(self)
@@ -219,11 +222,16 @@ class Expression(Function):
         """Return a printable representation."""
         return self.__str__()
 
+    @property
+    def args(self):
+        """Return the expression argument list."""
+        return self._args
+
     def __iter__(self):
-        return iter(self.args)
+        return iter(self._args)
 
     def __len__(self):
-        return len(self.args)
+        return len(self._args)
 
     @property
     def depth(self):
@@ -256,10 +264,6 @@ class Expression(Function):
         for n in range(2 ** self.degree):
             point = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
             yield point, self.restrict(point)
-
-    def iter_vars(self):
-        """Recursively iterate through all variables in the expression."""
-        raise NotImplementedError()
 
     def iter_minterms(self):
         """Iterate through the sum of products of N literals."""
@@ -356,7 +360,7 @@ class Expression(Function):
     # Convenience methods
     def _get_restrictions(self, mapping):
         restrictions = dict()
-        for i, arg in enumerate(self.args):
+        for i, arg in enumerate(self._args):
             new_arg = arg.restrict(mapping)
             if id(new_arg) != id(arg):
                 restrictions[i] = new_arg
@@ -364,14 +368,14 @@ class Expression(Function):
 
     def _get_compositions(self, mapping):
         compositions = dict()
-        for i, arg in enumerate(self.args):
+        for i, arg in enumerate(self._args):
             new_arg = arg.compose(mapping)
             if id(new_arg) != id(arg):
                 compositions[i] = new_arg
         return compositions
 
     def _subs(self, idx_arg):
-        args = self.args[:]
+        args = list(self._args)
         for i, arg in idx_arg.items():
             args[i] = arg
         return self.__class__(*args)
@@ -390,10 +394,6 @@ class Literal(Expression):
 
     # Specific to Literal
     @property
-    def args(self):
-        return {self}
-
-    @property
     def _oidx(self):
         """Return an index for ordering comparison."""
         return (-1 if self.index is None else self.index)
@@ -404,9 +404,14 @@ class _Variable(Variable, Literal):
 
     def __init__(self, name, index=None):
         Variable.__init__(self, name, index)
-        Literal.__init__(self)
+        self._support = {self}
+        self._args = (self, )
 
     # From Function
+    @property
+    def support(self):
+        return self._support
+
     def restrict(self, mapping):
         try:
             return boolify(mapping[self])
@@ -431,9 +436,6 @@ class _Variable(Variable, Literal):
     def invert(self):
         return comp(self)
 
-    def iter_vars(self):
-        yield self
-
     # Specific to _Variable
     @property
     def minterm_index(self):
@@ -452,8 +454,14 @@ class _Complement(Literal):
 
     def __init__(self, v):
         self._var = v
+        self._support = {v}
+        self._args = (self, )
 
     # From Function
+    @property
+    def support(self):
+        return self._support
+
     def restrict(self, mapping):
         return self.compose(mapping)
 
@@ -477,9 +485,6 @@ class _Complement(Literal):
 
     def invert(self):
         return self._var
-
-    def iter_vars(self):
-        yield self._var
 
     # Specific to _Complement
     def __str__(self):
@@ -536,14 +541,14 @@ class OrAnd(Expression):
             return args[0]
 
         self = super(OrAnd, cls).__new__(cls)
-        self.args = args
+        self._args = tuple(args)
         return self
 
     # From Function
     def restrict(self, mapping):
         idx_arg = self._get_restrictions(mapping)
         if idx_arg:
-            args = self.args[:]
+            args = list(self._args)
             for i, arg in idx_arg.items():
                 # speed hack
                 if arg == self.DOMINATOR:
@@ -582,18 +587,13 @@ class OrAnd(Expression):
 
     @cached_property
     def depth(self):
-        return max(arg.depth + 1 for arg in self.args)
+        return max(arg.depth + 1 for arg in self._args)
 
     def invert(self):
-        return self.DUAL(*[Not(arg) for arg in self.args])
+        return self.DUAL(*[Not(arg) for arg in self._args])
 
     def factor(self):
-        return self.__class__(*[arg.factor() for arg in self.args])
-
-    def iter_vars(self):
-        for arg in self.args:
-            for v in arg.iter_vars():
-                yield v
+        return self.__class__(*[arg.factor() for arg in self._args])
 
     # Specific to OrAnd
     def absorb(self):
@@ -607,7 +607,7 @@ class OrAnd(Expression):
         whether each term is a subset of another term, which is N^3.
         """
         clauses, args = list(), list()
-        for arg in self.args:
+        for arg in self._args:
             if isinstance(arg, Literal) or arg.depth == 1:
                 clauses.append(arg)
             else:
@@ -647,9 +647,9 @@ class OrAnd(Expression):
               instead.
         """
         if isinstance(self, op):
-            for i, arg in enumerate(self.args):
+            for i, arg in enumerate(self._args):
                 if isinstance(arg, self.DUAL):
-                    others = self.args[:i] + self.args[i+1:]
+                    others = self._args[:i] + self._args[i+1:]
                     expr = op.DUAL(*[op(a, *others) for a in arg.args])
                     if isinstance(expr, OrAnd):
                         return expr._flatten(op)
@@ -659,7 +659,7 @@ class OrAnd(Expression):
                 return self
         else:
             nested, others = list(), list()
-            for arg in self.args:
+            for arg in self._args:
                 if arg.depth > 1:
                     nested.append(arg)
                 else:
@@ -690,7 +690,7 @@ class Or(OrAnd):
 
     def __str__(self):
         sep = " " + self.OP + " "
-        return sep.join(str(arg) for arg in sorted(self.args))
+        return sep.join(str(arg) for arg in sorted(self._args))
 
     def is_sop(self):
         return self.depth == 1
@@ -707,7 +707,7 @@ class Or(OrAnd):
         n = self.degree - 1
         index = 0
         for i, v in enumerate(self.inputs):
-            if -v in self.args:
+            if -v in self._args:
                 index |= 1 << (n - i)
         return index
 
@@ -734,7 +734,7 @@ class And(OrAnd):
 
     def __str__(self):
         s = list()
-        for arg in sorted(self.args):
+        for arg in sorted(self._args):
             if isinstance(arg, Or):
                 s.append("(" + str(arg) + ")")
             else:
@@ -757,7 +757,7 @@ class And(OrAnd):
         n = self.degree - 1
         index = 0
         for i, v in enumerate(self.inputs):
-            if v in self.args:
+            if v in self._args:
                 index |= 1 << (n - i)
         return index
 
@@ -786,28 +786,29 @@ class Not(Expression):
                 return arg.invert()
             else:
                 self = super(Not, cls).__new__(cls)
-                self.arg = arg
+                self._arg = arg
+                self._args = (arg, )
                 return self
         else:
             return 1 - boolify(arg)
 
     def __str__(self):
-        return "Not({0.arg})".format(self)
+        return "Not({0._arg})".format(self)
 
     # From Function
     def restrict(self, mapping):
-        arg = self.arg.restrict(mapping)
+        arg = self._arg.restrict(mapping)
         # speed hack
         if arg in {0, 1}:
             return 1 - arg
-        elif id(arg) == id(self.arg):
+        elif id(arg) == id(self._arg):
             return self
         else:
             return self.__class__(arg)
 
     def compose(self, mapping):
-        expr = self.arg.compose(mapping)
-        if id(expr) == id(self.arg):
+        expr = self._arg.compose(mapping)
+        if id(expr) == id(self._arg):
             return self
         else:
             return self.__class__(expr)
@@ -815,22 +816,13 @@ class Not(Expression):
     # From Expression
     @cached_property
     def depth(self):
-        return self.arg.depth
+        return self._arg.depth
 
     def invert(self):
-        return self.arg
+        return self._arg
 
     def factor(self):
-        return self.arg.invert().factor()
-
-    def iter_vars(self):
-        for v in self.arg.iter_vars():
-            yield v
-
-    # Specific to Not
-    @property
-    def args(self):
-        return {self.arg}
+        return self._arg.invert().factor()
 
 
 class Exclusive(Expression):
@@ -865,12 +857,12 @@ class Exclusive(Expression):
             return Not(args[0]) if parity else args[0]
 
         self = super(Exclusive, cls).__new__(cls)
-        self.args = args
+        self._args = tuple(args)
         self._parity = parity
         return self
 
     def __str__(self):
-        args = ", ".join(str(arg) for arg in self.args)
+        args = ", ".join(str(arg) for arg in self._args)
         if self._parity:
             return "Xnor(" + args + ")"
         else:
@@ -880,7 +872,7 @@ class Exclusive(Expression):
     def restrict(self, mapping):
         idx_arg = self._get_restrictions(mapping)
         if idx_arg:
-            args = self.args[:]
+            args = list(self._args)
             for i, arg in idx_arg.items():
                 args[i] = arg
             return Xnor(*args) if self._parity else Xor(*args)
@@ -890,7 +882,7 @@ class Exclusive(Expression):
     def compose(self, mapping):
         idx_arg = self._get_compositions(mapping)
         if idx_arg:
-            args = self.args[:]
+            args = self._args[:]
             for i, arg in idx_arg.items():
                 args[i] = arg
             return Xnor(*args) if self._parity else Xor(*args)
@@ -909,26 +901,22 @@ class Exclusive(Expression):
         >>> Xor(a, b, c + Xor(d, e)).depth
         5
         """
-        return max(arg.depth + 2 for arg in self.args)
+        return max(arg.depth + 2 for arg in self._args)
 
     def invert(self):
         if self._parity == Xor.PARITY:
-            return Xnor(*self.args)
+            return Xnor(*self._args)
         else:
-            return Xor(*self.args)
+            return Xor(*self._args)
 
     def factor(self):
-        arg, args = self.args[0], self.args[1:]
+        fst, rst = self._args[0], self._args[1:]
         if self._parity == Xor.PARITY:
-            return Or(And(Not(arg), Xor(*args)), And(arg, Xnor(*args))).factor()
+            return Or(And(Not(fst).factor(), Xor(*rst).factor()),
+                      And(fst.factor(), Xnor(*rst).factor()))
         else:
-            return Or(And(Not(arg), Xnor(*args)), And(arg, Xor(*args))).factor()
-
-    def iter_vars(self):
-        for arg in self.args:
-            for v in arg.iter_vars():
-                yield v
-
+            return Or(And(Not(fst).factor(), Xnor(*rst).factor()),
+                      And(fst.factor(), Xor(*rst).factor()))
 
 class Xor(Exclusive):
     """Boolean Exclusive OR (XOR) operator
@@ -991,12 +979,12 @@ class Implies(Expression):
             elif args[0] == -args[1]:
                 return args[1]
         self = super(Implies, cls).__new__(cls)
-        self.args = args
+        self._args = tuple(args)
         return self
 
     def __str__(self):
         s = list()
-        for arg in self.args:
+        for arg in self._args:
             if isinstance(arg, Literal):
                 s.append(str(arg))
             else:
@@ -1016,18 +1004,13 @@ class Implies(Expression):
     # From Expression
     @property
     def depth(self):
-        return max(arg.depth + 1 for arg in self.args)
+        return max(arg.depth + 1 for arg in self._args)
 
     def invert(self):
-        return And(self.args[0], Not(self.args[1]))
+        return And(self._args[0], Not(self._args[1]))
 
     def factor(self):
-        return Or(Not(self.args[0]), self.args[1]).factor()
-
-    def iter_vars(self):
-        for arg in self.args:
-            for v in arg.iter_vars():
-                yield v
+        return Or(Not(self._args[0]).factor(), self._args[1].factor())
 
 
 class Equal(Expression):
@@ -1074,12 +1057,12 @@ class Equal(Expression):
             return 1
 
         self = super(Equal, cls).__new__(cls)
-        self.args = args
+        self._args = tuple(args)
         return self
 
     def __str__(self):
         s = list()
-        for arg in self.args:
+        for arg in self._args:
             if isinstance(arg, Literal):
                 s.append(str(arg))
             else:
@@ -1099,20 +1082,14 @@ class Equal(Expression):
     # From Expression
     @property
     def depth(self):
-        return max(arg.depth + 2 for arg in self.args)
+        return max(arg.depth + 2 for arg in self._args)
 
     def invert(self):
-        return And(Or(*self.args), Or(*[Not(arg) for arg in self.args]))
+        return And(Or(*self._args), Or(*[Not(arg) for arg in self._args]))
 
     def factor(self):
-        return Or(And(*[Not(arg) for arg in self.args]),
-                  And(*self.args)).factor()
-
-    def iter_vars(self):
-        for arg in self.args:
-            for v in arg.iter_vars():
-                yield v
-
+        return Or(And(*[Not(arg).factor() for arg in self._args]),
+                  And(*[arg.factor() for arg in self._args]))
 
 def naive_sat_one(expr):
     """
