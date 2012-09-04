@@ -504,7 +504,7 @@ class OrAnd(Expression):
     def __new__(cls, *args):
         temps, args = list(args), list()
         while temps:
-            arg = temps.pop()
+            arg = temps.pop(0)
             if isinstance(arg, Expression):
                 # associative
                 if isinstance(arg, cls):
@@ -833,7 +833,7 @@ class Exclusive(Expression):
         parity = cls.PARITY
         temps, args = list(args), list()
         while temps:
-            arg = temps.pop()
+            arg = temps.pop(0)
             if isinstance(arg, Expression):
                 # associative
                 if isinstance(arg, cls):
@@ -1053,7 +1053,7 @@ class Equal(Expression):
 
         temps, args = args, list()
         while temps:
-            arg = temps.pop()
+            arg = temps.pop(0)
             # complement
             if isinstance(arg, Literal) and -arg in args:
                 return 0
