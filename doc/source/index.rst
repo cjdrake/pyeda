@@ -6,8 +6,8 @@ Python EDA Documentation
 :Release: |version|
 :Date: |today|
 
-PyEDA is a Python library for electronic design automation. It written entirely
-in Python 3.2, and currently has no external dependencies.
+Python EDA is a Python library for electronic design automation. It is written
+entirely in Python 3.2, and currently has no external dependencies.
 
 In particular, PyEDA focuses on implementing data structures and algorithms for
 logic synthesis and verification.
