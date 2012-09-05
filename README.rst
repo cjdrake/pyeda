@@ -13,10 +13,12 @@ performance, so that is a possible future direction.
 
 `Read the docs! <http://pyeda.rtfd.org>`_
 
-.. WARNING::
-   This software is very much a work in progress. As long as the major version
-   number is "0", the API could change drastically between releases. Use at
-   your own risk.
+Warning
+=======
+
+This software is very much a work in progress. As long as the major version
+number is "0", the API could change drastically between releases. Use at
+your own risk.
 
 EDA Reference Books
 ===================
