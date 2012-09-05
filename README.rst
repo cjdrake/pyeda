@@ -11,7 +11,7 @@ PyEDA is currently for education and experimentation. Python has several tools
 (eg Numpy, PyPy) in the ecosystem that are appropriate for industrial-strength
 performance, so that is a possible future direction.
 
-`Read the docs! <http://pyeda.rtdf.org>`_
+`Read the docs! <http://pyeda.rtfd.org>`_
 
 .. WARNING::
    This software is very much a work in progress. As long as the major version
