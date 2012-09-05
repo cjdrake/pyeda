@@ -75,7 +75,7 @@ class TruthTable(Table):
         for n in range(2 ** self.degree):
             s += [str(bit_on(n, i)) for i in range(self.degree - 1, -1, -1)]
             # n >> 2 == n / 4; n & 3 == n % 4
-            byte = self._data[(n >> 2)]
+            byte = self._data[n >> 2]
             output = (byte >> ((n & 3) << 1)) & 3
             s += [" ", PC_STR[output], "\n"]
         s.append(".e")

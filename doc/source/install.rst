@@ -6,8 +6,7 @@
 
 This page describes how to procure your very own, shiny copy of PyEDA. It is
 a primary goal of the PyEDA project to be a mainstream Python package, and
-adhere to the majority of conventions observed by the community. Therefore,
-hopefully most of the instructions that follow will seem familiar to you.
+adhere to the majority of conventions observed by the community.
 
 Distutils / Virtualenv
 ======================
