@@ -4,9 +4,6 @@ Boolean Functions
 Interface Classes:
     Variable
     Function
-        Constant
-            Zero
-            One
     VectorFunction
 
 Boolean Identities
