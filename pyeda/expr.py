@@ -462,6 +462,9 @@ class _Complement(Literal):
         self._support = {v}
         self._args = (self, )
 
+    def __str__(self):
+        return str(self._var) + self.OP
+
     # From Function
     @property
     def support(self):
@@ -492,9 +495,6 @@ class _Complement(Literal):
         return self._var
 
     # Specific to _Complement
-    def __str__(self):
-        return str(self._var) + self.OP
-
     @property
     def var(self):
         return self._var

@@ -13,5 +13,6 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 __version__ = "0.5.0"
 
 from pyeda.expr import var
+from pyeda.constant import ZERO, ONE
 from pyeda.expr import Not, Or, Nor, And, Nand, Xor, Xnor, Implies, Equal
 from pyeda.table import TruthTable
