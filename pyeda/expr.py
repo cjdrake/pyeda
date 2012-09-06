@@ -132,38 +132,26 @@ class Expression(Function):
             s |= arg.support
         return s
 
-    def op_not(self):
+    def __neg__(self):
         return Not(self)
 
-    def op_or(self, *args):
-        return Or(self, *args)
+    def __add__(self, arg):
+        return Or(self, arg)
 
-    def op_nor(self, *args):
-        return Nor(self, *args)
+    def __mul__(self, arg):
+        return And(self, arg)
 
-    def op_and(self, *args):
-        return And(self, *args)
-
-    def op_nand(self, *args):
-        return Nand(self, *args)
-
-    def op_xor(self, *args):
-        return Xor(self, *args)
-
-    def op_xnor(self, *args):
-        return Xnor(self, *args)
-
-    def op_eq(self, *args):
-        return Equal(self, *args)
-
-    def op_ne(self, *args):
-        return Not(Equal(self, *args))
-
-    def op_le(self, arg):
+    def __rshift__(self, arg):
         return Implies(self, arg)
 
-    def op_ge(self, arg):
+    def __rrshift__(self, arg):
         return Implies(arg, self)
+
+    def xor(self, *args):
+        return Xor(self, *args)
+
+    def equal(self, *args):
+        return Equal(self, *args)
 
     def satisfy_one(self, algorithm='naive'):
         if algorithm == 'naive':
@@ -346,7 +334,7 @@ class Expression(Function):
         """
         return {term.maxterm_index for term in self.iter_maxterms()}
 
-    def equals(self, other):
+    def equivalent(self, other):
         """Return whether this expression is equivalent to another.
 
         NOTE: This algorithm uses exponential time and memory.
@@ -633,13 +621,13 @@ class OrAnd(Expression):
             drop_fst = False
             for term in rst:
                 drop_clause = False
-                if fst.equals(term):
+                if fst.equivalent(term):
                     drop_clause = True
                 else:
-                    if all(any(farg.equals(targ) for targ in term.args)
+                    if all(any(farg.equivalent(targ) for targ in term.args)
                            for farg in fst.args):
                         drop_clause = True
-                    if all(any(farg.equals(targ) for targ in fst.args)
+                    if all(any(farg.equivalent(targ) for targ in fst.args)
                            for farg in term.args):
                         drop_fst = True
                 if not drop_clause:

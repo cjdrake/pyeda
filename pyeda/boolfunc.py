@@ -121,29 +121,6 @@ class Function:
 
     # Overloaded operators
     def __neg__(self):
-        return self.op_not()
-
-    def __add__(self, other):
-        return self.op_or(other)
-
-    def __radd__(self, other):
-        return self.op_or(other)
-
-    def __mul__(self, other):
-        return self.op_and(other)
-
-    def __rmul__(self, other):
-        return self.op_and(other)
-
-    def __rshift__(self, other):
-        """Return a >> b, equivalent to a -> b."""
-        return self.op_le(other)
-
-    def __rrshift__(self, other):
-        return self.op_ge(other)
-
-    # Operators
-    def op_not(self):
         """Return symbolic complement of a function.
 
         DIMACS SAT format: -f
@@ -159,7 +136,7 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_or(self, *args):
+    def __add__(self, other):
         """Return symbolic disjunction of functions.
 
         DIMACS SAT format: +(f1, f2, ..., fn)
@@ -177,11 +154,10 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_nor(self, *args):
-        """Return symbolic NOR (NOT OR) of functions."""
-        raise NotImplementedError()
+    def __radd__(self, other):
+        return self.__add__(other)
 
-    def op_and(self, *args):
+    def __mul__(self, other):
         """Return symbolic conjunction of functions.
 
         DIMACS SAT format: *(f1, f2, ..., fn)
@@ -199,11 +175,39 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_nand(self, *args):
-        """Return symbolic NAND (NOT AND) of functions."""
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __rshift__(self, other):
+        """Return symbolic implication of two functions.
+
+        +---+---+--------+
+        | f | g | f <= g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    1   |
+        | 1 | 0 |    0   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
+        """
         raise NotImplementedError()
 
-    def op_xor(self, *args):
+    def __rrshift__(self, other):
+        """Return symbolic reverse implicaton of two functions.
+
+        +---+---+--------+
+        | f | g | f >= g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    0   |
+        | 1 | 0 |    1   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
+        """
+        raise NotImplementedError()
+
+    # Optional operators
+    def xor(self, *args):
         """Return symbolic XOR of functions.
 
         DIMACS SAT format: xor(f1, f2, ..., fn)
@@ -221,23 +225,7 @@ class Function:
         """
         raise NotImplementedError()
 
-    def op_xnor(self, *args):
-        """Return symbolic XNOR of functions.
-
-        +---+---+-----------+
-        | f | g | XNOR(f,g) |
-        +---+---+-----------+
-        | 0 | 0 |     1     |
-        | 0 | 1 |     0     |
-        | 1 | 0 |     0     |
-        | 1 | 1 |     1     |
-        +---+---+-----------+
-
-        Also known as: even parity
-        """
-        raise NotImplementedError()
-
-    def op_eq(self, *args):
+    def equal(self, *args):
         """Return symbolic EQUAL of functions.
 
         DIMACS SAT format: =(f1, f2, ..., fn)
@@ -254,56 +242,6 @@ class Function:
         | 1 1 0 |     0     |
         | 1 1 1 |     1     |
         +-------+-----------+
-        """
-        raise NotImplementedError()
-
-    def op_ne(self, *args):
-        """Return symbolic NOT EQUAL of functions.
-
-        +-------+-----------+
-        | f g h | NE(f,g,h) |
-        +-------+-----------+
-        | 0 0 0 |     0     |
-        | 0 0 1 |     1     |
-        | 0 1 0 |     1     |
-        | 0 1 1 |     1     |
-        | 1 0 0 |     1     |
-        | 1 0 1 |     1     |
-        | 1 1 0 |     1     |
-        | 1 1 1 |     0     |
-        +-------+-----------+
-        """
-        raise NotImplementedError()
-
-    def op_le(self, arg):
-        """Return symbolic "less than or equal to" of two functions.
-
-        +---+---+--------+
-        | f | g | f <= g |
-        +---+---+--------+
-        | 0 | 0 |    1   |
-        | 0 | 1 |    1   |
-        | 1 | 0 |    0   |
-        | 1 | 1 |    1   |
-        +---+---+--------+
-
-        Also known as: implies (f => g)
-        """
-        raise NotImplementedError()
-
-    def op_ge(self, arg):
-        """Return symbolic "greater than or equal to" of two functions.
-
-        +---+---+--------+
-        | f | g | f >= g |
-        +---+---+--------+
-        | 0 | 0 |    1   |
-        | 0 | 1 |    0   |
-        | 1 | 0 |    1   |
-        | 1 | 1 |    1   |
-        +---+---+--------+
-
-        Also known as: reverse implies (g => f)
         """
         raise NotImplementedError()
 

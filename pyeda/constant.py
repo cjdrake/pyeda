@@ -15,6 +15,13 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 from pyeda.common import bit_on
 from pyeda.boolfunc import Function
 
+BOOL_DICT = {
+    0: 0,
+    1: 1,
+    "0": 0,
+    "1": 1
+}
+
 def boolify(arg):
     """Convert 'arg' to an integer in B = {0, 1}.
 
@@ -89,37 +96,20 @@ class Zero(Constant):
     def __init__(self, support=None):
         super(Zero, self).__init__(support)
 
-    def op_not(self):
-        """Boolean NOT operator
+    def __neg__(self):
+        return 1
 
-        >>> -ZERO
-        1
-        """
-        return One(self.support)
+    def __add__(self, other):
+        return other
 
-    def op_or(self, *args):
-        """Boolean OR operator
-        >>> ZERO + ZERO, ZERO + ONE
-        (0, 1)
-        """
-        if args:
-            return args[0].op_or(*args[1:])
-        else:
-            return self
+    def __mul__(self, other):
+        return 0
 
-    def op_and(self, *args):
-        """Boolean AND operator
+    def __rshift__(self, other):
+        return 1
 
-        >>> ZERO * ZERO, ZERO * ONE
-        (0, 0)
-        """
-        support = self.support.copy()
-        for arg in args:
-            support |= arg.support
-        if self.support == support:
-            return self
-        else:
-            return Zero(support)
+    def __rrshift__(self, other):
+        return _invert(other)
 
     def satisfy_one(self):
         return None
@@ -139,38 +129,20 @@ class One(Constant):
     def __init__(self, support=None):
         super(One, self).__init__(support)
 
-    def op_not(self):
-        """Boolean NOT operator
+    def __neg__(self):
+        return 0
 
-        >>> -ONE
-        0
-        """
-        return Zero(self.support)
+    def __add__(self, other):
+        return 1
 
-    def op_or(self, *args):
-        """Boolean OR operator
+    def __mul__(self, other):
+        return other
 
-        >>> ONE + ZERO, ONE + ONE
-        (1, 1)
-        """
-        support = self.support.copy()
-        for arg in args:
-            support |= arg.support
-        if self.support == support:
-            return self
-        else:
-            return One(support)
+    def __rshift__(self, other):
+        return other
 
-    def op_and(self, *args):
-        """Boolean AND operator
-
-        >>> ONE * ZERO, ONE * ONE
-        (0, 1)
-        """
-        if args:
-            return args[0].op_and(*args[1:])
-        else:
-            return self
+    def __rrshift__(self, other):
+        return 1
 
     def satisfy_one(self):
         return {}
@@ -188,9 +160,8 @@ ZERO = Zero()
 ONE = One()
 
 
-BOOL_DICT = {
-    0: 0,
-    1: 1,
-    "0": 0,
-    "1": 1
-}
+def _invert(arg):
+    if isinstance(arg, Function):
+        return -arg
+    else:
+        return 1 - boolify(arg)
