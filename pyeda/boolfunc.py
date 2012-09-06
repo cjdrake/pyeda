@@ -290,7 +290,7 @@ class Function:
         | 1 | 1 |    1   |
         +---+---+--------+
 
-        Also known as: implies (f -> g)
+        Also known as: implies (f => g)
         """
         raise NotImplementedError()
 
@@ -306,7 +306,7 @@ class Function:
         | 1 | 1 |    1   |
         +---+---+--------+
 
-        Also known as: reverse implies (g -> f)
+        Also known as: reverse implies (g => f)
         """
         raise NotImplementedError()
 
@@ -341,7 +341,7 @@ class Function:
         raise NotImplementedError()
 
     def satisfy_all(self):
-        """Return the list of all satisfying input points."""
+        """Iterate through all satisfying input points."""
         raise NotImplementedError()
 
     def satisfy_count(self):
@@ -352,6 +352,8 @@ class Function:
         """Iterate through the cofactors of N variables."""
         if vs is None:
             vs = list()
+        elif isinstance(vs, Function):
+            vs = [vs]
         for n in range(2 ** len(vs)):
             yield self.restrict({v: bit_on(n, i) for i, v in enumerate(vs)})
 

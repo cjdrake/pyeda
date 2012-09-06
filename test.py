@@ -14,8 +14,7 @@ from pyeda.expr import (
     Not,
     Or, And,
     Xor, Xnor,
-    factor,
-    f_nor, f_nand, f_xor, f_xnor
+    factor
 )
 
 from pyeda.vexpr import (
@@ -33,10 +32,6 @@ def test_literal():
     c1 = var("c", 1)
     c2 = var("c", 2)
     c10 = var("c", 10)
-
-    # __len__
-    assert len(-a) == 1
-    assert len(a) == 1
 
     # __str__
     assert str(-a) == "a'"
@@ -65,9 +60,6 @@ def test_literal():
     assert c2 < c10
     assert a < a + b
     assert b < a + b
-
-    # depth
-    assert a.depth == 0
 
     # name
     assert (-a).name == "a"
@@ -120,9 +112,6 @@ def test_not():
     assert str(Not(-a + b).factor()) == "a * b'"
 
 def test_or():
-    # __len__
-    assert len(a + b + c) == 3
-
     # __str__
     assert str(a + b) == "a + b"
     assert str(a + b + c) == "a + b + c"
@@ -158,11 +147,6 @@ def test_or():
     assert a + a + a + a == a
     assert (a + a) + (a + a) == a
 
-    # depth
-    assert (a + b).depth == 1
-    assert (a + (b * c)).depth == 2
-    assert (a + (b * (c + d))).depth == 3
-
     # support
     assert (-a + b + (-c * d)).support == {a, b, c, d}
 
@@ -185,9 +169,6 @@ def test_or():
     assert str(f.to_csop()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
 
 def test_and():
-    # __len__
-    assert len(a * b * c) == 3
-
     # __str__
     assert str(a * b) == "a * b"
     assert str(a * b * c) == "a * b * c"
@@ -222,11 +203,6 @@ def test_and():
     assert a * a * a == a
     assert a * a * a * a == a
     assert (a * a) + (a * a) == a
-
-    # depth
-    assert (a * b).depth == 1
-    assert (a * (b + c)).depth == 2
-    assert (a * (b + (c * d))).depth == 3
 
     # support
     assert (-a * b * (-c + d)).support == {a, b, c, d}

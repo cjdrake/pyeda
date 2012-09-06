@@ -34,6 +34,7 @@ from pyeda.common import bit_on, cached_property
 
 from pyeda.boolfunc import Variable, Function
 from pyeda.constant import boolify
+from pyeda.sat import naive_sat_one, naive_sat_all
 
 VARIABLES = dict()
 COMPLEMENTS = dict()
@@ -92,7 +93,7 @@ def f_nor(*args):
     >>> f_nor(-a, b, -c, d)
     a * b' * c * d'
     """
-    return Not(Or(*args)).factor()
+    return Nor(*args).factor()
 
 def f_and(*args):
     """Return factored AND expression."""
@@ -107,7 +108,7 @@ def f_nand(*args):
     >>> f_nand(-a, b, -c, d)
     a + b' + c + d'
     """
-    return Not(And(*args)).factor()
+    return Nand(*args).factor()
 
 def f_xor(*args):
     """Return factored XOR expression."""
@@ -183,6 +184,8 @@ class Expression(Function):
     def is_neg_unate(self, vs=None):
         if vs is None:
             vs = self.support
+        elif isinstance(vs, Function):
+            vs = [vs]
         for v in vs:
             fv0, fv1 = self.cofactors(v)
             if fv0 in {0, 1} or fv1 in {0, 1}:
@@ -195,6 +198,8 @@ class Expression(Function):
     def is_pos_unate(self, vs=None):
         if vs is None:
             vs = self.support
+        elif isinstance(vs, Function):
+            vs = [vs]
         for v in vs:
             fv0, fv1 = self.cofactors(v)
             if fv0 in {0, 1} or fv1 in {0, 1}:
@@ -227,15 +232,9 @@ class Expression(Function):
         """Return the expression argument list."""
         return self._args
 
-    def __iter__(self):
-        return iter(self._args)
-
-    def __len__(self):
-        return len(self._args)
-
     @property
     def depth(self):
-        """The number of levels in the expression tree."""
+        """Return the number of levels in the expression tree."""
         raise NotImplementedError()
 
     def invert(self):
@@ -387,6 +386,12 @@ class Literal(Expression):
     # From Expression
     @property
     def depth(self):
+        """Return the number of levels in the expression tree.
+
+        >>> a = var("a")
+        >>> a.depth, (-a).depth
+        (0, 0)
+        """
         return 0
 
     def factor(self):
@@ -502,7 +507,6 @@ class _Complement(Literal):
     def index(self):
         return self._var.index
 
-    # Specific to _Complement
     @property
     def minterm_index(self):
         return 0
@@ -535,8 +539,10 @@ class OrAnd(Expression):
                 if num == cls.DOMINATOR:
                     return cls.DOMINATOR
 
+        # Or() = 0; And() = 1
         if len(args) == 0:
             return cls.IDENTITY
+        # Or(x) = x; And(x) = x
         if len(args) == 1:
             return args[0]
 
@@ -587,6 +593,14 @@ class OrAnd(Expression):
 
     @cached_property
     def depth(self):
+        """Return the number of levels in the expression tree.
+
+        >>> a, b, c, d = map(var, "abcd")
+        >>> (a + b).depth, (a + (b * c)).depth, (a + (b * (c + d))).depth
+        (1, 2, 3)
+        >>> (a * b).depth, (a * (b + c)).depth, (a * (b + (c * d))).depth
+        (1, 2, 3)
+        """
         return max(arg.depth + 1 for arg in self._args)
 
     def invert(self):
@@ -671,7 +685,7 @@ class OrAnd(Expression):
 class Or(OrAnd):
     """Boolean OR operator
 
-    >>> a, b, c = map(var, "abc")
+    >>> a, b, c, d = map(var, "abcd")
     >>> Or(), Or(a)
     (0, a)
     >>> a + 1, a + b + 1, a + 0
@@ -715,7 +729,7 @@ class Or(OrAnd):
 class And(OrAnd):
     """Boolean AND operator
 
-    >>> a, b, c = map(var, "abc")
+    >>> a, b, c, d = map(var, "abcd")
     >>> And(), And(a)
     (1, a)
     >>> a * 0, a * b * 0, a * 1
@@ -786,29 +800,28 @@ class Not(Expression):
                 return arg.invert()
             else:
                 self = super(Not, cls).__new__(cls)
-                self._arg = arg
                 self._args = (arg, )
                 return self
         else:
             return 1 - boolify(arg)
 
     def __str__(self):
-        return "Not({0._arg})".format(self)
+        return "Not({0.arg})".format(self)
 
     # From Function
     def restrict(self, mapping):
-        arg = self._arg.restrict(mapping)
+        arg = self.arg.restrict(mapping)
         # speed hack
         if arg in {0, 1}:
             return 1 - arg
-        elif id(arg) == id(self._arg):
+        elif id(arg) == id(self.arg):
             return self
         else:
             return self.__class__(arg)
 
     def compose(self, mapping):
-        expr = self._arg.compose(mapping)
-        if id(expr) == id(self._arg):
+        expr = self.arg.compose(mapping)
+        if id(expr) == id(self.arg):
             return self
         else:
             return self.__class__(expr)
@@ -816,19 +829,22 @@ class Not(Expression):
     # From Expression
     @cached_property
     def depth(self):
-        return self._arg.depth
+        return self.arg.depth
 
     def invert(self):
-        return self._arg
+        return self.arg
 
     def factor(self):
-        return self._arg.invert().factor()
+        return self.arg.invert().factor()
+
+    # Specific to Not
+    @property
+    def arg(self):
+        return self._args[0]
 
 
 class Exclusive(Expression):
     """Boolean exclusive (XOR, XNOR) operator"""
-
-    IDENTITY = 0
 
     def __new__(cls, *args):
         parity = cls.PARITY
@@ -851,8 +867,10 @@ class Exclusive(Expression):
             else:
                 parity ^= boolify(arg)
 
+        # Xor() = 0; Xnor() = 1
         if len(args) == 0:
-            return Not(cls.IDENTITY) if parity else cls.IDENTITY
+            return parity
+        # Xor(x) = x; Xnor(x) = x'
         if len(args) == 1:
             return Not(args[0]) if parity else args[0]
 
@@ -1023,7 +1041,7 @@ class Equal(Expression):
     (a', a', a, a)
     >>> Equal(a, a), Equal(a, -a)
     (1, 0)
-    >>> Equal(a, b, c).invert()
+    >>> Equal(a, b, c).invert().factor()
     (a + b + c) * (a' + b' + c')
     >>> Equal(a, b, c).factor()
     a' * b' * c' + a * b * c
@@ -1034,25 +1052,28 @@ class Equal(Expression):
     def __new__(cls, *args):
         args = [ (arg if isinstance(arg, Expression) else boolify(arg))
                  for arg in args ]
-
         if 0 in args:
+            # EQUAL(0, 1, ...) = 0
             if 1 in args:
                 return 0
+            # EQUAL(0, x0, x1, ...) = Nor(x0, x1, ...)
             else:
-                return And(*[Not(arg) for arg in args])
+                return Nor(*args)
+        # EQUAL(1, x0, x1, ...)
         if 1 in args:
             return And(*args)
 
         temps, args = args, list()
         while temps:
             arg = temps.pop(0)
-            # complement
+            # EQUAL(x, -x) = 0
             if isinstance(arg, Literal) and -arg in args:
                 return 0
-            # idempotent
+            # EQUAL(x, x, ...) = EQUAL(x, ...)
             elif arg not in args:
                 args.append(arg)
 
+        # EQUAL(x) = EQUAL() = 1
         if len(args) <= 1:
             return 1
 
@@ -1085,64 +1106,8 @@ class Equal(Expression):
         return max(arg.depth + 2 for arg in self._args)
 
     def invert(self):
-        return And(Or(*self._args), Or(*[Not(arg) for arg in self._args]))
+        return And(Or(*self._args), Nand(*self._args))
 
     def factor(self):
         return Or(And(*[Not(arg).factor() for arg in self._args]),
                   And(*[arg.factor() for arg in self._args]))
-
-def naive_sat_one(expr):
-    """
-    >>> a, b, c = map(var, "abc")
-    >>> point = (-a * b).satisfy_one(algorithm='naive')
-    >>> point[a], point[b]
-    (0, 1)
-    >>> (-a * -b + -a * b + a * -b + a * b).satisfy_one(algorithm='naive')
-    {}
-    >>> (a * b * (-a + -b)).satisfy_one(algorithm='naive')
-    """
-    var = expr.top
-    # Split the formula into var=0 and var=1 cofactors
-    cf0, cf1 = expr.cofactors(var)
-    if cf0 == 1:
-        if cf1 == 1:
-            # tautology
-            point = {}
-        else:
-            # var=0 satisfies the formula
-            point = {var: 0}
-    elif cf1 == 1:
-        # var=1 satisfies the formula
-        point = {var: 1}
-    else:
-        for num, cf in [(0, cf0), (1, cf1)]:
-            if cf != 0:
-                point = naive_sat_one(cf)
-                if point is not None:
-                    point[var] = num
-                    break
-        else:
-            point = None
-    return point
-
-def naive_sat_all(expr):
-    var = expr.top
-    # Split the formula into var=0 and var=1 cofactors
-    cf0, cf1 = expr.cofactors(var)
-    if cf0 == 1:
-        if cf1 == 1:
-            # tautology
-            yield {}
-        else:
-            # var=0 satisfies the formula
-            yield {var: 0}
-    elif cf1 == 1:
-        # var=1 satisfies the formula
-        yield {var: 1}
-    else:
-        for num, cf in [(0, cf0), (1, cf1)]:
-            if cf != 0:
-                for point in naive_sat_all(cf):
-                    if point is not None:
-                        point[var] = num
-                        yield point
