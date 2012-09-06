@@ -16,8 +16,8 @@ This document describes how to explore Boolean algebra using PyEDA.
    and you care about the distinction, we are referring unambiguously to the
    *two-valued* Boolean algebra or **switching algebra**.
 
-Basic Operations
-================
+Built-in Python Boolean Operations
+==================================
 
 The three operators most commonly used as the basis of Boolean algebra are the
 **complement**, **sum**, and **product**. Python already has a built-in Boolean
@@ -43,3 +43,15 @@ PyEDA allows you to extend this basic capability to define Boolean functions.
 
 Logical Expressions
 ===================
+
+Let's define a simple Boolean function: ``F(x, y, z) = x * y + -z``
+
+::
+
+   >>> import pyeda
+
+   # Create three Boolean variables
+   >>> x, y, z = map(pyeda.var, "xyz")
+
+   # Use '-', '*', '+' connectives to create a formula, and assign it to 'F'
+   >>> F = x * y + -z
