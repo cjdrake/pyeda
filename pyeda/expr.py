@@ -13,6 +13,8 @@ Interface Functions:
     f_or, f_nor
     f_and, f_nand
     f_xor, f_xnor
+    f_implies
+    f_equal
 
 Interface Classes:
     Expression
@@ -34,7 +36,7 @@ from pyeda.common import bit_on, cached_property
 
 from pyeda.boolfunc import Variable, Function
 from pyeda.constant import boolify
-from pyeda.sat import naive_sat_one, naive_sat_all
+from pyeda.sat import naive_sat_one
 
 VARIABLES = dict()
 COMPLEMENTS = dict()
@@ -72,51 +74,83 @@ def Nand(*args):
 def f_not(arg):
     """Return factored NOT expression.
 
-    >>> a, b, c = map(var, "abc")
-    >>> f_not(a * b * c), f_not(a + b + c)
-    (a' + b' + c', a' * b' * c')
-    >>> f_not(-a * b * c), f_not(-a + b + c)
-    (a + b' + c', a * b' * c')
+    >>> a, b, c, d = map(var, "abcd")
+    >>> f_not(-a * b * -c * d), f_not(-a + b + -c + d)
+    (a + b' + c + d', a * b' * c * d')
     """
     return Not(arg).factor()
 
 def f_or(*args):
-    """Return factored OR expression."""
+    """Return factored OR expression.
+
+    >>> a, b, c, d = map(var, "abcd")
+    >>> f_or(a >> b, c >> d)
+    a' + b + c' + d
+    """
     return Or(*args).factor()
 
 def f_nor(*args):
     """Return factored NOR expression.
 
     >>> a, b, c, d = map(var, "abcd")
-    >>> f_nor(a, b, c, d)
-    a' * b' * c' * d'
     >>> f_nor(-a, b, -c, d)
     a * b' * c * d'
     """
     return Nor(*args).factor()
 
 def f_and(*args):
-    """Return factored AND expression."""
+    """Return factored AND expression.
+
+    >>> a, b, c, d = map(var, "abcd")
+    >>> f_and(a >> b, c >> d)
+    (a' + b) * (c' + d)
+    """
     return And(*args).factor()
 
 def f_nand(*args):
     """Return factored NAND expression.
 
     >>> a, b, c, d = map(var, "abcd")
-    >>> f_nand(a, b, c, d)
-    a' + b' + c' + d'
     >>> f_nand(-a, b, -c, d)
     a + b' + c + d'
     """
     return Nand(*args).factor()
 
 def f_xor(*args):
-    """Return factored XOR expression."""
+    """Return factored XOR expression.
+
+    >>> a, b, c = map(var, "abc")
+    >>> f_xor(a, b, c)
+    a' * (b' * c + b * c') + a * (b' * c' + b * c)
+    """
     return Xor(*args).factor()
 
 def f_xnor(*args):
-    """Return factored XNOR expression."""
+    """Return factored XNOR expression.
+
+    >>> a, b, c = map(var, "abc")
+    >>> f_xnor(a, b, c)
+    a' * (b' * c' + b * c) + a * (b' * c + b * c')
+    """
     return Xnor(*args).factor()
+
+def f_implies(antecedent, consequence):
+    """Return factored Implies expression.
+
+    >>> a, b = map(var, "ab")
+    >>> f_implies(a, b)
+    a' + b
+    """
+    return Implies(antecedent, consequence).factor()
+
+def f_equal(*args):
+    """Return factored Equal expression.
+
+    >>> a, b, c = map(var, "abc")
+    >>> f_equal(a, b, c)
+    a' * b' * c' + a * b * c
+    """
+    return Equal(*args).factor()
 
 
 class Expression(Function):
@@ -131,6 +165,10 @@ class Expression(Function):
         for arg in self._args:
             s |= arg.support
         return s
+
+    @cached_property
+    def inputs(self):
+        return sorted(self.support)
 
     def __neg__(self):
         return Not(self)
@@ -159,15 +197,21 @@ class Expression(Function):
         else:
             raise ValueError("invalid algorithm")
 
-    def satisfy_all(self, algorithm='naive'):
-        if algorithm == 'naive':
-            for point in naive_sat_all(self):
-                yield point
-        else:
-            raise ValueError("invalid algorithm")
+    def satisfy_all(self):
+        """Iterate through all satisfying input points.
 
-    def satisfy_count(self, algorithm='naive'):
-        return len(self.satisfy_all(algorithm))
+        >>> a, b, c = map(var, "abc")
+        >>> ans = [sorted(p.items()) for p in Xor(a, b, c).satisfy_all()]
+        >>> ans[:2]
+        [[(a, 0), (b, 0), (c, 1)], [(a, 0), (b, 1), (c, 0)]]
+        >>> ans[2:]
+        [[(a, 1), (b, 0), (c, 0)], [(a, 1), (b, 1), (c, 1)]]
+        """
+        for point in self.iter_ones():
+            yield point
+
+    def satisfy_count(self):
+        return len(self.satisfy_all())
 
     def is_neg_unate(self, vs=None):
         if vs is None:
@@ -238,26 +282,11 @@ class Expression(Function):
         """
         raise NotImplementedError()
 
-    @cached_property
-    def inputs(self):
-        """Return the support set in name/index order."""
-        return sorted(self.support)
-
-    @property
-    def top(self):
-        return self.inputs[0] if self.inputs else None
-
-    def iter_outputs(self):
-        for n in range(2 ** self.degree):
-            point = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
-            yield point, self.restrict(point)
-
     def iter_minterms(self):
         """Iterate through the sum of products of N literals."""
-        for point, output in self.iter_outputs():
-            if output:
-                space = [(v if v_on else -v) for v, v_on in point.items()]
-                yield And(*space)
+        for point in self.iter_ones():
+            space = [(v if val else -v) for v, val in point.items()]
+            yield And(*space)
 
     @cached_property
     def minterms(self):
@@ -266,10 +295,9 @@ class Expression(Function):
 
     def iter_maxterms(self):
         """Iterate through the product of sums of N literals."""
-        for point, output in self.iter_outputs():
-            if not output:
-                space = [(-v if v_on else v) for v, v_on in point.items()]
-                yield Or(*space)
+        for point in self.iter_zeros():
+            space = [(-v if val else v) for v, val in point.items()]
+            yield Or(*space)
 
     @cached_property
     def maxterms(self):
@@ -292,7 +320,12 @@ class Expression(Function):
         return self.factor()._flatten(And).absorb()
 
     def to_csop(self):
-        """Return the expression as a sum of products of N literals."""
+        """Return the expression as a sum of products of N literals.
+
+        >>> a, b, c = map(var, "abc")
+        >>> (a * b + a * c + b * c).to_csop()
+        a' * b * c + a * b' * c + a * b * c' + a * b * c
+        """
         return Or(*[term for term in self.iter_minterms()])
 
     def is_pos(self):
@@ -311,7 +344,12 @@ class Expression(Function):
         return self.factor()._flatten(Or).absorb()
 
     def to_cpos(self):
-        """Return the expression as a product of sums of N literals."""
+        """Return the expression as a product of sums of N literals.
+
+        >>> a, b, c = map(var, "abc")
+        >>> (a * b + a * c + b * c).to_cpos()
+        (a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)
+        """
         return And(*[term for term in self.iter_maxterms()])
 
     @cached_property
@@ -674,14 +712,35 @@ class Or(OrAnd):
     """Boolean OR operator
 
     >>> a, b, c, d = map(var, "abcd")
+
     >>> Or(), Or(a)
     (0, a)
     >>> a + 1, a + b + 1, a + 0
     (1, 1, a)
-    >>> -a + a, -a + a + b
+    >>> -a + a, -a + b + a
     (1, 1)
-    >>> Or.DUAL is And
-    True
+
+    test associativity
+    >>> (a + b) + c + d
+    a + b + c + d
+    >>> a + (b + c) + d
+    a + b + c + d
+    >>> a + b + (c + d)
+    a + b + c + d
+    >>> (a + b) + (c + d)
+    a + b + c + d
+    >>> (a + b + c) + d
+    a + b + c + d
+    >>> a + (b + c + d)
+    a + b + c + d
+    >>> a + (b + (c + d))
+    a + b + c + d
+    >>> ((a + b) + c) + d
+    a + b + c + d
+
+    test idempotence
+    >>> a + a, a + a + a, a + a + a + a, (a + a) + (a + a)
+    (a, a, a, a)
     """
 
     # Infix symbol used in string representation
@@ -718,14 +777,35 @@ class And(OrAnd):
     """Boolean AND operator
 
     >>> a, b, c, d = map(var, "abcd")
+
     >>> And(), And(a)
     (1, a)
     >>> a * 0, a * b * 0, a * 1
     (0, 0, a)
-    >>> -a * a, -a * a * b
+    >>> -a * a, -a * b * a
     (0, 0)
-    >>> And.DUAL is Or
-    True
+
+    test associativity
+    >>> (a * b) * c * d
+    a * b * c * d
+    >>> a * (b * c) * d
+    a * b * c * d
+    >>> a * b * (c * d)
+    a * b * c * d
+    >>> (a * b) * (c * d)
+    a * b * c * d
+    >>> (a * b * c) * d
+    a * b * c * d
+    >>> a * (b * c * d)
+    a * b * c * d
+    >>> a * (b * (c * d))
+    a * b * c * d
+    >>> ((a * b) * c) * d
+    a * b * c * d
+
+    test idempotence
+    >>> a * a, a * a * a, a * a * a * a, (a * a) + (a * a)
+    (a, a, a, a)
     """
 
     # Infix symbol used in string representation
@@ -771,7 +851,7 @@ And.DUAL = Or
 class Not(Expression):
     """Boolean NOT operator
 
-    >>> a = var('a')
+    >>> a = var("a")
     >>> Not(0), Not(1)
     (1, 0)
     >>> Not(-a), Not(a)

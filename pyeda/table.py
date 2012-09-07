@@ -86,12 +86,12 @@ class TruthTable(Table):
     def support(self):
         return set(self._inputs)
 
-    @property
-    def degree(self):
-        return len(self._inputs)
-
     # Specific to TruthTable
     @property
     def inputs(self):
         """Return the support set in name/index order."""
         return self._inputs
+
+    @property
+    def degree(self):
+        return len(self._inputs)

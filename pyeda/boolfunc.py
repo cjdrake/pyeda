@@ -62,7 +62,7 @@ class Variable:
     def __str__(self):
         """Return the string representation.
 
-        >>> str(Variable('a'))
+        >>> str(Variable("a"))
         'a'
         >>> str(Variable('v', 42))
         'v[42]'
@@ -75,7 +75,7 @@ class Variable:
     def __lt__(self, other):
         """Return rich "less than" result, for ordering.
 
-        >>> a, b = map(Variable, 'ab')
+        >>> a, b = map(Variable, "ab")
         >>> a < b, b < a
         (True, False)
 
@@ -112,12 +112,52 @@ class Function:
         raise NotImplementedError()
 
     @property
+    def inputs(self):
+        """Return the support set in name/index order."""
+        raise NotImplementedError()
+
+    @property
+    def top(self):
+        return self.inputs[0]
+
+    @property
     def degree(self):
         """Return the degree of a function.
 
         A function from B^N => B is called a Boolean function of *degree* N.
         """
         return len(self.support)
+
+    def iter_ones(self):
+        fst, rst = self.inputs[0], self.inputs[1:]
+        for num, cf in zip((0, 1), self.cofactors(fst)):
+            if cf == 1:
+                for n in range(2 ** len(rst)):
+                    point = {v: bit_on(n, i) for i, v in enumerate(rst)}
+                    point[fst] = num
+                    yield point
+            elif cf != 0:
+                for point in cf.iter_ones():
+                    point[fst] = num
+                    yield point
+
+    def iter_zeros(self):
+        fst, rst = self.inputs[0], self.inputs[1:]
+        for num, cf in zip((0, 1), self.cofactors(fst)):
+            if cf == 0:
+                for n in range(2 ** len(rst)):
+                    point = {v: bit_on(n, i) for i, v in enumerate(rst)}
+                    point[fst] = num
+                    yield point
+            elif cf != 1:
+                for point in cf.iter_zeros():
+                    point[fst] = num
+                    yield point
+
+    def iter_outputs(self):
+        for n in range(2 ** self.degree):
+            point = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
+            yield point, self.restrict(point)
 
     # Overloaded operators
     def __neg__(self):

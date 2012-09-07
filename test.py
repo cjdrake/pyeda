@@ -132,21 +132,6 @@ def test_or():
 
     assert a + b < a + b + c
 
-    # associative
-    assert str((a + b) + c + d)   == "a + b + c + d"
-    assert str(a + (b + c) + d)   == "a + b + c + d"
-    assert str(a + b + (c + d))   == "a + b + c + d"
-    assert str((a + b) + (c + d)) == "a + b + c + d"
-    assert str((a + b + c) + d)   == "a + b + c + d"
-    assert str(a + (b + c + d))   == "a + b + c + d"
-    assert str(a + (b + (c + d))) == "a + b + c + d"
-    assert str(((a + b) + c) + d) == "a + b + c + d"
-
-    assert a + a == a
-    assert a + a + a == a
-    assert a + a + a + a == a
-    assert (a + a) + (a + a) == a
-
     # support
     assert (-a + b + (-c * d)).support == {a, b, c, d}
 
@@ -163,10 +148,6 @@ def test_or():
 
     # factor
     assert str(factor(a + -(b * c))) == "a + b' + c'"
-
-    # to_csop
-    f = a * b + a * c + b * c
-    assert str(f.to_csop()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
 
 def test_and():
     # __str__
@@ -189,21 +170,6 @@ def test_and():
 
     assert a * b < a * b * c
 
-    # associative
-    assert str((a * b) * c * d)   == "a * b * c * d"
-    assert str(a * (b * c) * d)   == "a * b * c * d"
-    assert str(a * b * (c * d))   == "a * b * c * d"
-    assert str((a * b) * (c * d)) == "a * b * c * d"
-    assert str((a * b * c) * d)   == "a * b * c * d"
-    assert str(a * (b * c * d))   == "a * b * c * d"
-    assert str(a * (b * (c * d))) == "a * b * c * d"
-    assert str(((a * b) * c) * d) == "a * b * c * d"
-
-    assert a * a == a
-    assert a * a * a == a
-    assert a * a * a * a == a
-    assert (a * a) + (a * a) == a
-
     # support
     assert (-a * b * (-c + d)).support == {a, b, c, d}
 
@@ -220,10 +186,6 @@ def test_and():
 
     # factor
     assert str(factor(a * -(b + c))) == "a * b' * c'"
-
-    # to_cpos
-    f = a * b + a * c + b * c
-    assert str(f.to_cpos()) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
 
 def test_absorb():
     assert str((a * b + a * b).absorb()) == "a * b"

@@ -13,8 +13,8 @@ def naive_sat_one(expr):
     >>> from pyeda import var
     >>> a, b, c = map(var, "abc")
     >>> point = (-a * b).satisfy_one(algorithm='naive')
-    >>> point[a], point[b]
-    (0, 1)
+    >>> sorted(point.items())
+    [(a, 0), (b, 1)]
     >>> (-a * -b + -a * b + a * -b + a * b).satisfy_one(algorithm='naive')
     {}
     >>> (a * b * (-a + -b)).satisfy_one(algorithm='naive')
@@ -42,26 +42,3 @@ def naive_sat_one(expr):
         else:
             point = None
     return point
-
-def naive_sat_all(expr):
-    """Iterate through all satisfying input points."""
-    var = expr.top
-    # Split the formula into var=0 and var=1 cofactors
-    cf0, cf1 = expr.cofactors(var)
-    if cf0 == 1:
-        if cf1 == 1:
-            # tautology
-            yield {}
-        else:
-            # var=0 satisfies the formula
-            yield {var: 0}
-    elif cf1 == 1:
-        # var=1 satisfies the formula
-        yield {var: 1}
-    else:
-        for num, cf in [(0, cf0), (1, cf1)]:
-            if cf != 0:
-                for point in naive_sat_all(cf):
-                    if point is not None:
-                        point[var] = num
-                        yield point
