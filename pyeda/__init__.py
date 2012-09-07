@@ -10,7 +10,7 @@ table.py -- Boolean tables
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 from pyeda.constant import ZERO, ONE
 from pyeda.expr import var
