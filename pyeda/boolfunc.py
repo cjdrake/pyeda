@@ -44,7 +44,7 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 from pyeda.common import bit_on
 
 
-class Variable:
+class Variable(object):
     """
     A Boolean variable is a numerical quantity that may assume any value in the
     set B = {0, 1}.
@@ -97,7 +97,7 @@ class Variable:
         return self._index
 
 
-class Function:
+class Function(object):
     """
     Abstract base class that defines an interface for a scalar Boolean function
     of N variables.
@@ -392,7 +392,7 @@ class Function:
         raise NotImplementedError()
 
 
-class VectorFunction:
+class VectorFunction(object):
     """
     Abstract base class that defines an interface for a vector Boolean function.
     """
