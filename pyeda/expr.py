@@ -721,6 +721,7 @@ class Or(OrAnd):
     (1, 1)
 
     test associativity
+
     >>> (a + b) + c + d
     a + b + c + d
     >>> a + (b + c) + d
@@ -739,6 +740,7 @@ class Or(OrAnd):
     a + b + c + d
 
     test idempotence
+
     >>> a + a, a + a + a, a + a + a + a, (a + a) + (a + a)
     (a, a, a, a)
     """
@@ -786,6 +788,7 @@ class And(OrAnd):
     (0, 0)
 
     test associativity
+
     >>> (a * b) * c * d
     a * b * c * d
     >>> a * (b * c) * d
@@ -804,6 +807,7 @@ class And(OrAnd):
     a * b * c * d
 
     test idempotence
+
     >>> a * a, a * a * a, a * a * a * a, (a * a) + (a * a)
     (a, a, a, a)
     """

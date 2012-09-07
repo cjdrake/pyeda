@@ -55,3 +55,27 @@ Let's define a simple Boolean function: ``F(x, y, z) = x * y + -z``
 
    # Use '-', '*', '+' connectives to create a formula, and assign it to 'F'
    >>> F = x * y + -z
+
+Work In Progress
+----------------
+
+.. autofunction:: pyeda.expr.var
+
+.. autoclass:: pyeda.expr.Expression
+   :members: depth
+
+.. autoclass:: pyeda.expr.Not
+
+.. autoclass:: pyeda.expr.Or
+
+.. autofunction:: pyeda.expr.Nor
+
+.. autoclass:: pyeda.expr.And
+
+.. autofunction:: pyeda.expr.Nand
+
+.. autoclass:: pyeda.expr.Xor
+
+.. autoclass:: pyeda.expr.Implies
+
+.. autoclass:: pyeda.expr.Equal

@@ -28,6 +28,7 @@ Contents:
 
    install.rst
    boolalg.rst
+   todo.rst
 
 
 Indices and Tables
