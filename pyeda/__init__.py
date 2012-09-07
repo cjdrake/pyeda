@@ -14,5 +14,6 @@ __version__ = "0.6.0"
 
 from pyeda.constant import ZERO, ONE
 from pyeda.expr import var
-from pyeda.expr import Not, Or, Nor, And, Nand, Xor, Xnor, Implies, Equal
+from pyeda.expr import Nor, Nand, OneHot0, OneHot
+from pyeda.expr import Not, Or, And, Xor, Xnor, Implies, Equal
 from pyeda.table import TruthTable

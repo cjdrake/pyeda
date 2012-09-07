@@ -30,15 +30,11 @@ def test_truth():
 def test_literal():
     c0 = var("c", 0)
     c1 = var("c", 1)
-    c2 = var("c", 2)
-    c10 = var("c", 10)
+    c_1_2_3 = var("c", 1, 2, 3)
 
     # __str__
     assert str(-a) == "a'"
-    assert str(a) == "a"
-    assert str(c0) == "c[0]"
     assert str(-c0) == "c[0]'"
-    assert str(c1) == "c[1]"
     assert str(-c1) == "c[1]'"
 
     # __eq__
@@ -54,22 +50,17 @@ def test_literal():
 
     # __lt__
     assert -a < a
-    assert a < b
-    assert c0 < c1
-    assert c1 < c10
-    assert c2 < c10
     assert a < a + b
     assert b < a + b
 
     # name
-    assert (-a).name == "a"
     assert a.name == "a"
 
-    # index
-    assert (-a).index is None
-    assert a.index is None
-    assert c0.index == 0
-    assert c1.index == 1
+    # indices
+    assert a.indices == ()
+    assert c0.indices == (0, )
+    assert c1.indices == (1, )
+    assert c_1_2_3.indices == (1, 2, 3)
 
     # invert
     assert (-a).invert() == a

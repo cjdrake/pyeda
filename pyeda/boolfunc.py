@@ -41,7 +41,7 @@ Boolean Identities
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from pyeda.common import bit_on
+from pyeda.common import iter_space
 
 
 class Variable(object):
@@ -52,9 +52,9 @@ class Variable(object):
     This implementation includes an optional "index", a nonnegative integer
     that is convenient for bit vectors.
     """
-    def __init__(self, name, index=None):
+    def __init__(self, name, *indices):
         self._name = name
-        self._index = index
+        self._indices = indices
 
     def __repr__(self):
         return self.__str__()
@@ -64,13 +64,13 @@ class Variable(object):
 
         >>> str(Variable("a"))
         'a'
-        >>> str(Variable('v', 42))
+        >>> str(Variable("v", 42))
         'v[42]'
+        >>> str(Variable("v", 1, 2, 3))
+        'v[1][2][3]'
         """
-        if self._index is None:
-            return self._name
-        else:
-            return "{0._name}[{0._index}]".format(self)
+        suffix = "".join("[{}]".format(idx) for idx in self._indices)
+        return self._name + suffix
 
     def __lt__(self, other):
         """Return rich "less than" result, for ordering.
@@ -84,7 +84,7 @@ class Variable(object):
         (True, True, True)
         """
         if self.name == other.name:
-            return self.index < other.index
+            return self._indices < other.indices
         else:
             return self.name < other.name
 
@@ -93,8 +93,8 @@ class Variable(object):
         return self._name
 
     @property
-    def index(self):
-        return self._index
+    def indices(self):
+        return self._indices
 
 
 class Function(object):
@@ -132,8 +132,7 @@ class Function(object):
         fst, rst = self.inputs[0], self.inputs[1:]
         for num, cf in zip((0, 1), self.cofactors(fst)):
             if cf == 1:
-                for n in range(2 ** len(rst)):
-                    point = {v: bit_on(n, i) for i, v in enumerate(rst)}
+                for point in iter_space(rst):
                     point[fst] = num
                     yield point
             elif cf != 0:
@@ -145,8 +144,7 @@ class Function(object):
         fst, rst = self.inputs[0], self.inputs[1:]
         for num, cf in zip((0, 1), self.cofactors(fst)):
             if cf == 0:
-                for n in range(2 ** len(rst)):
-                    point = {v: bit_on(n, i) for i, v in enumerate(rst)}
+                for point in iter_space(rst):
                     point[fst] = num
                     yield point
             elif cf != 1:
@@ -155,8 +153,7 @@ class Function(object):
                     yield point
 
     def iter_outputs(self):
-        for n in range(2 ** self.degree):
-            point = {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
+        for point in iter_space(self.inputs):
             yield point, self.restrict(point)
 
     # Overloaded operators
@@ -329,8 +326,8 @@ class Function(object):
             vs = list()
         elif isinstance(vs, Function):
             vs = [vs]
-        for n in range(2 ** len(vs)):
-            yield self.restrict({v: bit_on(n, i) for i, v in enumerate(vs)})
+        for point in iter_space(vs):
+            yield self.restrict(point)
 
     def cofactors(self, vs=None):
         """Return a tuple of cofactors of N variables.

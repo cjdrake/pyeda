@@ -10,7 +10,7 @@ Interface Classes:
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 from pyeda import __version__
-from pyeda.common import bit_on
+from pyeda.common import bit_on, iter_space
 from pyeda.boolfunc import Function
 from pyeda.expr import Expression
 
@@ -41,8 +41,7 @@ class TruthTable(Table):
             # the inputs to put 'a' in the MSB.
             self._inputs = arg.inputs[::-1]
             pos = 0
-            for n in range(2 ** self.degree):
-                point = {v: bit_on(n, i) for i, v in enumerate(self._inputs)}
+            for point in iter_space(self._inputs):
                 output = arg.restrict(point)
                 if pos == 0:
                     self._data.append(0)

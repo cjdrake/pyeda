@@ -2,6 +2,7 @@
 Interface Functions:
     clog2
     bit_on
+    iter_space
     cached_property
 """
 
@@ -36,6 +37,10 @@ def bit_on(num, bit):
     [0, 1, 0, 1, 0, 1]
     """
     return (num >> bit) & 1
+
+def iter_space(vs):
+    for n in range(2 ** len(vs)):
+        yield {v: bit_on(n, i) for i, v in enumerate(vs)}
 
 def cached_property(func):
     """Return a cached property calculated by input function."""

@@ -18,7 +18,7 @@ from pyeda.common import clog2, bit_on
 from pyeda.boolfunc import VectorFunction as VF
 from pyeda.expr import var, Not, Or, And, Xor, Xnor
 
-def bitvec(name, *args, **kwargs):
+def bitvec(name, *args, bnr=VF.UNSIGNED):
     """Return a vector of variables."""
     if len(args) == 0:
         raise TypeError("bitvec() expected at least two argument")
@@ -28,14 +28,14 @@ def bitvec(name, *args, **kwargs):
         start, stop = args
     else:
         raise TypeError("bitvec() expected at most three arguments")
-    if not 0 <= start < stop:
+    if not (0 <= start < stop):
         raise ValueError("invalid range: [{}:{}]".format(start, stop))
-    fs = [var(name, index=i) for i in range(start, stop)]
-    return BitVector(*fs, start=start, **kwargs)
+    fs = [var(name, i) for i in range(start, stop)]
+    return BitVector(*fs, start=start, bnr=bnr)
 
-def sbitvec(name, *args, **kwargs):
+def sbitvec(name, *args):
     """Return a signed vector of variables."""
-    return bitvec(name, *args, bnr=VF.TWOS_COMPLEMENT, **kwargs)
+    return bitvec(name, *args, bnr=VF.TWOS_COMPLEMENT)
 
 def uint2vec(num, length=None):
     """Convert an unsigned integer to a BitVector."""

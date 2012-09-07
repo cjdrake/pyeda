@@ -8,6 +8,7 @@ Interface Functions:
     factor
 
     Nor, Nand
+    OneHot0, OneHot
 
     f_not
     f_or, f_nor
@@ -32,7 +33,7 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from pyeda.common import bit_on, cached_property
+from pyeda.common import cached_property
 
 from pyeda.boolfunc import Variable, Function
 from pyeda.constant import boolify
@@ -41,13 +42,13 @@ from pyeda.sat import naive_sat_one
 VARIABLES = dict()
 COMPLEMENTS = dict()
 
-def var(name, index=None):
+def var(name, *indices):
     """Return a single variable expression."""
     try:
-        ret = VARIABLES[(name, index)]
+        ret = VARIABLES[(name, indices)]
     except KeyError:
-        ret = _Variable(name, index)
-        VARIABLES[(name, index)] = ret
+        ret = _Variable(name, *indices)
+        VARIABLES[(name, indices)] = ret
     return ret
 
 def comp(v):
@@ -65,10 +66,28 @@ def factor(expr):
 
 # convenience functions
 def Nor(*args):
+    """Alias for Not Or"""
     return Not(Or(*args))
 
 def Nand(*args):
+    """Alias for Not And"""
     return Not(And(*args))
+
+def OneHot0(*args):
+    """
+    Return an expression that means:
+        At most one input variable is true.
+    """
+    nargs = len(args)
+    return And(*[Nand(args[i], args[j])
+                 for i in range(nargs-1) for j in range(i+1, nargs)])
+
+def OneHot(*args):
+    """
+    Return an expression that means:
+        Exactly one input variable is true.
+    """
+    return And(Or(*args), OneHot0(*args))
 
 # factored operators
 def f_not(arg):
@@ -423,18 +442,12 @@ class Literal(Expression):
     def factor(self):
         return self
 
-    # Specific to Literal
-    @property
-    def _oidx(self):
-        """Return an index for ordering comparison."""
-        return (-1 if self.index is None else self.index)
-
 
 class _Variable(Variable, Literal):
     """Boolean variable (expression)"""
 
-    def __init__(self, name, index=None):
-        Variable.__init__(self, name, index)
+    def __init__(self, name, *indices):
+        Variable.__init__(self, name, *indices)
         self._support = {self}
         self._args = (self, )
 
@@ -457,9 +470,10 @@ class _Variable(Variable, Literal):
 
     # From Expression
     def __lt__(self, other):
-        if isinstance(other, Literal):
-            return (self.name < other.name or
-                    self.name == other.name and self._oidx < other._oidx)
+        if isinstance(other, _Variable):
+            return Variable.__lt__(self, other)
+        if isinstance(other, _Complement):
+            return Variable.__lt__(self, other.var)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
@@ -508,11 +522,11 @@ class _Complement(Literal):
     # From Expression
     def __lt__(self, other):
         if isinstance(other, _Variable):
-            return (self.name < other.name or
-                    self.name == other.name and self._oidx <= other._oidx)
+            return ( self.var.name < other.name or
+                         self.var.name == other.name and
+                         self._var.indices <= other.indices )
         if isinstance(other, _Complement):
-            return (self.name < other.name or
-                    self.name == other.name and self._oidx < other._oidx)
+            return Variable.__lt__(self._var, other.var)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
@@ -524,14 +538,6 @@ class _Complement(Literal):
     @property
     def var(self):
         return self._var
-
-    @property
-    def name(self):
-        return self._var.name
-
-    @property
-    def index(self):
-        return self._var.index
 
     @property
     def minterm_index(self):

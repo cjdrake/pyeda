@@ -12,7 +12,7 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from pyeda.common import bit_on
+from pyeda.common import iter_space
 from pyeda.boolfunc import Function
 
 BOOL_DICT = {
@@ -149,8 +149,8 @@ class One(Constant):
 
     def satisfy_all(self):
         vs = sorted(self.support)
-        for n in range(2 ** self.degree):
-            yield {v: bit_on(n, i) for i, v in enumerate(vs)}
+        for point in iter_space(vs):
+            yield point
 
     def satisfy_count(self):
         return 2 ** self.degree
