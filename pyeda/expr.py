@@ -58,7 +58,7 @@ def comp(v):
     try:
         ret = COMPLEMENTS[v]
     except KeyError:
-        ret = _Complement(v)
+        ret = Complement(v)
         COMPLEMENTS[v] = ret
     return ret
 
@@ -79,15 +79,27 @@ def OneHot0(*args):
     """
     Return an expression that means:
         At most one input variable is true.
+
+    >>> a, b, c = map(var, "abc")
+    >>> OneHot0(0, 0, 0, 0), OneHot0(0, 0, 0, 1), OneHot0(0, 0, 1, 1)
+    (1, 1, 0)
+    >>> OneHot0(a, b, c)
+    (a' + b') * (a' + c') * (b' + c')
     """
     nargs = len(args)
-    return And(*[Nand(args[i], args[j])
+    return And(*[Or(Not(args[i]), Not(args[j]))
                  for i in range(nargs-1) for j in range(i+1, nargs)])
 
 def OneHot(*args):
     """
     Return an expression that means:
         Exactly one input variable is true.
+
+    >>> a, b, c = map(var, "abc")
+    >>> OneHot(0, 0, 0, 0), OneHot(0, 0, 0, 1), OneHot(0, 0, 1, 1)
+    (0, 1, 0)
+    >>> OneHot(a, b, c)
+    (a' + b') * (a' + c') * (b' + c') * (a + b + c)
     """
     return And(Or(*args), OneHot0(*args))
 
@@ -474,7 +486,7 @@ class _Variable(Variable, Literal):
     def __lt__(self, other):
         if isinstance(other, _Variable):
             return Variable.__lt__(self, other)
-        if isinstance(other, _Complement):
+        if isinstance(other, Complement):
             return Variable.__lt__(self, other.var)
         if isinstance(other, Expression):
             return True
@@ -493,7 +505,7 @@ class _Variable(Variable, Literal):
         return 0
 
 
-class _Complement(Literal):
+class Complement(Literal):
     """Boolean complement"""
 
     # Postfix symbol used in string representation
@@ -527,7 +539,7 @@ class _Complement(Literal):
             return ( self.var.name < other.name or
                          self.var.name == other.name and
                          self._var.indices <= other.indices )
-        if isinstance(other, _Complement):
+        if isinstance(other, Complement):
             return Variable.__lt__(self._var, other.var)
         if isinstance(other, Expression):
             return True
@@ -536,7 +548,7 @@ class _Complement(Literal):
     def invert(self):
         return self._var
 
-    # Specific to _Complement
+    # Specific to Complement
     @property
     def var(self):
         return self._var
@@ -1138,7 +1150,7 @@ class Equal(Expression):
                 return 0
             # EQUAL(0, x0, x1, ...) = Nor(x0, x1, ...)
             else:
-                return Nor(*args)
+                return Not(Or(*args))
         # EQUAL(1, x0, x1, ...)
         if 1 in args:
             return And(*args)

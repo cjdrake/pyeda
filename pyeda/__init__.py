@@ -16,4 +16,5 @@ from pyeda.constant import ZERO, ONE
 from pyeda.expr import var
 from pyeda.expr import Nor, Nand, OneHot0, OneHot
 from pyeda.expr import Not, Or, And, Xor, Xnor, Implies, Equal
+from pyeda.vexpr import bitvec, sbitvec, uint2vec, int2vec
 from pyeda.table import TruthTable
