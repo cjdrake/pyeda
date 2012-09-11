@@ -398,7 +398,7 @@ class VectorFunction(object):
     def __init__(self, *fs, **kwargs):
         self.fs = list(fs)
         self._start = kwargs.get('start', 0)
-        self._bnr = kwargs.get('bnr', self.UNSIGNED)
+        self.bnr = kwargs.get('bnr', self.UNSIGNED)
 
     def __int__(self):
         return self.to_int()
@@ -413,16 +413,6 @@ class VectorFunction(object):
     def start(self):
         """Return the start index."""
         return self._start
-
-    def _get_bnr(self):
-        """Get the binary number representation."""
-        return self._bnr
-
-    def _set_bnr(self, value):
-        """Set the binary number representation."""
-        self._bnr = value
-
-    bnr = property(fget=_get_bnr, fset=_set_bnr)
 
     # Operators
     def uor(self):
@@ -477,7 +467,7 @@ class VectorFunction(object):
     def to_int(self):
         """Convert vector to an integer, if possible."""
         num = self.to_uint()
-        if self._bnr == self.TWOS_COMPLEMENT and self.fs[-1]:
+        if self.bnr == self.TWOS_COMPLEMENT and self.fs[-1]:
             return -2 ** self.__len__() + num
         else:
             return num
@@ -506,7 +496,7 @@ class VectorFunction(object):
             cls = self.__class__
             norm_sl = self._norm_slice(sl)
             return cls(*self.fs.__getitem__(norm_sl),
-                       start=(norm_sl.start + self._start), bnr=self._bnr)
+                       start=(norm_sl.start + self._start), bnr=self.bnr)
 
     def __setitem__(self, sl, f):
         if isinstance(sl, int):

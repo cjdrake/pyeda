@@ -10,3 +10,4 @@
 * (9/6/12) Quine-McCluskey Algorithm
 * (9/6/12) ESPRESSO heuristics
 * (9/6/12) TruthTable and ImplicantTable
+* (9/11/12) Add Sudoku CSP example, and docs
