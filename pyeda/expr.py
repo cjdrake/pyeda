@@ -762,7 +762,7 @@ class Or(OrAnd):
         return sep.join(str(arg) for arg in sorted(self._args))
 
     def is_sop(self):
-        return self.depth == 1
+        return self.depth == 2
 
     # Specific to Or
     @property
@@ -835,7 +835,7 @@ class And(OrAnd):
         return sep.join(s)
 
     def is_pos(self):
-        return self.depth == 1
+        return self.depth == 2
 
     # Specific to And
     @property
