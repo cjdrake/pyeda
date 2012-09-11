@@ -33,6 +33,8 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
+from collections import deque
+
 from pyeda.common import cached_property
 
 from pyeda.boolfunc import Variable, Function
@@ -552,9 +554,9 @@ class OrAnd(Expression):
     """Base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *args):
-        temps, args = list(args), list()
+        temps, args = deque(args), list()
         while temps:
-            arg = temps.pop(0)
+            arg = temps.popleft()
             if isinstance(arg, Expression):
                 # associative
                 if isinstance(arg, cls):
@@ -926,9 +928,9 @@ class Exclusive(Expression):
 
     def __new__(cls, *args):
         parity = cls.PARITY
-        temps, args = list(args), list()
+        temps, args = deque(args), list()
         while temps:
-            arg = temps.pop(0)
+            arg = temps.popleft()
             if isinstance(arg, Expression):
                 # associative
                 if isinstance(arg, cls):
@@ -1128,8 +1130,8 @@ class Equal(Expression):
     OP = "="
 
     def __new__(cls, *args):
-        args = [ (arg if isinstance(arg, Expression) else boolify(arg))
-                 for arg in args ]
+        args = deque(arg if isinstance(arg, Expression) else boolify(arg)
+                     for arg in args)
         if 0 in args:
             # EQUAL(0, 1, ...) = 0
             if 1 in args:
@@ -1143,7 +1145,7 @@ class Equal(Expression):
 
         temps, args = args, list()
         while temps:
-            arg = temps.pop(0)
+            arg = temps.popleft()
             # EQUAL(x, -x) = 0
             if isinstance(arg, Literal) and -arg in args:
                 return 0
