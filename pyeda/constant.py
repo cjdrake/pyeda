@@ -102,6 +102,9 @@ class Zero(Constant):
     def __add__(self, other):
         return other
 
+    def __sub__(self, other):
+        return _invert(other)
+
     def __mul__(self, other):
         return 0
 
@@ -133,6 +136,9 @@ class One(Constant):
         return 0
 
     def __add__(self, other):
+        return 1
+
+    def __sub__(self, other):
         return 1
 
     def __mul__(self, other):

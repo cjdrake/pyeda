@@ -209,6 +209,9 @@ class Expression(Function):
     def __add__(self, arg):
         return Or(self, arg)
 
+    def __sub__(self, arg):
+        return Or(self, Not(arg))
+
     def __mul__(self, arg):
         return And(self, arg)
 

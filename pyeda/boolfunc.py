@@ -130,26 +130,26 @@ class Function(object):
 
     def iter_ones(self):
         fst, rst = self.inputs[0], self.inputs[1:]
-        for num, cf in zip((0, 1), self.cofactors(fst)):
+        for p, cf in self.iter_cofactors(fst):
             if cf == 1:
                 for point in iter_space(rst):
-                    point[fst] = num
+                    point[fst] = p[fst]
                     yield point
             elif cf != 0:
                 for point in cf.iter_ones():
-                    point[fst] = num
+                    point[fst] = p[fst]
                     yield point
 
     def iter_zeros(self):
         fst, rst = self.inputs[0], self.inputs[1:]
-        for num, cf in zip((0, 1), self.cofactors(fst)):
+        for p, cf in self.iter_cofactors(fst):
             if cf == 0:
                 for point in iter_space(rst):
-                    point[fst] = num
+                    point[fst] = p[fst]
                     yield point
             elif cf != 1:
                 for point in cf.iter_zeros():
-                    point[fst] = num
+                    point[fst] = p[fst]
                     yield point
 
     def iter_outputs(self):
@@ -193,6 +193,14 @@ class Function(object):
 
     def __radd__(self, other):
         return self.__add__(other)
+
+    def __sub__(self, other):
+        """Alias: a - b = a + -b"""
+        raise NotImplementedError()
+
+    def __rsub__(self, other):
+        """Alias: a - b = a + -b"""
+        return (- self).__add__(other)
 
     def __mul__(self, other):
         """Return symbolic conjunction of functions.
@@ -327,7 +335,7 @@ class Function(object):
         elif isinstance(vs, Function):
             vs = [vs]
         for point in iter_space(vs):
-            yield self.restrict(point)
+            yield point, self.restrict(point)
 
     def cofactors(self, vs=None):
         """Return a tuple of cofactors of N variables.
@@ -338,7 +346,7 @@ class Function(object):
         The *cofactor* of f(x1, x2, ..., xi, ..., xn) with respect to
         variable xi' is f[xi'] = f(x1, x2, ..., 0, ..., xn)
         """
-        return tuple(cf for cf in self.iter_cofactors(vs))
+        return tuple(cf for p, cf in self.iter_cofactors(vs))
 
     def is_neg_unate(self, vs=None):
         """Return whether a function is negative unate.
