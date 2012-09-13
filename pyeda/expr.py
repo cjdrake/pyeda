@@ -459,6 +459,12 @@ class Literal(Expression):
     def factor(self):
         return self
 
+    def is_sop(self):
+        return True
+
+    def is_pos(self):
+        return True
+
 
 class _Variable(Variable, Literal):
     """Boolean variable (expression)"""
@@ -575,7 +581,7 @@ class OrAnd(Expression):
             if isinstance(arg, Expression):
                 # associative
                 if isinstance(arg, cls):
-                    temps.extend(arg.args)
+                    temps.extendleft(reversed(arg.args))
                 # complement
                 elif isinstance(arg, Literal) and -arg in args:
                     return cls.DOMINATOR
@@ -973,7 +979,7 @@ class Exclusive(Expression):
             if isinstance(arg, Expression):
                 # associative
                 if isinstance(arg, cls):
-                    temps.extend(arg.args)
+                    temps.extendleft(reversed(arg.args))
                 # XOR(x, x') = 1
                 elif isinstance(arg, Literal) and -arg in args:
                     args.remove(-arg)
