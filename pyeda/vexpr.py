@@ -18,8 +18,9 @@ from pyeda.common import clog2, bit_on
 from pyeda.boolfunc import VectorFunction as VF
 from pyeda.expr import var, Not, Or, And, Xor, Xnor
 
-def bitvec(name, *args, bnr=VF.UNSIGNED):
+def bitvec(name, *args, **kwargs):
     """Return a vector of variables."""
+    bnr = kwargs.get("bnr", VF.UNSIGNED)
     if len(args) == 0:
         raise TypeError("bitvec() expected at least two argument")
     elif len(args) == 1:
