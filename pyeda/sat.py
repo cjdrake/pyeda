@@ -4,7 +4,7 @@ Boolean Satisfiability
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-def naive_sat_one(expr):
+def backtrack(expr):
     """
     If this function is satisfiable, return a satisfying input point. A
     tautology *may* return an empty dictionary; a contradiction *must*
@@ -12,12 +12,12 @@ def naive_sat_one(expr):
 
     >>> from pyeda import var
     >>> a, b, c = map(var, "abc")
-    >>> point = (-a * b).satisfy_one(algorithm='naive')
+    >>> point = (-a * b).satisfy_one(algorithm='backtrack')
     >>> sorted(point.items())
     [(a, 0), (b, 1)]
-    >>> (-a * -b + -a * b + a * -b + a * b).satisfy_one(algorithm='naive')
+    >>> (-a * -b + -a * b + a * -b + a * b).satisfy_one(algorithm='backtrack')
     {}
-    >>> (a * b * (-a + -b)).satisfy_one(algorithm='naive')
+    >>> (a * b * (-a + -b)).satisfy_one(algorithm='backtrack')
     """
     var = expr.top
     cfs = {p[var]: cf for p, cf in expr.iter_cofactors(var)}
@@ -34,7 +34,7 @@ def naive_sat_one(expr):
     else:
         for num, cf in cfs.items():
             if cf != 0:
-                point = naive_sat_one(cf)
+                point = backtrack(cf)
                 if point is not None:
                     point[var] = num
                     break

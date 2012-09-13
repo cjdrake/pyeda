@@ -39,7 +39,7 @@ from pyeda.common import cached_property
 
 from pyeda.boolfunc import Variable, Function
 from pyeda.constant import boolify
-from pyeda.sat import naive_sat_one
+from pyeda.sat import backtrack
 
 VARIABLES = dict()
 COMPLEMENTS = dict()
@@ -227,9 +227,9 @@ class Expression(Function):
     def equal(self, *args):
         return Equal(self, *args)
 
-    def satisfy_one(self, algorithm='naive'):
-        if algorithm == 'naive':
-            return naive_sat_one(self)
+    def satisfy_one(self, algorithm='backtrack'):
+        if algorithm == 'backtrack':
+            return backtrack(self)
         else:
             raise ValueError("invalid algorithm")
 
@@ -779,7 +779,19 @@ class Or(OrAnd):
         return sep.join(str(arg) for arg in sorted(self._args))
 
     def is_sop(self):
-        return self.depth == 2
+        """Return whether this expression is a sum of products.
+
+        >>> a, b, c, d = map(var, "abcd")
+        >>> (a + b + c).is_sop()
+        True
+        >>> (a + (b * c) + (c * d)).is_sop()
+        True
+        >>> ((a * b) + (b * (c + d))).is_sop()
+        False
+        """
+        return ( self.depth <= 2 and
+                 all(isinstance(arg, Literal) or isinstance(arg, self.DUAL)
+                     for arg in self._args) )
 
     # Specific to Or
     @property
@@ -852,7 +864,19 @@ class And(OrAnd):
         return sep.join(s)
 
     def is_pos(self):
-        return self.depth == 2
+        """Return whether this expression is a products of sums.
+
+        >>> a, b, c, d = map(var, "abcd")
+        >>> (a * b * c).is_pos()
+        True
+        >>> (a * (b + c) * (c + d)).is_pos()
+        True
+        >>> ((a + b) * (b + c * d)).is_pos()
+        False
+        """
+        return ( self.depth <= 2 and
+                 all(isinstance(arg, Literal) or isinstance(arg, self.DUAL)
+                     for arg in self._args) )
 
     # Specific to And
     @property
@@ -1201,7 +1225,7 @@ class Equal(Expression):
         return max(arg.depth + 2 for arg in self._args)
 
     def invert(self):
-        return And(Or(*self._args), Nand(*self._args))
+        return And(Or(*self._args), Not(And(*self._args)))
 
     def factor(self):
         return Or(And(*[Not(arg).factor() for arg in self._args]),
