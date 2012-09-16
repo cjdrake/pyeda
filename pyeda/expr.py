@@ -575,24 +575,7 @@ class OrAnd(Expression):
     """Base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *args):
-        temps, args = deque(args), list()
-        while temps:
-            arg = temps.popleft()
-            if isinstance(arg, Expression):
-                # associative
-                if isinstance(arg, cls):
-                    temps.extendleft(reversed(arg.args))
-                # complement
-                elif isinstance(arg, Literal) and -arg in args:
-                    return cls.DOMINATOR
-                # idempotent
-                elif arg not in args:
-                    args.append(arg)
-            else:
-                num = boolify(arg)
-                # domination
-                if num == cls.DOMINATOR:
-                    return cls.DOMINATOR
+        args = cls._simplify(args)
 
         # Or() = 0; And() = 1
         if len(args) == 0:
@@ -604,6 +587,28 @@ class OrAnd(Expression):
         self = super(OrAnd, cls).__new__(cls)
         self._args = tuple(args)
         return self
+
+    @classmethod
+    def _simplify(cls, args):
+        temps, args = deque(args), list()
+        while temps:
+            arg = temps.popleft()
+            if isinstance(arg, Expression):
+                # associative
+                if isinstance(arg, cls):
+                    temps.extendleft(reversed(arg.args))
+                # complement
+                elif isinstance(arg, Literal) and -arg in args:
+                    return [cls.DOMINATOR]
+                # idempotent
+                elif arg not in args:
+                    args.append(arg)
+            else:
+                num = boolify(arg)
+                # domination
+                if num == cls.DOMINATOR:
+                    return [cls.DOMINATOR]
+        return args
 
     # From Function
     def restrict(self, mapping):
@@ -972,6 +977,22 @@ class Exclusive(Expression):
     """Boolean exclusive (XOR, XNOR) operator"""
 
     def __new__(cls, *args):
+        args, parity = cls._simplify(args)
+
+        # Xor() = 0; Xnor() = 1
+        if len(args) == 0:
+            return parity
+        # Xor(x) = x; Xnor(x) = x'
+        if len(args) == 1:
+            return Not(args[0]) if parity else args[0]
+
+        self = super(Exclusive, cls).__new__(cls)
+        self._args = tuple(args)
+        self._parity = parity
+        return self
+
+    @classmethod
+    def _simplify(cls, args):
         parity = cls.PARITY
         temps, args = deque(args), list()
         while temps:
@@ -991,18 +1012,7 @@ class Exclusive(Expression):
                     args.append(arg)
             else:
                 parity ^= boolify(arg)
-
-        # Xor() = 0; Xnor() = 1
-        if len(args) == 0:
-            return parity
-        # Xor(x) = x; Xnor(x) = x'
-        if len(args) == 1:
-            return Not(args[0]) if parity else args[0]
-
-        self = super(Exclusive, cls).__new__(cls)
-        self._args = tuple(args)
-        self._parity = parity
-        return self
+        return args, parity
 
     def __str__(self):
         args = ", ".join(str(arg) for arg in self._args)
