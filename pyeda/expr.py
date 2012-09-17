@@ -977,7 +977,7 @@ class Exclusive(Expression):
     """Boolean exclusive (XOR, XNOR) operator"""
 
     def __new__(cls, *args):
-        args, parity = cls._simplify(args)
+        args, parity = cls._simplify(args, cls.PARITY)
 
         # Xor() = 0; Xnor() = 1
         if len(args) == 0:
@@ -992,8 +992,7 @@ class Exclusive(Expression):
         return self
 
     @classmethod
-    def _simplify(cls, args):
-        parity = cls.PARITY
+    def _simplify(cls, args, parity):
         temps, args = deque(args), list()
         while temps:
             arg = temps.popleft()
