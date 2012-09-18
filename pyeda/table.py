@@ -1,6 +1,9 @@
 """
 Boolean Tables
 
+Interface Functions:
+    expr2truthtable
+
 Interface Classes:
     Table
         TruthTable
@@ -26,6 +29,18 @@ PC_STR = {
     PC_DC   : "-"
 }
 
+def expr2truthtable(expr):
+    """Convert an expression into a truth table.
+
+    If the expression lists the variables in a, b, c order, 'a' will
+    be in the LSB. Conventionally we read left-to-right, so reverse
+    the inputs to put 'a' in the MSB.
+    """
+    inputs = expr.inputs[::-1]
+    outputs = (PC_VALS[expr.restrict(point)] for point in iter_space(inputs))
+    return TruthTable(inputs, outputs)
+
+
 class Table(Function):
     def __repr__(self):
         return self.__str__()
@@ -33,29 +48,22 @@ class Table(Function):
 
 class TruthTable(Table):
 
-    def __init__(self, arg):
+    def __init__(self, inputs, outputs):
+        self._inputs = inputs
         self._data = bytearray()
-        if isinstance(arg, Expression):
-            # If the expression lists the variables in a, b, c order, 'a' will
-            # be in the LSB. Conventionally we read left-to-right, so reverse
-            # the inputs to put 'a' in the MSB.
-            self._inputs = arg.inputs[::-1]
-            pos = 0
-            for point in iter_space(self._inputs):
-                output = arg.restrict(point)
-                if pos == 0:
-                    self._data.append(0)
-                self._data[-1] += (PC_VALS[output] << pos)
-                pos = (pos + 2) & 7
-        else:
-            raise ValueError("invalid input")
+        pos = 0
+        for pcval in outputs:
+            if pos == 0:
+                self._data.append(0)
+            self._data[-1] += (pcval << pos)
+            pos = (pos + 2) & 7
 
     def __str__(self):
         """Return the table in Espresso input file format.
 
         >>> from pyeda.expr import var
         >>> a, b = map(var, "ab")
-        >>> TruthTable(a * -b)
+        >>> expr2truthtable(a * -b)
         .i 2
         .o 1
         .ilb a b
@@ -85,12 +93,6 @@ class TruthTable(Table):
     def support(self):
         return set(self._inputs)
 
-    # Specific to TruthTable
     @property
     def inputs(self):
-        """Return the support set in name/index order."""
         return self._inputs
-
-    @property
-    def degree(self):
-        return len(self._inputs)
