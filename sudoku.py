@@ -2,10 +2,8 @@
 Sudoku Puzzle
 
 >>> S = Sudoku()
->>> GIVEN =  ["002980010", "016327000", "390006040"]
->>> GIVEN += ["800030095", "000070000", "640050002"]
->>> GIVEN += ["080200054", "000761920", "060045700"]
->>> soln = S.solve(GIVEN)
+>>> grid = "002980010016327000390006040800030095000070000640050002080200054000761920060045700"
+>>> soln = S.solve(grid)
 >>> print(pretty_soln(soln))
 752|984|316
 416|327|589
@@ -18,6 +16,21 @@ Sudoku Puzzle
 187|293|654
 534|761|928
 269|845|731
+
+>>> grid = "8........ ..36..... .7..9.2.. .5...7... ....457.. ...1...3. ..1....68 ..85...1. .9....4.."
+>>> soln = S.solve(grid)
+>>> print(pretty_soln(soln))
+812|753|649
+943|682|175
+675|491|283
+---+---+---
+154|237|896
+369|845|721
+287|169|534
+---+---+---
+521|974|368
+438|526|917
+796|318|452
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
@@ -25,78 +38,69 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 from pyeda.expr import var, And, OneHot
 from pyeda.cnf import expr2cnf
 
-class Sudoku:
-    def __init__(self, N=3):
-        self.N = N
-        N2 = N * N
-        self.N2 = N2
+DIGITS = "123456789"
 
-        X = [ [ [ var("x", r, c, v) for v in range(N2) ]
-                                    for c in range(N2) ]
-                                    for r in range(N2) ]
+class Sudoku:
+    def __init__(self):
+        X = [ [ [ var("x", r, c, v) for v in range(3 * 3) ]
+                                    for c in range(3 * 3) ]
+                                    for r in range(3 * 3) ]
         self.X = X
 
         # Value constraints
         V = And(*[
                 And(*[
                     OneHot(*[ X[r][c][v]
-                        for v in range(N2) ])
-                        for c in range(N2) ])
-                        for r in range(N2) ])
+                        for v in range(3 * 3) ])
+                        for c in range(3 * 3) ])
+                        for r in range(3 * 3) ])
         V = expr2cnf(V)
 
         # Row constraints
         R = And(*[
                 And(*[
                     OneHot(*[ X[r][c][v]
-                        for c in range(N2) ])
-                        for v in range(N2) ])
-                        for r in range(N2) ])
+                        for c in range(3 * 3) ])
+                        for v in range(3 * 3) ])
+                        for r in range(3 * 3) ])
         R = expr2cnf(R)
 
         # Column constraints
         C = And(*[
                 And(*[
                     OneHot(*[ X[r][c][v]
-                        for r in range(N2) ])
-                        for v in range(N2) ])
-                        for c in range(N2) ])
+                        for r in range(3 * 3) ])
+                        for v in range(3 * 3) ])
+                        for c in range(3 * 3) ])
         C = expr2cnf(C)
 
         # Box constraints
         B = And(*[
                 And(*[
-                    OneHot(*[ X[N*br+r][N*bc+c][v]
-                        for r in range(N) for c in range(N) ])
-                        for v in range(N2) ])
-                        for br in range(N) for bc in range(N) ])
+                    OneHot(*[ X[3*br+r][3*bc+c][v]
+                        for r in range(3) for c in range(3) ])
+                        for v in range(3 * 3) ])
+                        for br in range(3) for bc in range(3) ])
         B = expr2cnf(B)
 
         self.cnf = V * R * C * B
 
-    def _specify(self, given):
+    def _assign(self, grid):
+        chars = [c for c in grid if c in DIGITS or c in "0."]
+        assert len(chars) == (3 * 3) ** 2
+
         cnf = self.cnf.copy()
-        nonzero = [str(n) for n in range(1, self.N2 + 1)]
-        for r in range(self.N2):
-            for c in range(self.N2):
-                str_val = given[r][c]
-                if str_val == "0":
-                    pass
-                elif str_val in nonzero:
-                    int_val = int(str_val) - 1
-                    for v in range(self.N2):
-                        if v == int_val:
-                            cnf *= self.X[r][c][v]
-                else:
-                    raise ValueError("invalid given")
+        for i, c in enumerate(chars):
+            if c in DIGITS:
+                cnf *= self.X[i//(3*3)][i%(3*3)][int(c)-1]
         return cnf
 
     def _get_rows(self, point):
         rows = []
-        for r in range(self.N2):
+        for r in range(3 * 3):
             row = []
-            for c in range(self.N2):
-                for v in range(self.N2):
+            for c in range(3 * 3):
+                for v in range(3 * 3):
                     if self.X[r][c][v] in point and point[self.X[r][c][v]] == 1:
                         row.append(str(v+1))
                         break
@@ -105,22 +109,21 @@ class Sudoku:
             rows.append("".join(row))
         return rows
 
-    def solve(self, given):
-        cnf = self._specify(given)
-        # FIXME -- use satisfy_one
-        point, _ = cnf.bcp()
+    def solve(self, grid):
+        cnf = self._assign(grid)
+        point = cnf.satisfy_one()
         rows = self._get_rows(point)
         return rows
 
-def pretty_soln(rows, N=3):
+def pretty_soln(rows):
     chars = list()
     for i, row in enumerate(rows):
         for j, col in enumerate(row):
-            if j != 0 and j % N == 0:
+            if j != 0 and j % 3 == 0:
                 chars.append("|")
             chars.append(col)
-        if i != (N * N - 1):
+        if i != (3 * 3 - 1):
             chars.append("\n")
-            if i % N == (N - 1):
+            if i % 3 == (3 - 1):
                 chars.append("---+---+---\n")
     return "".join(chars)
