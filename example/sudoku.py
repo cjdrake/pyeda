@@ -3,7 +3,7 @@
   Abusing PyEDA to solve Sudoku
 =================================
 
-According to Peter Norvig in his `class essay <http://norvig.com/sudoku.html>`_
+According to Peter Norvig in his `classic essay <http://norvig.com/sudoku.html>`_
 on solving every Sudoku puzzle using Python, security expert
 `Ben Laurie <http://en.wikipedia.org/wiki/Ben_Laurie>`_ once stated that
 "Sudoku is a denial of service attack on human intellect." I can personally
