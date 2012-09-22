@@ -1,41 +1,58 @@
 """
-Sudoku Puzzle
+=================================
+  Abusing PyEDA to solve Sudoku
+=================================
 
->>> grid = "002980010 016327000 390006040 800030095 000070000 640050002 080200054 000761920 060045700"
->>> soln = solve(grid)
->>> print(soln2str(soln))
-752|984|316
-416|327|589
-398|516|247
----+---+---
-871|632|495
-925|478|163
-643|159|872
----+---+---
-187|293|654
-534|761|928
-269|845|731
+According to Peter Norvig in his `class essay <http://norvig.com/sudoku.html>`_
+on solving every Sudoku puzzle using Python, security expert
+`Ben Laurie <http://en.wikipedia.org/wiki/Ben_Laurie>`_ once stated that
+"Sudoku is a denial of service attack on human intellect." I can personally
+attest to that.
 
->>> grid = "8........ ..36..... .7..9.2.. .5...7... ....457.. ...1...3. ..1....68 ..85...1. .9....4.."
->>> soln = solve(grid)
->>> print(soln2str(soln))
-812|753|649
-943|682|175
-675|491|283
----+---+---
-154|237|896
-369|845|721
-287|169|534
----+---+---
-521|974|368
-438|526|917
-796|318|452
+In this example, I will explain how to misuse/abuse PyEDA's Boolean expressions
+and satisfiability engine to create a general-purpose Sudoku solver.
+
+First, let's get a few ground rules straight:
+
+1. There are lots of Sudoku solvers on the Internet; I make no claims of novelty.
+2. PyEDA is unlikely to win any speed competitions.
+3. Let's face it--this is a pretty awesome waste of time :).
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-from pyeda.expr import var, And, OneHot
-from pyeda.cnf import expr2cnf, CNF_AND
+from pyeda import *
+
+#>>> grid = "002980010 016327000 390006040 800030095 000070000 640050002 080200054 000761920 060045700"
+#>>> soln = solve(grid)
+#>>> display(soln)
+#752|984|316
+#416|327|589
+#398|516|247
+#---+---+---
+#871|632|495
+#925|478|163
+#643|159|872
+#---+---+---
+#187|293|654
+#534|761|928
+#269|845|731
+
+#>>> grid = "8........ ..36..... .7..9.2.. .5...7... ....457.. ...1...3. ..1....68 ..85...1. .9....4.."
+#>>> soln = solve(grid)
+#>>> display(soln)
+#812|753|649
+#943|682|175
+#675|491|283
+#---+---+---
+#154|237|896
+#369|845|721
+#287|169|534
+#---+---+---
+#521|974|368
+#438|526|917
+#796|318|452
+#"""
 
 DIGITS = "123456789"
 

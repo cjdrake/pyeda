@@ -28,6 +28,7 @@ Contents:
 
    install.rst
    boolalg.rst
+   sudoku.rst
    todo.rst
 
 
