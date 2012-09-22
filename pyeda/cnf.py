@@ -6,13 +6,15 @@ Interface Functions:
     cnf2expr
 
 Interface Classes:
-    CNF
+    ConjNormalForm
 """
+
+import random
 
 from pyeda.common import cached_property
 from pyeda.constant import boolify
 from pyeda.boolfunc import Function
-from pyeda.expr import Expression, Or, And
+from pyeda.expr import Expression, Or, And, Complement
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
@@ -23,12 +25,12 @@ def expr2cnf(expr):
         for i, v in enumerate(expr.inputs):
             int2lit[-(i+1)] = -v
             int2lit[i+1] = v
-        lit2int = { lit: num for num, lit in int2lit.items() }
-        clauses = { tuple(sorted(lit2int[lit] for lit in clause.args))
-                    for clause in expr.args }
-        return CNF(int2lit, clauses)
+        lit2int = {lit: num for num, lit in int2lit.items()}
+        clauses = {tuple(sorted(lit2int[lit] for lit in clause.args))
+                   for clause in expr.args}
+        return ConjNormalForm(int2lit, clauses)
     else:
-        raise TypeError("expression is not in CNF")
+        raise TypeError("expression is not a CNF")
 
 def cnf2expr(cnf):
     """Convert a CNF into an expression."""
@@ -48,14 +50,14 @@ class NormalForm(Function):
 
     def __init__(self, int2lit, clauses):
         self.int2lit = int2lit
-        self.lit2int = { lit: num for num, lit in int2lit.items() }
+        self.lit2int = {lit: num for num, lit in int2lit.items()}
         self.clauses = frozenset(clauses)
 
     # From Function
     @cached_property
     def support(self):
-        return { self.int2lit[abs(num)]
-                 for clause in self.clauses for num in clause }
+        return {self.int2lit[abs(num)]
+                for clause in self.clauses for num in clause}
 
     @cached_property
     def inputs(self):
@@ -66,7 +68,7 @@ class NormalForm(Function):
         return self.__class__(self.int2lit, self.clauses)
 
 
-class CNF(NormalForm):
+class ConjNormalForm(NormalForm):
     """
     Conjunctive Normal Form
     """
@@ -75,22 +77,7 @@ class CNF(NormalForm):
     DOMINATOR = 0
 
     def __mul__(self, other):
-        if isinstance(other, Expression):
-            other = expr2cnf(other)
-
-        inputs = sorted(self.support | other.support)
-        int2lit = dict()
-        for i, v in enumerate(inputs):
-            int2lit[-(i+1)] = -v
-            int2lit[i+1] = v
-        lit2int = {lit: num for num, lit in int2lit.items()}
-
-        scls = { tuple(lit2int[self.int2lit[num]] for num in clause)
-                 for clause in self.clauses }
-        ocls = { tuple(lit2int[other.int2lit[num]] for num in clause)
-                 for clause in other.clauses }
-
-        return CNF(int2lit, scls | ocls)
+        return CNF_AND(self, other)
 
     def restrict(self, mapping):
         zeros, ones = set(), set()
@@ -108,65 +95,143 @@ class CNF(NormalForm):
                 else:
                     return self.DOMINATOR
 
-        return CNF(self.int2lit, new_clauses)
+        return ConjNormalForm(self.int2lit, new_clauses)
 
     def satisfy_one(self):
-        constraints, cnf = self.bcp()
+        # Boolean constraint propagation
+        cnf, point = bcp(self)
+
+        # Pure literal elimination
+        if isinstance(cnf, ConjNormalForm):
+            cnf, pure_point = cnf.eliminate_pure()
+            point.update(pure_point)
+
         if cnf == 0:
             return None
         elif cnf == 1:
-            return constraints
+            return point
 
-        # FIXME -- variable selection heuristic
-        var = cnf.top
+        # variable selection heuristic
+        #var = cnf.top
+        var = random.choice(cnf.inputs)
+
+        # backtracking
         cfs = {p[var]: cf for p, cf in cnf.iter_cofactors(var)}
         if cfs[0] == 1:
             if cfs[1] == 1:
                 # tautology
-                point = {}
+                bt_point = {}
             else:
                 # var=0 satisfies the formula
-                point = {var: 0}
+                bt_point = {var: 0}
         elif cfs[1] == 1:
             # var=1 satisfies the formula
-            point = {var: 1}
+            bt_point = {var: 1}
         else:
             for num, cf in cfs.items():
                 if cf != 0:
-                    point = cf.satisfy_one()
-                    if point is not None:
-                        point[var] = num
+                    bt_point = cf.satisfy_one()
+                    if bt_point is not None:
+                        bt_point[var] = num
                         break
             else:
-                point = None
+                bt_point = None
 
-        if point is not None:
-            point.update(constraints)
+        if bt_point is not None:
+            bt_point.update(point)
 
-        return point
+        return bt_point
 
-    def bcp(self):
-        """Boolean Constraint Propagation"""
-        constraints = dict()
+    def eliminate_pure(self):
+        """Return a CNF with no clauses that contain pure literals.
+
+        A literal is *pure* if it only exists with one polarity in the CNF.
+
+        For example:
+
+        >>> from pyeda import *
+        >>> a, b, c = map(var, "abc")
+
+        In this CNF, 'a' is pure: (a + b + c) * (a + -b + -c)
+        >>> cnf = expr2cnf((a + b + c) * (a + -b + -c))
+
+        Eliminating 'a' results in a true statement.
+        >>> cnf.eliminate_pure()
+        (1, {a: 1})
+
+        In this CNF, 'a' is pure: (a + b) * (a + c) * (-b + -c)
+        >>> cnf = expr2cnf((a + b) * (a + c) * (-b + -c))
+
+        Eliminating 'a' results in: -b + -c
+        >>> cnf, point = cnf.eliminate_pure()
+        >>> cnf.clauses, point
+        (frozenset({(-3, -2)}), {a: 1})
+        """
+        counter = dict()
         for clause in self.clauses:
+            for num in clause:
+                if num in counter:
+                    counter[num] += 1
+                else:
+                    counter[num] = 0
+
+        pures = list()
+        while counter:
+            num, cnt = counter.popitem()
+            if -num in counter:
+                counter.pop(-num)
+            elif cnt == 1:
+                pures.append(num)
+
+        if pures:
+            point = {self.int2lit[num]: (0 if num < 0 else 1) for num in pures}
+            new_clauses = list()
+            for clause in self.clauses:
+                if not any(num in clause for num in pures):
+                    new_clauses.append(clause)
+            return ConjNormalForm(self.int2lit, new_clauses), point
+        else:
+            return self, {}
+
+
+def bcp(cnf):
+    """Boolean Constraint Propagation"""
+    if cnf in {0, 1}:
+        return cnf, {}
+    else:
+        point = dict()
+        for clause in cnf.clauses:
             if len(clause) == 1:
                 num = clause[0]
                 if num > 0:
-                    constraints[self.int2lit[num]] = 1
+                    point[cnf.int2lit[num]] = 1
                 else:
-                    constraints[self.int2lit[-num]] = 0
-        if constraints:
-            cnf = self.restrict(constraints)
-            if cnf == 0:
-                return None, cnf
-            elif cnf == 1:
-                return constraints, cnf
-            else:
-                _constraints, _cnf = cnf.bcp()
-                if _cnf == 0:
-                    return None, _cnf
-                else:
-                    constraints.update(_constraints)
-                    return constraints, _cnf
+                    point[cnf.int2lit[-num]] = 0
+        if point:
+            _cnf, _point = bcp(cnf.restrict(point))
+            point.update(_point)
+            return _cnf, point
         else:
-            return constraints, self
+            return cnf, point
+
+def CNF_AND(*args):
+    args = [ expr2cnf(arg) if isinstance(arg, Expression) else arg
+             for arg in args ]
+
+    support = set()
+    for arg in args:
+        support |= arg.support
+    inputs = sorted(support)
+
+    int2lit = dict()
+    for i, v in enumerate(inputs):
+        int2lit[-(i+1)] = -v
+        int2lit[i+1] = v
+    lit2int = {lit: num for num, lit in int2lit.items()}
+
+    clauses = set()
+    for arg in args:
+        for clause in arg.clauses:
+            clauses.add(tuple(lit2int[arg.int2lit[num]] for num in clause))
+
+    return ConjNormalForm(int2lit, clauses)
