@@ -231,7 +231,7 @@ values in {0, 1}.
  ...             return DIGITS[v]
  ...     return "X"
  >>> 
- >>> def point2str(point):
+ >>> def display(point):
  ...     chars = list()
  ...     for r in range(3 * 3):
  ...         for c in range(3 * 3):
@@ -242,10 +242,7 @@ values in {0, 1}.
  ...             chars.append("\\n")
  ...             if r % 3 == (3 - 1):
  ...                 chars.append("+".join([\"-\" * 3] * 3) + "\\n")
- ...     return "".join(chars)
- >>> 
- >>> def display(point):
- ...     print(point2str(point))
+ ...     print("".join(chars))
 
 Finding the Solution
 ====================
