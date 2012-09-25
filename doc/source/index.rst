@@ -16,10 +16,14 @@ PyEDA is currently for education and experimentation. Python has several tools
 (eg Numpy, PyPy) in the ecosystem that are appropriate for industrial-strength
 performance, so that is a possible future direction.
 
-.. WARNING::
-   This software is very much a work in progress. As long as the major version
-   number is "0", the API could change drastically between releases. Use at
-   your own risk.
+Fork PyEDA: https://github.com/cjdrake/pyeda
+
+.. raw:: html
+
+   Tip PyEDA:
+   <iframe style="border: 0; margin: 0; padding: 0;"
+           src="https://www.gittip.com/cjdrake/widget.html"
+           width="48pt" height="20pt"></iframe>
 
 Contents:
 
