@@ -1,12 +1,14 @@
 """
 Python EDA Package
 
-common.py
 boolfunc.py -- Boolean functions
+cnf.py      -- Conjunctive normal forms
+common.py
 constant.py -- Boolean constant functions
-expr.py -- Boolean logic expressions
-vexpr.py -- Boolean vector logic expressions
-table.py -- Boolean tables
+expr.py     -- Boolean logic expressions
+sat.py      -- Boolean satisfiability algorithms
+table.py    -- Boolean tables
+vexpr.py    -- Boolean vector logic expressions
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
