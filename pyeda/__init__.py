@@ -12,7 +12,7 @@ vexpr.py    -- Boolean vector logic expressions
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 from pyeda.cnf import expr2cnf, cnf2expr, CNF_AND
 from pyeda.constant import ZERO, ONE
