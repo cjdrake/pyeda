@@ -521,12 +521,12 @@ class Complement(Literal):
     OP = "'"
 
     def __init__(self, v):
-        self._var = v
+        self.var = v
         self._support = {v}
         self._args = (self, )
 
     def __str__(self):
-        return str(self._var) + self.OP
+        return str(self.var) + self.OP
 
     # From Function
     @property
@@ -538,7 +538,7 @@ class Complement(Literal):
 
     def compose(self, mapping):
         try:
-            return Not(mapping[self._var])
+            return Not(mapping[self.var])
         except KeyError:
             return self
 
@@ -547,20 +547,15 @@ class Complement(Literal):
         if isinstance(other, _Variable):
             return ( self.var.name < other.name or
                          self.var.name == other.name and
-                         self._var.indices <= other.indices )
+                         self.var.indices <= other.indices )
         if isinstance(other, Complement):
-            return Variable.__lt__(self._var, other.var)
+            return Variable.__lt__(self.var, other.var)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
     def invert(self):
-        return self._var
-
-    # Specific to Complement
-    @property
-    def var(self):
-        return self._var
+        return self.var
 
     @property
     def minterm_index(self):

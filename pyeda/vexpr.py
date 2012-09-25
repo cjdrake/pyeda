@@ -93,7 +93,7 @@ class VectorExpression(VF):
 
     def __invert__(self):
         fs = [Not(v) for v in self.fs]
-        return self.__class__(*fs, start=self._start, bnr=self._bnr)
+        return self.__class__(*fs, start=self._start, bnr=self.bnr)
 
     def __or__(self, other):
         assert isinstance(other, VectorExpression) and len(self) == len(other)

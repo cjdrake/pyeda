@@ -53,8 +53,8 @@ class Variable(object):
     that is convenient for bit vectors.
     """
     def __init__(self, name, *indices):
-        self._name = name
-        self._indices = indices
+        self.name = name
+        self.indices = indices
 
     def __repr__(self):
         return self.__str__()
@@ -69,8 +69,8 @@ class Variable(object):
         >>> str(Variable("v", 1, 2, 3))
         'v[1][2][3]'
         """
-        suffix = "".join("[{}]".format(idx) for idx in self._indices)
-        return self._name + suffix
+        suffix = "".join("[{}]".format(idx) for idx in self.indices)
+        return self.name + suffix
 
     def __lt__(self, other):
         """Return rich "less than" result, for ordering.
@@ -84,17 +84,9 @@ class Variable(object):
         (True, True, True)
         """
         if self.name == other.name:
-            return self._indices < other.indices
+            return self.indices < other.indices
         else:
             return self.name < other.name
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def indices(self):
-        return self._indices
 
 
 class Function(object):
@@ -417,11 +409,6 @@ class VectorFunction(object):
     def __len__(self):
         return len(self.fs)
 
-    @property
-    def start(self):
-        """Return the start index."""
-        return self._start
-
     # Operators
     def uor(self):
         """Return the unary OR reduction."""
@@ -495,7 +482,7 @@ class VectorFunction(object):
 
     def getifz(self, i):
         """Get item from zero-based index."""
-        return self.__getitem__(i + self.start)
+        return self.__getitem__(i + self._start)
 
     def __getitem__(self, sl):
         if isinstance(sl, int):

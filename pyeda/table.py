@@ -13,7 +13,7 @@ Interface Classes:
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 from pyeda import __version__
-from pyeda.common import bit_on, iter_space
+from pyeda.common import bit_on, cached_property, iter_space
 from pyeda.boolfunc import Function
 from pyeda.expr import Expression
 
@@ -89,7 +89,7 @@ class TruthTable(Table):
         return "".join(s)
 
     # From Function
-    @property
+    @cached_property
     def support(self):
         return set(self._inputs)
 
