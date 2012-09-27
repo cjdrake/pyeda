@@ -2,3 +2,7 @@ include Makefile
 include LICENSE
 include README.rst
 include requirements.txt
+
+include doc/source/*
+include doc/source/images/*
+include example/*
