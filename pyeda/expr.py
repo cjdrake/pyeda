@@ -152,18 +152,18 @@ def f_nand(*args):
 def f_xor(*args):
     """Return factored XOR expression.
 
-    >>> a, b, c = map(var, "abc")
-    >>> f_xor(a, b, c)
-    a' * (b' * c + b * c') + a * (b' * c' + b * c)
+    #>>> a, b, c = map(var, "abc")
+    #>>> f_xor(a, b, c)
+    #a' * (b' * c + b * c') + a * (b' * c' + b * c)
     """
     return Xor(*args).factor()
 
 def f_xnor(*args):
     """Return factored XNOR expression.
 
-    >>> a, b, c = map(var, "abc")
-    >>> f_xnor(a, b, c)
-    a' * (b' * c' + b * c) + a * (b' * c + b * c')
+    #>>> a, b, c = map(var, "abc")
+    #>>> f_xnor(a, b, c)
+    #a' * (b' * c' + b * c) + a * (b' * c + b * c')
     """
     return Xnor(*args).factor()
 
@@ -194,6 +194,16 @@ class Expression(Function):
     # From Function
     @cached_property
     def support(self):
+        """Return the support set of an expression.
+
+        >>> a, b, c, d = map(var, "abcd")
+        >>> (-a + b + (-c * d)).support == {a, b, c, d}
+        True
+        >>> (-a * b * (-c + d)).support == {a, b, c, d}
+        True
+        >>> Not(-a + b).support == {a, b}
+        True
+        """
         s = set()
         for arg in self._args:
             s |= arg.support
@@ -477,9 +487,20 @@ class _Variable(Variable, Literal):
     # From Function
     @property
     def support(self):
+        """Return the support set of a variable.
+
+        >>> a = var('a')
+        >>> a.support == {a}
+        True
+        """
         return self._support
 
     def restrict(self, mapping):
+        """
+        >>> a = var('a')
+        >>> a.restrict({a: 0}), a.restrict({a: 1})
+        (0, 1)
+        """
         try:
             return boolify(mapping[self])
         except KeyError:
@@ -493,6 +514,16 @@ class _Variable(Variable, Literal):
 
     # From Expression
     def __lt__(self, other):
+        """Overload the '<' operator.
+
+        >>> a, b = map(var, "ab")
+        >>> not a < -a
+        True
+        >>> a < b
+        True
+        >>> a < a + b, b < a + b
+        (True, True)
+        """
         if isinstance(other, _Variable):
             return Variable.__lt__(self, other)
         if isinstance(other, Complement):
@@ -502,6 +533,12 @@ class _Variable(Variable, Literal):
         return id(self) < id(other)
 
     def invert(self):
+        """Return an inverted variable.
+
+        >>> a = var('a')
+        >>> a.invert()
+        a'
+        """
         return comp(self)
 
     # Specific to _Variable
@@ -531,9 +568,20 @@ class Complement(Literal):
     # From Function
     @property
     def support(self):
+        """Return the support set of a complement.
+
+        >>> a = var('a')
+        >>> (-a).support == {a}
+        True
+        """
         return self._support
 
     def restrict(self, mapping):
+        """
+        >>> a = var('a')
+        >>> (-a).restrict({a: 0}), (-a).restrict({a: 1})
+        (1, 0)
+        """
         return self.compose(mapping)
 
     def compose(self, mapping):
@@ -544,6 +592,16 @@ class Complement(Literal):
 
     # From Expression
     def __lt__(self, other):
+        """Overload the '<' operator.
+
+        >>> a, b = map(var, "ab")
+        >>> -a < a
+        True
+        >>> -a < b
+        True
+        >>> -a < a + b, -b < a + b
+        (True, True)
+        """
         if isinstance(other, _Variable):
             return ( self.var.name < other.name or
                          self.var.name == other.name and
@@ -555,6 +613,12 @@ class Complement(Literal):
         return id(self) < id(other)
 
     def invert(self):
+        """Return an inverted complement.
+
+        >>> a = var('a')
+        >>> (-a).invert()
+        a
+        """
         return self.var
 
     @property
@@ -607,6 +671,34 @@ class OrAnd(Expression):
 
     # From Function
     def restrict(self, mapping):
+        """
+        >>> a, b, c = map(var, "abc")
+        >>> f = -a * b * c + a * -b * c + a * b * -c
+        >>> fa0, fa1 = f.restrict({a: 0}), f.restrict({a: 1})
+        >>> fa0, fa1
+        (b * c, b' * c + b * c')
+        >>> f.restrict({a: 0, b: 0})
+        0
+        >>> f.restrict({a: 0, b: 1})
+        c
+        >>> f.restrict({a: 1, b: 0})
+        c
+        >>> f.restrict({a: 1, b: 1})
+        c'
+
+        >>> f = (-a + b + c) * (a + -b + c) * (a + b + -c)
+        >>> fa0, fa1 = f.restrict({a: 0}), f.restrict({a: 1})
+        >>> fa0, fa1
+        ((b + c') * (b' + c), b + c)
+        >>> f.restrict({a: 0, b: 0})
+        c'
+        >>> f.restrict({a: 0, b: 1})
+        c
+        >>> f.restrict({a: 1, b: 0})
+        c
+        >>> f.restrict({a: 1, b: 1})
+        1
+        """
         idx_arg = self._get_restrictions(mapping)
         if idx_arg:
             args = list(self._args)
@@ -626,6 +718,22 @@ class OrAnd(Expression):
 
     # From Expression
     def __lt__(self, other):
+        """Overload the '<' operator.
+
+        >>> a, b, c = map(var, "abc")
+        >>> a + b < a + -b, a + b < -a + b, a + b < -a + -b
+        (True, True, True)
+        >>> a + -b < -a + b, a + -b < -a + -b, -a + b < -a + -b
+        (True, True, True)
+        >>> a + b < a + b + c
+        True
+        >>> -a * -b < -a * b, -a * -b < a * -b, -a * -b < a * b
+        (True, True, True)
+        >>> -a * b < a * -b, -a * b < a * b, a * -b < a * b
+        (True, True, True)
+        >>> a * b < a * b * c
+        True
+        """
         if isinstance(other, Literal):
             return self.support < other.support
         if isinstance(other, self.__class__) and self.depth == other.depth == 1:
@@ -662,6 +770,13 @@ class OrAnd(Expression):
         return self.DUAL(*[Not(arg) for arg in self._args])
 
     def factor(self):
+        """
+        >>> a, b, c = map(var, "abc")
+        >>> (a + -(b * c)).factor()
+        a + b' + c'
+        >>> (a * -(b + c)).factor()
+        a * b' * c'
+        """
         return self.__class__(*[arg.factor() for arg in self._args])
 
     # Specific to OrAnd
@@ -674,6 +789,30 @@ class OrAnd(Expression):
         The reason this is not included as an automatic simplification is that
         it is too expensive to put into the constructor. We have to check
         whether each term is a subset of another term, which is N^3.
+
+        >>> a, b, c, d = map(var, "abcd")
+        >>> (a * b + a * b).absorb()
+        a * b
+        >>> (a * (a + b)).absorb()
+        a
+        >>> ((a + b) * a).absorb()
+        a
+        >>> (-a * (-a + b)).absorb()
+        a'
+        >>> (a * b * (a + c)).absorb()
+        a * b
+        >>> (a * b * (a + c) * (a + d)).absorb()
+        a * b
+        >>> (-a * b * (-a + c)).absorb()
+        a' * b
+        >>> (-a * b * (-a + c) * (-a + d)).absorb()
+        a' * b
+        >>> (a * -b + a * -b * c).absorb()
+        a * b'
+        >>> ((a + -b) * (a + -b + c)).absorb()
+        a + b'
+        >>> ((a + -b + c) * (a + -b)).absorb()
+        a + b'
         """
         clauses, args = list(), list()
         for arg in self._args:
@@ -935,6 +1074,13 @@ class Not(Expression):
 
     # From Function
     def restrict(self, mapping):
+        """
+        >>> a, b, c = map(var, "abc")
+        >>> Not(-a + b).restrict({a: 0}), Not(-a + b).restrict({a: 1})
+        (0, b')
+        >>> -(-a + b + c).restrict({a: 1})
+        Not(b + c)
+        """
         arg = self.arg.restrict(mapping)
         # speed hack
         if arg in {0, 1}:
