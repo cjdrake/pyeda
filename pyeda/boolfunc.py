@@ -110,6 +110,7 @@ class Function(object):
 
     @property
     def top(self):
+        """Return the first variable in the ordered support set."""
         return self.inputs[0]
 
     @property

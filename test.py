@@ -24,9 +24,9 @@ def test_cofactors():
     assert str(f.cofactors(a)) == "(b * c, b + c + b * c)"
     assert f.cofactors([a, b]) == (0, c, c, 1)
     assert f.cofactors([a, b, c]) == (0, 0, 0, 1, 0, 1, 1, 1)
-    assert str(f.smoothing(a).to_sop()) == "b + c"
-    assert str(f.consensus(a).to_sop()) == "b * c"
-    assert str(f.derivative(a).to_sop()) == "b' * c + b * c'"
+    assert str(f.smoothing(a).to_dnf()) == "b + c"
+    assert str(f.consensus(a).to_dnf()) == "b * c"
+    assert str(f.derivative(a).to_dnf()) == "b' * c + b * c'"
 
 def test_unate():
     f = a + b + -c

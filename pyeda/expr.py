@@ -324,7 +324,7 @@ class Expression(Function):
 
         A factored expression is one and only one of the following:
         * A literal.
-        * A sum / product of factored expressions.
+        * A disjunction / conjunction of factored expressions.
         """
         raise NotImplementedError()
 
@@ -350,50 +350,50 @@ class Expression(Function):
         """The product of sums of N literals"""
         return {term for term in self.iter_maxterms()}
 
-    def is_sop(self):
-        """Return whether this expression is a sum of products."""
+    def is_dnf(self):
+        """Return whether this expression is in disjunctive normal form."""
         return False
 
-    def to_sop(self):
-        """Return the expression as a sum of products.
+    def to_dnf(self):
+        """Return the expression in disjunctive normal form.
 
         >>> a, b, c = map(var, "abc")
-        >>> Xor(a, b, c).to_sop()
+        >>> Xor(a, b, c).to_dnf()
         a' * b' * c + a' * b * c' + a * b' * c' + a * b * c
-        >>> Xnor(a, b, c).to_sop()
+        >>> Xnor(a, b, c).to_dnf()
         a' * b' * c' + a' * b * c + a * b' * c + a * b * c'
         """
         return self.factor()._flatten(And).absorb()
 
-    def to_csop(self):
-        """Return the expression as a sum of products of N literals.
+    def to_cdnf(self):
+        """Return the expression in canonical disjunctive normal form.
 
         >>> a, b, c = map(var, "abc")
-        >>> (a * b + a * c + b * c).to_csop()
+        >>> (a * b + a * c + b * c).to_cdnf()
         a' * b * c + a * b' * c + a * b * c' + a * b * c
         """
         return Or(*[term for term in self.iter_minterms()])
 
-    def is_pos(self):
-        """Return whether this expression is a products of sums."""
+    def is_cnf(self):
+        """Return whether this expression is in conjunctive normal form."""
         return False
 
-    def to_pos(self):
-        """Return the expression as a product of sums.
+    def to_cnf(self):
+        """Return the expression in conjunctive normal form.
 
         >>> a, b, c = map(var, "abc")
-        >>> Xor(a, b, c).to_pos()
+        >>> Xor(a, b, c).to_cnf()
         (a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)
-        >>> Xnor(a, b, c).to_pos()
+        >>> Xnor(a, b, c).to_cnf()
         (a + b + c') * (a + b' + c) * (a' + b + c) * (a' + b' + c')
         """
         return self.factor()._flatten(Or).absorb()
 
-    def to_cpos(self):
-        """Return the expression as a product of sums of N literals.
+    def to_ccnf(self):
+        """Return the expression in canonical conjunctive normal form.
 
         >>> a, b, c = map(var, "abc")
-        >>> (a * b + a * c + b * c).to_cpos()
+        >>> (a * b + a * c + b * c).to_ccnf()
         (a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)
         """
         return And(*[term for term in self.iter_maxterms()])
@@ -469,10 +469,10 @@ class Literal(Expression):
     def factor(self):
         return self
 
-    def is_sop(self):
+    def is_dnf(self):
         return True
 
-    def is_pos(self):
+    def is_cnf(self):
         return True
 
 
@@ -851,7 +851,7 @@ class OrAnd(Expression):
         x * (y + z) = (x * y) + (x * z)
 
         NOTE: This function assumes the expression is already factored. Do NOT
-              call this method directly -- use the "to_sop" or "to_pos" methods
+              call this method directly -- use the "to_dnf" or "to_cnf" methods
               instead.
         """
         if isinstance(self, op):
@@ -923,15 +923,15 @@ class Or(OrAnd):
         sep = " " + self.OP + " "
         return sep.join(str(arg) for arg in sorted(self._args))
 
-    def is_sop(self):
-        """Return whether this expression is a sum of products.
+    def is_dnf(self):
+        """Return whether this expression is in disjunctive normal form.
 
         >>> a, b, c, d = map(var, "abcd")
-        >>> (a + b + c).is_sop()
+        >>> (a + b + c).is_dnf()
         True
-        >>> (a + (b * c) + (c * d)).is_sop()
+        >>> (a + (b * c) + (c * d)).is_dnf()
         True
-        >>> ((a * b) + (b * (c + d))).is_sop()
+        >>> ((a * b) + (b * (c + d))).is_dnf()
         False
         """
         return ( self.depth <= 2 and
@@ -1008,15 +1008,15 @@ class And(OrAnd):
         sep = " " + self.OP + " "
         return sep.join(s)
 
-    def is_pos(self):
-        """Return whether this expression is a products of sums.
+    def is_cnf(self):
+        """Return whether this expression is in conjunctive normal form.
 
         >>> a, b, c, d = map(var, "abcd")
-        >>> (a * b * c).is_pos()
+        >>> (a * b * c).is_cnf()
         True
-        >>> (a * (b + c) * (c + d)).is_pos()
+        >>> (a * (b + c) * (c + d)).is_cnf()
         True
-        >>> ((a + b) * (b + c * d)).is_pos()
+        >>> ((a + b) * (b + c * d)).is_cnf()
         False
         """
         return ( self.depth <= 2 and

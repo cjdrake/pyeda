@@ -20,7 +20,7 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 def expr2cnf(expr):
     """Convert an expression into a CNF."""
-    if expr.is_pos():
+    if expr.is_cnf():
         int2lit = dict()
         for i, v in enumerate(expr.inputs):
             int2lit[-(i+1)] = -v
