@@ -67,7 +67,7 @@ B = And(*[
             for v in range(3 * 3) ])
         for br in range(3) for bc in range(3) ])
 
-S = CNF_AND(V, R, C, B)
+S = CNF_And(V, R, C, B)
 
 def parse_grid(grid):
     chars = [c for c in grid if c in DIGITS or c in "0."]

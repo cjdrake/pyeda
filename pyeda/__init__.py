@@ -14,7 +14,7 @@ vexpr.py    -- Boolean vector logic expressions
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 __version__ = "0.7.0"
 
-from pyeda.cnf import expr2cnf, cnf2expr, CNF_AND
+from pyeda.cnf import expr2dnf, expr2cnf, dnf2expr, cnf2expr, DNF_Or, CNF_And
 from pyeda.constant import ZERO, ONE
 from pyeda.expr import var
 from pyeda.expr import Nor, Nand, OneHot0, OneHot

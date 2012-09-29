@@ -1,8 +1,10 @@
 """
-Conjunctive Normal Form
+Normal Form Expressions
 
 Interface Functions:
+    expr2dnf
     expr2cnf
+    dnf2expr
     cnf2expr
 
 Interface Classes:
@@ -18,6 +20,20 @@ from pyeda.expr import Expression, Or, And
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
+def expr2dnf(expr):
+    """Convert an expression into a DNF."""
+    if expr.is_dnf():
+        int2lit = dict()
+        for i, v in enumerate(expr.inputs):
+            int2lit[-(i+1)] = -v
+            int2lit[i+1] = v
+        lit2int = {lit: num for num, lit in int2lit.items()}
+        clauses = {tuple(sorted(lit2int[lit] for lit in clause.args))
+                   for clause in expr.args}
+        return DisjNormalForm(int2lit, clauses)
+    else:
+        raise TypeError("expression is not a DNF")
+
 def expr2cnf(expr):
     """Convert an expression into a CNF."""
     if expr.is_cnf():
@@ -32,11 +48,18 @@ def expr2cnf(expr):
     else:
         raise TypeError("expression is not a CNF")
 
+def dnf2expr(dnf):
+    """Convert a DNF into an expression."""
+    return Or(*[
+              And(*[ dnf.int2lit[num] for num in clause ])
+                     for clause in dnf.clauses ])
+
 def cnf2expr(cnf):
     """Convert a CNF into an expression."""
     return And(*[
                Or(*[ cnf.int2lit[num] for num in clause ])
                      for clause in cnf.clauses ])
+
 
 class NormalForm(Function):
     """
@@ -63,9 +86,36 @@ class NormalForm(Function):
     def inputs(self):
         return sorted(self.support)
 
-    # Specific to NormalForm
-    def copy(self):
-        return self.__class__(self.int2lit, self.clauses)
+    def restrict(self, mapping):
+        idents = set()
+        doms = set()
+        for v, val in mapping.items():
+            low, high = (-v, v) if boolify(val) == self.IDENTITY else (v, -v)
+            idents.add(self.lit2int[low])
+            doms.add(self.lit2int[high])
+
+        new_clauses = set()
+        for clause in self.clauses:
+            if not any(n in clause for n in doms):
+                new_clause = tuple(n for n in clause if n not in idents)
+                if new_clause:
+                    new_clauses.add(new_clause)
+                else:
+                    return self.DOMINATOR
+
+        return self.__class__(self.int2lit, new_clauses)
+
+
+class DisjNormalForm(NormalForm):
+    """
+    Disjunctive Normal Form
+    """
+
+    IDENTITY = 0
+    DOMINATOR = 1
+
+    def __add__(self, other):
+        return DNF_Or(self, other)
 
 
 class ConjNormalForm(NormalForm):
@@ -77,25 +127,7 @@ class ConjNormalForm(NormalForm):
     DOMINATOR = 0
 
     def __mul__(self, other):
-        return CNF_AND(self, other)
-
-    def restrict(self, mapping):
-        zeros, ones = set(), set()
-        for v, val in mapping.items():
-            low, high = (-v, v) if boolify(val) else (v, -v)
-            zeros.add(self.lit2int[low])
-            ones.add(self.lit2int[high])
-
-        new_clauses = set()
-        for clause in self.clauses:
-            if not any(one in clause for one in ones):
-                new_clause = tuple(n for n in clause if n not in zeros)
-                if new_clause:
-                    new_clauses.add(new_clause)
-                else:
-                    return self.DOMINATOR
-
-        return ConjNormalForm(self.int2lit, new_clauses)
+        return CNF_And(self, other)
 
     def satisfy_one(self):
         # Boolean constraint propagation
@@ -214,7 +246,29 @@ def bcp(cnf):
         else:
             return cnf, point
 
-def CNF_AND(*args):
+def DNF_Or(*args):
+    args = [ expr2dnf(arg) if isinstance(arg, Expression) else arg
+             for arg in args ]
+
+    support = set()
+    for arg in args:
+        support |= arg.support
+    inputs = sorted(support)
+
+    int2lit = dict()
+    for i, v in enumerate(inputs):
+        int2lit[-(i+1)] = -v
+        int2lit[i+1] = v
+    lit2int = {lit: num for num, lit in int2lit.items()}
+
+    clauses = set()
+    for arg in args:
+        for clause in arg.clauses:
+            clauses.add(tuple(lit2int[arg.int2lit[num]] for num in clause))
+
+    return DisjNormalForm(int2lit, clauses)
+
+def CNF_And(*args):
     args = [ expr2cnf(arg) if isinstance(arg, Expression) else arg
              for arg in args ]
 

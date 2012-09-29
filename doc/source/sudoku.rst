@@ -191,7 +191,7 @@ the constraints, because all constraints must be true for the puzzle to be
 solved.
 
 Instead of using the 'And' constructor, which will create a new logic
-expression, we will instead use the 'CNF_AND' function. The reason for this
+expression, we will instead use the 'CNF_And' function. The reason for this
 is simply speed. By now we have a *massive* logic expression that is written
 in conjunctive normal form, so we will use the pyeda.cnf.ConjNormalForm data
 type to represent the final equation, because it will be smaller and faster
@@ -199,7 +199,7 @@ when we kick off the SAT solver.
 
 ::
 
- >>> S = CNF_AND(V, R, C, B)
+ >>> S = CNF_And(V, R, C, B)
  >>> len(S.clauses)
  10530
 
