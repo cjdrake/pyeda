@@ -35,9 +35,7 @@ from pyeda import *
 
 DIGITS = "123456789"
 
-X = [[[ var("x", r, c, v) for v in range(3 * 3) ]
-                          for c in range(3 * 3) ]
-                          for r in range(3 * 3) ]
+X = bitvec("x", 9, 9, 9)
 
 V = And(*[
         And(*[

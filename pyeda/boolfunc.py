@@ -4,6 +4,7 @@ Boolean Functions
 Interface Classes:
     Variable
     Function
+    Slicer
     VectorFunction
 
 Boolean Identities
@@ -390,25 +391,87 @@ class Function(object):
         raise NotImplementedError()
 
 
-class VectorFunction(object):
+class Slicer(object):
+    def __init__(self, start, items):
+        self._start = start
+        self.items = list(items)
+
+    @property
+    def sl(self):
+        """Return a slice object that represents the vector's index range."""
+        return slice(self._start, self._start + self.__len__())
+
+    def __iter__(self):
+        return iter(self.items)
+
+    def __len__(self):
+        return len(self.items)
+
+    def getifz(self, i):
+        """Get item from zero-based index."""
+        return self.__getitem__(i + self.sl.start)
+
+    def __getitem__(self, sl):
+        if isinstance(sl, int):
+            return self.items[self._norm_idx(sl)]
+        else:
+            return self.items[self._norm_slice(sl)]
+
+    def __setitem__(self, sl, item):
+        if isinstance(sl, int):
+            self.items[self._norm_idx(sl)] = item
+        else:
+            self.items[self._norm_slice(sl)] = item
+
+    def _norm_idx(self, i):
+        """Return an index normalized to vector start index."""
+        if i >= 0:
+            if i < self.sl.start or i >= self.sl.stop:
+                raise IndexError("list index out of range")
+            else:
+                idx = i - self.sl.start
+        else:
+            raise ValueError("negative indices not supported")
+        return idx
+
+    def _norm_slice(self, sl):
+        """Return a slice normalized to vector start index."""
+        limits = {'start': None, 'stop': None}
+        for k in ('start', 'stop'):
+            i = getattr(sl, k)
+            if i is not None:
+                if i >= 0:
+                    if i < self.sl.start or i > self.sl.stop:
+                        raise IndexError("list index out of range")
+                    else:
+                        limits[k] = i - self.sl.start
+                else:
+                    raise ValueError("negative indices not supported")
+        return slice(limits['start'], limits['stop'])
+
+
+class VectorFunction(Slicer):
     """
     Abstract base class that defines an interface for a vector Boolean function.
     """
     UNSIGNED, TWOS_COMPLEMENT = range(2)
 
-    def __init__(self, *fs, **kwargs):
-        self.fs = list(fs)
-        self._start = kwargs.get('start', 0)
-        self.bnr = kwargs.get('bnr', self.UNSIGNED)
+    def __init__(self, sl=0, bnr=UNSIGNED):
+        if type(sl) is int:
+            sl = slice(0, sl)
+        elif type(sl) is tuple and len(sl) == 2:
+            sl = slice(*sl)
+        elif type(sl) is slice:
+            pass
+        else:
+            raise ValueError("invalid argument")
+        # Initialize the vector to all zeros
+        items = [0] * (sl.stop - sl.start)
+        super(VectorFunction, self).__init__(sl.start, items)
+        self.bnr = bnr
 
     def __int__(self):
         return self.to_int()
-
-    def __iter__(self):
-        return iter(self.fs)
-
-    def __len__(self):
-        return len(self.fs)
 
     # Operators
     def uor(self):
@@ -440,10 +503,10 @@ class VectorFunction(object):
         Return the vector that results from applying the 'restrict' method to
         all functions.
         """
-        cpy = self[:]
-        for i, _ in enumerate(cpy.fs):
-            cpy[i] = cpy[i].restrict(mapping)
-        return cpy
+        new = self.__class__((self.sl.start, self.sl.stop), bnr=self.bnr)
+        for i, f in enumerate(self):
+            new.items[i] = f.restrict(mapping)
+        return new
 
     def vrestrict(self, mapping):
         """Expand all vectors before applying 'restrict'."""
@@ -452,7 +515,7 @@ class VectorFunction(object):
     def to_uint(self):
         """Convert vector to an unsigned integer, if possible."""
         num = 0
-        for i, f in enumerate(self.fs):
+        for i, f in enumerate(self):
             if type(f) is int:
                 if f:
                     num += 2 ** i
@@ -463,7 +526,7 @@ class VectorFunction(object):
     def to_int(self):
         """Convert vector to an integer, if possible."""
         num = self.to_uint()
-        if self.bnr == self.TWOS_COMPLEMENT and self.fs[-1]:
+        if self.bnr == self.TWOS_COMPLEMENT and self.items[-1]:
             return -2 ** self.__len__() + num
         else:
             return num
@@ -475,67 +538,15 @@ class VectorFunction(object):
         otherwise, zero extend.
         """
         if self.bnr == self.TWOS_COMPLEMENT:
-            bit = self.fs[-1]
+            bit = self.items[-1]
         else:
             bit = 0
         for _ in range(num):
             self.append(bit)
 
-    def getifz(self, i):
-        """Get item from zero-based index."""
-        return self.__getitem__(i + self._start)
-
-    def __getitem__(self, sl):
-        if isinstance(sl, int):
-            return self.fs[self._norm_idx(sl)]
-        else:
-            cls = self.__class__
-            norm_sl = self._norm_slice(sl)
-            return cls(*self.fs.__getitem__(norm_sl),
-                       start=(norm_sl.start + self._start), bnr=self.bnr)
-
-    def __setitem__(self, sl, f):
-        if isinstance(sl, int):
-            self.fs.__setitem__(sl, f)
-        else:
-            norm = self._norm_slice(sl)
-            self.fs.__setitem__(norm, f)
-
-    def _norm_idx(self, i):
-        """Return an index normalized to vector start index."""
-        if i >= 0:
-            if i < self._start:
-                raise IndexError("list index out of range")
-            else:
-                idx = i - self._start
-        else:
-            idx = i + self._start
-        return idx
-
-    @property
-    def _sl(self):
-        """Return a slice object that represents the vector's index range."""
-        return slice(self._start, len(self.fs) + self._start)
-
-    def _norm_slice(self, sl):
-        """Return a slice normalized to vector start index."""
-        limits = dict()
-        for k in ('start', 'stop'):
-            idx = getattr(sl, k)
-            if idx is not None:
-                limits[k] = (idx if idx >= 0 else self._sl.stop + idx)
-            else:
-                limits[k] = getattr(self._sl, k)
-        if limits['start'] < self._sl.start or limits['stop'] > self._sl.stop:
-            raise IndexError("list index out of range")
-        elif limits['start'] >= limits['stop']:
-            raise IndexError("zero-sized slice")
-        return slice(limits['start'] - self._start,
-                     limits['stop'] - self._start)
-
     def append(self, f):
         """Append a function to the end of this vector."""
-        self.fs.append(f)
+        self.items.append(f)
 
 
 def _expand_vectors(mapping):

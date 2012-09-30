@@ -55,9 +55,7 @@ simple by using a multi-dimensional Python list.
 
 ::
 
- >>> X = [[[ var("x", r, c, v) for v in range(3 * 3) ]
- ...                           for c in range(3 * 3) ]
- ...                           for r in range(3 * 3) ]
+ >>> X = bitvec("x", 9, 9, 9)
 
 .. NOTE:: Python lists are always indexed from zero, so for this particular
           construction, the variable that corresponds to row 3, column 8,

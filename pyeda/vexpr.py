@@ -8,31 +8,41 @@ Interface Functions:
     int2vec
 
 Interface Classes:
-    VectorExpression
-        BitVector
+    BitVector
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 from pyeda.common import clog2, bit_on
-from pyeda.boolfunc import VectorFunction as VF
+from pyeda.boolfunc import Slicer, VectorFunction as VF
 from pyeda.expr import var, Not, Or, And, Xor, Xnor
 
 def bitvec(name, *args, **kwargs):
     """Return a vector of variables."""
     bnr = kwargs.get("bnr", VF.UNSIGNED)
-    if len(args) == 0:
-        raise TypeError("bitvec() expected at least two argument")
-    elif len(args) == 1:
-        start, stop = 0, args[0]
-    elif len(args) == 2:
-        start, stop = args
+    slices = list()
+    for arg in args:
+        if type(arg) is int:
+            slices.append(slice(0, arg))
+        elif type(arg) is tuple and len(arg) == 2:
+            slices.append(slice(*arg))
+        elif type(arg) is slice:
+            slices.append(arg)
+        else:
+            raise ValueError("invalid argument")
+    return _rbitvec(name, slices, tuple(), bnr)
+
+def _rbitvec(name, slices, indices, bnr=VF.UNSIGNED):
+    fst, rst = slices[0], slices[1:]
+    if rst:
+        sls = [ _rbitvec(name, rst, indices + (i, ), bnr)
+                for i in range(fst.start, fst.stop) ]
+        return Slicer(fst.start, sls)
     else:
-        raise TypeError("bitvec() expected at most three arguments")
-    if not (0 <= start < stop):
-        raise ValueError("invalid range: [{}:{}]".format(start, stop))
-    fs = [var(name, i) for i in range(start, stop)]
-    return BitVector(*fs, start=start, bnr=bnr)
+        bv = BitVector((fst.start, fst.stop), bnr=bnr)
+        for i in range(fst.start, fst.stop):
+            bv[i] = var(name, *(indices + (i, )))
+        return bv
 
 def sbitvec(name, *args):
     """Return a signed vector of variables."""
@@ -75,46 +85,57 @@ def int2vec(num, length=None):
     return logvec
 
 
-class VectorExpression(VF):
-    """Vector Boolean function"""
+class BitVector(VF):
+    """Vector Expression with logical functions."""
+
+    def __repr__(self):
+        return self.__str__()
 
     def __str__(self):
-        return str(self.fs)
+        return str(self.items)
 
     # Operators
     def uor(self):
-        return Or(*self.fs)
+        return Or(*self)
 
     def uand(self):
-        return And(*self.fs)
+        return And(*self)
 
     def uxor(self):
-        return Xor(*self.fs)
+        return Xor(*self)
 
     def __invert__(self):
-        fs = [Not(v) for v in self.fs]
-        return self.__class__(*fs, start=self._start, bnr=self.bnr)
+        bv = self.__class__(self.sl.start)
+        for f in self:
+            bv.append(Not(f))
+        return bv
 
     def __or__(self, other):
-        assert isinstance(other, VectorExpression) and len(self) == len(other)
-        return self.__class__(*[Or(*t) for t in zip(self.fs, other.fs)])
+        assert isinstance(other, BitVector) and len(self) == len(other)
+        bv = self.__class__()
+        for t in zip(self, other):
+            bv.append(Or(*t))
+        return bv
 
     def __and__(self, other):
-        assert isinstance(other, VectorExpression) and len(self) == len(other)
-        return self.__class__(*[And(*t) for t in zip(self.fs, other.fs)])
+        assert isinstance(other, BitVector) and len(self) == len(other)
+        bv = self.__class__()
+        for t in zip(self, other):
+            bv.append(And(*t))
+        return bv
 
     def __xor__(self, other):
-        assert isinstance(other, VectorExpression) and len(self) == len(other)
-        return self.__class__(*[Xor(*t) for t in zip(self.fs, other.fs)])
+        assert isinstance(other, BitVector) and len(self) == len(other)
+        bv = self.__class__()
+        for t in zip(self, other):
+            bv.append(Xor(*t))
+        return bv
 
-
-class BitVector(VectorExpression):
-    """Vector Expression with logical functions."""
-
+    # Common logic
     def eq(self, B):
         """Return symbolic logic for equivalence of two bit vectors."""
         assert isinstance(B, BitVector) and len(self) == len(B)
-        return And(*[Xnor(*t) for t in zip(self.fs, B.fs)])
+        return And(*[Xnor(*t) for t in zip(self, B)])
 
     def decode(self):
         """Return symbolic logic for an N-2^N binary decoder.
@@ -130,10 +151,11 @@ class BitVector(VectorExpression):
             |   1    1  |   1    0    0    0  |
             +===========+=====================+
         """
-        fs = [ And(*[ f if bit_on(i, j) else -f
-                      for j, f in enumerate(self.fs) ])
-               for i in range(2 ** len(self)) ]
-        return BitVector(*fs)
+        bv = BitVector()
+        for i in range(2 ** len(self)):
+            bv.append( And(*[ f if bit_on(i, j) else -f
+                              for j, f in enumerate(self) ]) )
+        return bv
 
     def ripple_carry_add(self, B, ci=0):
         """Return symbolic logic for an N-bit ripple carry adder."""
@@ -144,7 +166,7 @@ class BitVector(VectorExpression):
             sum_bnr = VF.UNSIGNED
         S = BitVector(bnr=sum_bnr)
         C = BitVector()
-        for i, A in enumerate(self.fs):
+        for i, A in enumerate(self):
             carry = (ci if i == 0 else C[i-1])
             S.append(Xor(A, B.getifz(i), carry))
             C.append(A * B.getifz(i) + A * carry + B.getifz(i) * carry)

@@ -49,7 +49,8 @@ def test_unate():
 def test_rcadd():
     A, B = bitvec("A", 8), bitvec("B", 8)
     S, C = A.ripple_carry_add(B)
-    S.append(C[-1])
+    #S.append(C[-1])
+    S.append(C[7])
     for i in range(64):
         ra = random.randint(0, 2**8-1)
         rb = random.randint(0, 2**8-1)
