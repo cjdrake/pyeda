@@ -11,8 +11,8 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 def clog2(num):
     """Return the ceiling log base two of an integer >= 1.
 
-    This function tells you the number of bits required to store all bit-strings
-    from 0 to N-1.
+    This function tells you the minimum dimension of a Boolean space with at
+    least N points.
 
     >>> [clog2(n) for n in range(1, 18)]
     [0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5]
