@@ -26,8 +26,6 @@ def bitvec(name, *args, **kwargs):
             slices.append(slice(0, arg))
         elif type(arg) is tuple and len(arg) == 2:
             slices.append(slice(*arg))
-        elif type(arg) is slice:
-            slices.append(arg)
         else:
             raise ValueError("invalid argument")
     return _rbitvec(name, slices, tuple(), bnr)
@@ -35,14 +33,12 @@ def bitvec(name, *args, **kwargs):
 def _rbitvec(name, slices, indices, bnr=VF.UNSIGNED):
     fst, rst = slices[0], slices[1:]
     if rst:
-        sls = [ _rbitvec(name, rst, indices + (i, ), bnr)
-                for i in range(fst.start, fst.stop) ]
-        return Slicer(fst.start, sls)
+        items = [ _rbitvec(name, rst, indices + (i, ), bnr)
+                  for i in range(fst.start, fst.stop) ]
+        return Slicer(fst.start, items)
     else:
-        bv = BitVector((fst.start, fst.stop), bnr=bnr)
-        for i in range(fst.start, fst.stop):
-            bv[i] = var(name, *(indices + (i, )))
-        return bv
+        vs = [var(name, *(indices + (i, ))) for i in range(fst.start, fst.stop)]
+        return BitVector((fst.start, fst.stop), vs, bnr=bnr)
 
 def sbitvec(name, *args):
     """Return a signed vector of variables."""
@@ -52,37 +48,37 @@ def uint2vec(num, length=None):
     """Convert an unsigned integer to a BitVector."""
     assert num >= 0
 
-    logvec = BitVector()
+    bv = BitVector()
     while num != 0:
-        logvec.append(num & 1)
+        bv.append(num & 1)
         num >>= 1
 
     if length:
-        if length < len(logvec):
+        if length < len(bv):
             raise ValueError("overflow: " + str(num))
         else:
-            logvec.ext(length - len(logvec))
+            bv.ext(length - len(bv))
 
-    return logvec
+    return bv
 
 def int2vec(num, length=None):
     """Convert a signed integer to a BitVector."""
     if num < 0:
         req_length = clog2(abs(num)) + 1
-        logvec = uint2vec(2 ** req_length + num)
+        bv = uint2vec(2 ** req_length + num)
     else:
         req_length = clog2(num + 1) + 1
-        logvec = uint2vec(num)
-        logvec.ext(req_length - len(logvec))
-    logvec.bnr = VF.TWOS_COMPLEMENT
+        bv = uint2vec(num)
+        bv.ext(req_length - len(bv))
+    bv.bnr = VF.TWOS_COMPLEMENT
 
     if length:
         if length < req_length:
             raise ValueError("overflow: " + str(num))
         else:
-            logvec.ext(length - req_length)
+            bv.ext(length - req_length)
 
-    return logvec
+    return bv
 
 
 class BitVector(VF):
@@ -105,31 +101,20 @@ class BitVector(VF):
         return Xor(*self)
 
     def __invert__(self):
-        bv = self.__class__(self.sl.start)
-        for f in self:
-            bv.append(Not(f))
-        return bv
+        fs = [Not(f) for f in self]
+        return self.__class__(fs=fs, bnr=self.bnr)
 
     def __or__(self, other):
-        assert isinstance(other, BitVector) and len(self) == len(other)
-        bv = self.__class__()
-        for t in zip(self, other):
-            bv.append(Or(*t))
-        return bv
+        fs = [Or(*t) for t in zip(self, other)]
+        return self.__class__(fs=fs)
 
     def __and__(self, other):
-        assert isinstance(other, BitVector) and len(self) == len(other)
-        bv = self.__class__()
-        for t in zip(self, other):
-            bv.append(And(*t))
-        return bv
+        fs = [And(*t) for t in zip(self, other)]
+        return self.__class__(fs=fs)
 
     def __xor__(self, other):
-        assert isinstance(other, BitVector) and len(self) == len(other)
-        bv = self.__class__()
-        for t in zip(self, other):
-            bv.append(Xor(*t))
-        return bv
+        fs = [Xor(*t) for t in zip(self, other)]
+        return self.__class__(fs=fs)
 
     # Common logic
     def eq(self, B):
@@ -150,24 +135,19 @@ class BitVector(VF):
             |   1    0  |   0    1    0    0  |
             |   1    1  |   1    0    0    0  |
             +===========+=====================+
-        """
-        bv = BitVector()
-        for i in range(2 ** len(self)):
-            bv.append( And(*[ f if bit_on(i, j) else -f
-                              for j, f in enumerate(self) ]) )
-        return bv
 
-    def ripple_carry_add(self, B, ci=0):
-        """Return symbolic logic for an N-bit ripple carry adder."""
-        assert isinstance(B, BitVector) and len(self) == len(B)
-        if self.bnr == VF.TWOS_COMPLEMENT or B.bnr == VF.TWOS_COMPLEMENT:
-            sum_bnr = VF.TWOS_COMPLEMENT
-        else:
-            sum_bnr = VF.UNSIGNED
-        S = BitVector(bnr=sum_bnr)
-        C = BitVector()
-        for i, A in enumerate(self):
-            carry = (ci if i == 0 else C[i-1])
-            S.append(Xor(A, B.getifz(i), carry))
-            C.append(A * B.getifz(i) + A * carry + B.getifz(i) * carry)
-        return S, C
+        >>> a = bitvec('a', 2)
+        >>> d = a.decode()
+        >>> d.vrestrict({a: "00"})
+        [1, 0, 0, 0]
+        >>> d.vrestrict({a: "10"})
+        [0, 1, 0, 0]
+        >>> d.vrestrict({a: "01"})
+        [0, 0, 1, 0]
+        >>> d.vrestrict({a: "11"})
+        [0, 0, 0, 1]
+        """
+        fs = [ And(*[ f if bit_on(i, j) else -f
+                      for j, f in enumerate(self) ])
+               for i in range(2 ** len(self)) ]
+        return self.__class__(fs=fs)

@@ -456,17 +456,27 @@ class VectorFunction(Slicer):
     """
     UNSIGNED, TWOS_COMPLEMENT = range(2)
 
-    def __init__(self, sl=0, bnr=UNSIGNED):
-        if type(sl) is int:
-            sl = slice(0, sl)
-        elif type(sl) is tuple and len(sl) == 2:
-            sl = slice(*sl)
-        elif type(sl) is slice:
-            pass
+    def __init__(self, sl=None, fs=None, bnr=UNSIGNED):
+        if fs is None:
+            if sl is None:
+                sl = slice(0, 0)
+            elif type(sl) is int:
+                sl = slice(0, sl)
+            elif type(sl) is tuple and len(sl) == 2:
+                sl = slice(*sl)
+            else:
+                raise ValueError("invalid inputs")
+            # Initialize the vector to all zeros
+            items = [0] * (sl.stop - sl.start)
         else:
-            raise ValueError("invalid argument")
-        # Initialize the vector to all zeros
-        items = [0] * (sl.stop - sl.start)
+            items = fs
+            if sl is None:
+                sl = slice(0, len(items))
+            elif type(sl) is tuple and len(sl) == 2:
+                sl = slice(*sl)
+                assert (sl.stop - sl.start) == len(items)
+            else:
+                raise ValueError("invalid inputs")
         super(VectorFunction, self).__init__(sl.start, items)
         self.bnr = bnr
 

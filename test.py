@@ -16,6 +16,8 @@ from pyeda.vexpr import (
     int2vec, uint2vec
 )
 
+from pyeda.arithmetic import ripple_carry_add
+
 a, b, c, d, e = map(var, "abcde")
 
 def test_cofactors():
@@ -48,7 +50,7 @@ def test_unate():
 
 def test_rcadd():
     A, B = bitvec("A", 8), bitvec("B", 8)
-    S, C = A.ripple_carry_add(B)
+    S, C = ripple_carry_add(A, B)
     #S.append(C[-1])
     S.append(C[7])
     for i in range(64):
@@ -60,7 +62,7 @@ def test_rcadd():
         assert int(S.vrestrict(d)) == ra + rb
 
     A, B = sbitvec("A", 8), sbitvec("B", 8)
-    S, C = A.ripple_carry_add(B)
+    S, C = ripple_carry_add(A, B)
     for i in range(64):
         ra = random.randint(-2**6, 2**6-1)
         rb = random.randint(-2**6, 2**6-1)
