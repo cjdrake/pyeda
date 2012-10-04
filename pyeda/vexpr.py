@@ -30,15 +30,15 @@ def bitvec(name, *args, **kwargs):
             raise ValueError("invalid argument")
     return _rbitvec(name, slices, tuple(), bnr)
 
-def _rbitvec(name, slices, indices, bnr=VF.UNSIGNED):
+def _rbitvec(name, slices, indices, bnr):
     fst, rst = slices[0], slices[1:]
     if rst:
         items = [ _rbitvec(name, rst, indices + (i, ), bnr)
                   for i in range(fst.start, fst.stop) ]
-        return Slicer(fst.start, items)
+        return Slicer(items, fst.start)
     else:
         vs = [var(name, *(indices + (i, ))) for i in range(fst.start, fst.stop)]
-        return BitVector((fst.start, fst.stop), vs, bnr=bnr)
+        return BitVector(vs, (fst.start, fst.stop), bnr=bnr)
 
 def sbitvec(name, *args):
     """Return a signed vector of variables."""
@@ -48,18 +48,19 @@ def uint2vec(num, length=None):
     """Convert an unsigned integer to a BitVector."""
     assert num >= 0
 
-    bv = BitVector()
+    items = list()
     while num != 0:
-        bv.append(num & 1)
+        items.append(num & 1)
         num >>= 1
 
     if length:
-        if length < len(bv):
+        if length < len(items):
             raise ValueError("overflow: " + str(num))
         else:
-            bv.ext(length - len(bv))
+            while len(items) < length:
+                items.append(0)
 
-    return bv
+    return BitVector(items)
 
 def int2vec(num, length=None):
     """Convert a signed integer to a BitVector."""
@@ -68,8 +69,7 @@ def int2vec(num, length=None):
         bv = uint2vec(2 ** req_length + num)
     else:
         req_length = clog2(num + 1) + 1
-        bv = uint2vec(num)
-        bv.ext(req_length - len(bv))
+        bv = uint2vec(num, req_length)
     bv.bnr = VF.TWOS_COMPLEMENT
 
     if length:
@@ -101,20 +101,20 @@ class BitVector(VF):
         return Xor(*self)
 
     def __invert__(self):
-        fs = [Not(f) for f in self]
-        return self.__class__(fs=fs, bnr=self.bnr)
+        items = [Not(f) for f in self]
+        return self.__class__(items, bnr=self.bnr)
 
     def __or__(self, other):
-        fs = [Or(*t) for t in zip(self, other)]
-        return self.__class__(fs=fs)
+        items = [Or(*t) for t in zip(self, other)]
+        return self.__class__(items)
 
     def __and__(self, other):
-        fs = [And(*t) for t in zip(self, other)]
-        return self.__class__(fs=fs)
+        items = [And(*t) for t in zip(self, other)]
+        return self.__class__(items)
 
     def __xor__(self, other):
-        fs = [Xor(*t) for t in zip(self, other)]
-        return self.__class__(fs=fs)
+        items = [Xor(*t) for t in zip(self, other)]
+        return self.__class__(items)
 
     # Common logic
     def eq(self, B):
@@ -147,7 +147,7 @@ class BitVector(VF):
         >>> d.vrestrict({a: "11"})
         [0, 0, 0, 1]
         """
-        fs = [ And(*[ f if bit_on(i, j) else -f
-                      for j, f in enumerate(self) ])
-               for i in range(2 ** len(self)) ]
-        return self.__class__(fs=fs)
+        items = [ And(*[ f if bit_on(i, j) else -f
+                         for j, f in enumerate(self) ])
+                  for i in range(2 ** len(self)) ]
+        return self.__class__(items)

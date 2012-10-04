@@ -392,9 +392,9 @@ class Function(object):
 
 
 class Slicer(object):
-    def __init__(self, start, items):
-        self._start = start
+    def __init__(self, items, start=0):
         self.items = list(items)
+        self._start = start
 
     @property
     def sl(self):
@@ -456,28 +456,15 @@ class VectorFunction(Slicer):
     """
     UNSIGNED, TWOS_COMPLEMENT = range(2)
 
-    def __init__(self, sl=None, fs=None, bnr=UNSIGNED):
-        if fs is None:
-            if sl is None:
-                sl = slice(0, 0)
-            elif type(sl) is int:
-                sl = slice(0, sl)
-            elif type(sl) is tuple and len(sl) == 2:
-                sl = slice(*sl)
-            else:
-                raise ValueError("invalid inputs")
-            # Initialize the vector to all zeros
-            items = [0] * (sl.stop - sl.start)
+    def __init__(self, items, sl=None, bnr=UNSIGNED):
+        if sl is None:
+            sl = slice(0, len(items))
+        elif type(sl) is tuple and len(sl) == 2:
+            sl = slice(*sl)
+            assert (sl.stop - sl.start) == len(items)
         else:
-            items = fs
-            if sl is None:
-                sl = slice(0, len(items))
-            elif type(sl) is tuple and len(sl) == 2:
-                sl = slice(*sl)
-                assert (sl.stop - sl.start) == len(items)
-            else:
-                raise ValueError("invalid inputs")
-        super(VectorFunction, self).__init__(sl.start, items)
+            raise ValueError("invalid inputs")
+        super(VectorFunction, self).__init__(items, sl.start)
         self.bnr = bnr
 
     def __int__(self):
@@ -513,10 +500,9 @@ class VectorFunction(Slicer):
         Return the vector that results from applying the 'restrict' method to
         all functions.
         """
-        new = self.__class__((self.sl.start, self.sl.stop), bnr=self.bnr)
-        for i, f in enumerate(self):
-            new.items[i] = f.restrict(mapping)
-        return new
+        items = [f.restrict(mapping) for f in self]
+        return self.__class__(items, sl=(self.sl.start, self.sl.stop),
+                              bnr=self.bnr)
 
     def vrestrict(self, mapping):
         """Expand all vectors before applying 'restrict'."""
