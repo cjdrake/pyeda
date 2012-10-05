@@ -10,4 +10,3 @@
 * (9/6/12) ESPRESSO heuristics
 * (9/6/12) TruthTable and ImplicantTable
 * (9/24/12) Reorganize the DPLL content
-* (9/24/12) Reorganize Normal Forms, extend to Disjunctive
