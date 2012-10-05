@@ -5,18 +5,8 @@ Test Module
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 __license__ = "All rights reserved."
 
-# standard library
-import random
-
 # pyeda
-from pyeda.expr import var, Not
-
-from pyeda.vexpr import (
-    bitvec, sbitvec,
-    int2vec, uint2vec
-)
-
-from pyeda.arithmetic import ripple_carry_add
+from pyeda.expr import var
 
 a, b, c, d, e = map(var, "abcde")
 
@@ -47,26 +37,3 @@ def test_unate():
     assert g.is_pos_unate(a)
     assert g.is_pos_unate(b)
     assert g.is_neg_unate(c)
-
-def test_rcadd():
-    A, B = bitvec("A", 8), bitvec("B", 8)
-    S, C = ripple_carry_add(A, B)
-    #S.append(C[-1])
-    S.append(C[7])
-    for i in range(64):
-        ra = random.randint(0, 2**8-1)
-        rb = random.randint(0, 2**8-1)
-        d = {A: uint2vec(ra, 8), B: uint2vec(rb, 8)}
-        assert int(A.vrestrict(d)) == ra
-        assert int(B.vrestrict(d)) == rb
-        assert int(S.vrestrict(d)) == ra + rb
-
-    A, B = sbitvec("A", 8), sbitvec("B", 8)
-    S, C = ripple_carry_add(A, B)
-    for i in range(64):
-        ra = random.randint(-2**6, 2**6-1)
-        rb = random.randint(-2**6, 2**6-1)
-        d = {A: int2vec(ra, 8), B: int2vec(rb, 8)}
-        assert int(A.vrestrict(d)) == ra
-        assert int(B.vrestrict(d)) == rb
-        assert int(S.vrestrict(d)) == ra + rb

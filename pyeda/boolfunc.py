@@ -393,13 +393,12 @@ class Function(object):
 
 class Slicer(object):
     def __init__(self, items, start=0):
-        self.items = list(items)
-        self._start = start
+        self.items = items
+        self.start = start
 
     @property
-    def sl(self):
-        """Return a slice object that represents the vector's index range."""
-        return slice(self._start, self._start + self.__len__())
+    def stop(self):
+        return self.start + self.__len__()
 
     def __iter__(self):
         return iter(self.items)
@@ -409,7 +408,7 @@ class Slicer(object):
 
     def getifz(self, i):
         """Get item from zero-based index."""
-        return self.__getitem__(i + self.sl.start)
+        return self.__getitem__(i + self.start)
 
     def __getitem__(self, sl):
         if isinstance(sl, int):
@@ -426,10 +425,10 @@ class Slicer(object):
     def _norm_idx(self, i):
         """Return an index normalized to vector start index."""
         if i >= 0:
-            if i < self.sl.start or i >= self.sl.stop:
+            if i < self.start or i >= self.stop:
                 raise IndexError("list index out of range")
             else:
-                idx = i - self.sl.start
+                idx = i - self.start
         else:
             raise ValueError("negative indices not supported")
         return idx
@@ -441,10 +440,10 @@ class Slicer(object):
             i = getattr(sl, k)
             if i is not None:
                 if i >= 0:
-                    if i < self.sl.start or i > self.sl.stop:
+                    if i < self.start or i > self.stop:
                         raise IndexError("list index out of range")
                     else:
-                        limits[k] = i - self.sl.start
+                        limits[k] = i - self.start
                 else:
                     raise ValueError("negative indices not supported")
         return slice(limits['start'], limits['stop'])
@@ -454,9 +453,7 @@ class VectorFunction(Slicer):
     """
     Abstract base class that defines an interface for a vector Boolean function.
     """
-    UNSIGNED, TWOS_COMPLEMENT = range(2)
-
-    def __init__(self, items, sl=None, bnr=UNSIGNED):
+    def __init__(self, items, sl=None):
         if sl is None:
             sl = slice(0, len(items))
         elif type(sl) is tuple and len(sl) == 2:
@@ -465,10 +462,6 @@ class VectorFunction(Slicer):
         else:
             raise ValueError("invalid inputs")
         super(VectorFunction, self).__init__(items, sl.start)
-        self.bnr = bnr
-
-    def __int__(self):
-        return self.to_int()
 
     # Operators
     def uor(self):
@@ -501,8 +494,7 @@ class VectorFunction(Slicer):
         all functions.
         """
         items = [f.restrict(mapping) for f in self]
-        return self.__class__(items, sl=(self.sl.start, self.sl.stop),
-                              bnr=self.bnr)
+        return self.__class__(items, (self.start, self.stop))
 
     def vrestrict(self, mapping):
         """Expand all vectors before applying 'restrict'."""
@@ -522,23 +514,19 @@ class VectorFunction(Slicer):
     def to_int(self):
         """Convert vector to an integer, if possible."""
         num = self.to_uint()
-        if self.bnr == self.TWOS_COMPLEMENT and self.items[-1]:
-            return -2 ** self.__len__() + num
+        if self.items[-1]:
+            return num - 2 ** self.__len__()
         else:
             return num
 
-    def ext(self, num):
-        """Extend this vector by N bits.
+    def zext(self, num):
+        """Zero extend this vector by N bits."""
+        self.items += [0] * num
 
-        If this vector uses two's complement representation, sign extend;
-        otherwise, zero extend.
-        """
-        if self.bnr == self.TWOS_COMPLEMENT:
-            bit = self.items[-1]
-        else:
-            bit = 0
-        for _ in range(num):
-            self.append(bit)
+    def sext(self, num):
+        """Sign extend this vector by N bits."""
+        bit = self.items[-1]
+        self.items += [bit] * num
 
     def append(self, f):
         """Append a function to the end of this vector."""

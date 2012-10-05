@@ -3,7 +3,6 @@ Boolean Vector Logic Expressions
 
 Interface Functions:
     bitvec
-    sbitvec
     uint2vec
     int2vec
 
@@ -14,12 +13,11 @@ Interface Classes:
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 from pyeda.common import clog2, bit_on
-from pyeda.boolfunc import Slicer, VectorFunction as VF
+from pyeda.boolfunc import Slicer, VectorFunction
 from pyeda.expr import var, Not, Or, And, Xor, Xnor
 
-def bitvec(name, *args, **kwargs):
+def bitvec(name, *args):
     """Return a vector of variables."""
-    bnr = kwargs.get("bnr", VF.UNSIGNED)
     slices = list()
     for arg in args:
         if type(arg) is int:
@@ -28,21 +26,17 @@ def bitvec(name, *args, **kwargs):
             slices.append(slice(*arg))
         else:
             raise ValueError("invalid argument")
-    return _rbitvec(name, slices, tuple(), bnr)
+    return _rbitvec(name, slices, tuple())
 
-def _rbitvec(name, slices, indices, bnr):
+def _rbitvec(name, slices, indices):
     fst, rst = slices[0], slices[1:]
     if rst:
-        items = [ _rbitvec(name, rst, indices + (i, ), bnr)
+        items = [ _rbitvec(name, rst, indices + (i, ))
                   for i in range(fst.start, fst.stop) ]
         return Slicer(items, fst.start)
     else:
         vs = [var(name, *(indices + (i, ))) for i in range(fst.start, fst.stop)]
-        return BitVector(vs, (fst.start, fst.stop), bnr=bnr)
-
-def sbitvec(name, *args):
-    """Return a signed vector of variables."""
-    return bitvec(name, *args, bnr=VF.TWOS_COMPLEMENT)
+        return BitVector(vs, (fst.start, fst.stop))
 
 def uint2vec(num, length=None):
     """Convert an unsigned integer to a BitVector."""
@@ -70,18 +64,17 @@ def int2vec(num, length=None):
     else:
         req_length = clog2(num + 1) + 1
         bv = uint2vec(num, req_length)
-    bv.bnr = VF.TWOS_COMPLEMENT
 
     if length:
         if length < req_length:
             raise ValueError("overflow: " + str(num))
         else:
-            bv.ext(length - req_length)
+            bv.sext(length - req_length)
 
     return bv
 
 
-class BitVector(VF):
+class BitVector(VectorFunction):
     """Vector Expression with logical functions."""
 
     def __repr__(self):
@@ -102,7 +95,7 @@ class BitVector(VF):
 
     def __invert__(self):
         items = [Not(f) for f in self]
-        return self.__class__(items, bnr=self.bnr)
+        return self.__class__(items)
 
     def __or__(self, other):
         items = [Or(*t) for t in zip(self, other)]
