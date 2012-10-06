@@ -150,21 +150,11 @@ def f_nand(*args):
     return Nand(*args).factor()
 
 def f_xor(*args):
-    """Return factored XOR expression.
-
-    #>>> a, b, c = map(var, "abc")
-    #>>> f_xor(a, b, c)
-    #a' * (b' * c + b * c') + a * (b' * c' + b * c)
-    """
+    """Return factored XOR expression."""
     return Xor(*args).factor()
 
 def f_xnor(*args):
-    """Return factored XNOR expression.
-
-    #>>> a, b, c = map(var, "abc")
-    #>>> f_xnor(a, b, c)
-    #a' * (b' * c' + b * c) + a * (b' * c + b * c')
-    """
+    """Return factored XNOR expression."""
     return Xnor(*args).factor()
 
 def f_implies(antecedent, consequence):
@@ -260,6 +250,19 @@ class Expression(Function):
         return len(self.satisfy_all())
 
     def is_neg_unate(self, vs=None):
+        """Return whether a function is negative unate.
+
+        >>> a, b, c = map(var, "abc")
+        >>> f = a + b + -c
+        >>> f.is_neg_unate(c)
+        True
+
+        >>> g = a * -b + a * -c + b * -c
+        >>> g.is_neg_unate(c)
+        True
+        >>> g.is_binate(b)
+        True
+        """
         if vs is None:
             vs = self.support
         elif isinstance(vs, Function):
@@ -274,6 +277,19 @@ class Expression(Function):
         return True
 
     def is_pos_unate(self, vs=None):
+        """Return whether a function is positive unate.
+
+        >>> a, b, c = map(var, "abc")
+        >>> f = a + b + -c
+        >>> f.is_pos_unate(a)
+        True
+        >>> f.is_pos_unate(b)
+        True
+
+        >>> g = a * -b + a * -c + b * -c
+        >>> g.is_pos_unate(a)
+        True
+        """
         if vs is None:
             vs = self.support
         elif isinstance(vs, Function):
@@ -288,12 +304,33 @@ class Expression(Function):
         return True
 
     def smoothing(self, vs=None):
+        """Return the smoothing of a function.
+
+        >>> a, b, c = map(var, "abc")
+        >>> f = a * b + a * c + b * c
+        >>> f.smoothing(a).to_dnf()
+        b + c
+        """
         return Or(*self.cofactors(vs))
 
     def consensus(self, vs=None):
+        """Return the consensus of a function.
+
+        >>> a, b, c = map(var, "abc")
+        >>> f = a * b + a * c + b * c
+        >>> f.consensus(a).to_dnf()
+        b * c
+        """
         return And(*self.cofactors(vs))
 
     def derivative(self, vs=None):
+        """Return the derivative of a function.
+
+        >>> a, b, c = map(var, "abc")
+        >>> f = a * b + a * c + b * c
+        >>> f.derivative(a).to_dnf()
+        b' * c + b * c'
+        """
         return Xor(*self.cofactors(vs))
 
     # Specific to Expression
