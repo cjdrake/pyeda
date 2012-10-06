@@ -414,7 +414,8 @@ class Slicer(object):
         if isinstance(sl, int):
             return self.items[self._norm_idx(sl)]
         else:
-            return self.items[self._norm_slice(sl)]
+            items = self.items[self._norm_slice(sl)]
+            return self.__class__(items, sl.start)
 
     def __setitem__(self, sl, item):
         if isinstance(sl, int):
@@ -453,16 +454,6 @@ class VectorFunction(Slicer):
     """
     Abstract base class that defines an interface for a vector Boolean function.
     """
-    def __init__(self, items, sl=None):
-        if sl is None:
-            sl = slice(0, len(items))
-        elif type(sl) is tuple and len(sl) == 2:
-            sl = slice(*sl)
-            assert (sl.stop - sl.start) == len(items)
-        else:
-            raise ValueError("invalid inputs")
-        super(VectorFunction, self).__init__(items, sl.start)
-
     # Operators
     def uor(self):
         """Return the unary OR reduction."""

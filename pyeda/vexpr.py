@@ -36,7 +36,7 @@ def _rbitvec(name, slices, indices):
         return Slicer(items, fst.start)
     else:
         vs = [var(name, *(indices + (i, ))) for i in range(fst.start, fst.stop)]
-        return BitVector(vs, (fst.start, fst.stop))
+        return BitVector(vs, fst.start)
 
 def uint2vec(num, length=None):
     """Convert an unsigned integer to a BitVector."""

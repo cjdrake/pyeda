@@ -36,3 +36,31 @@ def ripple_carry_add(A, B, cin=0):
         S.append(Xor(ai, B.getifz(i), carry))
         C.append(ai * B.getifz(i) + ai * carry + B.getifz(i) * carry)
     return BitVector(S), BitVector(C)
+
+def bin2gray(B):
+    """Convert a binary-coded vector into a gray-coded vector.
+
+    >>> from pyeda import bitvec, uint2vec
+    >>> B = bitvec("B", 3)
+    >>> G = bin2gray(B)
+    >>> gnums = [G.vrestrict({B: uint2vec(i, 3)}).to_uint() for i in range(8)]
+    >>> print(gnums)
+    [0, 1, 3, 2, 6, 7, 5, 4]
+    """
+    N = len(B)
+    items = [(B[i] if i == (N-1) else Xor(B[i], B[i+1])) for i in range(N)]
+    return BitVector(items, B.start)
+
+def gray2bin(G):
+    """Convert a gray-coded vector into a binary-coded vector.
+
+    >>> from pyeda import bitvec, uint2vec
+    >>> G = bitvec("G", 3)
+    >>> B = gray2bin(G)
+    >>> gnums = [0, 1, 3, 2, 6, 7, 5, 4]
+    >>> bnums = [B.vrestrict({G: uint2vec(i, 3)}).to_uint() for i in gnums ]
+    >>> print(bnums)
+    [0, 1, 2, 3, 4, 5, 6, 7]
+    """
+    items = [G[i:].uxor() for i, _ in enumerate(G)]
+    return BitVector(items, G.start)
