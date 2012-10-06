@@ -11,14 +11,14 @@ Interface Classes:
     ConjNormalForm
 """
 
+__copyright__ = "Copyright (c) 2012, Chris Drake"
+
 import random
 
 from pyeda.common import cached_property
 from pyeda.constant import boolify
 from pyeda.boolfunc import Function
 from pyeda.expr import Expression, Or, And
-
-__copyright__ = "Copyright (c) 2012, Chris Drake"
 
 def expr2dnf(expr):
     """Convert an expression into a DNF."""
