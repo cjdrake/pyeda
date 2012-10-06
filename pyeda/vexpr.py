@@ -112,12 +112,41 @@ class BitVector(VectorFunction):
         items = [Xor(*t) for t in zip(self, other)]
         return self.__class__(items)
 
-    # Common logic
-    def eq(self, B):
-        """Return symbolic logic for equivalence of two bit vectors."""
-        assert isinstance(B, BitVector) and len(self) == len(B)
-        return And(*[Xnor(*t) for t in zip(self, B)])
+    # Shift operators
+    def lsh(self, y, cin=None):
+        assert 0 <= y <= len(self)
+        if cin is None:
+            cin = BitVector([0] * y)
+        else:
+            assert len(cin) == y
+        if y == 0:
+            return self, BitVector([])
+        else:
+            return ( BitVector(cin.items + self.items[:-y], self.start),
+                     BitVector(self.items[-y:]) )
 
+    def rsh(self, y, cin=None):
+        assert 0 <= y <= len(self)
+        if cin is None:
+            cin = BitVector([0] * y)
+        else:
+            assert len(cin) == y
+        if y == 0:
+            return self, BitVector([])
+        else:
+            return ( BitVector(self.items[y:] + cin.items, self.start),
+                     BitVector(self.items[:y]) )
+
+    def arsh(self, y):
+        assert 0 <= y <= len(self)
+        if y == 0:
+            return self, BitVector([])
+        else:
+            sign = self.items[-1]
+            return ( BitVector(self.items[y:] + [sign] * y, self.start),
+                     BitVector(self.items[:y]) )
+
+    # Other logic
     def decode(self):
         """Return symbolic logic for an N-2^N binary decoder.
 
