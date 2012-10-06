@@ -16,17 +16,20 @@ from pyeda.common import clog2, bit_on
 from pyeda.boolfunc import Slicer, VectorFunction
 from pyeda.expr import var, Not, Or, And, Xor, Xnor
 
-def bitvec(name, *args):
+def bitvec(name, *slices):
     """Return a vector of variables."""
-    slices = list()
-    for arg in args:
-        if type(arg) is int:
-            slices.append(slice(0, arg))
-        elif type(arg) is tuple and len(arg) == 2:
-            slices.append(slice(*arg))
+    sls = list()
+    for sl in slices:
+        if type(sl) is int:
+            sls.append(slice(0, sl))
+        elif type(sl) is tuple and len(sl) == 2:
+            if sl[0] < sl[1]:
+                sls.append(slice(sl[0], sl[1]))
+            else:
+                sls.append(slice(sl[1], sl[0]))
         else:
             raise ValueError("invalid argument")
-    return _rbitvec(name, slices, tuple())
+    return _rbitvec(name, sls, tuple())
 
 def _rbitvec(name, slices, indices):
     fst, rst = slices[0], slices[1:]
@@ -95,7 +98,7 @@ class BitVector(VectorFunction):
 
     def __invert__(self):
         items = [Not(f) for f in self]
-        return self.__class__(items)
+        return self.__class__(items, self.start)
 
     def __or__(self, other):
         items = [Or(*t) for t in zip(self, other)]
@@ -129,15 +132,15 @@ class BitVector(VectorFunction):
             |   1    1  |   1    0    0    0  |
             +===========+=====================+
 
-        >>> a = bitvec('a', 2)
-        >>> d = a.decode()
-        >>> d.vrestrict({a: "00"})
+        >>> A = bitvec('a', 2)
+        >>> d = A.decode()
+        >>> d.vrestrict({A: "00"})
         [1, 0, 0, 0]
-        >>> d.vrestrict({a: "10"})
+        >>> d.vrestrict({A: "10"})
         [0, 1, 0, 0]
-        >>> d.vrestrict({a: "01"})
+        >>> d.vrestrict({A: "01"})
         [0, 0, 1, 0]
-        >>> d.vrestrict({a: "11"})
+        >>> d.vrestrict({A: "11"})
         [0, 0, 0, 1]
         """
         items = [ And(*[ f if bit_on(i, j) else -f
