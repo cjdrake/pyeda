@@ -196,8 +196,8 @@ class ConjNormalForm(NormalForm):
 
         Eliminating 'a' results in: -b + -c
         >>> cnf, point = cnf.eliminate_pure()
-        >>> cnf.clauses, point
-        (frozenset({(-3, -2)}), {a: 1})
+        >>> cnf.clauses == {(-3, -2)}, point
+        (True, {a: 1})
         """
         counter = dict()
         for clause in self.clauses:
