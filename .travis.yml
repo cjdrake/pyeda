@@ -1,0 +1,9 @@
+# Filename: .travis.yml
+
+language: python
+python:
+  - "2.7"
+  - "3.2"
+
+# command to run tests
+script: nosetests --with-doctest

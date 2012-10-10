@@ -93,7 +93,7 @@ def gray2bin(G):
     >>> G = bitvec("G", 3)
     >>> B = gray2bin(G)
     >>> gnums = [0, 1, 3, 2, 6, 7, 5, 4]
-    >>> bnums = [B.vrestrict({G: uint2vec(i, 3)}).to_uint() for i in gnums ]
+    >>> bnums = [B.vrestrict({G: uint2vec(i, 3)}).to_uint() for i in gnums]
     >>> print(bnums)
     [0, 1, 2, 3, 4, 5, 6, 7]
     """
