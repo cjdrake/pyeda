@@ -526,7 +526,7 @@ class _Variable(Variable, Literal):
     def support(self):
         """Return the support set of a variable.
 
-        >>> a = var('a')
+        >>> a = var("a")
         >>> a.support == {a}
         True
         """
@@ -534,7 +534,7 @@ class _Variable(Variable, Literal):
 
     def restrict(self, mapping):
         """
-        >>> a = var('a')
+        >>> a = var("a")
         >>> a.restrict({a: 0}), a.restrict({a: 1})
         (0, 1)
         """
@@ -572,7 +572,7 @@ class _Variable(Variable, Literal):
     def invert(self):
         """Return an inverted variable.
 
-        >>> a = var('a')
+        >>> a = var("a")
         >>> a.invert()
         a'
         """
@@ -607,7 +607,7 @@ class Complement(Literal):
     def support(self):
         """Return the support set of a complement.
 
-        >>> a = var('a')
+        >>> a = var("a")
         >>> (-a).support == {a}
         True
         """
@@ -615,7 +615,7 @@ class Complement(Literal):
 
     def restrict(self, mapping):
         """
-        >>> a = var('a')
+        >>> a = var("a")
         >>> (-a).restrict({a: 0}), (-a).restrict({a: 1})
         (1, 0)
         """
@@ -652,7 +652,7 @@ class Complement(Literal):
     def invert(self):
         """Return an inverted complement.
 
-        >>> a = var('a')
+        >>> a = var("a")
         >>> (-a).invert()
         a
         """

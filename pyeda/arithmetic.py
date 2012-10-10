@@ -6,6 +6,7 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 __license__ = "All rights reserved."
 
 # pyeda
+from pyeda.common import clog2
 from pyeda.expr import Xor
 from pyeda.vexpr import BitVector
 
@@ -36,6 +37,40 @@ def ripple_carry_add(A, B, cin=0):
         s.append(Xor(ai, B[i], carry))
         c.append(ai * B[i] + ai * carry + B[i] * carry)
     return BitVector(s), BitVector(c)
+
+def kogge_stone_add(A, B, cin=0):
+    """Return symbolic logic for an N-bit Kogge-Stone adder.
+
+    >>> import random
+    >>> from pyeda import *
+    >>> A, B = bitvec("A", 8), bitvec("B", 8)
+    >>> S, C = kogge_stone_add(A, B)
+    >>> S.append(C[7])
+    >>> for i in range(64):
+    ...     ra = random.randint(0, 2**8-1)
+    ...     rb = random.randint(0, 2**8-1)
+    ...     d = {A: uint2vec(ra, 8), B: uint2vec(rb, 8)}
+    ...     assert S.vrestrict(d).to_uint() == ra + rb
+    >>> S, C = kogge_stone_add(A, B)
+    >>> for i in range(64):
+    ...     ra = random.randint(-2**6, 2**6-1)
+    ...     rb = random.randint(-2**6, 2**6-1)
+    ...     d = {A: int2vec(ra, 8), B: int2vec(rb, 8)}
+    ...     assert S.vrestrict(d).to_int() == ra + rb
+    """
+    assert len(A) == len(B)
+    stop = len(A)
+    # generate/propagate logic
+    g = [A[i] * B[i] for i in range(stop)]
+    p = [Xor(A[i], B[i]) for i in range(stop)]
+    for i in range(clog2(stop)):
+        start = 1 << i
+        for j in range(start, stop):
+            g[j] = g[j] + p[j] * g[j-start]
+            p[j] = p[j] * p[j-start]
+    # sum logic
+    s = [Xor(A[i], B[i], (cin if i == 0 else g[i-1])) for i in range(stop)]
+    return BitVector(s), BitVector(g)
 
 def bin2gray(B):
     """Convert a binary-coded vector into a gray-coded vector.
