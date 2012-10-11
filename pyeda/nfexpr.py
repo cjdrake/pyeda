@@ -15,8 +15,7 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 import random
 
-from pyeda.common import cached_property
-from pyeda.constant import boolify
+from pyeda.common import boolify, cached_property
 from pyeda.boolfunc import Function
 from pyeda.expr import Expression, Or, And
 

@@ -35,10 +35,9 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 from collections import deque
 
-from pyeda.common import cached_property
+from pyeda.common import boolify, cached_property
 
 from pyeda.boolfunc import Variable, Function
-from pyeda.constant import boolify
 from pyeda.sat import backtrack
 
 VARIABLES = dict()
