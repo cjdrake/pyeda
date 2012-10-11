@@ -203,27 +203,126 @@ class Expression(Function):
         return sorted(self.support)
 
     def __neg__(self):
+        """Boolean negation
+
+        DIMACS SAT format: -f
+
+        +---+----+
+        | f | -f |
+        +---+----+
+        | 0 |  1 |
+        | 1 |  0 |
+        +---+----+
+        """
         return Not(self)
 
     def __add__(self, arg):
+        """Boolean disjunction (addition, OR)
+
+        DIMACS SAT format: +(f1, f2, ..., fn)
+
+        +---+---+-------+
+        | f | g | f + g |
+        +---+---+-------+
+        | 0 | 0 |   0   |
+        | 0 | 1 |   1   |
+        | 1 | 0 |   1   |
+        | 1 | 1 |   1   |
+        +---+---+-------+
+        """
         return Or(self, arg)
 
+    def __radd__(self, other):
+        return self.__add__(other)
+
     def __sub__(self, arg):
+        """Alias: a - b = a + -b"""
         return Or(self, Not(arg))
 
+    def __rsub__(self, other):
+        return self.__neg__().__add__(other)
+
     def __mul__(self, arg):
+        """Boolean conjunction (multiplication, AND)
+
+        DIMACS SAT format: *(f1, f2, ..., fn)
+
+        +---+---+-------+
+        | f | g | f * g |
+        +---+---+-------+
+        | 0 | 0 |   0   |
+        | 0 | 1 |   0   |
+        | 1 | 0 |   0   |
+        | 1 | 1 |   1   |
+        +---+---+-------+
+        """
         return And(self, arg)
 
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     def __rshift__(self, arg):
+        """Boolean implication
+
+        +---+---+--------+
+        | f | g | f -> g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    1   |
+        | 1 | 0 |    0   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
+        """
         return Implies(self, arg)
 
     def __rrshift__(self, arg):
+        """Reverse Boolean implication
+
+        +---+---+--------+
+        | f | g | f <- g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    0   |
+        | 1 | 0 |    1   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
+        """
         return Implies(arg, self)
 
     def xor(self, *args):
+        """Boolean XOR (odd parity)
+
+        DIMACS SAT format: xor(f1, f2, ..., fn)
+
+        +---+---+----------+
+        | f | g | XOR(f,g) |
+        +---+---+----------+
+        | 0 | 0 |     0    |
+        | 0 | 1 |     1    |
+        | 1 | 0 |     1    |
+        | 1 | 1 |     0    |
+        +---+---+----------+
+        """
         return Xor(self, *args)
 
     def equal(self, *args):
+        """Boolean equality
+
+        DIMACS SAT format: =(f1, f2, ..., fn)
+
+        +-------+-----------+
+        | f g h | EQ(f,g,h) |
+        +-------+-----------+
+        | 0 0 0 |     1     |
+        | 0 0 1 |     0     |
+        | 0 1 0 |     0     |
+        | 0 1 1 |     0     |
+        | 1 0 0 |     0     |
+        | 1 0 1 |     0     |
+        | 1 1 0 |     0     |
+        | 1 1 1 |     1     |
+        +-------+-----------+
+        """
         return Equal(self, *args)
 
     def satisfy_one(self, algorithm='backtrack'):
