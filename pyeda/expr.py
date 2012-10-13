@@ -43,12 +43,12 @@ from pyeda.sat import backtrack
 VARIABLES = dict()
 COMPLEMENTS = dict()
 
-def var(name, *indices):
+def var(name, indices=None):
     """Return a single variable expression."""
     try:
         ret = VARIABLES[(name, indices)]
     except KeyError:
-        ret = _Variable(name, *indices)
+        ret = _Variable(name, indices)
         VARIABLES[(name, indices)] = ret
     return ret
 
@@ -614,8 +614,8 @@ class Literal(Expression):
 class _Variable(Variable, Literal):
     """Boolean variable (expression)"""
 
-    def __init__(self, name, *indices):
-        Variable.__init__(self, name, *indices)
+    def __init__(self, name, indices=None):
+        Variable.__init__(self, name, indices)
         self._support = {self}
         self._args = (self, )
 

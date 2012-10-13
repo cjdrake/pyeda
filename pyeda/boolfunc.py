@@ -21,9 +21,16 @@ class Variable(object):
     This implementation includes an optional "index", a nonnegative integer
     that is convenient for bit vectors.
     """
-    def __init__(self, name, *indices):
+    def __init__(self, name, indices=None):
         self.name = name
-        self.indices = indices
+        if indices is None:
+            self.indices = tuple()
+        elif type(indices) is int:
+            self.indices = (indices, )
+        elif type(indices) is tuple:
+            self.indices = indices
+        else:
+            raise ValueError("invalid indices")
 
     def __repr__(self):
         return self.__str__()
@@ -35,7 +42,7 @@ class Variable(object):
         'a'
         >>> str(Variable("v", 42))
         'v[42]'
-        >>> str(Variable("v", 1, 2, 3))
+        >>> str(Variable("v", (1, 2, 3)))
         'v[1][2][3]'
         """
         suffix = "".join("[{}]".format(idx) for idx in self.indices)
