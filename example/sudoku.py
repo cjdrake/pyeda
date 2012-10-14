@@ -41,28 +41,28 @@ V = And(*[
         And(*[
             OneHot(*[ X[r][c][v]
                 for v in range(1, 10) ])
-            for c in range(1, 10) ])
+            for c in range(1, 10) ], simplify=False)
         for r in range(1, 10) ])
 
 R = And(*[
         And(*[
             OneHot(*[ X[r][c][v]
                 for c in range(1, 10) ])
-            for v in range(1, 10) ])
+            for v in range(1, 10) ], simplify=False)
         for r in range(1, 10) ])
 
 C = And(*[
         And(*[
             OneHot(*[ X[r][c][v]
                 for r in range(1, 10) ])
-            for v in range(1, 10) ])
+            for v in range(1, 10) ], simplify=False)
         for c in range(1, 10) ])
 
 B = And(*[
         And(*[
             OneHot(*[ X[3*br+r][3*bc+c][v]
                 for r in range(1, 4) for c in range(1, 4) ])
-            for v in range(1, 10) ])
+            for v in range(1, 10) ], simplify=False)
         for br in range(3) for bc in range(3) ])
 
 S = CNF_And(V, R, C, B)
