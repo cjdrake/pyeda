@@ -72,22 +72,13 @@ class Zero(Constant):
         super(Zero, self).__init__(support)
 
     def __neg__(self):
-        return 1
+        return ONE
 
     def __add__(self, other):
         return other
 
-    def __sub__(self, other):
-        return _invert(other)
-
     def __mul__(self, other):
-        return 0
-
-    def __rshift__(self, other):
-        return 1
-
-    def __rrshift__(self, other):
-        return _invert(other)
+        return self
 
     def satisfy_one(self):
         return None
@@ -108,22 +99,13 @@ class One(Constant):
         super(One, self).__init__(support)
 
     def __neg__(self):
-        return 0
+        return ZERO
 
     def __add__(self, other):
-        return 1
-
-    def __sub__(self, other):
-        return 1
+        return self
 
     def __mul__(self, other):
         return other
-
-    def __rshift__(self, other):
-        return other
-
-    def __rrshift__(self, other):
-        return 1
 
     def satisfy_one(self):
         return {}
@@ -139,10 +121,3 @@ class One(Constant):
 
 ZERO = Zero()
 ONE = One()
-
-
-def _invert(arg):
-    if isinstance(arg, Function):
-        return -arg
-    else:
-        return 1 - boolify(arg)
