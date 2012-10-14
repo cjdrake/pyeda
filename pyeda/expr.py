@@ -38,7 +38,7 @@ from collections import deque
 from pyeda.common import boolify, cached_property
 
 from pyeda.boolfunc import Variable, Function
-from pyeda.sat import backtrack
+from pyeda.sat import backtrack, dpll
 
 VARIABLES = dict()
 COMPLEMENTS = dict()
@@ -328,6 +328,11 @@ class Expression(Function):
     def satisfy_one(self, algorithm='backtrack'):
         if algorithm == 'backtrack':
             return backtrack(self)
+        #elif algorithm == 'dpll':
+        #    if self.is_cnf():
+        #        return dpll(self)
+        #    else:
+        #        raise TypeError("expression is not a CNF")
         else:
             raise ValueError("invalid algorithm")
 

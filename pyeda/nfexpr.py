@@ -13,11 +13,10 @@ Interface Classes:
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
 
-import random
-
 from pyeda.common import boolify, cached_property
 from pyeda.boolfunc import Function
 from pyeda.expr import Expression, Or, And
+from pyeda.sat import backtrack, dpll
 
 def expr2dnf(expr):
     """Convert an expression into a DNF."""
@@ -128,53 +127,20 @@ class ConjNormalForm(NormalForm):
     def __mul__(self, other):
         return CNF_And(self, other)
 
-    def satisfy_one(self):
-        # Boolean constraint propagation
-        cnf, point = bcp(self)
-
-        # Pure literal elimination
-        if isinstance(cnf, ConjNormalForm):
-            cnf, pure_point = cnf.eliminate_pure()
-            point.update(pure_point)
-
-        if cnf == 0:
-            return None
-        elif cnf == 1:
-            return point
-
-        # variable selection heuristic
-        #var = cnf.top
-        var = random.choice(cnf.inputs)
-
-        # backtracking
-        cfs = {p[var]: cf for p, cf in cnf.iter_cofactors(var)}
-        if cfs[0] == 1:
-            if cfs[1] == 1:
-                # tautology
-                bt_point = {}
-            else:
-                # var=0 satisfies the formula
-                bt_point = {var: 0}
-        elif cfs[1] == 1:
-            # var=1 satisfies the formula
-            bt_point = {var: 1}
+    def satisfy_one(self, algorithm='dpll'):
+        if algorithm == 'backtrack':
+            return backtrack(self)
+        elif algorithm == 'dpll':
+            return dpll(self)
         else:
-            for num, cf in cfs.items():
-                if cf != 0:
-                    bt_point = cf.satisfy_one()
-                    if bt_point is not None:
-                        bt_point[var] = num
-                        break
-            else:
-                bt_point = None
+            raise ValueError("invalid algorithm")
 
-        if bt_point is not None:
-            bt_point.update(point)
+    def bcp(self):
+        """Boolean Constraint Propagation"""
+        return _bcp(self)
 
-        return bt_point
-
-    def eliminate_pure(self):
-        """Return a CNF with no clauses that contain pure literals.
+    def ple(self):
+        """Pure Literal Elimination
 
         A literal is *pure* if it only exists with one polarity in the CNF.
 
@@ -187,16 +153,16 @@ class ConjNormalForm(NormalForm):
         >>> cnf = expr2cnf((a + b + c) * (a + -b + -c))
 
         Eliminating 'a' results in a true statement.
-        >>> cnf.eliminate_pure()
+        >>> cnf.ple()
         (1, {a: 1})
 
-        In this CNF, 'a' is pure: (a + b) * (a + c) * (-b + -c)
-        >>> cnf = expr2cnf((a + b) * (a + c) * (-b + -c))
+        In this CNF, '-a' is pure: (-a + b) * (-a + c) * (-b + -c)
+        >>> cnf = expr2cnf((-a + b) * (-a + c) * (-b + -c))
 
-        Eliminating 'a' results in: -b + -c
-        >>> cnf, point = cnf.eliminate_pure()
+        Eliminating '-a' results in: -b + -c
+        >>> cnf, point = cnf.ple()
         >>> cnf.clauses == {(-3, -2)}, point
-        (True, {a: 1})
+        (True, {a: 0})
         """
         counter = dict()
         for clause in self.clauses:
@@ -206,26 +172,20 @@ class ConjNormalForm(NormalForm):
                 else:
                     counter[num] = 0
 
-        pures = list()
+        point = dict()
         while counter:
             num, cnt = counter.popitem()
             if -num in counter:
                 counter.pop(-num)
             elif cnt == 1:
-                pures.append(num)
-
-        if pures:
-            point = {self.int2lit[num]: (0 if num < 0 else 1) for num in pures}
-            new_clauses = list()
-            for clause in self.clauses:
-                if not any(num in clause for num in pures):
-                    new_clauses.append(clause)
-            return ConjNormalForm(self.int2lit, new_clauses), point
+                point[self.int2lit[abs(num)]] = int(num > 0)
+        if point:
+            return self.restrict(point), point
         else:
             return self, {}
 
 
-def bcp(cnf):
+def _bcp(cnf):
     """Boolean Constraint Propagation"""
     if cnf in {0, 1}:
         return cnf, {}
@@ -239,7 +199,7 @@ def bcp(cnf):
                 else:
                     point[cnf.int2lit[-num]] = 0
         if point:
-            _cnf, _point = bcp(cnf.restrict(point))
+            _cnf, _point = _bcp(cnf.restrict(point))
             point.update(_point)
             return _cnf, point
         else:
