@@ -681,6 +681,13 @@ class _Variable(Variable, Literal):
         """
         return comp(self)
 
+    # DPLL IF
+    def bcp(self):
+        return 1, {self: 1}
+
+    def ple(self):
+        return 1, {self: 1}
+
     # Specific to _Variable
     @property
     def minterm_index(self):
@@ -761,6 +768,14 @@ class Complement(Literal):
         """
         return self.var
 
+    # DPLL IF
+    def bcp(self):
+        return 1, {self.var: 0}
+
+    def ple(self):
+        return 1, {self.var: 0}
+
+    # Specific to Complement
     @property
     def minterm_index(self):
         return 0
@@ -1163,22 +1178,7 @@ class And(OrAnd):
                  all(isinstance(arg, Literal) or isinstance(arg, self.DUAL)
                      for arg in self._args) )
 
-    # Specific to And
-    @property
-    def term_index(self):
-        return self.minterm_index
-
-    @cached_property
-    def minterm_index(self):
-        if self.depth > 1:
-            return None
-        n = self.degree - 1
-        index = 0
-        for i, v in enumerate(self.inputs):
-            if v in self._args:
-                index |= 1 << (n - i)
-        return index
-
+    # DPLL IF
     def bcp(self):
         return _bcp(self)
 
@@ -1205,6 +1205,22 @@ class And(OrAnd):
             return self.restrict(point), point
         else:
             return self, {}
+
+    # Specific to And
+    @property
+    def term_index(self):
+        return self.minterm_index
+
+    @cached_property
+    def minterm_index(self):
+        if self.depth > 1:
+            return None
+        n = self.degree - 1
+        index = 0
+        for i, v in enumerate(self.inputs):
+            if v in self._args:
+                index |= 1 << (n - i)
+        return index
 
 
 Or.DUAL = And

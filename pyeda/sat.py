@@ -1,5 +1,9 @@
 """
 Boolean Satisfiability
+
+Interface functions:
+    backtrack
+    dpll
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
