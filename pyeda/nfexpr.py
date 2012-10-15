@@ -185,26 +185,6 @@ class ConjNormalForm(NormalForm):
             return self, {}
 
 
-def _bcp(cnf):
-    """Boolean Constraint Propagation"""
-    if cnf in {0, 1}:
-        return cnf, {}
-    else:
-        point = dict()
-        for clause in cnf.clauses:
-            if len(clause) == 1:
-                num = clause[0]
-                if num > 0:
-                    point[cnf.int2lit[num]] = 1
-                else:
-                    point[cnf.int2lit[-num]] = 0
-        if point:
-            _cnf, _point = _bcp(cnf.restrict(point))
-            point.update(_point)
-            return _cnf, point
-        else:
-            return cnf, point
-
 def DNF_Or(*args):
     args = [ expr2dnf(arg) if isinstance(arg, Expression) else arg
              for arg in args ]
@@ -248,3 +228,23 @@ def CNF_And(*args):
             clauses.add(tuple(lit2int[arg.int2lit[num]] for num in clause))
 
     return ConjNormalForm(int2lit, clauses)
+
+def _bcp(cnf):
+    """Boolean Constraint Propagation"""
+    if cnf in {0, 1}:
+        return cnf, {}
+    else:
+        point = dict()
+        for clause in cnf.clauses:
+            if len(clause) == 1:
+                num = clause[0]
+                if num > 0:
+                    point[cnf.int2lit[num]] = 1
+                else:
+                    point[cnf.int2lit[-num]] = 0
+        if point:
+            _cnf, _point = _bcp(cnf.restrict(point))
+            point.update(_point)
+            return _cnf, point
+        else:
+            return cnf, point

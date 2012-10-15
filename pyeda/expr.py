@@ -325,14 +325,14 @@ class Expression(Function):
         """
         return Equal(self, *args)
 
-    def satisfy_one(self, algorithm='backtrack'):
+    def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':
             return backtrack(self)
-        #elif algorithm == 'dpll':
-        #    if self.is_cnf():
-        #        return dpll(self)
-        #    else:
-        #        raise TypeError("expression is not a CNF")
+        elif algorithm == 'dpll':
+            if self.is_cnf():
+                return dpll(self)
+            else:
+                raise TypeError("expression is not a CNF")
         else:
             raise ValueError("invalid algorithm")
 
@@ -1179,6 +1179,33 @@ class And(OrAnd):
                 index |= 1 << (n - i)
         return index
 
+    def bcp(self):
+        return _bcp(self)
+
+    def ple(self):
+        counter = dict()
+        for clause in self.args:
+            for lit in clause.args:
+                if lit in counter:
+                    counter[lit] += 1
+                else:
+                    counter[lit] = 0
+
+        point = dict()
+        while counter:
+            lit, cnt = counter.popitem()
+            if -lit in counter:
+                counter.pop(-lit)
+            elif cnt == 1:
+                if isinstance(lit, Complement):
+                    point[lit.var] = 0
+                else:
+                    point[lit] = 1
+        if point:
+            return self.restrict(point), point
+        else:
+            return self, {}
+
 
 Or.DUAL = And
 And.DUAL = Or
@@ -1526,3 +1553,24 @@ class Equal(Expression):
     def factor(self):
         return Or(And(*[Not(arg).factor() for arg in self._args]),
                   And(*[arg.factor() for arg in self._args]))
+
+
+def _bcp(cnf):
+    """Boolean Constraint Propagation"""
+    if cnf in {0, 1}:
+        return cnf, {}
+    else:
+        point = dict()
+        for clause in cnf.args:
+            if len(clause.args) == 1:
+                lit = clause.args[0]
+                if isinstance(lit, Complement):
+                    point[lit.var] = 0
+                else:
+                    point[lit] = 1
+        if point:
+            _cnf, _point = _bcp(cnf.restrict(point))
+            point.update(_point)
+            return _cnf, point
+        else:
+            return cnf, point
