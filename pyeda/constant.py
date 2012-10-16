@@ -41,13 +41,6 @@ class Constant(Function):
         return bool(self.VAL)
 
     def __eq__(self, other):
-        """Overloaded equals '==' operator
-
-        >>> ZERO == ONE
-        False
-        >>> ZERO == 0, ZERO == 1, ONE == 0, ONE == 1
-        (True, False, False, True)
-        """
         if isinstance(other, Constant):
             return self.VAL == other.VAL
         else:
@@ -72,7 +65,7 @@ class Zero(Constant):
         super(Zero, self).__init__(support)
 
     def __neg__(self):
-        return ONE
+        return One(self.support)
 
     def __add__(self, other):
         return other
@@ -99,7 +92,7 @@ class One(Constant):
         super(One, self).__init__(support)
 
     def __neg__(self):
-        return ZERO
+        return Zero(self.support)
 
     def __add__(self, other):
         return self
@@ -117,7 +110,3 @@ class One(Constant):
 
     def satisfy_count(self):
         return 2 ** self.degree
-
-
-ZERO = Zero()
-ONE = One()
