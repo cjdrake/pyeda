@@ -116,9 +116,9 @@ and at least one must be true".
  >>> f
  (a' + b') * (a' + c') * (b' + c') * (a + b + c)
 
-In sum-of-products form, the function looks like this::
+In disjunctive normal (sum-of-products) form, the function looks like this::
 
- >>> f.to_sop()
+ >>> f.to_dnf()
  a' * b' * c + a' * b * c' + a * b' * c'
 
 Value Constraints
