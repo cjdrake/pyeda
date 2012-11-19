@@ -266,10 +266,12 @@ class Slicer(object):
 
     def _norm_idx(self, i):
         """Return an index normalized to vector start index."""
-        if i < self.start or i >= self.stop:
-            raise IndexError("list index out of range")
-        else:
+        if i >= self.start and i < self.stop:
             idx = i - self.start
+        elif i >= -self.stop and i < -self.start:
+            idx = i + self.stop
+        else:
+            raise IndexError("list index out of range")
         return idx
 
     def _norm_slice(self, sl):
@@ -278,10 +280,12 @@ class Slicer(object):
         for k in ('start', 'stop'):
             i = getattr(sl, k)
             if i is not None:
-                if i < self.start or i > self.stop:
-                    raise IndexError("list index out of range")
-                else:
+                if i >= self.start and i < self.stop:
                     limits[k] = i - self.start
+                elif i >= -self.stop and i < -self.start:
+                    limits[k] = i + self.stop
+                else:
+                    raise IndexError("list index out of range")
         return slice(limits['start'], limits['stop'])
 
 
