@@ -25,7 +25,6 @@ Contents:
    install.rst
    boolalg.rst
    sudoku.rst
-   todo.rst
 
 
 Indices and Tables
