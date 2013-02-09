@@ -20,6 +20,8 @@ Interface Functions:
 Interface Classes:
     Expression
         Literal
+            Variable
+            Complement
         OrAnd
             Or
             And
@@ -35,31 +37,13 @@ __copyright__ = "Copyright (c) 2012, Chris Drake"
 
 from collections import deque
 
+from pyeda import boolfunc
+from pyeda import sat
 from pyeda.common import boolify, cached_property
 
-from pyeda.boolfunc import Variable, Function
-from pyeda.sat import backtrack, dpll
-
-VARIABLES = dict()
-COMPLEMENTS = dict()
-
-def var(name, indices=None):
+def var(name, indices=None, namespace=None):
     """Return a single variable expression."""
-    try:
-        ret = VARIABLES[(name, indices)]
-    except KeyError:
-        ret = _Variable(name, indices)
-        VARIABLES[(name, indices)] = ret
-    return ret
-
-def comp(v):
-    """Return a single complement expression."""
-    try:
-        ret = COMPLEMENTS[v]
-    except KeyError:
-        ret = Complement(v)
-        COMPLEMENTS[v] = ret
-    return ret
+    return Variable(name, indices, namespace)
 
 def factor(expr):
     """Return a factored expression."""
@@ -175,7 +159,7 @@ def f_equal(*args):
     return Equal(*args).factor()
 
 
-class Expression(Function):
+class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
 
     SOP, POS = range(2)
@@ -327,10 +311,10 @@ class Expression(Function):
 
     def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':
-            return backtrack(self)
+            return sat.backtrack(self)
         elif algorithm == 'dpll':
             if self.is_cnf():
-                return dpll(self)
+                return sat.dpll(self)
             else:
                 raise TypeError("expression is not a CNF")
         else:
@@ -368,7 +352,7 @@ class Expression(Function):
         """
         if vs is None:
             vs = self.support
-        elif isinstance(vs, Function):
+        elif isinstance(vs, boolfunc.Function):
             vs = [vs]
         for v in vs:
             fv0, fv1 = self.cofactors(v)
@@ -395,7 +379,7 @@ class Expression(Function):
         """
         if vs is None:
             vs = self.support
-        elif isinstance(vs, Function):
+        elif isinstance(vs, boolfunc.Function):
             vs = [vs]
         for v in vs:
             fv0, fv1 = self.cofactors(v)
@@ -616,13 +600,22 @@ class Literal(Expression):
         return True
 
 
-class _Variable(Variable, Literal):
+class Variable(boolfunc.Variable, Literal):
     """Boolean variable (expression)"""
 
-    def __init__(self, name, indices=None):
-        Variable.__init__(self, name, indices)
-        self._support = {self}
-        self._args = (self, )
+    _MEM = dict()
+
+    def __new__(cls, name, indices=None, namespace=None):
+        if namespace not in cls._MEM:
+            cls._MEM[namespace] = dict()
+        try:
+            self = cls._MEM[namespace][(name, indices)]
+        except KeyError:
+            self = boolfunc.Variable.__new__(cls, name, indices, namespace)
+            self._support = {self}
+            self._args = (self, )
+            cls._MEM[namespace][(name, indices)] = self
+        return self
 
     # From Function
     @property
@@ -664,10 +657,10 @@ class _Variable(Variable, Literal):
         >>> a < a + b, b < a + b
         (True, True)
         """
-        if isinstance(other, _Variable):
-            return Variable.__lt__(self, other)
+        if isinstance(other, Variable):
+            return boolfunc.Variable.__lt__(self, other)
         if isinstance(other, Complement):
-            return Variable.__lt__(self, other.var)
+            return boolfunc.Variable.__lt__(self, other.var)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
@@ -679,7 +672,7 @@ class _Variable(Variable, Literal):
         >>> a.invert()
         a'
         """
-        return comp(self)
+        return Complement(self)
 
     # DPLL IF
     def bcp(self):
@@ -688,7 +681,7 @@ class _Variable(Variable, Literal):
     def ple(self):
         return 1, {self: 1}
 
-    # Specific to _Variable
+    # Specific to Variable
     @property
     def minterm_index(self):
         return 1
@@ -701,13 +694,21 @@ class _Variable(Variable, Literal):
 class Complement(Literal):
     """Boolean complement"""
 
+    _MEM = dict()
+
     # Postfix symbol used in string representation
     OP = "'"
 
-    def __init__(self, v):
-        self.var = v
-        self._support = {v}
-        self._args = (self, )
+    def __new__(cls, v):
+        try:
+            self = cls._MEM[v]
+        except KeyError:
+            self = super(Complement, cls).__new__(cls)
+            self.var = v
+            self._support = {v}
+            self._args = (self, )
+            cls._MEM[v] = self
+        return self
 
     def __str__(self):
         return str(self.var) + self.OP
@@ -749,12 +750,12 @@ class Complement(Literal):
         >>> -a < a + b, -b < a + b
         (True, True)
         """
-        if isinstance(other, _Variable):
+        if isinstance(other, Variable):
             return ( self.var.name < other.name or
                          self.var.name == other.name and
                          self.var.indices <= other.indices )
         if isinstance(other, Complement):
-            return Variable.__lt__(self.var, other.var)
+            return boolfunc.Variable.__lt__(self.var, other.var)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)

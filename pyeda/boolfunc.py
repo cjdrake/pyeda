@@ -21,7 +21,9 @@ class Variable(object):
     This implementation includes an optional "index", a nonnegative integer
     that is convenient for bit vectors.
     """
-    def __init__(self, name, indices=None):
+
+    def __new__(cls, name, indices=None, namespace=None):
+        self = super(Variable, cls).__new__(cls)
         self.name = name
         if indices is None:
             self.indices = tuple()
@@ -31,6 +33,11 @@ class Variable(object):
             self.indices = indices
         else:
             raise ValueError("invalid indices")
+        if namespace is None or type(namespace) is str:
+            self.namespace = namespace
+        else:
+            raise ValueError("invalid namespace")
+        return self
 
     def __repr__(self):
         return self.__str__()
@@ -45,8 +52,9 @@ class Variable(object):
         >>> str(Variable("v", (1, 2, 3)))
         'v[1][2][3]'
         """
+        prefix = "" if self.namespace is None else self.namespace + "."
         suffix = "".join("[{}]".format(idx) for idx in self.indices)
-        return self.name + suffix
+        return prefix + self.name + suffix
 
     def __lt__(self, other):
         """Return rich "less than" result, for ordering.
