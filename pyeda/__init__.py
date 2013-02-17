@@ -22,6 +22,7 @@ from pyeda.binop import (
     OP_NOR,  OP_XNOR, OP_NSND, OP_GTE, OP_NFST, OP_LTE, OP_NAND, OP_ONE
 )
 from pyeda.common import clog2
+from pyeda.dimacs import parse_cnf, parse_sat
 from pyeda.expr import var
 from pyeda.expr import Nor, Nand, OneHot0, OneHot
 from pyeda.expr import Not, Or, And, Xor, Xnor, Implies, Equal
