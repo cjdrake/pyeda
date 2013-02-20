@@ -1541,14 +1541,8 @@ class Equal(Expression):
         return self
 
     def __str__(self):
-        s = list()
-        for arg in self._args:
-            if isinstance(arg, Literal):
-                s.append(str(arg))
-            else:
-                s.append("(" + str(arg) + ")")
-        sep = " " + self.OP + " "
-        return sep.join(s)
+        args = ", ".join(str(arg) for arg in self._args)
+        return "Equal(" + args + ")"
 
     # From Function
     def restrict(self, mapping):
