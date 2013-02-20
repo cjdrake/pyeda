@@ -14,7 +14,7 @@ import collections
 import re
 
 # pyeda
-from pyeda.expr import Expression, Not, Or, And, Xor, Equal
+from pyeda.expr import Not, Or, And, Xor, Equal
 from pyeda.vexpr import bitvec
 
 Token = collections.namedtuple('Token', ['typ', 'val', 'line', 'col'])
@@ -64,7 +64,7 @@ def iter_tokens(s):
             line += 1
         elif typ != 'WS':
             val = m.group(typ)
-            if typ in ('ZERO', 'POSINT'):
+            if typ in {'ZERO', 'POSINT'}:
                 val = int(val)
             col = m.start() - line_start
             yield Token(typ, val, line, col)
@@ -86,14 +86,15 @@ def iter_tokens(s):
 #
 # CLAUSES := POSINT
 
+_CNF_TOKS = {'ZERO', 'NOT', 'POSINT'}
+
 def parse_cnf(s, varname='x'):
     """Parse an input string in DIMACS CNF format, and return an expression."""
     gen = iter_tokens(s)
     try:
-        while True:
+        tok = _expect_token(gen, {'c', 'p'})
+        while tok.typ == 'c':
             tok = _expect_token(gen, {'c', 'p'})
-            if tok.typ == 'p':
-                break
         _expect_token(gen, {'CNF'})
         nvars = _expect_token(gen, {'POSINT'}).val
         ncls = _expect_token(gen, {'POSINT'}).val
@@ -105,15 +106,15 @@ def parse_cnf(s, varname='x'):
 
     try:
         while True:
-            tok = _expect_token(gen, {'ZERO', 'NOT', 'POSINT'})
+            tok = _expect_token(gen, _CNF_TOKS)
             if tok.typ == 'ZERO':
                 clauses.append([])
             elif tok.typ == 'NOT':
                 tok = _expect_token(gen, {'POSINT'})
-                assert tok.val <= nvars
+                assert tok.val <= len(X)
                 clauses[-1].append(-X[tok.val])
             else:
-                assert tok.val <= nvars
+                assert tok.val <= len(X)
                 clauses[-1].append(X[tok.val])
     except StopIteration:
         pass
@@ -140,10 +141,8 @@ def parse_cnf(s, varname='x'):
 #          | 'xor' '(' FORMULA* ')'
 #          | '=' '(' FORMULA* ')'
 
-_FORMULA = {'POSINT', 'LPAREN', 'NOT', 'OR', 'AND', 'XOR', 'EQUAL'}
-
-_ZOM_FORMULAS = {'POSINT', 'LPAREN', 'RPAREN',
-                 'NOT', 'OR', 'AND', 'XOR', 'EQUAL'}
+_SAT_TOKS = {'SAT', 'SATX', 'SATE', 'SATEX'}
+_FORMULA_TOKS = {'POSINT', 'LPAREN', 'NOT', 'OR', 'AND', 'XOR', 'EQUAL'}
 
 _SAT_OPS = {
     'SAT': {'NOT', 'OR', 'AND'},
@@ -164,80 +163,58 @@ def parse_sat(s, varname='x'):
     """Parse an input string in DIMACS SAT format, and return an expression."""
     gen = iter_tokens(s)
     try:
-        while True:
+        tok = _expect_token(gen, {'c', 'p'})
+        while tok.typ == 'c':
             tok = _expect_token(gen, {'c', 'p'})
-            if tok.typ == 'p':
-                break
-        fmt = _expect_token(gen, {'SAT', 'SATX', 'SATE', 'SATEX'}).typ
+        fmt = _expect_token(gen, _SAT_TOKS).typ
         nvars = _expect_token(gen, {'POSINT'}).val
     except StopIteration:
         raise SyntaxError("incomplete preamble")
 
     X = bitvec(varname, (1, nvars + 1))
     try:
-        return _formula(gen, fmt, X)
+        tok = _expect_token(gen, _FORMULA_TOKS)
+        return _formula(gen, tok, fmt, X)
     except StopIteration:
         raise SyntaxError("incomplete formula")
 
 def _expect_token(gen, types):
-    tok = gen.__next__()
+    tok = next(gen)
     if tok.typ in types:
         return tok
     else:
         fstr = "unexpected token on line {0.line}, col {0.col}: {0.val}"
         raise SyntaxError(fstr.format(tok))
 
-def _formula(gen, fmt, X):
-    tok = _expect_token(gen, _FORMULA)
+def _formula(gen, tok, fmt, X):
     if tok.typ == 'POSINT':
+        assert tok.val <= len(X)
         return X[tok.val]
     elif tok.typ == 'NOT':
-        tok2 = _expect_token(gen, {'POSINT', 'LPAREN'})
-        if tok2.typ == 'POSINT':
-            return -X[tok2.val]
+        tok = _expect_token(gen, {'POSINT', 'LPAREN'})
+        if tok.typ == 'POSINT':
+            assert tok.val <= len(X)
+            return -X[tok.val]
         else:
             return _one_formula(gen, fmt, X)
     elif tok.typ == 'LPAREN':
         return _one_formula(gen, fmt, X)
     # OR/AND/XOR/EQUAL
     else:
-        if tok.typ not in _SAT_OPS[fmt]:
-            raise SyntaxError("unsupported operator: " + tok.val)
-        tok2 = _expect_token(gen, {'LPAREN'})
-        fs = _get_fs(gen, fmt, X)
-        return _OP_EXPR[tok.typ](*fs)
+        assert tok.typ in _SAT_OPS[fmt]
+        op = _OP_EXPR[tok.typ]
+        tok = _expect_token(gen, {'LPAREN'})
+        return op(*_zom_formulas(gen, fmt, X))
 
 def _one_formula(gen, fmt, X):
-    f = _formula(gen, fmt, X)
+    f = _formula(gen, next(gen), fmt, X)
     _expect_token(gen, {'RPAREN'})
     return f
 
 def _zom_formulas(gen, fmt, X):
-    tok = _expect_token(gen, _ZOM_FORMULAS)
-    if tok.typ == 'POSINT':
-        return X[tok.val]
-    elif tok.typ == 'NOT':
-        tok2 = _expect_token(gen, {'POSINT', 'LPAREN'})
-        if tok2.typ == 'POSINT':
-            return -X[tok2.val]
-        else:
-            return _one_formula(gen, fmt, X)
-    elif tok.typ == 'LPAREN':
-        return _one_formula(gen, fmt, X)
-    elif tok.typ in {'OR', 'AND', 'XOR', 'EQUAL'}:
-        if tok.typ not in _SAT_OPS[fmt]:
-            raise SyntaxError("unsupported operator: " + tok.val)
-        tok2 = _expect_token(gen, {'LPAREN'})
-        fs = _get_fs(gen, fmt, X)
-        return _OP_EXPR[tok.typ](*fs)
-    # RPAREN
-    else:
-        return None
-
-def _get_fs(gen, fmt, X):
     fs = []
-    f = _zom_formulas(gen, fmt, X)
-    while f is not None:
-        fs.append(f)
-        f = _zom_formulas(gen, fmt, X)
+    tok = _expect_token(gen, _FORMULA_TOKS | {'RPAREN'})
+    while tok.typ != 'RPAREN':
+        fs.append(_formula(gen, tok, fmt, X))
+        tok = _expect_token(gen, _FORMULA_TOKS | {'RPAREN'})
     return fs
