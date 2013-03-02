@@ -14,7 +14,7 @@ vexpr.py      -- Boolean vector logic expressions
 """
 
 __copyright__ = "Copyright (c) 2012, Chris Drake"
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 from pyeda.binop import (
     apply2,
