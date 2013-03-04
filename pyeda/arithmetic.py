@@ -13,22 +13,6 @@ from pyeda.vexpr import BitVector
 def ripple_carry_add(A, B, cin=0):
     """Return symbolic logic for an N-bit ripple carry adder.
 
-    >>> import random
-    >>> from pyeda import *
-    >>> A, B = bitvec("A", 8), bitvec("B", 8)
-    >>> S, C = ripple_carry_add(A, B)
-    >>> S.append(C[7])
-    >>> for i in range(64):
-    ...     ra = random.randint(0, 2**8-1)
-    ...     rb = random.randint(0, 2**8-1)
-    ...     d = {A: uint2vec(ra, 8), B: uint2vec(rb, 8)}
-    ...     assert S.vrestrict(d).to_uint() == ra + rb
-    >>> S, C = ripple_carry_add(A, B)
-    >>> for i in range(64):
-    ...     ra = random.randint(-2**6, 2**6-1)
-    ...     rb = random.randint(-2**6, 2**6-1)
-    ...     d = {A: int2vec(ra, 8), B: int2vec(rb, 8)}
-    ...     assert S.vrestrict(d).to_int() == ra + rb
     """
     assert len(A) == len(B)
     s, c = list(), list()
@@ -41,22 +25,6 @@ def ripple_carry_add(A, B, cin=0):
 def kogge_stone_add(A, B, cin=0):
     """Return symbolic logic for an N-bit Kogge-Stone adder.
 
-    >>> import random
-    >>> from pyeda import *
-    >>> A, B = bitvec("A", 8), bitvec("B", 8)
-    >>> S, C = kogge_stone_add(A, B)
-    >>> S.append(C[7])
-    >>> for i in range(64):
-    ...     ra = random.randint(0, 2**8-1)
-    ...     rb = random.randint(0, 2**8-1)
-    ...     d = {A: uint2vec(ra, 8), B: uint2vec(rb, 8)}
-    ...     assert S.vrestrict(d).to_uint() == ra + rb
-    >>> S, C = kogge_stone_add(A, B)
-    >>> for i in range(64):
-    ...     ra = random.randint(-2**6, 2**6-1)
-    ...     rb = random.randint(-2**6, 2**6-1)
-    ...     d = {A: int2vec(ra, 8), B: int2vec(rb, 8)}
-    ...     assert S.vrestrict(d).to_int() == ra + rb
     """
     assert len(A) == len(B)
     stop = len(A)
