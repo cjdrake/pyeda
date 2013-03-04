@@ -307,7 +307,7 @@ class VectorFunction(Slicer):
         all functions.
         """
         items = [f.restrict(mapping) for f in self]
-        return self.__class__(items, (self.start, self.stop))
+        return self.__class__(items, self.start)
 
     def vrestrict(self, mapping):
         """Expand all vectors before applying 'restrict'."""
