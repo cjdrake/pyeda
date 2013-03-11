@@ -434,6 +434,11 @@ class Expression(boolfunc.Function):
         """Return the expression argument list."""
         return self._args
 
+    @cached_property
+    def arg_set(self):
+        """Return the expression arguments as a set."""
+        return set(self._args)
+
     @property
     def depth(self):
         """Return the number of levels in the expression tree."""
@@ -936,6 +941,15 @@ class OrAnd(Expression):
         return self.__class__(*[arg.factor() for arg in self._args])
 
     # Specific to OrAnd
+    def is_nf(self):
+        """Return whether this expression is in normal form.
+        """
+        return (
+            self.depth <= 2 and
+            all(isinstance(arg, Literal) or isinstance(arg, self.DUAL)
+                for arg in self._args)
+        )
+
     def absorb(self):
         """Return the OR/AND expression after absorption.
 
@@ -970,30 +984,23 @@ class OrAnd(Expression):
         >>> ((a + -b + c) * (a + -b)).absorb()
         a + b'
         """
-        clauses, args = list(), list()
-        for arg in self._args:
-            if isinstance(arg, Literal) or arg.depth == 1:
-                clauses.append(arg)
-            else:
-                args.append(arg)
+        if not self.is_nf():
+            raise TypeError("expression is not in normal form")
 
-        # Drop all clauses that are a subset of other clauses
-        while clauses:
-            fst, rst, clauses = clauses[0], clauses[1:], list()
+        temps, args = list(self._args), list()
+
+        # Drop all terms that are a subset of other terms
+        while temps:
+            fst, rst, temps = temps[0], temps[1:], list()
             drop_fst = False
             for term in rst:
-                drop_clause = False
-                if fst.equivalent(term):
-                    drop_clause = True
-                else:
-                    if all(any(farg.equivalent(targ) for targ in term.args)
-                           for farg in fst.args):
-                        drop_clause = True
-                    if all(any(farg.equivalent(targ) for targ in fst.args)
-                           for farg in term.args):
-                        drop_fst = True
-                if not drop_clause:
-                    clauses.append(term)
+                drop_term = False
+                if fst.arg_set <= term.arg_set:
+                    drop_term = True
+                elif fst.arg_set > term.arg_set:
+                    drop_fst = True
+                if not drop_term:
+                    temps.append(term)
             if not drop_fst:
                 args.append(fst)
 
@@ -1090,9 +1097,7 @@ class Or(OrAnd):
         >>> ((a * b) + (b * (c + d))).is_dnf()
         False
         """
-        return ( self.depth <= 2 and
-                 all(isinstance(arg, Literal) or isinstance(arg, self.DUAL)
-                     for arg in self._args) )
+        return self.is_nf()
 
     # Specific to Or
     @property
@@ -1175,9 +1180,7 @@ class And(OrAnd):
         >>> ((a + b) * (b + c * d)).is_cnf()
         False
         """
-        return ( self.depth <= 2 and
-                 all(isinstance(arg, Literal) or isinstance(arg, self.DUAL)
-                     for arg in self._args) )
+        return self.is_nf()
 
     # DPLL IF
     def bcp(self):
