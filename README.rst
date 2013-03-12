@@ -12,6 +12,7 @@ Features
 * Conjunctive normal form logic expression representation
 * DPLL SAT solver
 * Multi-dimensional bit vectors
+* DIMACS CNF/SAT parser
 
 Contact the Author
 ==================

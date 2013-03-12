@@ -1,22 +1,38 @@
 # -*- coding: utf-8 -*-
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-__license__ = "All rights reserved."
-
-# standard library
 from distutils.core import setup
 
-# pyeda
 import pyeda
 
-with open("README.rst") as fin:
+NAME = 'pyeda'
+VERSION = pyeda.__version__
+AUTHOR = "Chris Drake"
+AUTHOR_EMAIL = "cjdrake AT gmail DOT com"
+DESCRIPTION = "Python Electronic Design Automation"
+KEYWORDS = [
+    "Boolean algebra",
+    "Boolean satisfiability",
+    "computer arithmetic",
+    "digital arithmetic",
+    "digital logic",
+    "EDA",
+    "electronic design automation",
+    "logic",
+    "logic synthesis",
+    "math",
+    "mathematics",
+    "satisfiability",
+    "SAT",
+]
+
+with open('README.rst') as fin:
     README = fin.read()
 
-with open("LICENSE") as fin:
+with open('LICENSE') as fin:
     LICENSE = fin.read()
 
-PACKAGES = ["pyeda"]
-
+URL = "https://github.com/cjdrake/pyeda"
+DOWNLOAD_URL = "https://pypi.python.org/packages/source/p/pyeda"
 CLASSIFIERS = [
     "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
@@ -28,15 +44,19 @@ CLASSIFIERS = [
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 
+PACKAGES = ['pyeda']
+
 setup(
-    name="pyeda",
-    version=pyeda.__version__,
-    description="Python Electronic Design Automation",
+    name=NAME,
+    version=VERSION,
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    description=DESCRIPTION,
+    keywords=KEYWORDS,
     long_description=README,
-    author="Chris Drake",
-    author_email="cjdrake AT gmail DOT com",
-    url="https://github.com/cjdrake/pyeda",
     license=LICENSE,
+    url=URL,
+    download_url=DOWNLOAD_URL,
+    classifiers=CLASSIFIERS,
     packages=PACKAGES,
-    classifiers=CLASSIFIERS
 )
