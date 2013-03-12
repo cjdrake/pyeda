@@ -1,3 +1,6 @@
+"""
+Test logic functions for digital arithmetic
+"""
 
 import random
 
