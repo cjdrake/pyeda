@@ -17,4 +17,4 @@ test:
 	@$(NOSETESTS) --with-doctest
 
 cover:
-	@$(NOSETESTS) --with-doctest --with-coverage
+	@$(NOSETESTS) --with-doctest --with-coverage --cover-html
