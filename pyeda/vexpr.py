@@ -10,8 +10,6 @@ Interface Classes:
     BitVector
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-
 from pyeda.common import clog2, bit_on
 from pyeda.boolfunc import Slicer, VectorFunction
 from pyeda.expr import var, Not, Or, And, Xor, Xnor

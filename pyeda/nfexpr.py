@@ -11,8 +11,6 @@ Interface Classes:
     ConjNormalForm
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-
 from pyeda.common import boolify, cached_property
 from pyeda.boolfunc import Function
 from pyeda.expr import Expression, Or, And

@@ -7,8 +7,6 @@ Interface Classes:
         One
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-
 from pyeda.common import boolify, iter_space
 from pyeda.boolfunc import Function
 

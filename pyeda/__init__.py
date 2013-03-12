@@ -13,7 +13,6 @@ table.py      -- Boolean tables
 vexpr.py      -- Boolean vector logic expressions
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
 __version__ = "0.9.0"
 
 from pyeda.binop import (

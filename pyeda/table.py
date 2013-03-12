@@ -10,8 +10,6 @@ Interface Classes:
         ImplicantTable
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-
 from pyeda import __version__
 from pyeda.common import bit_on, cached_property, iter_space
 from pyeda.boolfunc import Function

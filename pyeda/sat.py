@@ -6,8 +6,6 @@ Interface functions:
     dpll
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-
 #import random
 
 def backtrack(expr):

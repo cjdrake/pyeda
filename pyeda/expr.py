@@ -33,8 +33,6 @@ Interface Classes:
         Equal
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-
 from collections import deque
 
 from pyeda import boolfunc

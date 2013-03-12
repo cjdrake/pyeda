@@ -6,8 +6,6 @@ Interface Functions:
     cached_property
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-
 BOOL_DICT = {
     0: 0,
     1: 1,

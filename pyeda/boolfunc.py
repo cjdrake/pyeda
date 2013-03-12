@@ -8,8 +8,6 @@ Interface Classes:
     VectorFunction
 """
 
-__copyright__ = "Copyright (c) 2012, Chris Drake"
-
 from pyeda.common import iter_space
 
 
