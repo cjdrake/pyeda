@@ -92,12 +92,7 @@ def parse_cnf(s, varname='x'):
     """Parse an input string in DIMACS CNF format, and return an expression."""
     gtoks = iter_tokens(s)
     try:
-        tok = _expect_token(gtoks, {'c', 'p'})
-        while tok.typ == 'c':
-            tok = _expect_token(gtoks, {'c', 'p'})
-        _expect_token(gtoks, {'CNF'})
-        nvars = _expect_token(gtoks, {'POSINT'}).val
-        ncls = _expect_token(gtoks, {'POSINT'}).val
+        nvars, ncls = _cnf_preamble(gtoks)
     except StopIteration:
         raise SyntaxError("incomplete preamble")
 
@@ -121,6 +116,16 @@ def parse_cnf(s, varname='x'):
 
     assert len(clauses) == ncls
     return And(*[Or(*clause) for clause in clauses])
+
+def _cnf_preamble(gtoks):
+    tok = _expect_token(gtoks, {'c', 'p'})
+    if tok.typ == 'c':
+        return _cnf_preamble(gtoks)
+    else:
+        _expect_token(gtoks, {'CNF'})
+        nvars = _expect_token(gtoks, {'POSINT'}).val
+        ncls = _expect_token(gtoks, {'POSINT'}).val
+        return nvars, ncls
 
 # Grammar for a SAT file
 #
