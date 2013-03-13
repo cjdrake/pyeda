@@ -76,17 +76,19 @@ def iter_tokens(s):
 
 # Grammar for a CNF file
 #
-# CNF := COMMENT* PREAMBLE POSINT+ ('0' POSINT+)*
+# CNF := COMMENT* PREAMBLE FORMULA
+#
+# COMMENT := 'c' .*
 #
 # PREAMBLE := 'p' 'cnf' VARIABLES CLAUSES
-#
-# FORMAT := POSINT
 #
 # VARIABLES := POSINT
 #
 # CLAUSES := POSINT
+#
+# FORMULA := POSINT+ ('0' POSINT+)*
 
-_CNF_TOKS = {'ZERO', 'NOT', 'POSINT'}
+_CNF_FORMULA_TOKS = {'ZERO', 'NOT', 'POSINT'}
 
 def parse_cnf(s, varname='x'):
     """Parse an input string in DIMACS CNF format, and return an expression."""
@@ -101,7 +103,7 @@ def parse_cnf(s, varname='x'):
 
     try:
         while True:
-            tok = _expect_token(gtoks, _CNF_TOKS)
+            tok = _expect_token(gtoks, _CNF_FORMULA_TOKS)
             if tok.typ == 'ZERO':
                 clauses.append([])
             elif tok.typ == 'NOT':
