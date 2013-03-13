@@ -90,14 +90,14 @@ _CNF_TOKS = {'ZERO', 'NOT', 'POSINT'}
 
 def parse_cnf(s, varname='x'):
     """Parse an input string in DIMACS CNF format, and return an expression."""
-    gen = iter_tokens(s)
+    gtoks = iter_tokens(s)
     try:
-        tok = _expect_token(gen, {'c', 'p'})
+        tok = _expect_token(gtoks, {'c', 'p'})
         while tok.typ == 'c':
-            tok = _expect_token(gen, {'c', 'p'})
-        _expect_token(gen, {'CNF'})
-        nvars = _expect_token(gen, {'POSINT'}).val
-        ncls = _expect_token(gen, {'POSINT'}).val
+            tok = _expect_token(gtoks, {'c', 'p'})
+        _expect_token(gtoks, {'CNF'})
+        nvars = _expect_token(gtoks, {'POSINT'}).val
+        ncls = _expect_token(gtoks, {'POSINT'}).val
     except StopIteration:
         raise SyntaxError("incomplete preamble")
 
@@ -106,11 +106,11 @@ def parse_cnf(s, varname='x'):
 
     try:
         while True:
-            tok = _expect_token(gen, _CNF_TOKS)
+            tok = _expect_token(gtoks, _CNF_TOKS)
             if tok.typ == 'ZERO':
                 clauses.append([])
             elif tok.typ == 'NOT':
-                tok = _expect_token(gen, {'POSINT'})
+                tok = _expect_token(gtoks, {'POSINT'})
                 assert tok.val <= len(X)
                 clauses[-1].append(-X[tok.val])
             else:
@@ -161,60 +161,60 @@ _OP_EXPR = {
 
 def parse_sat(s, varname='x'):
     """Parse an input string in DIMACS SAT format, and return an expression."""
-    gen = iter_tokens(s)
+    gtoks = iter_tokens(s)
     try:
-        tok = _expect_token(gen, {'c', 'p'})
+        tok = _expect_token(gtoks, {'c', 'p'})
         while tok.typ == 'c':
-            tok = _expect_token(gen, {'c', 'p'})
-        fmt = _expect_token(gen, _SAT_TOKS).typ
-        nvars = _expect_token(gen, {'POSINT'}).val
+            tok = _expect_token(gtoks, {'c', 'p'})
+        fmt = _expect_token(gtoks, _SAT_TOKS).typ
+        nvars = _expect_token(gtoks, {'POSINT'}).val
     except StopIteration:
         raise SyntaxError("incomplete preamble")
 
     X = bitvec(varname, (1, nvars + 1))
     try:
-        tok = _expect_token(gen, _FORMULA_TOKS)
-        return _formula(gen, tok, fmt, X)
+        tok = _expect_token(gtoks, _FORMULA_TOKS)
+        return _formula(gtoks, tok, fmt, X)
     except StopIteration:
         raise SyntaxError("incomplete formula")
 
-def _expect_token(gen, types):
-    tok = next(gen)
+def _expect_token(gtoks, types):
+    tok = next(gtoks)
     if tok.typ in types:
         return tok
     else:
         fstr = "unexpected token on line {0.line}, col {0.col}: {0.val}"
         raise SyntaxError(fstr.format(tok))
 
-def _formula(gen, tok, fmt, X):
+def _formula(gtoks, tok, fmt, X):
     if tok.typ == 'POSINT':
         assert tok.val <= len(X)
         return X[tok.val]
     elif tok.typ == 'NOT':
-        tok = _expect_token(gen, {'POSINT', 'LPAREN'})
+        tok = _expect_token(gtoks, {'POSINT', 'LPAREN'})
         if tok.typ == 'POSINT':
             assert tok.val <= len(X)
             return -X[tok.val]
         else:
-            return _one_formula(gen, fmt, X)
+            return _one_formula(gtoks, fmt, X)
     elif tok.typ == 'LPAREN':
-        return _one_formula(gen, fmt, X)
+        return _one_formula(gtoks, fmt, X)
     # OR/AND/XOR/EQUAL
     else:
         assert tok.typ in _SAT_OPS[fmt]
         op = _OP_EXPR[tok.typ]
-        tok = _expect_token(gen, {'LPAREN'})
-        return op(*_zom_formulas(gen, fmt, X))
+        tok = _expect_token(gtoks, {'LPAREN'})
+        return op(*_zom_formulas(gtoks, fmt, X))
 
-def _one_formula(gen, fmt, X):
-    f = _formula(gen, next(gen), fmt, X)
-    _expect_token(gen, {'RPAREN'})
+def _one_formula(gtoks, fmt, X):
+    f = _formula(gtoks, next(gtoks), fmt, X)
+    _expect_token(gtoks, {'RPAREN'})
     return f
 
-def _zom_formulas(gen, fmt, X):
+def _zom_formulas(gtoks, fmt, X):
     fs = []
-    tok = _expect_token(gen, _FORMULA_TOKS | {'RPAREN'})
+    tok = _expect_token(gtoks, _FORMULA_TOKS | {'RPAREN'})
     while tok.typ != 'RPAREN':
-        fs.append(_formula(gen, tok, fmt, X))
-        tok = _expect_token(gen, _FORMULA_TOKS | {'RPAREN'})
+        fs.append(_formula(gtoks, tok, fmt, X))
+        tok = _expect_token(gtoks, _FORMULA_TOKS | {'RPAREN'})
     return fs
