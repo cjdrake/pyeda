@@ -133,6 +133,8 @@ def _cnf_preamble(gtoks):
 #
 # SAT := COMMENT* PREAMBLE FORMULA
 #
+# COMMENT := 'c' .*
+#
 # PREAMBLE := 'p' FORMAT VARIABLES
 #
 # FORMAT := 'sat' | 'satx' | 'sate' | 'satex'
@@ -148,17 +150,16 @@ def _cnf_preamble(gtoks):
 #          | 'xor' '(' FORMULA* ')'
 #          | '=' '(' FORMULA* ')'
 
-_SAT_TOKS = {'SAT', 'SATX', 'SATE', 'SATEX'}
-_FORMULA_TOKS = {'POSINT', 'LPAREN', 'NOT', 'OR', 'AND', 'XOR', 'EQUAL'}
+_SAT_FORMAT_TOKS = {'SAT', 'SATX', 'SATE', 'SATEX'}
 
-_SAT_OPS = {
-    'SAT': {'NOT', 'OR', 'AND'},
-    'SATX': {'NOT', 'OR', 'AND', 'XOR'},
-    'SATE': {'NOT', 'OR', 'AND', 'EQUAL'},
-    'SATEX': {'NOT', 'OR', 'AND', 'XOR', 'EQUAL'},
+_SAT_OP_TOKS = {
+    'sat': {'NOT', 'OR', 'AND'},
+    'satx': {'NOT', 'OR', 'AND', 'XOR'},
+    'sate': {'NOT', 'OR', 'AND', 'EQUAL'},
+    'satex': {'NOT', 'OR', 'AND', 'XOR', 'EQUAL'},
 }
 
-_OP_EXPR = {
+_SAT_TOK2OP = {
     'NOT': Not,
     'OR': Or,
     'AND': And,
@@ -170,30 +171,28 @@ def parse_sat(s, varname='x'):
     """Parse an input string in DIMACS SAT format, and return an expression."""
     gtoks = iter_tokens(s)
     try:
-        tok = _expect_token(gtoks, {'c', 'p'})
-        while tok.typ == 'c':
-            tok = _expect_token(gtoks, {'c', 'p'})
-        fmt = _expect_token(gtoks, _SAT_TOKS).typ
-        nvars = _expect_token(gtoks, {'POSINT'}).val
+        fmt, nvars = _sat_preamble(gtoks)
     except StopIteration:
         raise SyntaxError("incomplete preamble")
 
+    types = {'POSINT', 'LPAREN'} | _SAT_OP_TOKS[fmt]
     X = bitvec(varname, (1, nvars + 1))
     try:
-        tok = _expect_token(gtoks, _FORMULA_TOKS)
-        return _formula(gtoks, tok, fmt, X)
+        tok = _expect_token(gtoks, types)
+        return _sat_formula(gtoks, tok, fmt, X)
     except StopIteration:
         raise SyntaxError("incomplete formula")
 
-def _expect_token(gtoks, types):
-    tok = next(gtoks)
-    if tok.typ in types:
-        return tok
+def _sat_preamble(gtoks):
+    tok = _expect_token(gtoks, {'c', 'p'})
+    if tok.typ == 'c':
+        return _sat_preamble(gtoks)
     else:
-        fstr = "unexpected token on line {0.line}, col {0.col}: {0.val}"
-        raise SyntaxError(fstr.format(tok))
+        fmt = _expect_token(gtoks, _SAT_FORMAT_TOKS).val
+        nvars = _expect_token(gtoks, {'POSINT'}).val
+        return fmt, nvars
 
-def _formula(gtoks, tok, fmt, X):
+def _sat_formula(gtoks, tok, fmt, X):
     if tok.typ == 'POSINT':
         assert tok.val <= len(X)
         return X[tok.val]
@@ -208,20 +207,28 @@ def _formula(gtoks, tok, fmt, X):
         return _one_formula(gtoks, fmt, X)
     # OR/AND/XOR/EQUAL
     else:
-        assert tok.typ in _SAT_OPS[fmt]
-        op = _OP_EXPR[tok.typ]
+        op = _SAT_TOK2OP[tok.typ]
         tok = _expect_token(gtoks, {'LPAREN'})
         return op(*_zom_formulas(gtoks, fmt, X))
 
 def _one_formula(gtoks, fmt, X):
-    f = _formula(gtoks, next(gtoks), fmt, X)
+    f = _sat_formula(gtoks, next(gtoks), fmt, X)
     _expect_token(gtoks, {'RPAREN'})
     return f
 
 def _zom_formulas(gtoks, fmt, X):
     fs = []
-    tok = _expect_token(gtoks, _FORMULA_TOKS | {'RPAREN'})
+    types = {'POSINT', 'LPAREN', 'RPAREN'} | _SAT_OP_TOKS[fmt]
+    tok = _expect_token(gtoks, types)
     while tok.typ != 'RPAREN':
-        fs.append(_formula(gtoks, tok, fmt, X))
-        tok = _expect_token(gtoks, _FORMULA_TOKS | {'RPAREN'})
+        fs.append(_sat_formula(gtoks, tok, fmt, X))
+        tok = _expect_token(gtoks, types)
     return fs
+
+def _expect_token(gtoks, types):
+    tok = next(gtoks)
+    if tok.typ in types:
+        return tok
+    else:
+        fstr = "unexpected token on line {0.line}, col {0.col}: {0.val}"
+        raise SyntaxError(fstr.format(tok))
