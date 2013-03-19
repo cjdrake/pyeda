@@ -3,7 +3,6 @@ Boolean Logic Expressions
 
 Interface Functions:
     var
-    comp
 
     factor
 
