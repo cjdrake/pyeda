@@ -1,7 +1,7 @@
 Python Electronic Design Automation Repository
 ==============================================
 
-Python EDA is a Python library for electronic design automation.
+PyEDA is a Python library for electronic design automation.
 
 `Read the docs! <http://pyeda.rtfd.org>`_
 
