@@ -186,7 +186,7 @@ def DNF_Or(*args):
     clauses = set()
     for arg in args:
         int2lit.update(arg.int2lit)
-        clauses |= arg.clauses
+        clauses.update(arg.clauses)
 
     return DisjNormalForm(int2lit, clauses)
 
@@ -198,7 +198,7 @@ def CNF_And(*args):
     clauses = set()
     for arg in args:
         int2lit.update(arg.int2lit)
-        clauses |= arg.clauses
+        clauses.update(arg.clauses)
 
     return ConjNormalForm(int2lit, clauses)
 
