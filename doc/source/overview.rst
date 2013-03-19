@@ -56,5 +56,5 @@ the "two-clause" BSD License.
 Repository
 ==========
 
-The PyEDA source code may be viewed on
+View the PyEDA source code on
 `GitHub <http://github.com/cjdrake/pyeda>`_.
