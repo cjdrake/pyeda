@@ -25,7 +25,7 @@ def expr2dnf(expr):
         for v in expr.inputs:
             int2lit[-v.gidx] = -v
             int2lit[v.gidx] = v
-        clauses = {tuple(sorted(lit.gidx for lit in clause.args))
+        clauses = {frozenset(lit.gidx for lit in clause.args)
                    for clause in expr.args}
         return DisjNormalForm(int2lit, clauses)
     else:
@@ -38,7 +38,7 @@ def expr2cnf(expr):
         for v in expr.inputs:
             int2lit[-v.gidx] = -v
             int2lit[v.gidx] = v
-        clauses = {tuple(sorted(lit.gidx for lit in clause.args))
+        clauses = {frozenset(lit.gidx for lit in clause.args)
                    for clause in expr.args}
         return ConjNormalForm(int2lit, clauses)
     else:
@@ -69,7 +69,7 @@ class NormalForm(Function):
 
     def __init__(self, int2lit, clauses):
         self.int2lit = int2lit
-        self.clauses = frozenset(clauses)
+        self.clauses = clauses
 
     # From Function
     @cached_property
@@ -92,7 +92,7 @@ class NormalForm(Function):
         new_clauses = set()
         for clause in self.clauses:
             if not any(n in clause for n in doms):
-                new_clause = tuple(n for n in clause if n not in idents)
+                new_clause = frozenset(n for n in clause if n not in idents)
                 if new_clause:
                     new_clauses.add(new_clause)
                 else:
@@ -210,7 +210,7 @@ def _bcp(cnf):
         point = dict()
         for clause in cnf.clauses:
             if len(clause) == 1:
-                num = clause[0]
+                num = list(clause)[0]
                 if num > 0:
                     point[cnf.int2lit[num]] = 1
                 else:
