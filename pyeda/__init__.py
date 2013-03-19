@@ -4,9 +4,9 @@ Python EDA Package
 arithmetic.py -- Boolean arithmetic
 binop.py      -- Binary operators
 boolfunc.py   -- Boolean functions
-cnf.py        -- Conjunctive normal forms
 common.py
 constant.py   -- Boolean constant functions
+dimacs.py     -- DIMACS parsing utilities
 expr.py       -- Boolean logic expressions
 sat.py        -- Boolean satisfiability algorithms
 table.py      -- Boolean tables
