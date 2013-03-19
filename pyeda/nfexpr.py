@@ -11,6 +11,8 @@ Interface Classes:
     ConjNormalForm
 """
 
+from collections import Counter
+
 from pyeda.common import boolify, cached_property
 from pyeda.boolfunc import Function
 from pyeda.expr import Expression, Or, And
@@ -20,11 +22,10 @@ def expr2dnf(expr):
     """Convert an expression into a DNF."""
     if expr.is_dnf():
         int2lit = dict()
-        for i, v in enumerate(expr.inputs):
-            int2lit[-(i+1)] = -v
-            int2lit[i+1] = v
-        lit2int = {lit: num for num, lit in int2lit.items()}
-        clauses = {tuple(sorted(lit2int[lit] for lit in clause.args))
+        for v in expr.inputs:
+            int2lit[-v.gidx] = -v
+            int2lit[v.gidx] = v
+        clauses = {tuple(sorted(lit.gidx for lit in clause.args))
                    for clause in expr.args}
         return DisjNormalForm(int2lit, clauses)
     else:
@@ -34,11 +35,10 @@ def expr2cnf(expr):
     """Convert an expression into a CNF."""
     if expr.is_cnf():
         int2lit = dict()
-        for i, v in enumerate(expr.inputs):
-            int2lit[-(i+1)] = -v
-            int2lit[i+1] = v
-        lit2int = {lit: num for num, lit in int2lit.items()}
-        clauses = {tuple(sorted(lit2int[lit] for lit in clause.args))
+        for v in expr.inputs:
+            int2lit[-v.gidx] = -v
+            int2lit[v.gidx] = v
+        clauses = {tuple(sorted(lit.gidx for lit in clause.args))
                    for clause in expr.args}
         return ConjNormalForm(int2lit, clauses)
     else:
@@ -69,7 +69,6 @@ class NormalForm(Function):
 
     def __init__(self, int2lit, clauses):
         self.int2lit = int2lit
-        self.lit2int = {lit: num for num, lit in int2lit.items()}
         self.clauses = frozenset(clauses)
 
     # From Function
@@ -87,8 +86,8 @@ class NormalForm(Function):
         doms = set()
         for v, val in mapping.items():
             low, high = (-v, v) if boolify(val) == self.IDENTITY else (v, -v)
-            idents.add(self.lit2int[low])
-            doms.add(self.lit2int[high])
+            idents.add(low.gidx)
+            doms.add(high.gidx)
 
         new_clauses = set()
         for clause in self.clauses:
@@ -159,23 +158,19 @@ class ConjNormalForm(NormalForm):
 
         Eliminating '-a' results in: -b + -c
         >>> cnf, point = cnf.ple()
-        >>> cnf.clauses == {(-3, -2)}, point
-        (True, {a: 0})
+        >>> cnf2expr(cnf), point
+        (b' + c', {a: 0})
         """
-        counter = dict()
+        cntr = Counter()
         for clause in self.clauses:
-            for num in clause:
-                if num in counter:
-                    counter[num] += 1
-                else:
-                    counter[num] = 0
+            cntr.update(clause)
 
         point = dict()
-        while counter:
-            num, cnt = counter.popitem()
-            if -num in counter:
-                counter.pop(-num)
-            elif cnt == 1:
+        while cntr:
+            num, cnt = cntr.popitem()
+            if -num in cntr:
+                cntr.pop(-num)
+            else:
                 point[self.int2lit[abs(num)]] = int(num > 0)
         if point:
             return self.restrict(point), point
@@ -184,46 +179,26 @@ class ConjNormalForm(NormalForm):
 
 
 def DNF_Or(*args):
-    args = [ expr2dnf(arg) if isinstance(arg, Expression) else arg
-             for arg in args ]
-
-    support = set()
-    for arg in args:
-        support |= arg.support
-    inputs = sorted(support)
+    args = [expr2dnf(arg) if isinstance(arg, Expression) else arg
+            for arg in args]
 
     int2lit = dict()
-    for i, v in enumerate(inputs):
-        int2lit[-(i+1)] = -v
-        int2lit[i+1] = v
-    lit2int = {lit: num for num, lit in int2lit.items()}
-
     clauses = set()
     for arg in args:
-        for clause in arg.clauses:
-            clauses.add(tuple(lit2int[arg.int2lit[num]] for num in clause))
+        int2lit.update(arg.int2lit)
+        clauses |= arg.clauses
 
     return DisjNormalForm(int2lit, clauses)
 
 def CNF_And(*args):
-    args = [ expr2cnf(arg) if isinstance(arg, Expression) else arg
-             for arg in args ]
-
-    support = set()
-    for arg in args:
-        support |= arg.support
-    inputs = sorted(support)
+    args = [expr2cnf(arg) if isinstance(arg, Expression) else arg
+            for arg in args]
 
     int2lit = dict()
-    for i, v in enumerate(inputs):
-        int2lit[-(i+1)] = -v
-        int2lit[i+1] = v
-    lit2int = {lit: num for num, lit in int2lit.items()}
-
     clauses = set()
     for arg in args:
-        for clause in arg.clauses:
-            clauses.add(tuple(lit2int[arg.int2lit[num]] for num in clause))
+        int2lit.update(arg.int2lit)
+        clauses |= arg.clauses
 
     return ConjNormalForm(int2lit, clauses)
 

@@ -33,7 +33,7 @@ Interface Classes:
         Equal
 """
 
-from collections import deque
+from collections import deque, OrderedDict
 
 from pyeda import boolfunc
 from pyeda import sat
@@ -610,7 +610,7 @@ class Variable(boolfunc.Variable, Literal):
 
     def __new__(cls, name, indices=None, namespace=None):
         if namespace not in cls._MEM:
-            cls._MEM[namespace] = dict()
+            cls._MEM[namespace] = OrderedDict()
         try:
             self = cls._MEM[namespace][(name, indices)]
         except KeyError:
@@ -685,6 +685,10 @@ class Variable(boolfunc.Variable, Literal):
         return 1, {self: 1}
 
     # Specific to Variable
+    @cached_property
+    def gidx(self):
+        return list(self._MEM[self.namespace].values()).index(self) + 1
+
     @property
     def minterm_index(self):
         return 1
@@ -780,6 +784,10 @@ class Complement(Literal):
         return 1, {self.var: 0}
 
     # Specific to Complement
+    @property
+    def gidx(self):
+        return -self.var.gidx
+
     @property
     def minterm_index(self):
         return 0
