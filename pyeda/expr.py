@@ -547,12 +547,17 @@ class Expression(boolfunc.Function):
     def equivalent(self, other):
         """Return whether this expression is equivalent to another.
 
-        NOTE: This algorithm uses exponential time and memory.
+        NOTE: This algorithm uses exponential time.
         """
-        if self.support == other.support:
-            return self.min_indices == other.min_indices
-        else:
+        f = And(Or(Not(self), Not(other)), Or(self, other))
+        if f == 0:
+            return True
+        elif f == 1:
             return False
+        elif f.is_cnf():
+            return f.satisfy_one(algorithm='dpll') is None
+        else:
+            return f.satisfy_one(algorithm='backtrack') is None
 
     # Convenience methods
     def _get_restrictions(self, mapping):
