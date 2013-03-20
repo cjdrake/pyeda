@@ -686,7 +686,9 @@ class Variable(boolfunc.Variable, Literal):
     # Specific to Variable
     @cached_property
     def gidx(self):
-        return list(self._MEM[self.namespace].values()).index(self) + 1
+        for i, v in enumerate(self._MEM[self.namespace].values(), start=1):
+            if v == self:
+                return i
 
     @property
     def minterm_index(self):
