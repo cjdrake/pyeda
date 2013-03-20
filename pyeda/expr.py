@@ -547,7 +547,6 @@ class Expression(boolfunc.Function):
     def equivalent(self, other):
         """Return whether this expression is equivalent to another.
 
-        NOTE: This algorithm uses exponential time.
         """
         f = And(Or(Not(self), Not(other)), Or(self, other))
         if f == 0:
