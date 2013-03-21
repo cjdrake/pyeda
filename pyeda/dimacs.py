@@ -19,19 +19,13 @@ from pyeda.vexpr import bitvec
 
 Token = collections.namedtuple('Token', ['typ', 'val', 'line', 'col'])
 
+_CNF_PREAMBLE_RE = re.compile(r"(?:c.*\n)*p\s+cnf\s+([1-9][0-9]*)\s+([1-9][0-9]*)\s*\n")
+_SAT_PREAMBLE_RE = re.compile(r"(?:c.*\n)*p\s+(sat|satx|sate|satex)\s+([1-9][0-9]*)\s*\n")
+
 # lexical states
-_TOK_RE = (
+_TOK_PAIRS = (
     ('WS', r'[ \t]+'),
     ('NL', r'\n'),
-
-    ('CNF',   r'\bcnf\b'),
-    ('SATEX', r'\bsatex\b'),
-    ('SATX',  r'\bsatx\b'),
-    ('SATE',  r'\bsate\b'),
-    ('SAT',   r'\bsat\b'),
-
-    ('c', r'c.*'),
-    ('p', r'p'),
 
     ('ZERO',   r'0'),
     ('POSINT', r'[1-9][0-9]*'),
@@ -46,17 +40,17 @@ _TOK_RE = (
     ('EQUAL', r'='),
 )
 
-_regex = re.compile('|'.join("(?P<%s>%s)" % pair for pair in _TOK_RE))
+_TOK_RE = re.compile('|'.join("(?P<{}>{})".format(*pair)
+                              for pair in _TOK_PAIRS))
 
-def iter_tokens(s):
+def _iter_tokens(s, line=1):
     """Iterate through all tokens in a DIMACS format input string.
 
     This method is common between cnf/sat/satx/sate/satex formats
     """
-    line = 1
     pos = line_start = 0
 
-    m = _regex.match(s)
+    m = _TOK_RE.match(s)
     while m is not None:
         typ = m.lastgroup
         if typ == 'NL':
@@ -69,18 +63,26 @@ def iter_tokens(s):
             col = m.start() - line_start
             yield Token(typ, val, line, col)
         pos = m.end()
-        m = _regex.match(s, pos)
+        m = _TOK_RE.match(s, pos)
     if pos != len(s):
         fstr = "unexpected character on line {}: {}"
         raise SyntaxError(fstr.format(line, s[pos]))
+
+def _expect_token(gtoks, types):
+    tok = next(gtoks)
+    if tok.typ in types:
+        return tok
+    else:
+        fstr = "unexpected token on line {0.line}, col {0.col}: {0.val}"
+        raise SyntaxError(fstr.format(tok))
 
 # Grammar for a CNF file
 #
 # CNF := COMMENT* PREAMBLE FORMULA
 #
-# COMMENT := 'c' .*
+# COMMENT := 'c' .* NL
 #
-# PREAMBLE := 'p' 'cnf' VARIABLES CLAUSES
+# PREAMBLE := 'p' 'cnf' VARIABLES CLAUSES NL
 #
 # VARIABLES := POSINT
 #
@@ -92,15 +94,19 @@ _CNF_FORMULA_TOKS = {'ZERO', 'NOT', 'POSINT'}
 
 def parse_cnf(s, varname='x'):
     """Parse an input string in DIMACS CNF format, and return an expression."""
-    gtoks = iter_tokens(s)
-    try:
-        nvars, ncls = _cnf_preamble(gtoks)
-    except StopIteration:
-        raise SyntaxError("incomplete preamble")
+    m = _CNF_PREAMBLE_RE.match(s)
+    if m:
+        nvars = int(m.group(1))
+        ncls = int(m.group(2))
+    else:
+        raise SyntaxError("incorrect preamble")
 
+    ps, fs = s[:m.end()], s[m.end():]
+    line = ps.count('\n') + 1
+
+    gtoks = _iter_tokens(fs, line)
     X = bitvec(varname, (1, nvars + 1))
     clauses = [[]]
-
     try:
         while True:
             tok = _expect_token(gtoks, _CNF_FORMULA_TOKS)
@@ -110,7 +116,7 @@ def parse_cnf(s, varname='x'):
                 tok = _expect_token(gtoks, {'POSINT'})
                 assert tok.val <= len(X)
                 clauses[-1].append(-X[tok.val])
-            else:
+            elif tok.typ == 'POSINT':
                 assert tok.val <= len(X)
                 clauses[-1].append(X[tok.val])
     except StopIteration:
@@ -119,23 +125,13 @@ def parse_cnf(s, varname='x'):
     assert len(clauses) == ncls
     return And(*[Or(*clause) for clause in clauses])
 
-def _cnf_preamble(gtoks):
-    tok = _expect_token(gtoks, {'c', 'p'})
-    if tok.typ == 'c':
-        return _cnf_preamble(gtoks)
-    else:
-        _expect_token(gtoks, {'CNF'})
-        nvars = _expect_token(gtoks, {'POSINT'}).val
-        ncls = _expect_token(gtoks, {'POSINT'}).val
-        return nvars, ncls
-
 # Grammar for a SAT file
 #
 # SAT := COMMENT* PREAMBLE FORMULA
 #
-# COMMENT := 'c' .*
+# COMMENT := 'c' .* NL
 #
-# PREAMBLE := 'p' FORMAT VARIABLES
+# PREAMBLE := 'p' FORMAT VARIABLES NL
 #
 # FORMAT := 'sat' | 'satx' | 'sate' | 'satex'
 #
@@ -149,8 +145,6 @@ def _cnf_preamble(gtoks):
 #          | '*' '(' FORMULA* ')'
 #          | 'xor' '(' FORMULA* ')'
 #          | '=' '(' FORMULA* ')'
-
-_SAT_FORMAT_TOKS = {'SAT', 'SATX', 'SATE', 'SATEX'}
 
 _SAT_OP_TOKS = {
     'sat': {'NOT', 'OR', 'AND'},
@@ -169,12 +163,17 @@ _SAT_TOK2OP = {
 
 def parse_sat(s, varname='x'):
     """Parse an input string in DIMACS SAT format, and return an expression."""
-    gtoks = iter_tokens(s)
-    try:
-        fmt, nvars = _sat_preamble(gtoks)
-    except StopIteration:
-        raise SyntaxError("incomplete preamble")
+    m = _SAT_PREAMBLE_RE.match(s)
+    if m:
+        fmt = m.group(1)
+        nvars = int(m.group(2))
+    else:
+        raise SyntaxError("incorrect preamble")
 
+    ps, fs = s[:m.end()], s[m.end():]
+    line = ps.count('\n') + 1
+
+    gtoks = _iter_tokens(fs, line)
     types = {'POSINT', 'LPAREN'} | _SAT_OP_TOKS[fmt]
     X = bitvec(varname, (1, nvars + 1))
     try:
@@ -182,15 +181,6 @@ def parse_sat(s, varname='x'):
         return _sat_formula(gtoks, tok, fmt, X)
     except StopIteration:
         raise SyntaxError("incomplete formula")
-
-def _sat_preamble(gtoks):
-    tok = _expect_token(gtoks, {'c', 'p'})
-    if tok.typ == 'c':
-        return _sat_preamble(gtoks)
-    else:
-        fmt = _expect_token(gtoks, _SAT_FORMAT_TOKS).val
-        nvars = _expect_token(gtoks, {'POSINT'}).val
-        return fmt, nvars
 
 def _sat_formula(gtoks, tok, fmt, X):
     if tok.typ == 'POSINT':
@@ -224,11 +214,3 @@ def _zom_formulas(gtoks, fmt, X):
         fs.append(_sat_formula(gtoks, tok, fmt, X))
         tok = _expect_token(gtoks, types)
     return fs
-
-def _expect_token(gtoks, types):
-    tok = next(gtoks)
-    if tok.typ in types:
-        return tok
-    else:
-        fstr = "unexpected token on line {0.line}, col {0.col}: {0.val}"
-        raise SyntaxError(fstr.format(tok))
