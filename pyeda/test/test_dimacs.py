@@ -3,7 +3,7 @@ Test the DIMACS parser
 """
 
 from pyeda.vexpr import bitvec
-from pyeda.dimacs import parse_cnf, parse_sat
+from pyeda.dimacs import load_cnf, dump_cnf, load_sat, dump_sat
 from pyeda.expr import Xor, Equal
 
 import nose
@@ -118,31 +118,31 @@ p satex 6
 """
 
 def test_cnf_errors():
-    nose.tools.assert_raises(SyntaxError, parse_cnf, CNF_NO_PREAMBLE)
-    nose.tools.assert_raises(SyntaxError, parse_cnf, CNF_INCORRECT_PREAMBLE_1)
-    nose.tools.assert_raises(SyntaxError, parse_cnf, CNF_INCORRECT_PREAMBLE_2)
-    nose.tools.assert_raises(SyntaxError, parse_cnf, CNF_INCORRECT_PREAMBLE_3)
-    nose.tools.assert_raises(SyntaxError, parse_cnf, CNF_INCORRECT_FORMULA_1)
-    nose.tools.assert_raises(SyntaxError, parse_cnf, CNF_INCORRECT_FORMULA_2)
+    nose.tools.assert_raises(SyntaxError, load_cnf, CNF_NO_PREAMBLE)
+    nose.tools.assert_raises(SyntaxError, load_cnf, CNF_INCORRECT_PREAMBLE_1)
+    nose.tools.assert_raises(SyntaxError, load_cnf, CNF_INCORRECT_PREAMBLE_2)
+    nose.tools.assert_raises(SyntaxError, load_cnf, CNF_INCORRECT_PREAMBLE_3)
+    nose.tools.assert_raises(SyntaxError, load_cnf, CNF_INCORRECT_FORMULA_1)
+    nose.tools.assert_raises(SyntaxError, load_cnf, CNF_INCORRECT_FORMULA_2)
 
 def test_cnf():
-    assert parse_cnf(CNF_F1_1).equivalent(F1)
-    assert parse_cnf(CNF_F1_2).equivalent(F1)
-    assert parse_cnf(CNF_F1_3).equivalent(F1)
+    assert load_cnf(CNF_F1_1).equivalent(F1)
+    assert load_cnf(CNF_F1_2).equivalent(F1)
+    assert load_cnf(CNF_F1_3).equivalent(F1)
 
 def test_sat_errors():
-    nose.tools.assert_raises(SyntaxError, parse_sat, SAT_INCORRECT_PREAMBLE_1)
-    nose.tools.assert_raises(SyntaxError, parse_sat, SAT_INCORRECT_PREAMBLE_2)
+    nose.tools.assert_raises(SyntaxError, load_sat, SAT_INCORRECT_PREAMBLE_1)
+    nose.tools.assert_raises(SyntaxError, load_sat, SAT_INCORRECT_PREAMBLE_2)
 
 def test_sat():
-    assert parse_sat(SAT_F1_1).equivalent(F1)
-    assert parse_sat(SAT_F2_1).equivalent(F2)
+    assert load_sat(SAT_F1_1).equivalent(F1)
+    assert load_sat(SAT_F2_1).equivalent(F2)
 
 def test_satx():
-    assert parse_sat(SAT_F3_1).equivalent(F3)
+    assert load_sat(SAT_F3_1).equivalent(F3)
 
 def test_sate():
-    assert parse_sat(SAT_F4_1).equivalent(F4)
+    assert load_sat(SAT_F4_1).equivalent(F4)
 
 def test_satex():
-    assert parse_sat(SAT_F5_1).equivalent(F5)
+    assert load_sat(SAT_F5_1).equivalent(F5)

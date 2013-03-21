@@ -5,8 +5,10 @@ For more information on the input formats,
 see "Satisfiability Suggested Format".
 
 Interface Functions:
-    parse_cnf
-    parse_sat
+    load_cnf
+    dump_cnf
+    load_sat
+    dump_sat
 """
 
 # standard library
@@ -14,7 +16,7 @@ import collections
 import re
 
 # pyeda
-from pyeda.expr import Not, Or, And, Xor, Equal
+from pyeda.expr import Expression, Literal, Not, Or, And, Xor, Equal
 from pyeda.vexpr import bitvec
 
 Token = collections.namedtuple('Token', ['typ', 'val', 'line', 'col'])
@@ -92,7 +94,7 @@ def _expect_token(gtoks, types):
 
 _CNF_FORMULA_TOKS = {'ZERO', 'NOT', 'POSINT'}
 
-def parse_cnf(s, varname='x'):
+def load_cnf(s, varname='x'):
     """Parse an input string in DIMACS CNF format, and return an expression."""
     m = _CNF_PREAMBLE_RE.match(s)
     if m:
@@ -124,6 +126,17 @@ def parse_cnf(s, varname='x'):
 
     assert len(clauses) == ncls
     return And(*[Or(*clause) for clause in clauses])
+
+def dump_cnf(expr):
+    if not isinstance(expr, Expression):
+        raise ValueError("input is not an expression")
+    if not expr.is_cnf():
+        raise ValueError("expression is not a CNF")
+    formula = " 0\n".join(" ".join(str(arg.gidx) for arg in clause.args)
+                          for clause in expr.args)
+    nvars = max(v.gidx for v in expr.support)
+    ncls = len(expr.args)
+    return "p cnf {} {}\n{}".format(nvars, ncls, formula)
 
 # Grammar for a SAT file
 #
@@ -161,7 +174,7 @@ _SAT_TOK2OP = {
     'EQUAL': Equal,
 }
 
-def parse_sat(s, varname='x'):
+def load_sat(s, varname='x'):
     """Parse an input string in DIMACS SAT format, and return an expression."""
     m = _SAT_PREAMBLE_RE.match(s)
     if m:
@@ -214,3 +227,33 @@ def _zom_formulas(gtoks, fmt, X):
         fs.append(_sat_formula(gtoks, tok, fmt, X))
         tok = _expect_token(gtoks, types)
     return fs
+
+def dump_sat(expr):
+    if not isinstance(expr, Expression):
+        raise ValueError("input is not an expression")
+
+    formula = _expr2sat(expr)
+    if 'xor' in formula:
+        fmt = 'satex' if '=' in formula else 'satx'
+    elif '=' in formula:
+        fmt = 'sate'
+    else:
+        fmt = 'sat'
+    nvars = max(v.gidx for v in expr.support)
+    return "p {} {}\n{}".format(fmt, nvars, formula)
+
+def _expr2sat(expr):
+    if isinstance(expr, Literal):
+        return str(expr.gidx)
+    elif isinstance(expr, Not):
+        return "-(" + _expr2sat(expr.arg) + ")"
+    elif isinstance(expr, Or):
+        return "+(" + " ".join(_expr2sat(arg) for arg in expr.args) + ")"
+    elif isinstance(expr, And):
+        return "*(" + " ".join(_expr2sat(arg) for arg in expr.args) + ")"
+    elif isinstance(expr, Xor):
+        return "xor(" + " ".join(_expr2sat(arg) for arg in expr.args) + ")"
+    elif isinstance(expr, Equal):
+        return "=(" + " ".join(_expr2sat(arg) for arg in expr.args) + ")"
+    else:
+        raise ValueError("invalid expression")
