@@ -609,18 +609,16 @@ class Literal(Expression):
 class Variable(boolfunc.Variable, Literal):
     """Boolean variable (expression)"""
 
-    _MEM = dict()
+    _MEM = OrderedDict()
 
     def __new__(cls, name, indices=None, namespace=None):
-        if namespace not in cls._MEM:
-            cls._MEM[namespace] = OrderedDict()
         try:
-            self = cls._MEM[namespace][(name, indices)]
+            self = cls._MEM[(namespace, name, indices)]
         except KeyError:
             self = boolfunc.Variable.__new__(cls, name, indices, namespace)
             self._support = {self}
             self._args = (self, )
-            cls._MEM[namespace][(name, indices)] = self
+            cls._MEM[(namespace, name, indices)] = self
         return self
 
     # From Function
@@ -690,7 +688,7 @@ class Variable(boolfunc.Variable, Literal):
     # Specific to Variable
     @cached_property
     def gidx(self):
-        for i, v in enumerate(self._MEM[self.namespace].values(), start=1):
+        for i, v in enumerate(self._MEM.values(), start=1):
             if v == self:
                 return i
 
