@@ -5,6 +5,7 @@ Interface Functions:
     var
 
     factor
+    simplify
 
     Nor, Nand
     OneHot0, OneHot
@@ -46,14 +47,18 @@ def factor(expr):
     """Return a factored expression."""
     return expr.factor()
 
-# convenience functions
-def Nor(*args, **kwargs):
-    """Alias for Not Or"""
-    return Not(Or(*args, **kwargs))
+def simplify(expr):
+    """Return a simplified expression."""
+    return expr.simplify()
 
-def Nand(*args, **kwargs):
+# convenience functions
+def Nor(*args):
+    """Alias for Not Or"""
+    return Not(Or(*args))
+
+def Nand(*args):
     """Alias for Not And"""
-    return Not(And(*args, **kwargs))
+    return Not(And(*args))
 
 def OneHot0(*args):
     """
@@ -444,6 +449,10 @@ class Expression(boolfunc.Function):
         """
         raise NotImplementedError()
 
+    def simplify(self):
+        """Return a simplified expression."""
+        return self
+
     def iter_minterms(self):
         """Iterate through the sum of products of N literals."""
         for point in self.iter_ones():
@@ -800,15 +809,9 @@ class OrAnd(Expression):
             if degenerate:
                 return args
 
-        # Or() = 0; And() = 1
-        if len(args) == 0:
-            return cls.IDENTITY
-        # Or(x) = x; And(x) = x
-        if len(args) == 1:
-            return args[0]
-
         self = super(OrAnd, cls).__new__(cls)
         self._args = args
+        self._simplified = simplify
         return self
 
     @classmethod
@@ -823,7 +826,8 @@ class OrAnd(Expression):
                     temps.extendleft(reversed(arg.args))
                 # complement
                 elif isinstance(arg, Literal) and -arg in args:
-                    return True, cls.DOMINATOR
+                    args = [cls.DOMINATOR]
+                    break
                 # idempotent
                 elif arg not in args:
                     args.append(arg)
@@ -831,7 +835,15 @@ class OrAnd(Expression):
                 num = boolify(arg)
                 # domination
                 if num == cls.DOMINATOR:
-                    return True, cls.DOMINATOR
+                    args = [cls.DOMINATOR]
+                    break
+
+        # Or() = 0; And() = 1
+        if len(args) == 0:
+            return True, cls.IDENTITY
+        # Or(x) = x; And(x) = x
+        if len(args) == 1:
+            return True, args[0]
 
         return False, tuple(args)
 
@@ -945,10 +957,22 @@ class OrAnd(Expression):
         """
         return self.__class__(*[arg.factor() for arg in self._args])
 
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        degenerate, args = self._simplify(self._args)
+        if degenerate:
+            return args
+
+        obj = super(OrAnd, self).__new__(self.__class__)
+        obj._args = args
+        obj._simplified = True
+        return obj
+
     # Specific to OrAnd
     def is_nf(self):
-        """Return whether this expression is in normal form.
-        """
+        """Return whether this expression is in normal form."""
         return (
             self.depth <= 2 and
             all(isinstance(arg, Literal) or isinstance(arg, self.DUAL)
@@ -1088,8 +1112,12 @@ class Or(OrAnd):
     DOMINATOR = 1
 
     def __str__(self):
+        try:
+            args = sorted(self._args)
+        except (AttributeError, TypeError):
+            args = list(self._args)
         sep = " " + self.OP + " "
-        return sep.join(str(arg) for arg in sorted(self._args))
+        return sep.join(str(arg) for arg in args)
 
     def is_dnf(self):
         """Return whether this expression is in disjunctive normal form.
@@ -1165,8 +1193,12 @@ class And(OrAnd):
     DOMINATOR = 0
 
     def __str__(self):
+        try:
+            args = sorted(self._args)
+        except (AttributeError, TypeError):
+            args = list(self._args)
         s = list()
-        for arg in sorted(self._args):
+        for arg in args:
             if isinstance(arg, Or):
                 s.append("(" + str(arg) + ")")
             else:
@@ -1249,20 +1281,29 @@ class Not(Expression):
     >>> Not(a + -a), Not(a * -a)
     (0, 1)
     """
-    def __new__(cls, arg):
-        # Auto-simplify numbers and literals
+    def __new__(cls, arg, simplify=True):
+        if simplify:
+            degenerate, arg = cls._simplify(arg)
+            if degenerate:
+                return arg
+
+        self = super(Not, cls).__new__(cls)
+        self._args = (arg, )
+        self._simplified = simplify
+        return self
+
+    @classmethod
+    def _simplify(cls, arg):
         if isinstance(arg, Expression):
             if isinstance(arg, Literal):
-                return arg.invert()
+                return True, arg.invert()
             else:
-                self = super(Not, cls).__new__(cls)
-                self._args = (arg, )
-                return self
+                return False, arg
         else:
-            return 1 - boolify(arg)
+            return True, 1 - boolify(arg)
 
     def __str__(self):
-        return "Not({0.arg})".format(self)
+        return "Not(" + str(self.arg) + ")"
 
     # From Function
     def restrict(self, mapping):
@@ -1300,6 +1341,19 @@ class Not(Expression):
     def factor(self):
         return self.arg.invert().factor()
 
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        degenerate, arg = self._simplify(self.arg)
+        if degenerate:
+            return arg
+
+        obj = super(Not, self).__new__(self.__class__)
+        obj._args = (arg, )
+        obj._simplified = True
+        return obj
+
     # Specific to Not
     @property
     def arg(self):
@@ -1312,19 +1366,15 @@ class Exclusive(Expression):
     def __new__(cls, *args, **kwargs):
         simplify = kwargs.get('simplify', True)
         if simplify:
-            args, parity = cls._simplify(args)
+            degenerate, args, parity = cls._simplify(args)
+            if degenerate:
+                return args
         else:
             parity = cls.PARITY
 
-        # Xor() = 0; Xnor() = 1
-        if len(args) == 0:
-            return parity
-        # Xor(x) = x; Xnor(x) = x'
-        if len(args) == 1:
-            return Not(args[0]) if parity else args[0]
-
         self = super(Exclusive, cls).__new__(cls)
         self._args = args
+        self._simplified = simplify
         self._parity = parity
         return self
 
@@ -1351,14 +1401,21 @@ class Exclusive(Expression):
             else:
                 parity ^= boolify(arg)
 
-        return tuple(args), parity
+        # Xor() = 0; Xnor() = 1
+        if len(args) == 0:
+            return True, parity, None
+        # Xor(x) = x; Xnor(x) = x'
+        if len(args) == 1:
+            return True, Not(args[0]) if parity else args[0], None
+
+        return False, tuple(args), parity
 
     def __str__(self):
-        args = ", ".join(str(arg) for arg in self._args)
+        args_str = ", ".join(str(arg) for arg in self._args)
         if self._parity:
-            return "Xnor(" + args + ")"
+            return "Xnor(" + args_str + ")"
         else:
-            return "Xor(" + args + ")"
+            return "Xor(" + args_str + ")"
 
     # From Function
     def restrict(self, mapping):
@@ -1410,6 +1467,21 @@ class Exclusive(Expression):
             return Or(And(Not(fst).factor(), Xnor(*rst).factor()),
                       And(fst.factor(), Xor(*rst).factor()))
 
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        degenerate, args, parity = self._simplify(self._args)
+        if degenerate:
+            return args
+
+        obj = super(Exclusive, self).__new__(self.__class__)
+        obj._args = args
+        obj._simplified = True
+        obj._parity = parity
+        return obj
+
+
 class Xor(Exclusive):
     """Boolean Exclusive OR (XOR) operator"""
     PARITY = 0
@@ -1429,12 +1501,9 @@ class Equal(Expression):
             if degenerate:
                 return args
 
-        # Equal(x) = Equal() = 1
-        if len(args) <= 1:
-            return 1
-
         self = super(Equal, cls).__new__(cls)
         self._args = args
+        self._simplified = simplify
         return self
 
     @classmethod
@@ -1462,11 +1531,15 @@ class Equal(Expression):
             elif arg not in args:
                 args.append(arg)
 
+        # Equal(x) = Equal() = 1
+        if len(args) <= 1:
+            return True, 1
+
         return False, tuple(args)
 
     def __str__(self):
-        args = ", ".join(str(arg) for arg in self._args)
-        return "Equal(" + args + ")"
+        args_str = ", ".join(str(arg) for arg in self._args)
+        return "Equal(" + args_str + ")"
 
     # From Function
     def restrict(self, mapping):
@@ -1489,6 +1562,19 @@ class Equal(Expression):
         return Or(And(*[Not(arg).factor() for arg in self._args]),
                   And(*[arg.factor() for arg in self._args]))
 
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        degenerate, args = self._simplify(self._args)
+        if degenerate:
+            return args
+
+        obj = super(Equal, self).__new__(self.__class__)
+        obj._args = args
+        obj._simplified = True
+        return obj
+
 
 class Implies(Expression):
     """Boolean implication operator"""
@@ -1505,6 +1591,7 @@ class Implies(Expression):
 
         self = super(Implies, cls).__new__(cls)
         self._args = args
+        self._simplified = simplify
         return self
 
     @classmethod
@@ -1534,7 +1621,7 @@ class Implies(Expression):
     def __str__(self):
         s = list()
         for arg in self._args:
-            if isinstance(arg, Literal):
+            if isinstance(arg, int) or isinstance(arg, Literal):
                 s.append(str(arg))
             else:
                 s.append("(" + str(arg) + ")")
@@ -1560,6 +1647,19 @@ class Implies(Expression):
 
     def factor(self):
         return Or(Not(self._args[0]).factor(), self._args[1].factor())
+
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        degenerate, args = self._simplify(*self._args)
+        if degenerate:
+            return args
+
+        obj = super(Implies, self).__new__(self.__class__)
+        obj._args = args
+        obj._simplified = True
+        return obj
 
 
 def _bcp(cnf):
