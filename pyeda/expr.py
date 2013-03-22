@@ -13,8 +13,8 @@ Interface Functions:
     f_or, f_nor
     f_and, f_nand
     f_xor, f_xnor
-    f_implies
     f_equal
+    f_implies
 
 Interface Classes:
     Expression
@@ -28,8 +28,8 @@ Interface Classes:
         Exclusive
             Xor
             Xnor
-        Implies
         Equal
+        Implies
 """
 
 from collections import deque, OrderedDict
@@ -137,23 +137,13 @@ def f_xnor(*args):
     """Return factored XNOR expression."""
     return Xnor(*args).factor()
 
-def f_implies(antecedent, consequence):
-    """Return factored Implies expression.
-
-    >>> a, b = map(var, "ab")
-    >>> f_implies(a, b)
-    a' + b
-    """
-    return Implies(antecedent, consequence).factor()
-
 def f_equal(*args):
-    """Return factored Equal expression.
-
-    >>> a, b, c = map(var, "abc")
-    >>> f_equal(a, b, c)
-    a' * b' * c' + a * b * c
-    """
+    """Return factored Equal expression."""
     return Equal(*args).factor()
+
+def f_implies(antecedent, consequence):
+    """Return factored Implies expression."""
+    return Implies(antecedent, consequence).factor()
 
 
 class Expression(boolfunc.Function):
@@ -242,34 +232,6 @@ class Expression(boolfunc.Function):
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    def __rshift__(self, arg):
-        """Boolean implication
-
-        +---+---+--------+
-        | f | g | f -> g |
-        +---+---+--------+
-        | 0 | 0 |    1   |
-        | 0 | 1 |    1   |
-        | 1 | 0 |    0   |
-        | 1 | 1 |    1   |
-        +---+---+--------+
-        """
-        return Implies(self, arg)
-
-    def __rrshift__(self, arg):
-        """Reverse Boolean implication
-
-        +---+---+--------+
-        | f | g | f <- g |
-        +---+---+--------+
-        | 0 | 0 |    1   |
-        | 0 | 1 |    0   |
-        | 1 | 0 |    1   |
-        | 1 | 1 |    1   |
-        +---+---+--------+
-        """
-        return Implies(arg, self)
-
     def xor(self, *args):
         """Boolean XOR (odd parity)
 
@@ -305,6 +267,34 @@ class Expression(boolfunc.Function):
         +-------+-----------+
         """
         return Equal(self, *args)
+
+    def __rshift__(self, arg):
+        """Boolean implication
+
+        +---+---+--------+
+        | f | g | f -> g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    1   |
+        | 1 | 0 |    0   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
+        """
+        return Implies(self, arg)
+
+    def __rrshift__(self, arg):
+        """Reverse Boolean implication
+
+        +---+---+--------+
+        | f | g | f <- g |
+        +---+---+--------+
+        | 0 | 0 |    1   |
+        | 0 | 1 |    0   |
+        | 1 | 0 |    1   |
+        | 1 | 1 |    1   |
+        +---+---+--------+
+        """
+        return Implies(arg, self)
 
     def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':
@@ -1408,117 +1398,16 @@ class Exclusive(Expression):
                       And(fst.factor(), Xor(*rst).factor()))
 
 class Xor(Exclusive):
-    """Boolean Exclusive OR (XOR) operator
-
-    >>> a, b, c = map(var, "abc")
-    >>> Xor(), Xor(a)
-    (0, a)
-    >>> Xor(0, 0), Xor(0, 1), Xor(1, 0), Xor(1, 1)
-    (0, 1, 1, 0)
-    >>> Xor(a, a), Xor(a, -a)
-    (0, 1)
-    """
+    """Boolean Exclusive OR (XOR) operator"""
     PARITY = 0
 
 class Xnor(Exclusive):
-    """Boolean Exclusive NOR (XNOR) operator
-
-    >>> a, b, c = map(var, "abc")
-    >>> Xnor(), Xnor(a)
-    (1, a')
-    >>> Xnor(0, 0), Xnor(0, 1), Xnor(1, 0), Xnor(1, 1)
-    (1, 0, 0, 1)
-    >>> Xnor(a, a), Xnor(a, -a)
-    (1, 0)
-    """
+    """Boolean Exclusive NOR (XNOR) operator"""
     PARITY = 1
 
 
-class Implies(Expression):
-    """Boolean implication operator
-
-    >>> a, b = map(var, "ab")
-    >>> 0 >> a, 1 >> a, a >> 0, a >> 1
-    (1, a, a', 1)
-    >>> a >> a, a >> -a, -a >> a
-    (1, a', a)
-    >>> (a >> b).factor()
-    a' + b
-    """
-
-    OP = "=>"
-
-    def __new__(cls, antecedent, consequence):
-        args = [arg if isinstance(arg, Expression) else boolify(arg)
-                for arg in (antecedent, consequence)]
-        # 0 => x = 1; x => 1 = 1
-        if args[0] == 0 or args[1] == 1:
-            return 1
-        # 1 => x = x
-        elif args[0] == 1:
-            return args[1]
-        # x => 0 = x'
-        elif args[1] == 0:
-            return Not(args[0])
-        elif isinstance(args[0], Literal):
-            # x -> x = 1
-            if args[0] == args[1]:
-                return 1
-            # -x -> x = x
-            elif args[0] == -args[1]:
-                return args[1]
-        self = super(Implies, cls).__new__(cls)
-        self._args = tuple(args)
-        return self
-
-    def __str__(self):
-        s = list()
-        for arg in self._args:
-            if isinstance(arg, Literal):
-                s.append(str(arg))
-            else:
-                s.append("(" + str(arg) + ")")
-        sep = " " + self.OP + " "
-        return sep.join(s)
-
-    # From Function
-    def restrict(self, mapping):
-        idx_arg = self._get_restrictions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
-
-    def compose(self, mapping):
-        idx_arg = self._get_compositions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
-
-    # From Expression
-    @property
-    def depth(self):
-        return max(arg.depth + 1 for arg in self._args)
-
-    def invert(self):
-        return And(self._args[0], Not(self._args[1]))
-
-    def factor(self):
-        return Or(Not(self._args[0]).factor(), self._args[1].factor())
-
-
 class Equal(Expression):
-    """Boolean EQUAL operator
-
-    >>> a, b, c = map(var, "abc")
-    >>> Equal(0, 0), Equal(0, 1), Equal(1, 0), Equal(1, 1)
-    (1, 0, 0, 1)
-    >>> Equal(0, a), Equal(a, 0), Equal(1, a), Equal(a, 1)
-    (a', a', a, a)
-    >>> Equal(a, a), Equal(a, -a)
-    (1, 0)
-    >>> Equal(a, b, c).invert().factor()
-    (a + b + c) * (a' + b' + c')
-    >>> Equal(a, b, c).factor()
-    a' * b' * c' + a * b * c
-    """
-
-    OP = "="
+    """Boolean EQUAL operator"""
 
     def __new__(cls, *args):
         args = deque(arg if isinstance(arg, Expression) else boolify(arg)
@@ -1576,6 +1465,65 @@ class Equal(Expression):
     def factor(self):
         return Or(And(*[Not(arg).factor() for arg in self._args]),
                   And(*[arg.factor() for arg in self._args]))
+
+
+class Implies(Expression):
+    """Boolean implication operator"""
+
+    OP = "=>"
+
+    def __new__(cls, antecedent, consequence):
+        args = [arg if isinstance(arg, Expression) else boolify(arg)
+                for arg in (antecedent, consequence)]
+        # 0 => x = 1; x => 1 = 1
+        if args[0] == 0 or args[1] == 1:
+            return 1
+        # 1 => x = x
+        elif args[0] == 1:
+            return args[1]
+        # x => 0 = x'
+        elif args[1] == 0:
+            return Not(args[0])
+        elif isinstance(args[0], Literal):
+            # x -> x = 1
+            if args[0] == args[1]:
+                return 1
+            # -x -> x = x
+            elif args[0] == -args[1]:
+                return args[1]
+        self = super(Implies, cls).__new__(cls)
+        self._args = tuple(args)
+        return self
+
+    def __str__(self):
+        s = list()
+        for arg in self._args:
+            if isinstance(arg, Literal):
+                s.append(str(arg))
+            else:
+                s.append("(" + str(arg) + ")")
+        sep = " " + self.OP + " "
+        return sep.join(s)
+
+    # From Function
+    def restrict(self, mapping):
+        idx_arg = self._get_restrictions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    def compose(self, mapping):
+        idx_arg = self._get_compositions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    # From Expression
+    @property
+    def depth(self):
+        return max(arg.depth + 1 for arg in self._args)
+
+    def invert(self):
+        return And(self._args[0], Not(self._args[1]))
+
+    def factor(self):
+        return Or(Not(self._args[0]).factor(), self._args[1].factor())
 
 
 def _bcp(cnf):
