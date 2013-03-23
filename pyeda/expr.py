@@ -705,9 +705,6 @@ class Complement(Literal):
 
     _MEM = dict()
 
-    # Postfix symbol used in string representation
-    OP = "'"
-
     def __new__(cls, v):
         try:
             self = cls._MEM[v]
@@ -720,7 +717,7 @@ class Complement(Literal):
         return self
 
     def __str__(self):
-        return str(self.var) + self.OP
+        return str(self.var) + "'"
 
     # From Function
     @property
@@ -1106,8 +1103,6 @@ class Or(OrAnd):
     """
 
     # Infix symbol used in string representation
-    OP = "+"
-
     IDENTITY = 0
     DOMINATOR = 1
 
@@ -1116,8 +1111,7 @@ class Or(OrAnd):
             args = sorted(self._args)
         except (AttributeError, TypeError):
             args = list(self._args)
-        sep = " " + self.OP + " "
-        return sep.join(str(arg) for arg in args)
+        return " + ".join(str(arg) for arg in args)
 
     def is_dnf(self):
         """Return whether this expression is in disjunctive normal form.
@@ -1187,8 +1181,6 @@ class And(OrAnd):
     """
 
     # Infix symbol used in string representation
-    OP = "*"
-
     IDENTITY = 1
     DOMINATOR = 0
 
@@ -1203,8 +1195,7 @@ class And(OrAnd):
                 s.append("(" + str(arg) + ")")
             else:
                 s.append(str(arg))
-        sep = " " + self.OP + " "
-        return sep.join(s)
+        return " * ".join(s)
 
     def is_cnf(self):
         """Return whether this expression is in conjunctive normal form.
@@ -1579,8 +1570,6 @@ class Equal(Expression):
 class Implies(Expression):
     """Boolean implication operator"""
 
-    OP = "=>"
-
     def __new__(cls, antecedent, consequence, simplify=True):
         if simplify:
             degenerate, args = cls._simplify(antecedent, consequence)
@@ -1625,8 +1614,7 @@ class Implies(Expression):
                 s.append(str(arg))
             else:
                 s.append("(" + str(arg) + ")")
-        sep = " " + self.OP + " "
-        return sep.join(s)
+        return " => ".join(s)
 
     # From Function
     def restrict(self, mapping):
