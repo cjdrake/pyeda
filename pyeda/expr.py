@@ -150,6 +150,10 @@ def f_implies(antecedent, consequence):
     """Return factored Implies expression."""
     return Implies(antecedent, consequence).factor()
 
+def f_ite(s, a, b):
+    """Return factored if-then-else expression."""
+    return ITE(s, a, b).factor()
+
 
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
@@ -1585,27 +1589,27 @@ class Implies(Expression):
 
     @classmethod
     def _simplify(cls, antecedent, consequence):
-        args = [arg if isinstance(arg, Expression) else boolify(arg)
-                for arg in (antecedent, consequence)]
+        a, b = (arg if isinstance(arg, Expression) else boolify(arg)
+                for arg in (antecedent, consequence))
 
-        # 0 => x = 1; x => 1 = 1
-        if args[0] == 0 or args[1] == 1:
+        # 0 => b = 1; a => 1 = 1
+        if a == 0 or b == 1:
             return True, 1
-        # 1 => x = x
-        elif args[0] == 1:
-            return True, args[1]
-        # x => 0 = x'
-        elif args[1] == 0:
-            return True, Not(args[0])
-        elif isinstance(args[0], Literal):
-            # x -> x = 1
-            if args[0] == args[1]:
+        # 1 => b = b
+        elif a == 1:
+            return True, b
+        # a => 0 = a'
+        elif b == 0:
+            return True, Not(a)
+        elif isinstance(a, Literal) and isinstance(b, Literal):
+            # a -> a = 1
+            if a == b:
                 return True, 1
-            # -x -> x = x
-            elif args[0] == -args[1]:
-                return True, args[1]
+            # -a -> a = a
+            elif a == -b:
+                return True, b
 
-        return False, tuple(args)
+        return False, (a, b)
 
     def __str__(self):
         s = list()
@@ -1645,6 +1649,109 @@ class Implies(Expression):
             return args
 
         obj = super(Implies, self).__new__(self.__class__)
+        obj._args = args
+        obj._simplified = True
+        return obj
+
+
+class ITE(Expression):
+    """Boolean if-then-else ternary operator"""
+
+    def __new__(cls, s, a, b, simplify=True):
+        if simplify:
+            degenerate, args = cls._simplify(s, a, b)
+            if degenerate:
+                return args
+        else:
+            args = (s, a, b)
+
+        self = super(ITE, cls).__new__(cls)
+        self._args = args
+        self._simplified = simplify
+        return self
+
+    @classmethod
+    def _simplify(cls, s, a, b):
+        s, a, b = (arg if isinstance(arg, Expression) else boolify(arg)
+                   for arg in (s, a, b))
+
+        # 0 ? a : b = b
+        if s == 0:
+            return True, b
+        # 1 ? a : b = a
+        elif s == 1:
+            return True, a
+        elif a == 0:
+            # s ? 0 : 0 = 0
+            if b == 0:
+                return True, 0
+            # s ? 0 : 1 = s'
+            elif b == 1:
+                return True, Not(s)
+            # s ? 0 : b = s' * b
+            else:
+                return True, And(Not(s), b)
+        elif a == 1:
+            # s ? 1 : 0 = s
+            if b == 0:
+                return True, s
+            # s ? 1 : 1 = 1
+            elif b == 1:
+                return True, 1
+            # s ? 1 : b = s * b
+            else:
+                return True, And(s, b)
+        # s ? a : 0 = s * a
+        elif b == 0:
+            return True, And(s, a)
+        # s ? a : 1 = s' * a
+        elif b == 1:
+            return True, And(Not(s), a)
+        elif isinstance(a, Literal) and isinstance(b, Literal) and a == b:
+            return True, a
+
+        return False, (s, a, b)
+
+    def __str__(self):
+        s = list()
+        for arg in self._args:
+            if isinstance(arg, int) or isinstance(arg, Literal):
+                s.append(str(arg))
+            else:
+                s.append("(" + str(arg) + ")")
+        return "{} ? {} : {}".format(*s)
+
+    # From Function
+    def restrict(self, mapping):
+        idx_arg = self._get_restrictions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    def compose(self, mapping):
+        idx_arg = self._get_compositions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    # From Expression
+    @cached_property
+    def depth(self):
+        return max(arg.depth + 2 for arg in self._args)
+
+    def invert(self):
+        s, a, b = self._args
+        return And(Or(Not(s), Not(a)), Or(s, Not(b)))
+
+    def factor(self):
+        s, a, b = self._args
+        return Or(And(s, a), And(Not(s), b))
+
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        degenerate, args = self._simplify(*self._args)
+        if degenerate:
+            return args
+
+        obj = super(ITE, self).__new__(self.__class__)
         obj._args = args
         obj._simplified = True
         return obj
