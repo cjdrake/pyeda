@@ -805,6 +805,8 @@ class OrAnd(Expression):
 
     def __new__(cls, *args, **kwargs):
         simplify = kwargs.get('simplify', True)
+        args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
+                     for arg in args)
         if simplify:
             degenerate, args = cls._simplify(args)
             if degenerate:
@@ -822,22 +824,20 @@ class OrAnd(Expression):
         while temps:
             arg = temps.popleft()
             if isinstance(arg, Expression):
-                # associative
-                if isinstance(arg, cls):
-                    temps.extendleft(reversed(arg.args))
-                # complement
-                elif isinstance(arg, Literal) and -arg in args:
-                    args = [cls.DOMINATOR]
-                    break
-                # idempotent
-                elif arg not in args:
-                    args.append(arg)
-            else:
-                num = boolify(arg)
-                # domination
-                if num == cls.DOMINATOR:
-                    args = [cls.DOMINATOR]
-                    break
+                arg = arg.simplify()
+            if arg == cls.DOMINATOR:
+                return True, cls.DOMINATOR
+            elif arg == cls.IDENTITY:
+                pass
+            # associative
+            elif isinstance(arg, cls):
+                temps.extendleft(reversed(arg.args))
+            # complement
+            elif isinstance(arg, Literal) and -arg in args:
+                return True, cls.DOMINATOR
+            # idempotent
+            elif arg not in args:
+                args.append(arg)
 
         # Or() = 0; And() = 1
         if len(args) == 0:
@@ -1277,6 +1277,7 @@ class Not(Expression):
     (0, 1)
     """
     def __new__(cls, arg, simplify=True):
+        arg = arg if isinstance(arg, Expression) else boolify(arg)
         if simplify:
             degenerate, arg = cls._simplify(arg)
             if degenerate:
@@ -1290,12 +1291,13 @@ class Not(Expression):
     @classmethod
     def _simplify(cls, arg):
         if isinstance(arg, Expression):
-            if isinstance(arg, Literal):
-                return True, arg.invert()
-            else:
-                return False, arg
+            arg = arg.simplify()
+        if isinstance(arg, int):
+            return True, 1 - arg
+        elif isinstance(arg, Literal):
+            return True, arg.invert()
         else:
-            return True, 1 - boolify(arg)
+            return False, arg
 
     def __str__(self):
         return "Not(" + str(self.arg) + ")"
@@ -1360,6 +1362,8 @@ class Exclusive(Expression):
 
     def __new__(cls, *args, **kwargs):
         simplify = kwargs.get('simplify', True)
+        args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
+                     for arg in args)
         if simplify:
             degenerate, args, parity = cls._simplify(args)
             if degenerate:
@@ -1381,20 +1385,21 @@ class Exclusive(Expression):
         while temps:
             arg = temps.popleft()
             if isinstance(arg, Expression):
-                # associative
-                if isinstance(arg, cls):
-                    temps.extendleft(reversed(arg.args))
-                # Xor(x, x') = 1
-                elif isinstance(arg, Literal) and -arg in args:
-                    args.remove(-arg)
-                    parity ^= 1
-                # Xor(x, x) = 0
-                elif arg in args:
-                    args.remove(arg)
-                else:
-                    args.append(arg)
+                arg = arg.simplify()
+            if isinstance(arg, int):
+                parity ^= arg
+            # associative
+            elif isinstance(arg, cls):
+                temps.extendleft(reversed(arg.args))
+            # Xor(x, x') = 1
+            elif isinstance(arg, Literal) and -arg in args:
+                args.remove(-arg)
+                parity ^= 1
+            # Xor(x, x) = 0
+            elif arg in args:
+                args.remove(arg)
             else:
-                parity ^= boolify(arg)
+                args.append(arg)
 
         # Xor() = 0; Xnor() = 1
         if len(args) == 0:
@@ -1491,6 +1496,8 @@ class Equal(Expression):
 
     def __new__(cls, *args, **kwargs):
         simplify = kwargs.get('simplify', True)
+        args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
+                     for arg in args)
         if simplify:
             degenerate, args = cls._simplify(args)
             if degenerate:
@@ -1503,8 +1510,6 @@ class Equal(Expression):
 
     @classmethod
     def _simplify(cls, args):
-        args = [arg if isinstance(arg, Expression) else boolify(arg)
-                for arg in args]
         if 0 in args:
             # Equal(0, 1, ...) = 0
             if 1 in args:
@@ -1575,8 +1580,10 @@ class Implies(Expression):
     """Boolean implication operator"""
 
     def __new__(cls, antecedent, consequence, simplify=True):
+        args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
+                     for arg in (antecedent, consequence))
         if simplify:
-            degenerate, args = cls._simplify(antecedent, consequence)
+            degenerate, args = cls._simplify(args)
             if degenerate:
                 return args
         else:
@@ -1588,9 +1595,9 @@ class Implies(Expression):
         return self
 
     @classmethod
-    def _simplify(cls, antecedent, consequence):
-        a, b = (arg if isinstance(arg, Expression) else boolify(arg)
-                for arg in (antecedent, consequence))
+    def _simplify(cls, args):
+        a, b = (arg.simplify() if isinstance(arg, Expression) else arg
+                for arg in args)
 
         # 0 => b = 1; a => 1 = 1
         if a == 0 or b == 1:
@@ -1601,13 +1608,12 @@ class Implies(Expression):
         # a => 0 = a'
         elif b == 0:
             return True, Not(a)
-        elif isinstance(a, Literal) and isinstance(b, Literal):
-            # a -> a = 1
-            if a == b:
-                return True, 1
-            # -a -> a = a
-            elif a == -b:
-                return True, b
+        # a -> a = 1
+        elif a == b:
+            return True, 1
+        # -a -> a = a
+        elif isinstance(a, Literal) and -a == b:
+            return True, b
 
         return False, (a, b)
 
@@ -1644,7 +1650,7 @@ class Implies(Expression):
         if self._simplified:
             return self
 
-        degenerate, args = self._simplify(*self._args)
+        degenerate, args = self._simplify(self._args)
         if degenerate:
             return args
 
@@ -1658,8 +1664,10 @@ class ITE(Expression):
     """Boolean if-then-else ternary operator"""
 
     def __new__(cls, s, a, b, simplify=True):
+        args = (arg if isinstance(arg, Expression) else boolify(arg)
+                for arg in (s, a, b))
         if simplify:
-            degenerate, args = cls._simplify(s, a, b)
+            degenerate, args = cls._simplify(args)
             if degenerate:
                 return args
         else:
@@ -1671,9 +1679,9 @@ class ITE(Expression):
         return self
 
     @classmethod
-    def _simplify(cls, s, a, b):
-        s, a, b = (arg if isinstance(arg, Expression) else boolify(arg)
-                   for arg in (s, a, b))
+    def _simplify(cls, args):
+        s, a, b = (arg.simplify() if isinstance(arg, Expression) else arg
+                   for arg in args)
 
         # 0 ? a : b = b
         if s == 0:
@@ -1707,7 +1715,8 @@ class ITE(Expression):
         # s ? a : 1 = s' * a
         elif b == 1:
             return True, And(Not(s), a)
-        elif isinstance(a, Literal) and isinstance(b, Literal) and a == b:
+        # s ? a : a = a
+        elif a == b:
             return True, a
 
         return False, (s, a, b)
@@ -1747,7 +1756,7 @@ class ITE(Expression):
         if self._simplified:
             return self
 
-        degenerate, args = self._simplify(*self._args)
+        degenerate, args = self._simplify(self._args)
         if degenerate:
             return args
 
