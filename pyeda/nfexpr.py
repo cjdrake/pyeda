@@ -122,6 +122,11 @@ class DisjNormalForm(NormalForm):
     def __add__(self, other):
         return DNF_Or(self, other)
 
+    def __mul__(self, other):
+        f = dnf2expr(self)
+        g = dnf2expr(other)
+        return expr2dnf((f * g).to_dnf())
+
 
 class ConjNormalForm(NormalForm):
     """
@@ -137,6 +142,11 @@ class ConjNormalForm(NormalForm):
     def __neg__(self):
         clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
         return DisjNormalForm(self.int2lit, clauses)
+
+    def __add__(self, other):
+        f = cnf2expr(self)
+        g = cnf2expr(other)
+        return expr2cnf((f + g).to_cnf())
 
     def __mul__(self, other):
         return CNF_And(self, other)
