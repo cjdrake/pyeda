@@ -71,6 +71,9 @@ class NormalForm(Function):
         self.int2lit = int2lit
         self.clauses = clauses
 
+    def __repr__(self):
+        return self.__str__()
+
     # From Function
     @cached_property
     def support(self):
@@ -109,6 +112,13 @@ class DisjNormalForm(NormalForm):
     IDENTITY = 0
     DOMINATOR = 1
 
+    def __str__(self):
+        return str(dnf2expr(self))
+
+    def __neg__(self):
+        clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
+        return ConjNormalForm(self.int2lit, clauses)
+
     def __add__(self, other):
         return DNF_Or(self, other)
 
@@ -120,6 +130,13 @@ class ConjNormalForm(NormalForm):
 
     IDENTITY = 1
     DOMINATOR = 0
+
+    def __str__(self):
+        return str(cnf2expr(self))
+
+    def __neg__(self):
+        clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
+        return DisjNormalForm(self.int2lit, clauses)
 
     def __mul__(self, other):
         return CNF_And(self, other)
