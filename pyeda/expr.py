@@ -39,6 +39,8 @@ from pyeda import boolfunc
 from pyeda import sat
 from pyeda.common import boolify, cached_property
 
+B = {0, 1}
+
 def var(name, indices=None, namespace=None):
     """Return a single variable expression."""
     return Variable(name, indices, namespace)
@@ -329,7 +331,7 @@ class Expression(boolfunc.Function):
             vs = [vs]
         for v in vs:
             fv0, fv1 = self.cofactors(v)
-            if fv0 in {0, 1} or fv1 in {0, 1}:
+            if fv0 in B or fv1 in B:
                 if not (fv0 == 1 or fv1 == 0):
                     return False
             elif not fv0.min_indices >= fv1.min_indices:
@@ -356,7 +358,7 @@ class Expression(boolfunc.Function):
             vs = [vs]
         for v in vs:
             fv0, fv1 = self.cofactors(v)
-            if fv0 in {0, 1} or fv1 in {0, 1}:
+            if fv0 in B or fv1 in B:
                 if not (fv1 == 1 or fv0 == 0):
                     return False
             elif not fv1.min_indices >= fv0.min_indices:
@@ -882,7 +884,7 @@ class OrAnd(Expression):
         a * b' * c'
         """
         obj = self if self._simplified else self.simplify()
-        if isinstance(obj, int):
+        if obj in B:
             return obj
         elif isinstance(obj, OrAnd):
             return obj.__class__(*[arg.factor() for arg in obj._args])
@@ -1185,7 +1187,7 @@ class Not(Expression):
     def _simplify(cls, arg):
         if isinstance(arg, Expression):
             arg = arg.simplify()
-        if isinstance(arg, int):
+        if arg in B:
             return True, 1 - arg
         elif isinstance(arg, Literal):
             return True, arg.invert()
@@ -1206,7 +1208,7 @@ class Not(Expression):
         """
         arg = self.arg.restrict(mapping)
         # speed hack
-        if arg in {0, 1}:
+        if arg in B:
             return 1 - arg
         elif id(arg) == id(self.arg):
             return self
@@ -1230,7 +1232,7 @@ class Not(Expression):
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
-        if isinstance(obj, int):
+        if obj in B:
             return obj
         elif isinstance(obj, Not):
             return obj.arg.invert().factor()
@@ -1285,7 +1287,7 @@ class Exclusive(Expression):
             arg = temps.popleft()
             if isinstance(arg, Expression):
                 arg = arg.simplify()
-            if isinstance(arg, int):
+            if arg in B:
                 parity ^= arg
             # associative
             elif isinstance(arg, cls):
@@ -1359,7 +1361,7 @@ class Exclusive(Expression):
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
-        if isinstance(obj, int):
+        if obj in B:
             return obj
         elif isinstance(obj, Exclusive):
             fst, rst = obj._args[0], obj._args[1:]
@@ -1465,7 +1467,7 @@ class Equal(Expression):
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
-        if isinstance(obj, int):
+        if obj in B:
             return obj
         elif isinstance(obj, Equal):
             return Or(And(*[Not(arg).factor() for arg in obj._args]),
@@ -1531,7 +1533,7 @@ class Implies(Expression):
     def __str__(self):
         s = list()
         for arg in self._args:
-            if isinstance(arg, int) or isinstance(arg, Literal):
+            if arg in B or isinstance(arg, Literal):
                 s.append(str(arg))
             else:
                 s.append("(" + str(arg) + ")")
@@ -1557,7 +1559,7 @@ class Implies(Expression):
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
-        if isinstance(obj, int):
+        if obj in B:
             return obj
         elif isinstance(obj, Implies):
             a, b = obj._args
@@ -1643,7 +1645,7 @@ class ITE(Expression):
     def __str__(self):
         s = list()
         for arg in self._args:
-            if isinstance(arg, int) or isinstance(arg, Literal):
+            if arg in B or isinstance(arg, Literal):
                 s.append(str(arg))
             else:
                 s.append("(" + str(arg) + ")")
@@ -1669,7 +1671,7 @@ class ITE(Expression):
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
-        if isinstance(obj, int):
+        if obj in B:
             return obj
         elif isinstance(obj, ITE):
             s, a, b = obj._args
@@ -1693,7 +1695,7 @@ class ITE(Expression):
 
 def _bcp(cnf):
     """Boolean Constraint Propagation"""
-    if cnf in {0, 1}:
+    if cnf in B:
         return cnf, {}
     else:
         point = dict()
