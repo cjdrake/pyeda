@@ -4,6 +4,8 @@ Boolean Logic Expressions
 Interface Functions:
     var
 
+    iter_cubes
+
     factor
     simplify
 
@@ -37,13 +39,17 @@ from collections import deque, OrderedDict
 
 from pyeda import boolfunc
 from pyeda import sat
-from pyeda.common import boolify, cached_property
+from pyeda.common import bit_on, boolify, cached_property
 
 B = {0, 1}
 
 def var(name, indices=None, namespace=None):
     """Return a single variable expression."""
     return Variable(name, indices, namespace)
+
+def iter_cubes(vs):
+    for n in range(2 ** len(vs)):
+        yield tuple(v if bit_on(n, i) else -v for i, v in enumerate(vs))
 
 def factor(expr):
     """Return a factored expression."""
@@ -283,6 +289,27 @@ class Expression(boolfunc.Function):
     def ite(self, a, b):
         """If-then-else operator"""
         return ITE(self, a, b)
+
+    def expand(self, vs=None, dnf=True):
+        """Return the Shannon expansion with respect to a list of variables.
+
+        >>> a, b, c = map(var, 'abc')
+        >>> a.expand(b)
+        a * b' + a * b
+        >>> a.expand([b, c])
+        a * b' * c' + a * b' * c + a * b * c' + a * b * c
+        """
+        if vs is None:
+            vs = list()
+        elif isinstance(vs, Expression):
+            vs = [vs]
+        if vs:
+            if dnf:
+                return Or(*[And(self, *cube) for cube in iter_cubes(vs)])
+            else:
+                return And(*[Or(self, *cube) for cube in iter_cubes(vs)])
+        else:
+            return self
 
     def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':
