@@ -1592,15 +1592,15 @@ class ITE(Expression):
             # s ? 1 : 1 = 1
             elif b == 1:
                 return True, 1
-            # s ? 1 : b = s * b
+            # s ? 1 : b = s + b
             else:
-                return True, And(s, b)
+                return True, Or(s, b)
         # s ? a : 0 = s * a
         elif b == 0:
             return True, And(s, a)
-        # s ? a : 1 = s' * a
+        # s ? a : 1 = s' + a
         elif b == 1:
-            return True, And(Not(s), a)
+            return True, Or(Not(s), a)
         # s ? a : a = a
         elif a == b:
             return True, a
@@ -1617,13 +1617,13 @@ class ITE(Expression):
         return "{} ? {} : {}".format(*s)
 
     # From Function
-    #def restrict(self, mapping):
-    #    idx_arg = self._get_restrictions(mapping)
-    #    return self._subs(idx_arg) if idx_arg else self
+    def restrict(self, mapping):
+        idx_arg = self._get_restrictions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
 
-    #def compose(self, mapping):
-    #    idx_arg = self._get_compositions(mapping)
-    #    return self._subs(idx_arg) if idx_arg else self
+    def compose(self, mapping):
+        idx_arg = self._get_compositions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
 
     # From Expression
     @cached_property

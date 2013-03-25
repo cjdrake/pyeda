@@ -22,7 +22,7 @@ def test_ops():
     # xor, equal, ite
     assert a.xor(b, c).equivalent(-a * -b * c + -a * b * -c + a * -b * -c + a * b * c)
     assert a.equal(b, c).equivalent(-a * -b * -c + a * b * c)
-    #assert s.ite(a, b).equivalent(s * a + -s * b)
+    assert s.ite(a, b).equivalent(s * a + -s * b)
 
 def test_simplify():
     f1 = And(a, And(b, And(c, 0, simplify=False), simplify=False), simplify=False)
@@ -297,8 +297,8 @@ def test_ite():
 
     assert ITE(s, 0, b).equivalent(-s * b)
     assert ITE(s, a, 0).equivalent(s * a)
-    assert ITE(s, 1, b).equivalent(s * b)
-    assert ITE(s, a, 1).equivalent(-s * a)
+    assert ITE(s, 1, b).equivalent(s + b)
+    assert ITE(s, a, 1).equivalent(-s + a)
 
     assert ITE(s, -a, -a) == -a
     assert ITE(s, a, a) == a
