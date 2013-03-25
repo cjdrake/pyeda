@@ -119,9 +119,9 @@ def f_equal(*args):
     """Return factored Equal expression."""
     return Equal(*args).factor()
 
-def f_implies(antecedent, consequence):
+def f_implies(p, q):
     """Return factored Implies expression."""
-    return Implies(antecedent, consequence).factor()
+    return Implies(p, q).factor()
 
 def f_ite(s, a, b):
     """Return factored if-then-else expression."""
@@ -1489,15 +1489,15 @@ class Equal(Expression):
 class Implies(Expression):
     """Boolean implication operator"""
 
-    def __new__(cls, antecedent, consequence, simplify=True):
+    def __new__(cls, p, q, simplify=True):
         args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
-                     for arg in (antecedent, consequence))
+                     for arg in (p, q))
         if simplify:
             degenerate, args = cls._simplify(args)
             if degenerate:
                 return args
         else:
-            args = (antecedent, consequence)
+            args = (p, q)
 
         self = super(Implies, cls).__new__(cls)
         self._args = args
@@ -1506,26 +1506,26 @@ class Implies(Expression):
 
     @classmethod
     def _simplify(cls, args):
-        a, b = (arg.simplify() if isinstance(arg, Expression) else arg
+        p, q = (arg.simplify() if isinstance(arg, Expression) else arg
                 for arg in args)
 
-        # 0 => b = 1; a => 1 = 1
-        if a == 0 or b == 1:
+        # 0 => q = 1; p => 1 = 1
+        if p == 0 or q == 1:
             return True, 1
-        # 1 => b = b
-        elif a == 1:
-            return True, b
-        # a => 0 = a'
-        elif b == 0:
-            return True, Not(a)
-        # a -> a = 1
-        elif a == b:
+        # 1 => q = q
+        elif p == 1:
+            return True, q
+        # p => 0 = p'
+        elif q == 0:
+            return True, Not(p)
+        # p -> p = 1
+        elif p == q:
             return True, 1
-        # -a -> a = a
-        elif isinstance(a, Literal) and -a == b:
-            return True, b
+        # -p -> p = p
+        elif isinstance(p, Literal) and -p == q:
+            return True, q
 
-        return False, (a, b)
+        return False, (p, q)
 
     def __str__(self):
         s = list()
