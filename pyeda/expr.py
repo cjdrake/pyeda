@@ -880,7 +880,13 @@ class OrAnd(Expression):
         >>> (a * -(b + c)).factor()
         a * b' * c'
         """
-        return self.__class__(*[arg.factor() for arg in self._args])
+        obj = self if self._simplified else self.simplify()
+        if isinstance(obj, int):
+            return obj
+        elif isinstance(obj, OrAnd):
+            return obj.__class__(*[arg.factor() for arg in obj._args])
+        else:
+            return obj.factor()
 
     def simplify(self):
         if self._simplified:
@@ -1222,7 +1228,13 @@ class Not(Expression):
         return self.arg
 
     def factor(self):
-        return self.arg.invert().factor()
+        obj = self if self._simplified else self.simplify()
+        if isinstance(obj, int):
+            return obj
+        elif isinstance(obj, Not):
+            return obj.arg.invert().factor()
+        else:
+            return obj.factor()
 
     def simplify(self):
         if self._simplified:
@@ -1345,13 +1357,19 @@ class Exclusive(Expression):
             return Xor(*self._args)
 
     def factor(self):
-        fst, rst = self._args[0], self._args[1:]
-        if self._parity == Xor.PARITY:
-            return Or(And(Not(fst).factor(), Xor(*rst).factor()),
-                      And(fst.factor(), Xnor(*rst).factor()))
+        obj = self if self._simplified else self.simplify()
+        if isinstance(obj, int):
+            return obj
+        elif isinstance(obj, Exclusive):
+            fst, rst = obj._args[0], obj._args[1:]
+            if obj._parity == Xor.PARITY:
+                return Or(And(Not(fst).factor(), Xor(*rst).factor()),
+                          And(fst.factor(), Xnor(*rst).factor()))
+            else:
+                return Or(And(Not(fst).factor(), Xnor(*rst).factor()),
+                          And(fst.factor(), Xor(*rst).factor()))
         else:
-            return Or(And(Not(fst).factor(), Xnor(*rst).factor()),
-                      And(fst.factor(), Xor(*rst).factor()))
+            return obj.factor()
 
     def simplify(self):
         if self._simplified:
@@ -1445,8 +1463,14 @@ class Equal(Expression):
         return And(Or(*self._args), Not(And(*self._args)))
 
     def factor(self):
-        return Or(And(*[Not(arg).factor() for arg in self._args]),
-                  And(*[arg.factor() for arg in self._args]))
+        obj = self if self._simplified else self.simplify()
+        if isinstance(obj, int):
+            return obj
+        elif isinstance(obj, Equal):
+            return Or(And(*[Not(arg).factor() for arg in obj._args]),
+                      And(*[arg.factor() for arg in obj._args]))
+        else:
+            return obj.factor()
 
     def simplify(self):
         if self._simplified:
@@ -1530,7 +1554,14 @@ class Implies(Expression):
         return And(self._args[0], Not(self._args[1]))
 
     def factor(self):
-        return Or(Not(self._args[0]).factor(), self._args[1].factor())
+        obj = self if self._simplified else self.simplify()
+        if isinstance(obj, int):
+            return obj
+        elif isinstance(obj, Implies):
+            a, b = obj._args
+            return Or(Not(a).factor(), b.factor())
+        else:
+            return obj.factor()
 
     def simplify(self):
         if self._simplified:
@@ -1635,8 +1666,14 @@ class ITE(Expression):
         return And(Or(Not(s), Not(a)), Or(s, Not(b)))
 
     def factor(self):
-        s, a, b = self._args
-        return Or(And(s, a), And(Not(s).factor(), b))
+        obj = self if self._simplified else self.simplify()
+        if isinstance(obj, int):
+            return obj
+        elif isinstance(obj, ITE):
+            s, a, b = obj._args
+            return Or(And(s, a), And(Not(s).factor(), b))
+        else:
+            return obj.factor()
 
     def simplify(self):
         if self._simplified:
