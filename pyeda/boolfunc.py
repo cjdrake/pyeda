@@ -35,6 +35,7 @@ class Variable(object):
             self.namespace = namespace
         else:
             raise ValueError("invalid namespace")
+        self.qualname = name if namespace is None else namespace + "." + name
         return self
 
     def __repr__(self):
@@ -50,9 +51,8 @@ class Variable(object):
         >>> str(Variable("v", (1, 2, 3)))
         'v[1][2][3]'
         """
-        prefix = "" if self.namespace is None else self.namespace + "."
         suffix = "".join("[{}]".format(idx) for idx in self.indices)
-        return prefix + self.name + suffix
+        return self.qualname + suffix
 
     def __lt__(self, other):
         """Return rich "less than" result, for ordering.
