@@ -680,7 +680,10 @@ class Complement(Literal):
         return self._support
 
     def restrict(self, mapping):
-        return self.compose(mapping)
+        try:
+            return 1 - boolify(mapping[self.var])
+        except KeyError:
+            return self
 
     def compose(self, mapping):
         try:
