@@ -1636,7 +1636,7 @@ class ITE(Expression):
 
     def factor(self):
         s, a, b = self._args
-        return Or(And(s, a), And(Not(s), b))
+        return Or(And(s, a), And(Not(s).factor(), b))
 
     def simplify(self):
         if self._simplified:
