@@ -23,9 +23,9 @@ def expr2dnf(expr):
     if expr.is_dnf():
         int2lit = dict()
         for v in expr.inputs:
-            int2lit[-v.gidx] = -v
-            int2lit[v.gidx] = v
-        clauses = {frozenset(lit.gidx for lit in clause.args)
+            int2lit[-v.gnum] = -v
+            int2lit[v.gnum] = v
+        clauses = {frozenset(lit.gnum for lit in clause.args)
                    for clause in expr.args}
         return DisjNormalForm(int2lit, clauses)
     else:
@@ -36,9 +36,9 @@ def expr2cnf(expr):
     if expr.is_cnf():
         int2lit = dict()
         for v in expr.inputs:
-            int2lit[-v.gidx] = -v
-            int2lit[v.gidx] = v
-        clauses = {frozenset(lit.gidx for lit in clause.args)
+            int2lit[-v.gnum] = -v
+            int2lit[v.gnum] = v
+        clauses = {frozenset(lit.gnum for lit in clause.args)
                    for clause in expr.args}
         return ConjNormalForm(int2lit, clauses)
     else:
@@ -89,8 +89,8 @@ class NormalForm(Function):
         doms = set()
         for v, val in mapping.items():
             low, high = (-v, v) if boolify(val) == self.IDENTITY else (v, -v)
-            idents.add(low.gidx)
-            doms.add(high.gidx)
+            idents.add(low.gnum)
+            doms.add(high.gnum)
 
         new_clauses = set()
         for clause in self.clauses:

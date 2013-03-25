@@ -64,13 +64,7 @@ def OneHot0(*args):
     """
     Return an expression that means:
         At most one input variable is true.
-
-    >>> a, b, c = map(var, "abc")
-    >>> OneHot0(0, 0, 0, 0), OneHot0(0, 0, 0, 1), OneHot0(0, 0, 1, 1)
-    (1, 1, 0)
-    >>> OneHot0(a, b, c)
-    (a' + b') * (a' + c') * (b' + c')
-    """
+   """
     nargs = len(args)
     return And(*[Or(Not(args[i]), Not(args[j]))
                  for i in range(nargs-1) for j in range(i+1, nargs)])
@@ -79,32 +73,16 @@ def OneHot(*args):
     """
     Return an expression that means:
         Exactly one input variable is true.
-
-    >>> a, b, c = map(var, "abc")
-    >>> OneHot(0, 0, 0, 0), OneHot(0, 0, 0, 1), OneHot(0, 0, 1, 1)
-    (0, 1, 0)
-    >>> OneHot(a, b, c)
-    (a' + b') * (a' + c') * (b' + c') * (a + b + c)
     """
     return And(Or(*args), OneHot0(*args))
 
 # factored operators
 def f_not(arg):
-    """Return factored NOT expression.
-
-    >>> a, b, c, d = map(var, "abcd")
-    >>> f_not(-a * b * -c * d), f_not(-a + b + -c + d)
-    (a + b' + c + d', a * b' * c * d')
-    """
+    """Return factored NOT expression."""
     return Not(arg).factor()
 
 def f_or(*args):
-    """Return factored OR expression.
-
-    >>> a, b, c, d = map(var, "abcd")
-    >>> f_or(a >> b, c >> d)
-    a' + b + c' + d
-    """
+    """Return factored OR expression."""
     return Or(*args).factor()
 
 def f_nor(*args):
@@ -117,12 +95,7 @@ def f_nor(*args):
     return Nor(*args).factor()
 
 def f_and(*args):
-    """Return factored AND expression.
-
-    >>> a, b, c, d = map(var, "abcd")
-    >>> f_and(a >> b, c >> d)
-    (a' + b) * (c' + d)
-    """
+    """Return factored AND expression."""
     return And(*args).factor()
 
 def f_nand(*args):
@@ -304,6 +277,10 @@ class Expression(boolfunc.Function):
         +---+---+--------+
         """
         return Implies(arg, self)
+
+    def ite(self, a, b):
+        """If-then-else operator"""
+        return ITE(self, a, b)
 
     def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':
@@ -492,7 +469,8 @@ class Expression(boolfunc.Function):
         >>> Xnor(a, b, c).to_dnf()
         a' * b' * c' + a' * b * c + a * b' * c + a * b * c'
         """
-        return self.factor()._flatten(And).absorb()
+        f = self.factor()._flatten(And)
+        return f.absorb() if isinstance(f, Expression) else f
 
     def to_cdnf(self):
         """Return the expression in canonical disjunctive normal form.
@@ -516,7 +494,8 @@ class Expression(boolfunc.Function):
         >>> Xnor(a, b, c).to_cnf()
         (a + b + c') * (a + b' + c) * (a' + b + c) * (a' + b' + c')
         """
-        return self.factor()._flatten(Or).absorb()
+        f = self.factor()._flatten(Or)
+        return f.absorb() if isinstance(f, Expression) else f
 
     def to_ccnf(self):
         """Return the expression in canonical conjunctive normal form.
@@ -548,9 +527,7 @@ class Expression(boolfunc.Function):
         return {term.maxterm_index for term in self.iter_maxterms()}
 
     def equivalent(self, other):
-        """Return whether this expression is equivalent to another.
-
-        """
+        """Return whether this expression is equivalent to another."""
         f = And(Or(Not(self), Not(other)), Or(self, other))
         if f == 0:
             return True
@@ -591,12 +568,7 @@ class Literal(Expression):
     # From Expression
     @property
     def depth(self):
-        """Return the number of levels in the expression tree.
-
-        >>> a = var("a")
-        >>> a.depth, (-a).depth
-        (0, 0)
-        """
+        """Return the number of levels in the expression tree."""
         return 0
 
     def factor(self):
@@ -627,20 +599,10 @@ class Variable(boolfunc.Variable, Literal):
     # From Function
     @property
     def support(self):
-        """Return the support set of a variable.
-
-        >>> a = var("a")
-        >>> a.support == {a}
-        True
-        """
+        """Return the support set of a variable."""
         return self._support
 
     def restrict(self, mapping):
-        """
-        >>> a = var("a")
-        >>> a.restrict({a: 0}), a.restrict({a: 1})
-        (0, 1)
-        """
         try:
             return boolify(mapping[self])
         except KeyError:
@@ -654,16 +616,7 @@ class Variable(boolfunc.Variable, Literal):
 
     # From Expression
     def __lt__(self, other):
-        """Overload the '<' operator.
-
-        >>> a, b = map(var, "ab")
-        >>> not a < -a
-        True
-        >>> a < b
-        True
-        >>> a < a + b, b < a + b
-        (True, True)
-        """
+        """Overload the '<' operator."""
         if isinstance(other, Variable):
             return boolfunc.Variable.__lt__(self, other)
         if isinstance(other, Complement):
@@ -673,12 +626,7 @@ class Variable(boolfunc.Variable, Literal):
         return id(self) < id(other)
 
     def invert(self):
-        """Return an inverted variable.
-
-        >>> a = var("a")
-        >>> a.invert()
-        a'
-        """
+        """Return an inverted variable."""
         return Complement(self)
 
     # DPLL IF
@@ -690,7 +638,7 @@ class Variable(boolfunc.Variable, Literal):
 
     # Specific to Variable
     @cached_property
-    def gidx(self):
+    def gnum(self):
         for i, v in enumerate(self._MEM.values(), start=1):
             if v == self:
                 return i
@@ -726,20 +674,10 @@ class Complement(Literal):
     # From Function
     @property
     def support(self):
-        """Return the support set of a complement.
-
-        >>> a = var("a")
-        >>> (-a).support == {a}
-        True
-        """
+        """Return the support set of a complement."""
         return self._support
 
     def restrict(self, mapping):
-        """
-        >>> a = var("a")
-        >>> (-a).restrict({a: 0}), (-a).restrict({a: 1})
-        (1, 0)
-        """
         return self.compose(mapping)
 
     def compose(self, mapping):
@@ -750,16 +688,7 @@ class Complement(Literal):
 
     # From Expression
     def __lt__(self, other):
-        """Overload the '<' operator.
-
-        >>> a, b = map(var, "ab")
-        >>> -a < a
-        True
-        >>> -a < b
-        True
-        >>> -a < a + b, -b < a + b
-        (True, True)
-        """
+        """Overload the '<' operator."""
         if isinstance(other, Variable):
             return ( self.var.name < other.name or
                          self.var.name == other.name and
@@ -771,12 +700,7 @@ class Complement(Literal):
         return id(self) < id(other)
 
     def invert(self):
-        """Return an inverted complement.
-
-        >>> a = var("a")
-        >>> (-a).invert()
-        a
-        """
+        """Return an inverted complement."""
         return self.var
 
     # DPLL IF
@@ -788,8 +712,8 @@ class Complement(Literal):
 
     # Specific to Complement
     @property
-    def gidx(self):
-        return -self.var.gidx
+    def gnum(self):
+        return -self.var.gnum
 
     @property
     def minterm_index(self):
@@ -1050,13 +974,6 @@ class Or(OrAnd):
 
     >>> a, b, c, d = map(var, "abcd")
 
-    >>> Or(), Or(a)
-    (0, a)
-    >>> a + 1, a + b + 1, a + 0
-    (1, 1, a)
-    >>> -a + a, -a + b + a
-    (1, 1)
-
     test associativity
 
     >>> (a + b) + c + d
@@ -1127,13 +1044,6 @@ class And(OrAnd):
     """Boolean AND operator
 
     >>> a, b, c, d = map(var, "abcd")
-
-    >>> And(), And(a)
-    (1, a)
-    >>> a * 0, a * b * 0, a * 1
-    (0, 0, a)
-    >>> -a * a, -a * b * a
-    (0, 0)
 
     test associativity
 
@@ -1707,13 +1617,13 @@ class ITE(Expression):
         return "{} ? {} : {}".format(*s)
 
     # From Function
-    def restrict(self, mapping):
-        idx_arg = self._get_restrictions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
+    #def restrict(self, mapping):
+    #    idx_arg = self._get_restrictions(mapping)
+    #    return self._subs(idx_arg) if idx_arg else self
 
-    def compose(self, mapping):
-        idx_arg = self._get_compositions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
+    #def compose(self, mapping):
+    #    idx_arg = self._get_compositions(mapping)
+    #    return self._subs(idx_arg) if idx_arg else self
 
     # From Expression
     @cached_property

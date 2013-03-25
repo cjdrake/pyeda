@@ -7,7 +7,6 @@ Interface Functions:
 Interface Classes:
     Table
         TruthTable
-        ImplicantTable
 """
 
 from pyeda import __version__
