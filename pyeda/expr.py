@@ -989,30 +989,6 @@ class OrAnd(Expression):
         The reason this is not included as an automatic simplification is that
         it is too expensive to put into the constructor. We have to check
         whether each term is a subset of another term, which is N^3.
-
-        >>> a, b, c, d = map(var, "abcd")
-        >>> (a * b + a * b).absorb()
-        a * b
-        >>> (a * (a + b)).absorb()
-        a
-        >>> ((a + b) * a).absorb()
-        a
-        >>> (-a * (-a + b)).absorb()
-        a'
-        >>> (a * b * (a + c)).absorb()
-        a * b
-        >>> (a * b * (a + c) * (a + d)).absorb()
-        a * b
-        >>> (-a * b * (-a + c)).absorb()
-        a' * b
-        >>> (-a * b * (-a + c) * (-a + d)).absorb()
-        a' * b
-        >>> (a * -b + a * -b * c).absorb()
-        a * b'
-        >>> ((a + -b) * (a + -b + c)).absorb()
-        a + b'
-        >>> ((a + -b + c) * (a + -b)).absorb()
-        a + b'
         """
         if not self.is_nf():
             raise TypeError("expression is not in normal form")

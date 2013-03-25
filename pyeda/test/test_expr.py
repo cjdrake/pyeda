@@ -9,6 +9,20 @@ from pyeda.expr import (
     f_xor, f_xnor, f_equal, f_implies, f_ite
 )
 
+def test_absorb():
+    a, b, c, d = map(var, 'abcd')
+    assert (a * b + a * b).absorb().equivalent(a * b)
+    assert (a * (a + b)).absorb() == a
+    assert ((a + b) * a).absorb() == a
+    assert (-a * (-a + b)).absorb() == -a
+    assert (a * b * (a + c)).absorb().equivalent(a * b)
+    assert (a * b * (a + c) * (a + d)).absorb().equivalent(a * b)
+    assert (-a * b * (-a + c)).absorb().equivalent(-a * b)
+    assert (-a * b * (-a + c) * (-a + d)).absorb().equivalent(-a * b)
+    assert (a * -b + a * -b * c).absorb().equivalent(a * -b)
+    assert ((a + -b) * (a + -b + c)).absorb().equivalent(a + -b)
+    assert ((a + -b + c) * (a + -b)).absorb().equivalent(a + -b)
+
 def test_xor():
     a, b, c = map(var, 'abc')
 
