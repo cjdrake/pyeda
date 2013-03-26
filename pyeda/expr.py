@@ -93,43 +93,53 @@ def OneHot(*args):
 # factored operators
 def f_not(arg):
     """Return factored NOT expression."""
-    return Not(arg).factor()
+    f = Not(arg).factor()
+    return f if f in B else f.factor()
 
 def f_or(*args):
     """Return factored OR expression."""
-    return Or(*args).factor()
+    f = Or(*args).factor()
+    return f if f in B else f.factor()
 
 def f_nor(*args):
     """Return factored NOR expression."""
-    return Nor(*args).factor()
+    f = Nor(*args).factor()
+    return f if f in B else f.factor()
 
 def f_and(*args):
     """Return factored AND expression."""
-    return And(*args).factor()
+    f = And(*args).factor()
+    return f if f in B else f.factor()
 
 def f_nand(*args):
     """Return factored NAND expression."""
-    return Nand(*args).factor()
+    f = Nand(*args).factor()
+    return f if f in B else f.factor()
 
 def f_xor(*args):
     """Return factored XOR expression."""
-    return Xor(*args).factor()
+    f = Xor(*args).factor()
+    return f if f in B else f.factor()
 
 def f_xnor(*args):
     """Return factored XNOR expression."""
-    return Xnor(*args).factor()
+    f = Xnor(*args).factor()
+    return f if f in B else f.factor()
 
 def f_equal(*args):
     """Return factored Equal expression."""
-    return Equal(*args).factor()
+    f = Equal(*args).factor()
+    return f if f in B else f.factor()
 
 def f_implies(p, q):
     """Return factored Implies expression."""
-    return Implies(p, q).factor()
+    f = Implies(p, q).factor()
+    return f if f in B else f.factor()
 
 def f_ite(s, a, b):
     """Return factored if-then-else expression."""
-    return ITE(s, a, b).factor()
+    f = ITE(s, a, b).factor()
+    return f if f in B else f.factor()
 
 
 class Expression(boolfunc.Function):
