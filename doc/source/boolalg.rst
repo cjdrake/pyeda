@@ -1,8 +1,8 @@
 .. boolalg.rst
 
-===================
+*******************
   Boolean Algebra
-===================
+*******************
 
 Boolean algebra defines the rules for working with the set {0, 1}. It is a
 cornerstone of electronic design automation, and fundamental to several other

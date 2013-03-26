@@ -15,6 +15,7 @@ Features:
 * Symbolic Boolean algebra logic expressions
 * Conjunctive normal form logic expression representation
 * DPLL SAT solver
+* Formal equivalence
 * Multi-dimensional bit vectors
 * DIMACS CNF/SAT parser
 
@@ -28,6 +29,7 @@ Contents:
    boolalg.rst
    numbers.rst
    sudoku.rst
+   relnotes.rst
 
 
 Indices and Tables

@@ -1,8 +1,8 @@
 .. overview.rst
 
-********
-Overview
-********
+************
+  Overview
+************
 
 What is Electronic Design Eutomation (EDA)?
 ===========================================

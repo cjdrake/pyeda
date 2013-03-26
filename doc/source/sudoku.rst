@@ -2,9 +2,9 @@
 
 .. |smiley| unicode:: 0x263A
 
-*****************************
-Abusing PyEDA to Solve Sudoku
-*****************************
+*********************************
+  Abusing PyEDA to Solve Sudoku
+*********************************
 
 According to Peter Norvig in his
 `fantastic essay <http://norvig.com/sudoku.html>`_

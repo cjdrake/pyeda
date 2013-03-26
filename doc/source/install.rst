@@ -1,8 +1,8 @@
 .. install.rst
 
-****************
-Installing PyEDA
-****************
+********************
+  Installing PyEDA
+********************
 
 This page describes how to procure your very own, shiny copy of PyEDA.
 It is a primary goal of the PyEDA project to be a mainstream Python package,
