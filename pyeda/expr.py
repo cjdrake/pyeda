@@ -53,11 +53,17 @@ def iter_cubes(vs):
 
 def factor(expr):
     """Return a factored expression."""
-    return expr.factor()
+    if expr in B:
+        return expr
+    else:
+        return expr.factor()
 
 def simplify(expr):
     """Return a simplified expression."""
-    return expr.simplify()
+    if expr in B:
+        return expr
+    else:
+        return expr.simplify()
 
 # convenience functions
 def Nor(*args):
@@ -94,12 +100,7 @@ def f_or(*args):
     return Or(*args).factor()
 
 def f_nor(*args):
-    """Return factored NOR expression.
-
-    >>> a, b, c, d = map(var, "abcd")
-    >>> f_nor(-a, b, -c, d)
-    a * b' * c * d'
-    """
+    """Return factored NOR expression."""
     return Nor(*args).factor()
 
 def f_and(*args):
@@ -107,12 +108,7 @@ def f_and(*args):
     return And(*args).factor()
 
 def f_nand(*args):
-    """Return factored NAND expression.
-
-    >>> a, b, c, d = map(var, "abcd")
-    >>> f_nand(-a, b, -c, d)
-    a + b' + c + d'
-    """
+    """Return factored NAND expression."""
     return Nand(*args).factor()
 
 def f_xor(*args):
@@ -144,16 +140,7 @@ class Expression(boolfunc.Function):
     # From Function
     @cached_property
     def support(self):
-        """Return the support set of an expression.
-
-        >>> a, b, c, d = map(var, "abcd")
-        >>> (-a + b + (-c * d)).support == {a, b, c, d}
-        True
-        >>> (-a * b * (-c + d)).support == {a, b, c, d}
-        True
-        >>> Not(-a + b).support == {a, b}
-        True
-        """
+        """Return the support set of an expression."""
         s = set()
         for arg in self._args:
             s |= arg.support
@@ -291,14 +278,7 @@ class Expression(boolfunc.Function):
         return ITE(self, a, b)
 
     def expand(self, vs=None, dnf=True):
-        """Return the Shannon expansion with respect to a list of variables.
-
-        >>> a, b, c = map(var, 'abc')
-        >>> a.expand(b)
-        a * b' + a * b
-        >>> a.expand([b, c])
-        a * b' * c' + a * b' * c + a * b * c' + a * b * c
-        """
+        """Return the Shannon expansion with respect to a list of variables."""
         if vs is None:
             vs = list()
         elif isinstance(vs, Expression):
@@ -323,15 +303,7 @@ class Expression(boolfunc.Function):
             raise ValueError("invalid algorithm")
 
     def satisfy_all(self):
-        """Iterate through all satisfying input points.
-
-        >>> a, b, c = map(var, "abc")
-        >>> ans = [sorted(p.items()) for p in Xor(a, b, c).satisfy_all()]
-        >>> ans[:2]
-        [[(a, 0), (b, 0), (c, 1)], [(a, 0), (b, 1), (c, 0)]]
-        >>> ans[2:]
-        [[(a, 1), (b, 0), (c, 0)], [(a, 1), (b, 1), (c, 1)]]
-        """
+        """Iterate through all satisfying input points."""
         for point in self.iter_ones():
             yield point
 
@@ -339,19 +311,7 @@ class Expression(boolfunc.Function):
         return len(self.satisfy_all())
 
     def is_neg_unate(self, vs=None):
-        """Return whether a function is negative unate.
-
-        >>> a, b, c = map(var, "abc")
-        >>> f = a + b + -c
-        >>> f.is_neg_unate(c)
-        True
-
-        >>> g = a * -b + a * -c + b * -c
-        >>> g.is_neg_unate(c)
-        True
-        >>> g.is_binate(b)
-        True
-        """
+        """Return whether a function is negative unate."""
         if vs is None:
             vs = self.support
         elif isinstance(vs, boolfunc.Function):
@@ -366,19 +326,7 @@ class Expression(boolfunc.Function):
         return True
 
     def is_pos_unate(self, vs=None):
-        """Return whether a function is positive unate.
-
-        >>> a, b, c = map(var, "abc")
-        >>> f = a + b + -c
-        >>> f.is_pos_unate(a)
-        True
-        >>> f.is_pos_unate(b)
-        True
-
-        >>> g = a * -b + a * -c + b * -c
-        >>> g.is_pos_unate(a)
-        True
-        """
+        """Return whether a function is positive unate."""
         if vs is None:
             vs = self.support
         elif isinstance(vs, boolfunc.Function):
@@ -393,33 +341,15 @@ class Expression(boolfunc.Function):
         return True
 
     def smoothing(self, vs=None):
-        """Return the smoothing of a function.
-
-        >>> a, b, c = map(var, "abc")
-        >>> f = a * b + a * c + b * c
-        >>> f.smoothing(a).to_dnf()
-        b + c
-        """
+        """Return the smoothing of a function."""
         return Or(*self.cofactors(vs))
 
     def consensus(self, vs=None):
-        """Return the consensus of a function.
-
-        >>> a, b, c = map(var, "abc")
-        >>> f = a * b + a * c + b * c
-        >>> f.consensus(a).to_dnf()
-        b * c
-        """
+        """Return the consensus of a function."""
         return And(*self.cofactors(vs))
 
     def derivative(self, vs=None):
-        """Return the derivative of a function.
-
-        >>> a, b, c = map(var, "abc")
-        >>> f = a * b + a * c + b * c
-        >>> f.derivative(a).to_dnf()
-        b' * c + b * c'
-        """
+        """Return the derivative of a function."""
         return Xor(*self.cofactors(vs))
 
     # Specific to Expression

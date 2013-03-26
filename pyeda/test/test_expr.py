@@ -2,6 +2,8 @@
 Test expressions
 """
 
+import sys
+
 from pyeda.expr import (
     factor, simplify,
     var,
@@ -10,7 +12,10 @@ from pyeda.expr import (
     f_not, f_or, f_and, f_xor, f_xnor, f_equal, f_implies, f_ite
 )
 
-a, b, c, d, e, s = map(var, 'abcdes')
+MAJOR = sys.version_info.major
+MINOR = sys.version_info.minor
+
+a, b, c, d, e, p, q, s = map(var, 'abcdepqs')
 
 def test_ops():
     # __sub__, __rsub__
@@ -27,8 +32,9 @@ def test_ops():
 def test_simplify():
     f1 = And(a, And(b, And(c, 0, simplify=False), simplify=False), simplify=False)
     f2 = Or(a, Or(b, Or(c, 1, simplify=False), simplify=False), simplify=False)
-    #assert str(f1) == "a * b * c * 0"
-    #assert str(f2) == "a + b + c + 1"
+    if MAJOR >= 3:
+        assert str(f1) == "a * b * c * 0"
+        assert str(f2) == "a + b + c + 1"
     assert simplify(f1) == 0
     assert simplify(f2) == 1
 
@@ -100,6 +106,10 @@ def test_var_order():
     assert -b < a + b
 
 def test_or():
+    # Function
+    assert (-a + b).support == {a, b}
+
+    # Expression
     assert Or() == 0
     assert Or(a) == a
 
@@ -133,6 +143,10 @@ def test_or():
     assert f_or(a >> b, c >> d).equivalent(-a + b + -c + d)
 
 def test_and():
+    # Function
+    assert (-a * b).support == {a, b}
+
+    # Expression
     assert And() == 1
     assert And(a) == a
 
@@ -166,10 +180,18 @@ def test_and():
     assert f_and(a >> b, c >> d).equivalent((-a + b) * (-c + d))
 
 def test_not():
+    # Function
+    assert Not(-a + b).support == {a, b}
+
+    # Expression
     assert f_not(-a * b * -c * d).equivalent(a + -b + c + -d)
     assert f_not(-a + b + -c + d).equivalent(a * -b * c * -d)
 
 def test_xor():
+    # Function
+    assert Xor(-a, b).support == {a, b}
+
+    # Expression
     assert Xor() == 0
     assert Xor(a) == a
 
@@ -200,6 +222,10 @@ def test_xor():
     assert f_xor(a, b, c).equivalent(-a * -b * c + -a * b * -c + a * -b * -c + a * b * c)
 
 def test_xnor():
+    # Function
+    assert Xnor(-a, b).support == {a, b}
+
+    # Expression
     assert Xnor() == 1
     assert Xnor(a) == -a
 
@@ -230,6 +256,10 @@ def test_xnor():
     assert f_xnor(a, b, c).equivalent(-a * -b * -c + -a * b * c + a * -b * c + a * b * -c)
 
 def test_equal():
+    # Function
+    assert Equal(-a, b).support == {a, b}
+
+    # Expression
     assert Equal() == 1
     assert Equal(a) == 1
 
@@ -260,23 +290,31 @@ def test_equal():
     assert f_equal(a, b, c).equivalent(-a * -b * -c + a * b * c)
 
 def test_implies():
+    # Function
+    assert Implies(-p, q).support == {p, q}
+
+    # Expression
     assert Implies(0, 0) == 1
     assert Implies(0, 1) == 1
     assert Implies(1, 0) == 0
     assert Implies(1, 1) == 1
 
-    assert (0 >> a) == 1
-    assert (1 >> a) == a
-    assert (a >> 0) == -a
-    assert (a >> 1) == 1
+    assert (0 >> p) == 1
+    assert (1 >> p) == p
+    assert (p >> 0) == -p
+    assert (p >> 1) == 1
 
-    assert (a >> a) == 1
-    assert (a >> -a) == -a
-    assert (-a >> a) == a
+    assert (p >> p) == 1
+    assert (p >> -p) == -p
+    assert (-p >> p) == p
 
-    assert f_implies(a, b).equivalent(-a + b)
+    assert f_implies(p, q).equivalent(-p + q)
 
 def test_ite():
+    # Function
+    assert ITE(s, -a, b).support == {s, a, b}
+
+    # Expression
     assert ITE(0, 0, 0) == 0
     assert ITE(0, 0, 1) == 1
     assert ITE(0, 1, 0) == 0
@@ -317,3 +355,26 @@ def test_absorb():
     assert (a * -b + a * -b * c).absorb().equivalent(a * -b)
     assert ((a + -b) * (a + -b + c)).absorb().equivalent(a + -b)
     assert ((a + -b + c) * (a + -b)).absorb().equivalent(a + -b)
+
+def test_expand():
+    assert a.expand() == a
+    f = a.expand(b)
+    assert len(f.args) == 2 and f.equivalent(a)
+    f = a.expand([b, c])
+    assert len(f.args) == 4 and f.equivalent(a)
+
+def test_satisfy():
+    points = [p for p in Xor(a, b, c).satisfy_all()]
+    assert points == [
+        {a: 0, b: 0, c: 1},
+        {a: 0, b: 1, c: 0},
+        {a: 1, b: 0, c: 0},
+        {a: 1, b: 1, c: 1},
+    ]
+
+def test_misc():
+    f = a * b + a * c + b * c
+
+    assert f.smoothing(a).equivalent(b + c)
+    assert f.consensus(a).equivalent(b * c)
+    assert f.derivative(a).equivalent(Xor(b, c))
