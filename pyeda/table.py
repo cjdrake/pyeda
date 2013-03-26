@@ -33,7 +33,7 @@ def expr2truthtable(expr):
     be in the LSB. Conventionally we read left-to-right, so reverse
     the inputs to put 'a' in the MSB.
     """
-    inputs = expr.inputs[::-1]
+    inputs = tuple(reversed(expr.inputs))
     outputs = (PC_VALS[expr.restrict(point)] for point in iter_space(inputs))
     return TruthTable(inputs, outputs)
 
