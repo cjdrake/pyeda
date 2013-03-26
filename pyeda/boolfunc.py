@@ -131,6 +131,10 @@ class Function(object):
         for point in iter_space(self.inputs):
             yield point, self.restrict(point)
 
+    def reduce(self):
+        """Return the function reduced to a canonical form."""
+        raise NotImplementedError()
+
     def restrict(self, mapping):
         """
         Return the Boolean function that results after restricting a subset of

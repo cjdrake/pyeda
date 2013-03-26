@@ -631,6 +631,12 @@ class Variable(boolfunc.Variable, Literal):
         """Return the support set of a variable."""
         return self._support
 
+    def reduce(self, dnf=True):
+        if dnf:
+            return self.to_cdnf()
+        else:
+            return self.to_ccnf()
+
     def restrict(self, mapping):
         try:
             return boolify(mapping[self])
