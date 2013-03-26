@@ -210,10 +210,10 @@ second flip ``x[1]``, etc.
 
 ::
 
-   >>> x0 = var('x', indices=(0, ))
-   >>> x1 = var('x', indices=(1, ))
-   >>> x2 = var('x', indices=(2, ))
-   >>> x3 = var('x', indices=(3, ))
+   >>> x0 = var('x', indices=0)
+   >>> x1 = var('x', indices=1)
+   >>> x2 = var('x', indices=2)
+   >>> x3 = var('x', indices=3)
    >>> (x0, x1, x2, x3)
    (x[0], x[1], x[2], x[3])
 
@@ -234,14 +234,11 @@ but we will save the details of that for the section of bit vectors.
 Logical Expressions
 ===================
 
-Let's define a simple Boolean function: :math:`F(x, y, z) = x * y + -z`
+Let's define a simple Boolean function: :math:`F(x, y, z) = x * y + \overline{z}`
 
 ::
 
-   # Create three Boolean variables
    >>> x, y, z = map(var, 'xyz')
-
-   # Use '-', '*', '+' connectives to create a formula, and assign it to 'F'
    >>> F = x * y + -z
 
 Work In Progress
@@ -249,21 +246,16 @@ Work In Progress
 
 .. autofunction:: pyeda.expr.var
 
-.. autoclass:: pyeda.expr.Expression
-   :members: depth
-
 .. autoclass:: pyeda.expr.Not
 
 .. autoclass:: pyeda.expr.Or
 
-.. autofunction:: pyeda.expr.Nor
-
 .. autoclass:: pyeda.expr.And
-
-.. autofunction:: pyeda.expr.Nand
 
 .. autoclass:: pyeda.expr.Xor
 
+.. autoclass:: pyeda.expr.Equal
+
 .. autoclass:: pyeda.expr.Implies
 
-.. autoclass:: pyeda.expr.Equal
+.. autoclass:: pyeda.expr.ITE
