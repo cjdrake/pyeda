@@ -870,7 +870,8 @@ class OrAnd(Expression):
         return max(arg.depth + 1 for arg in self._args)
 
     def invert(self):
-        return self.DUAL(*[Not(arg) for arg in self._args])
+        return self.DUAL(*[Not(arg) for arg in self._args],
+                         simplify=self._simplified)
 
     def factor(self):
         """
@@ -1352,9 +1353,9 @@ class Exclusive(Expression):
 
     def invert(self):
         if self._parity == Xor.PARITY:
-            return Xnor(*self._args)
+            return Xnor(*self._args, simplify=self._simplified)
         else:
-            return Xor(*self._args)
+            return Xor(*self._args, simplify=self._simplified)
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
@@ -1551,7 +1552,8 @@ class Implies(Expression):
         return max(arg.depth + 1 for arg in self._args)
 
     def invert(self):
-        return And(self._args[0], Not(self._args[1]))
+        p, q = self._args
+        return And(p, Not(q))
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
