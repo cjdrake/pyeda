@@ -13,11 +13,13 @@ from pyeda.common import iter_space
 
 class Variable(object):
     """
-    A Boolean variable is a numerical quantity that may assume any value in the
-    set B = {0, 1}.
+    Abstract base class that defines an interface for a Boolean variable.
 
-    This implementation includes an optional "index", a nonnegative integer
-    that is convenient for bit vectors.
+    A Boolean variable is a numerical quantity that may assume any value in the
+    set :math:`B = \{0, 1\}`.
+
+    This implementation includes optional indices, nonnegative integers that
+    can be used to construct multi-dimensional bit vectors.
     """
 
     def __new__(cls, name, indices=None, namespace=None):
