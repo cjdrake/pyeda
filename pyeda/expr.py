@@ -1663,7 +1663,7 @@ class ITE(Expression):
 
     def invert(self):
         s, a, b = self._args
-        return And(Or(Not(s), Not(a)), Or(s, Not(b)))
+        return ITE(s, Not(a), Not(b), simplify=self._simplified)
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
