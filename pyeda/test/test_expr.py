@@ -100,10 +100,27 @@ def test_comp():
 
 def test_var_order():
     assert -a < a < -b < b
+
     assert a < a + b
     assert b < a + b
     assert -a < a + b
     assert -b < a + b
+
+    assert a + b < a + -b
+    assert a + b < -a + b
+    assert a + b < -a + -b
+    assert a + -b < -a + b
+    assert a + -b < -a + -b
+    assert -a + b < -a + -b
+
+    assert -a * -b < -a * b
+    assert -a * -b < a * -b
+    assert -a * -b < a * b
+    assert -a * b < a * -b
+    assert -a * b < a * b
+    assert a * -b < a * b
+
+    assert a * b < a * b * c
 
 def test_or():
     # Function
@@ -137,8 +154,33 @@ def test_or():
     assert (1 + a + b) == 1
     assert (a + b + 1) == 1
 
+    # associative
+    assert str((a + b) + c + d) == "a + b + c + d"
+    assert str(a + (b + c) + d) == "a + b + c + d"
+    assert str(a + b + (c + d)) == "a + b + c + d"
+    assert str((a + b) + (c + d)) == "a + b + c + d"
+    assert str((a + b + c) + d) == "a + b + c + d"
+    assert str(a + (b + c + d)) == "a + b + c + d"
+    assert str(a + (b + (c + d))) == "a + b + c + d"
+    assert str(((a + b) + c) + d) == "a + b + c + d"
+
+    # idempotent
+    assert a + a == a
+    assert a + a + a == a
+    assert a + a + a + a == a
+    assert (a + a) + (a + a) == a
+
+    # iverse
     assert -a + a == 1
     assert a + -a == 1
+
+    f = -a * b * c + a * -b * c + a * b * -c
+    assert f.restrict({a: 0}).equivalent(b * c)
+    assert f.restrict({a: 1}).equivalent(Xor(b, c))
+    assert f.restrict({a: 0, b: 0}) == 0
+    assert f.restrict({a: 0, b: 1}) == c
+    assert f.restrict({a: 1, b: 0}) == c
+    assert f.restrict({a: 1, b: 1}) == -c
 
     assert f_or(a >> b, c >> d).equivalent(-a + b + -c + d)
 
@@ -174,8 +216,33 @@ def test_and():
     assert (1 * a * b).equivalent(a * b)
     assert (a * b * 1).equivalent(a * b)
 
+    # associative
+    assert str((a * b) * c * d) == "a * b * c * d"
+    assert str(a * (b * c) * d) == "a * b * c * d"
+    assert str(a * b * (c * d)) == "a * b * c * d"
+    assert str((a * b) * (c * d)) == "a * b * c * d"
+    assert str((a * b * c) * d) == "a * b * c * d"
+    assert str(a * (b * c * d)) == "a * b * c * d"
+    assert str(a * (b * (c * d))) == "a * b * c * d"
+    assert str(((a * b) * c) * d) == "a * b * c * d"
+
+    # idempotent
+    assert a * a == a
+    assert a * a * a == a
+    assert a * a * a * a == a
+    assert (a * a) + (a * a) == a
+
+    # inverse
     assert -a * a == 0
     assert a * -a == 0
+
+    f = (-a + b + c) * (a + -b + c) * (a + b + -c)
+    assert f.restrict({a: 0}).equivalent(Xnor(b, c))
+    assert f.restrict({a: 1}).equivalent(b + c)
+    assert f.restrict({a: 0, b: 0}) == -c
+    assert f.restrict({a: 0, b: 1}) == c
+    assert f.restrict({a: 1, b: 0}) == c
+    assert f.restrict({a: 1, b: 1}) == 1
 
     assert f_and(a >> b, c >> d).equivalent((-a + b) * (-c + d))
 
@@ -184,6 +251,18 @@ def test_not():
     assert Not(-a + b).support == {a, b}
 
     # Expression
+    assert Not(0) == 1
+    assert Not(1) == 0
+    assert Not(a) == -a
+    assert Not(-a) == a
+
+    assert -(-a) == a
+    assert -(-(-a)) == -a
+    assert -(-(-(-a))) == a
+
+    assert Not(a + -a) == 0
+    assert Not(a * -a) == 1
+
     assert f_not(-a * b * -c * d).equivalent(a + -b + c + -d)
     assert f_not(-a + b + -c + d).equivalent(a * -b * c * -d)
 
@@ -308,6 +387,18 @@ def test_implies():
     assert (p >> -p) == -p
     assert (-p >> p) == p
 
+    assert str(p >> q) == "p => q"
+    assert str((a * b) >> (c + d)) == "(a * b) => (c + d)"
+
+    assert (p >> q).restrict({p: 0}) == 1
+    assert (p >> q).compose({q: a}).equivalent(p >> a)
+    assert (p >> q).invert().equivalent(p * -q)
+    assert ((a * b) >> (c + d)).depth == 2
+
+    f = Implies(p, 1, simplify=False)
+    assert str(f) == "p => 1"
+    assert simplify(f) == 1
+
     assert f_implies(p, q).equivalent(-p + q)
 
 def test_ite():
@@ -333,6 +424,10 @@ def test_ite():
     assert ITE(1, 1, b) == 1
     assert ITE(1, a, 1) == a
 
+    assert ITE(s, 0, 0) == 0
+    assert ITE(s, 0, 1) == -s
+    assert ITE(s, 1, 0) == s
+    assert ITE(s, 1, 1) == 1
     assert ITE(s, 0, b).equivalent(-s * b)
     assert ITE(s, a, 0).equivalent(s * a)
     assert ITE(s, 1, b).equivalent(s + b)
@@ -340,6 +435,18 @@ def test_ite():
 
     assert ITE(s, -a, -a) == -a
     assert ITE(s, a, a) == a
+
+    assert str(ITE(s, a, b)) == "s ? a : b"
+    assert str(ITE(s, a * b, c + d)) == "s ? (a * b) : (c + d)"
+
+    assert ITE(s, a, b).restrict({a: 1, b: 1}) == 1
+    assert ITE(s, a, b).compose({a: b, b: a}).equivalent(s * b + -s * a)
+    assert ITE(s, a, b).invert().equivalent((-s + -a) * (s + -b))
+    assert ITE(s, a * b, c + d).depth == 3
+
+    f = ITE(s, 1, 1, simplify=False)
+    assert str(f) == "s ? 1 : 1"
+    assert simplify(f) == 1
 
     assert f_ite(s, a, b).equivalent(s * a + -s * b)
 
@@ -363,6 +470,12 @@ def test_expand():
     f = a.expand([b, c])
     assert len(f.args) == 4 and f.equivalent(a)
 
+    assert a.expand(dnf=False) == a
+    f = a.expand(b)
+    assert len(f.args) == 2 and f.equivalent(a)
+    f = a.expand([b, c])
+    assert len(f.args) == 4 and f.equivalent(a)
+
 def test_satisfy():
     points = [p for p in Xor(a, b, c).satisfy_all()]
     assert points == [
@@ -371,6 +484,7 @@ def test_satisfy():
         {a: 1, b: 0, c: 0},
         {a: 1, b: 1, c: 1},
     ]
+    assert Xor(a, b, c).satisfy_count() == 4
 
 def test_misc():
     f = a * b + a * c + b * c

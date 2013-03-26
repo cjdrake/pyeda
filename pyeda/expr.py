@@ -318,7 +318,10 @@ class Expression(boolfunc.Function):
             yield point
 
     def satisfy_count(self):
-        return len(self.satisfy_all())
+        cnt = 0
+        for point in self.satisfy_all():
+            cnt += 1
+        return cnt
 
     def is_neg_unate(self, vs=None):
         """Return whether a function is negative unate."""
@@ -752,34 +755,6 @@ class OrAnd(Expression):
 
     # From Function
     def restrict(self, mapping):
-        """
-        >>> a, b, c = map(var, "abc")
-        >>> f = -a * b * c + a * -b * c + a * b * -c
-        >>> fa0, fa1 = f.restrict({a: 0}), f.restrict({a: 1})
-        >>> fa0, fa1
-        (b * c, b' * c + b * c')
-        >>> f.restrict({a: 0, b: 0})
-        0
-        >>> f.restrict({a: 0, b: 1})
-        c
-        >>> f.restrict({a: 1, b: 0})
-        c
-        >>> f.restrict({a: 1, b: 1})
-        c'
-
-        >>> f = (-a + b + c) * (a + -b + c) * (a + b + -c)
-        >>> fa0, fa1 = f.restrict({a: 0}), f.restrict({a: 1})
-        >>> fa0, fa1
-        ((b + c') * (b' + c), b + c)
-        >>> f.restrict({a: 0, b: 0})
-        c'
-        >>> f.restrict({a: 0, b: 1})
-        c
-        >>> f.restrict({a: 1, b: 0})
-        c
-        >>> f.restrict({a: 1, b: 1})
-        1
-        """
         idx_arg = self._get_restrictions(mapping)
         if idx_arg:
             args = list(self._args)
@@ -799,22 +774,7 @@ class OrAnd(Expression):
 
     # From Expression
     def __lt__(self, other):
-        """Overload the '<' operator.
-
-        >>> a, b, c = map(var, "abc")
-        >>> a + b < a + -b, a + b < -a + b, a + b < -a + -b
-        (True, True, True)
-        >>> a + -b < -a + b, a + -b < -a + -b, -a + b < -a + -b
-        (True, True, True)
-        >>> a + b < a + b + c
-        True
-        >>> -a * -b < -a * b, -a * -b < a * -b, -a * -b < a * b
-        (True, True, True)
-        >>> -a * b < a * -b, -a * b < a * b, a * -b < a * b
-        (True, True, True)
-        >>> a * b < a * b * c
-        True
-        """
+        """Overload the '<' operator."""
         if isinstance(other, Literal):
             return self.support < other.support
         if isinstance(other, self.__class__) and self.depth == other.depth == 1:
@@ -955,34 +915,7 @@ class OrAnd(Expression):
 
 
 class Or(OrAnd):
-    """Boolean OR operator
-
-    >>> a, b, c, d = map(var, "abcd")
-
-    test associativity
-
-    >>> (a + b) + c + d
-    a + b + c + d
-    >>> a + (b + c) + d
-    a + b + c + d
-    >>> a + b + (c + d)
-    a + b + c + d
-    >>> (a + b) + (c + d)
-    a + b + c + d
-    >>> (a + b + c) + d
-    a + b + c + d
-    >>> a + (b + c + d)
-    a + b + c + d
-    >>> a + (b + (c + d))
-    a + b + c + d
-    >>> ((a + b) + c) + d
-    a + b + c + d
-
-    test idempotence
-
-    >>> a + a, a + a + a, a + a + a + a, (a + a) + (a + a)
-    (a, a, a, a)
-    """
+    """Boolean OR operator"""
 
     # Infix symbol used in string representation
     IDENTITY = 0
@@ -1026,34 +959,7 @@ class Or(OrAnd):
 
 
 class And(OrAnd):
-    """Boolean AND operator
-
-    >>> a, b, c, d = map(var, "abcd")
-
-    test associativity
-
-    >>> (a * b) * c * d
-    a * b * c * d
-    >>> a * (b * c) * d
-    a * b * c * d
-    >>> a * b * (c * d)
-    a * b * c * d
-    >>> (a * b) * (c * d)
-    a * b * c * d
-    >>> (a * b * c) * d
-    a * b * c * d
-    >>> a * (b * c * d)
-    a * b * c * d
-    >>> a * (b * (c * d))
-    a * b * c * d
-    >>> ((a * b) * c) * d
-    a * b * c * d
-
-    test idempotence
-
-    >>> a * a, a * a * a, a * a * a * a, (a * a) + (a * a)
-    (a, a, a, a)
-    """
+    """Boolean AND operator"""
 
     # Infix symbol used in string representation
     IDENTITY = 1
@@ -1135,18 +1041,7 @@ And.DUAL = Or
 
 
 class Not(Expression):
-    """Boolean NOT operator
-
-    >>> a = var("a")
-    >>> Not(0), Not(1)
-    (1, 0)
-    >>> Not(-a), Not(a)
-    (a, a')
-    >>> -(-a), -(-(-a)), -(-(-(-a)))
-    (a, a', a)
-    >>> Not(a + -a), Not(a * -a)
-    (0, 1)
-    """
+    """Boolean NOT operator"""
     def __new__(cls, arg, simplify=True):
         arg = arg if isinstance(arg, Expression) else boolify(arg)
         if simplify:
