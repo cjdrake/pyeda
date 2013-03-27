@@ -33,6 +33,7 @@ Interface Classes:
             Xnor
         Equal
         Implies
+        ITE
 """
 
 from collections import deque, OrderedDict
