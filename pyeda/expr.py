@@ -338,10 +338,7 @@ class Expression(boolfunc.Function):
             yield point
 
     def satisfy_count(self):
-        cnt = 0
-        for point in self.satisfy_all():
-            cnt += 1
-        return cnt
+        return sum(1 for _ in self.satisfy_all())
 
     def is_neg_unate(self, vs=None):
         """Return whether a function is negative unate."""
