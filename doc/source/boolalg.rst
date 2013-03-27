@@ -16,22 +16,19 @@ We will be using some mathematical language here and there,
 but please do not run away screaming in fear.
 This document assumes very little background knowledge.
 
-We don't even assume you know what Boolean Algebra is;
-so let's define it now.
-
 What is Boolean Algebra?
 ========================
 
 All great stories have a beginning, so let's start with the basics.
-You probably took a class called "algebra" in high school.
+You probably took a class called "algebra" in (junior) high school.
 So when you started reading this document you were already confused.
 Algebra is just algebra, right?
-You solve for :math:`X`, find the intersection of two lines,
+You solve for :math:`x`, find the intersection of two lines,
 and you're done, right?
 
 As it turns out,
-the algebra you are probably already familiar with is just scratching the
-surface.
+the algebra you are familiar with just scratches the surface.
+There are many algebras with equally many theoretical and practical uses.
 An algebra is the combination of two things:
 
 1. a collection of mathematical objects, and
@@ -40,7 +37,7 @@ An algebra is the combination of two things:
 For example, in your familiar algebra, you have numbers such as
 :math:`\{1, 3, 5, \frac{1}{2}, .337\}`, and operators such as
 :math:`\{+, -, \cdot, \div\}`.
-The numbers are the mathematics objects,
+The numbers are the mathematical objects,
 and the operators are the rules for how to manipulate them.
 Except in very extreme circumstances (division by zero),
 whenever you add, subtract, or divide two numbers, you get another number.
@@ -83,6 +80,10 @@ is defined by:
 
    1 + 1 = 1
 
+This looks familiar so far except for the :math:`1 + 1 = 1` part.
+The Boolean sum is called *OR* because the output of :math:`a` *OR* :math:`b`
+equals 1 *if and only if* :math:`a = 1`, or :math:`b = 1`, or both.
+
 The product (or conjunction), denoted with the :math:`\cdot` symbol,
 :math:`\wedge`, or *AND*,
 is defined by:
@@ -97,19 +98,21 @@ is defined by:
 
    1 \cdot 1 = 1
 
-So you are telling me that in Boolean algebra there are only two numbers you
-need to know about, and three operators?
-And people get paid to do this?
+The Boolean product is called *AND* because the output of :math:`a` *AND*
+:math:`b` equals 1 *if and only if* both :math:`a = 1`, and :math:`b = 1`.
 
-For basic manipulations involving constant values,
-the Python interpreter has all the built-in functionality we need.
+So you are telling me that in Boolean algebra there are only two numbers you
+need to know about, and only three operators?
+Not exactly.
+There are many other significant operators,
+but they may all be reduced to these fundamental three.
 
 Built-in Python Boolean Operations
 ==================================
 
 Python has a built-in Boolean data type, ``bool``.
-You can think of the ``False`` keyword as an alias for the number zero,
-and the ``True`` keyword as an alias for the number one.
+You can think of the ``False`` keyword as an alias for the number 0,
+and the ``True`` keyword as an alias for the number 1.
 
 ::
 
@@ -128,10 +131,8 @@ The keywords for complement, sum, and product are ``not``, ``or``, ``and``.
 
    >>> not True
    False
-
    >>> True or False
    True
-
    >>> True and False
    False
 
@@ -153,8 +154,8 @@ but *extremely* convenient for interactive use.
 If you want to see all the symbols you import with this statement,
 look into ``pyeda/__init__.py``.
 
-Boolean Variables and Functions
-===============================
+Boolean Variables
+=================
 
 Okay, so we already know what Boolean Algebra is,
 and Python can do everything we need already, right?
@@ -165,18 +166,33 @@ things start to get interesting when we introduce a few *variables*.
 A Boolean variable is a numerical quantity that may assume any value in the
 set :math:`B = \{0, 1\}`.
 
-Let's create a few Boolean variables using the ``var`` method:
+To put it another way,
+a *variable* is a handy label for a concept in the mind of its author.
+For example, if we flip a coin, the result will either be "heads" or "tails".
+Let's say we assign "tails" the value 0, and "heads" the value 1.
+Before we flip the coin,
+the face the coin will ultimately show is unknown.
+We could call this idea ``flip_result``,
+or just :math:`x` if we are going for brevity.
+Before the coin is flipped, its final result may *vary*,
+and is therefore referred to as a *variable*.
+After the coin is flipped, the result is a constant.
+
+Creating Variable Instances
+---------------------------
+
+Let's create a few Boolean variables using the ``var`` convenience method:
 
 ::
 
-   >>> a, b = map(var, 'ab')
+   >>> a, b, c, d = map(var, 'abcd')
    >>> a.name
    a
    >>> b.name
    b
 
 By default, all variables go into a global namespace.
-Also, variables are singletons.
+Also, all variable instances are singletons.
 That is, only one variable is allowed to exist per name.
 Verify this fact with the following::
 
@@ -186,76 +202,26 @@ Verify this fact with the following::
    True
 
 .. warning::
-   We recommend that you never do something crazy like assigning ``a`` and
-   ``b`` to the same variable instance.
+   We recommend that you never do something crazy like assigning :math:`a` and
+   :math:`b` to the same variable instance.
 
-If you want to create namespaces for your variables,
+If you want to put your variables into a separate namespaces,
 use the ``namespace`` parameter::
 
-   >>> eggs = var('eggs', namespace='spam')
-   >>> str(eggs)
+   >>> eggs1 = var('eggs', namespace='ham')
+   >>> eggs2 = var('eggs', namespace='spam')
+   >>> str(eggs1)
+   ham.eggs
+   >>> str(eggs2)
    spam.eggs
+   >>> id(eggs1) == id(eggs2)
+   False
 
-Variable Indices
-----------------
+Boolean Functions
+=================
 
-Sometimes, a variable is part of a related group of variables.
-For example, let's say you flip a coin four times.
-Instead of using ``a`` to represent the first flip,
-``b`` for the second flip, and so on,
-we can use a single variable name with an index.
-Let the first flip be ``x[0]``
-(because in programming we always start with index zero),
-second flip ``x[1]``, etc.
-
-::
-
-   >>> x0 = var('x', indices=0)
-   >>> x1 = var('x', indices=1)
-   >>> x2 = var('x', indices=2)
-   >>> x3 = var('x', indices=3)
-   >>> (x0, x1, x2, x3)
-   (x[0], x[1], x[2], x[3])
-
-As it turns out, we can actually do a lot better with the ``bitvec`` function::
-
-   >>> x = bitvec('x', 4)
-   >>> x[0]
-   x[0]
-   >>> x[1:3]
-   [x[1], x[2]]
-   >>> x
-   [x[0], x[1], x[2], x[3]]
-
-This function is actually much more powerful than this.
-It can deftly produce multi-dimensional arrays of variables with few keystrokes,
-but we will save the details of that for the section of bit vectors.
+Truth Tables
+============
 
 Logical Expressions
 ===================
-
-Let's define a simple Boolean function: :math:`F(x, y, z) = x * y + \overline{z}`
-
-::
-
-   >>> x, y, z = map(var, 'xyz')
-   >>> F = x * y + -z
-
-Work In Progress
-----------------
-
-.. autofunction:: pyeda.expr.var
-
-.. autoclass:: pyeda.expr.Not
-
-.. autoclass:: pyeda.expr.Or
-
-.. autoclass:: pyeda.expr.And
-
-.. autoclass:: pyeda.expr.Xor
-
-.. autoclass:: pyeda.expr.Equal
-
-.. autoclass:: pyeda.expr.Implies
-
-.. autoclass:: pyeda.expr.ITE

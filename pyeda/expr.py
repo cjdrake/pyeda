@@ -44,7 +44,20 @@ from pyeda.common import bit_on, boolify, cached_property
 B = {0, 1}
 
 def var(name, indices=None, namespace=None):
-    """Return a single variable expression."""
+    """Return a variable expression.
+
+    Parameters
+    ----------
+
+    name : str
+        The variable's identifier string.
+    indices : int or tuple[int], optional
+        One or more integer suffixes for variables that are part of a
+        multi-dimensional bit-vector, eg x[1], x[1][2][3]
+    namespace : str, optional
+        A container for a set of variables. Since a Variable instance is global,
+        a namespace can be used for local scoping.
+    """
     return Variable(name, indices, namespace)
 
 def iter_cubes(vs):
