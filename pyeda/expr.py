@@ -314,6 +314,12 @@ class Expression(boolfunc.Function):
         else:
             return self
 
+    def reduce(self, dnf=True):
+        if dnf:
+            return self.to_cdnf()
+        else:
+            return self.to_ccnf()
+
     def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':
             return sat.backtrack(self)
@@ -586,12 +592,6 @@ class Variable(boolfunc.Variable, Literal):
     def support(self):
         """Return the support set of a variable."""
         return self._support
-
-    def reduce(self, dnf=True):
-        if dnf:
-            return self.to_cdnf()
-        else:
-            return self.to_ccnf()
 
     def restrict(self, mapping):
         try:
