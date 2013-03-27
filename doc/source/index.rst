@@ -27,7 +27,6 @@ Contents:
    overview.rst
    install.rst
    boolalg.rst
-   numbers.rst
    sudoku.rst
    relnotes.rst
 
