@@ -217,6 +217,71 @@ use the ``namespace`` parameter::
    >>> id(eggs1) == id(eggs2)
    False
 
+Points in Boolean Space
+=======================
+
+Before we talk about Boolean functions,
+it will be useful to discuss the nature of Boolean space.
+
+In high school algebra,
+you started with functions that looked like :math:`f(x) = 2x + 3`.
+Later, you probably investigated slightly more interesting functions such as
+:math:`f(x) = x^2`, :math:`f(x) = sin(x)`, and :math:`f(x) = e^x`.
+All of these are functions of a single variable.
+That is, the domain of these functions is the set of all values the variable
+:math:`x` can take.
+In all these cases, that domain is :math:`[-\infty, +\infty]`
+
+Remember that variables in Boolean algebra can only take values of 0 or 1.
+So to create interesting functions in Boolean algebra,
+you use many variables.
+
+Let's revisit the coin-flipping example from before.
+You create a variable :math:`x` to represent the result of the first flip,
+and a variable :math:`y` to represent the result of the second flip.
+You use 0 to represent a "tails" result, and 1 to represent a "heads" result.
+
+The number of variables you use is called the "dimension".
+All the possible outcomes of this experiment is called the "space".
+Each possible outcome is called a "point".
+
+So let's put it all together.
+If you flip the coin twice, and the result is "heads", "tails",
+that result is point :math:`(1, 0)` in a 2-dimensional Boolean space.
+
+Use the ``iter_space`` iterator to iterate through all possible points in an
+N-dimensional Boolean space::
+
+   >>> x, y = map(var, 'xy')
+   >>> [ p for p in iter_space([x, y]) ]
+   [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}]
+
+The return value is a dictionary.
+The key is the variable instance, and the value is in :math:`{0, 1}`.
+
+Try doing the experiment with three coin flips.
+Use the variable :math:`z` to represent the result of the third flip.
+
+::
+
+   >>> x, y, z = map(var, 'xyz')
+
+   # Put 'z' in the least-significant position
+   >>> [ p for p in iter_space([z, y, x]) ]
+   [{x: 0, y: 0, z: 0},
+    {x: 0, y: 0, z: 1},
+    {x: 0, y: 1, z: 0},
+    {x: 0, y: 1, z: 1},
+    {x: 1, y: 0, z: 0},
+    {x: 1, y: 0, z: 1},
+    {x: 1, y: 1, z: 0},
+    {x: 1, y: 1, z: 1}]
+
+The observant reader will notice that this is equivalent to:
+
+* generating all bit-strings of length :math:`N`
+* counting from 0 to 7 in the binary number system
+
 Boolean Functions
 =================
 
