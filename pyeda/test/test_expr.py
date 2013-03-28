@@ -9,7 +9,7 @@ from pyeda.expr import (
     var,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
-    f_not, f_or, f_and, f_xor, f_xnor, f_equal, f_implies, f_ite
+    f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor, f_equal, f_implies, f_ite
 )
 
 MAJOR = sys.version_info.major
@@ -28,6 +28,16 @@ def test_ops():
     assert a.xor(b, c).equivalent(-a * -b * c + -a * b * -c + a * -b * -c + a * b * c)
     assert a.equal(b, c).equivalent(-a * -b * -c + a * b * c)
     assert s.ite(a, b).equivalent(s * a + -s * b)
+
+def test_factor():
+    assert factor(0) == 0
+    assert factor(Implies(p, q)).equivalent(-p + q)
+    assert factor(Xor(a, b)).equivalent(-a * b + a * -b)
+
+def test_simplify():
+    assert simplify(0) == 0
+    assert simplify(And(1, 1, 1, 0), simplify=False) == 0
+    assert simplify(Or(0, 0, 0, 1), simplify=False) == 0
 
 def test_simplify():
     f1 = And(a, And(b, And(c, 0, simplify=False), simplify=False), simplify=False)
@@ -184,6 +194,10 @@ def test_or():
 
     assert f_or(a >> b, c >> d).equivalent(-a + b + -c + d)
 
+def test_nor():
+    assert Nor(a, b).equivalent(-a * -b)
+    assert str(f_nor(a, b)) == "a' * b'"
+
 def test_and():
     # Function
     assert (-a * b).support == {a, b}
@@ -245,6 +259,10 @@ def test_and():
     assert f.restrict({a: 1, b: 1}) == 1
 
     assert f_and(a >> b, c >> d).equivalent((-a + b) * (-c + d))
+
+def test_nand():
+    assert Nand(a, b).equivalent(-a + -b)
+    assert str(f_nand(a, b)) == "a' + b'"
 
 def test_not():
     # Function
@@ -465,15 +483,19 @@ def test_absorb():
 
 def test_expand():
     assert a.expand() == a
+
     f = a.expand(b)
     assert len(f.args) == 2 and f.equivalent(a)
+
     f = a.expand([b, c])
     assert len(f.args) == 4 and f.equivalent(a)
 
     assert a.expand(dnf=False) == a
-    f = a.expand(b)
+
+    f = a.expand(b, dnf=False)
     assert len(f.args) == 2 and f.equivalent(a)
-    f = a.expand([b, c])
+
+    f = a.expand([b, c], dnf=False)
     assert len(f.args) == 4 and f.equivalent(a)
 
 def test_satisfy():
