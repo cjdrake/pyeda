@@ -26,4 +26,4 @@ Version 0.11
 Version 0.11.1
 --------------
 
-* Fixed bug #16: Function.reduce only implemented by Variable
+* Fixed bug #16: ``Function.reduce`` only implemented by Variable
