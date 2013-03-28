@@ -13,7 +13,7 @@ table.py      -- Boolean tables
 vexpr.py      -- Boolean vector logic expressions
 """
 
-__version__ = "0.11.0"
+__version__ = "0.11.1"
 
 from pyeda.binop import (
     apply2,

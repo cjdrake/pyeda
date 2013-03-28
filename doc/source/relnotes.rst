@@ -22,3 +22,8 @@ Version 0.11
 * Expressions gained an ``expand`` method, to implement Shannon expansion.
 * New if-then-else (ITE) expression type.
 * NormalForm expressions now both support ``-``, ``+``, and ``*`` operators.
+
+Version 0.11.1
+--------------
+
+* Fixed bug #16: Function.reduce only implemented by Variable
