@@ -7,8 +7,8 @@ Interface Classes:
         One
 """
 
-from pyeda.common import boolify, iter_space
-from pyeda.boolfunc import Function
+from pyeda.common import boolify
+from pyeda.boolfunc import iter_space, Function
 
 
 class Constant(Function):

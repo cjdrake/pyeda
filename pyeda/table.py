@@ -10,8 +10,8 @@ Interface Classes:
 """
 
 from pyeda import __version__
-from pyeda.common import bit_on, cached_property, iter_space
-from pyeda.boolfunc import Function
+from pyeda.common import bit_on, cached_property
+from pyeda.boolfunc import iter_space, Function
 from pyeda.expr import Expression
 
 # Positional Cube Notation

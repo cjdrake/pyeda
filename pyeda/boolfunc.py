@@ -1,6 +1,9 @@
 """
 Boolean Functions
 
+Interface Functions:
+    iter_space
+
 Interface Classes:
     Variable
     Function
@@ -8,7 +11,18 @@ Interface Classes:
     VectorFunction
 """
 
-from pyeda.common import iter_space
+from pyeda.common import bit_on
+
+
+def iter_space(vs):
+    """Iterate through all points in an N-dimensional space.
+
+    Parameters
+    ----------
+    vs : [Variable]
+    """
+    for n in range(2 ** len(vs)):
+        yield {v: bit_on(n, i) for i, v in enumerate(vs)}
 
 
 class Variable(object):
