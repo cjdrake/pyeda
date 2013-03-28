@@ -61,7 +61,7 @@ create a 3-dimensional variable, ``X``.
 
 ::
 
-   >>> X = bitvec('x', (1,9), (1,9), (1,9))
+   >>> X = bitvec('x', (1, 10), (1, 10), (1, 10))
 
 ``bitvec`` is a versatile function for returning arbitrary-length bit vectors.
 The first argument is the variable name.
@@ -69,8 +69,8 @@ Each additional argument adds an additional dimension with a non-negative start
 and stop index.
 If you provide only a number instead of a two-tuple,
 the start index is zero.
-For example, we could also have used ``bitvec('x', 9, 9, 9)``,
-but that would have given ``X[0:8][0:8][0:8]`` instead of ``X[1:9][1:9][1:9]``.
+For example, we could also have used ``bitvec('x', 10, 10, 10)``,
+but that would have given ``X[0:9][0:9][0:9]`` instead of ``X[1:10][1:10][1:10]``.
 
 The variable ``X`` is a 9x9x9 bit vector,
 indexed as ``X[row][column][value]``
