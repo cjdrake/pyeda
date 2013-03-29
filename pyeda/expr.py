@@ -301,25 +301,25 @@ class Expression(boolfunc.Function):
         """If-then-else operator"""
         return ITE(self, a, b)
 
-    def expand(self, vs=None, dnf=True):
+    def expand(self, vs=None, cnf=False):
         """Return the Shannon expansion with respect to a list of variables."""
         if vs is None:
             vs = list()
         elif isinstance(vs, Expression):
             vs = [vs]
         if vs:
-            if dnf:
-                return Or(*[And(self, *cube) for cube in iter_cubes(vs)])
-            else:
+            if cnf:
                 return And(*[Or(self, *cube) for cube in iter_cubes(vs)])
+            else:
+                return Or(*[And(self, *cube) for cube in iter_cubes(vs)])
         else:
             return self
 
-    def reduce(self, dnf=True):
-        if dnf:
-            return self.to_cdnf()
-        else:
+    def reduce(self, cnf=False):
+        if cnf:
             return self.to_ccnf()
+        else:
+            return self.to_cdnf()
 
     def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':

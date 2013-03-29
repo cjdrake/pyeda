@@ -490,12 +490,12 @@ def test_expand():
     f = a.expand([b, c])
     assert len(f.args) == 4 and f.equivalent(a)
 
-    assert a.expand(dnf=False) == a
+    assert a.expand(cnf=True) == a
 
-    f = a.expand(b, dnf=False)
+    f = a.expand(b, cnf=True)
     assert len(f.args) == 2 and f.equivalent(a)
 
-    f = a.expand([b, c], dnf=False)
+    f = a.expand([b, c], cnf=True)
     assert len(f.args) == 4 and f.equivalent(a)
 
 def test_satisfy():
