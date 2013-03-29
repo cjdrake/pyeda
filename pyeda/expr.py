@@ -165,14 +165,11 @@ class Expression(boolfunc.Function):
     @cached_property
     def support(self):
         """Return the support set of an expression."""
-        s = set()
-        for arg in self._args:
-            s |= arg.support
-        return s
+        return frozenset.union(*[arg.support for arg in self._args])
 
     @cached_property
     def inputs(self):
-        return sorted(self.support)
+        return tuple(sorted(self.support))
 
     def __neg__(self):
         """Boolean negation
@@ -580,7 +577,7 @@ class Variable(boolfunc.Variable, Literal):
             self = cls._MEM[(namespace, name, indices)]
         except KeyError:
             self = boolfunc.Variable.__new__(cls, name, indices, namespace)
-            self._support = {self}
+            self._support = frozenset([self, ])
             self._args = (self, )
             cls._MEM[(namespace, name, indices)] = self
         return self
@@ -652,7 +649,7 @@ class Complement(Literal):
         except KeyError:
             self = super(Complement, cls).__new__(cls)
             self.var = v
-            self._support = {v}
+            self._support = frozenset([v, ])
             self._args = (self, )
             cls._MEM[v] = self
         return self
