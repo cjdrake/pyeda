@@ -27,5 +27,5 @@ from pyeda.expr import var, iter_cubes, factor, simplify
 from pyeda.expr import Nor, Nand, OneHot0, OneHot
 from pyeda.expr import Not, Or, And, Xor, Xnor, Equal, Implies, ITE
 from pyeda.nfexpr import expr2dnf, expr2cnf, dnf2expr, cnf2expr, DNF_Or, CNF_And
-from pyeda.table import TruthTable, expr2truthtable
+from pyeda.table import TruthTable, expr2truthtable, truthtable2expr
 from pyeda.vexpr import BitVector, bitvec, uint2vec, int2vec
