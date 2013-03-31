@@ -4,8 +4,6 @@ Boolean Logic Expressions
 Interface Functions:
     var
 
-    iter_cubes
-
     factor
     simplify
 
@@ -60,10 +58,6 @@ def var(name, indices=None, namespace=None):
         a namespace can be used for local scoping.
     """
     return Variable(name, indices, namespace)
-
-def iter_cubes(vs):
-    for n in range(2 ** len(vs)):
-        yield tuple(v if bit_on(n, i) else -v for i, v in enumerate(vs))
 
 def factor(expr):
     """Return a factored expression."""
@@ -305,10 +299,9 @@ class Expression(boolfunc.Function):
         elif isinstance(vs, Expression):
             vs = [vs]
         if vs:
-            if cnf:
-                return And(*[Or(self, *cube) for cube in iter_cubes(vs)])
-            else:
-                return Or(*[And(self, *cube) for cube in iter_cubes(vs)])
+            outer, inner = (And, Or) if cnf else (Or, And)
+            return outer(*[inner(self, *term)
+                           for term in boolfunc.iter_terms(vs, cnf)])
         else:
             return self
 

@@ -22,8 +22,8 @@ from pyeda.binop import (
 )
 from pyeda.common import clog2
 from pyeda.dimacs import load_cnf, dump_cnf, load_sat, dump_sat
-from pyeda.boolfunc import iter_points
-from pyeda.expr import var, iter_cubes, factor, simplify
+from pyeda.boolfunc import iter_points, iter_terms
+from pyeda.expr import var, factor, simplify
 from pyeda.expr import Nor, Nand, OneHot0, OneHot
 from pyeda.expr import Not, Or, And, Xor, Xnor, Equal, Implies, ITE
 from pyeda.nfexpr import expr2dnf, expr2cnf, dnf2expr, cnf2expr, DNF_Or, CNF_And
