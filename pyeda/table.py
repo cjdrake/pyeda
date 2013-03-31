@@ -10,7 +10,7 @@ Interface Classes:
 """
 
 from pyeda.common import bit_on, boolify, cached_property
-from pyeda.boolfunc import iter_space, Function
+from pyeda.boolfunc import iter_points, Function
 from pyeda.expr import Or, And, Not
 
 # Positional Cube Notation
@@ -40,7 +40,7 @@ PC_COUNT_ONES = {n: sum((n >> (i << 1)) & 3 == PC_ONE for i in range(4))
 
 def expr2truthtable(expr):
     """Convert an expression into a truth table."""
-    outputs = (expr.restrict(point) for point in iter_space(expr.inputs))
+    outputs = (expr.restrict(point) for point in iter_points(expr.inputs))
     return TruthTable(expr.inputs, outputs)
 
 def truthtable2expr(tt, cnf=False):

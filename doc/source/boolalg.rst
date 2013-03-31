@@ -249,11 +249,11 @@ So let's put it all together.
 If you flip the coin twice, and the result is "heads", "tails",
 that result is point :math:`(1, 0)` in a 2-dimensional Boolean space.
 
-Use the ``iter_space`` iterator to iterate through all possible points in an
+Use the ``iter_points`` iterator to iterate through all possible points in an
 N-dimensional Boolean space::
 
    >>> x, y = map(var, 'xy')
-   >>> [ p for p in iter_space([x, y]) ]
+   >>> [ point for point in iter_points([x, y]) ]
    [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}]
 
 The return value is a dictionary.
@@ -267,7 +267,7 @@ Use the variable :math:`z` to represent the result of the third flip.
    >>> x, y, z = map(var, 'xyz')
 
    # Put 'z' in the least-significant position
-   >>> [ p for p in iter_space([z, y, x]) ]
+   >>> [ point for point in iter_points([z, y, x]) ]
    [{x: 0, y: 0, z: 0},
     {x: 0, y: 0, z: 1},
     {x: 0, y: 1, z: 0},

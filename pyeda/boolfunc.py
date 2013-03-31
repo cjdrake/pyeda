@@ -2,7 +2,7 @@
 Boolean Functions
 
 Interface Functions:
-    iter_space
+    iter_points
 
 Interface Classes:
     Variable
@@ -14,7 +14,7 @@ Interface Classes:
 from pyeda.common import bit_on
 
 
-def iter_space(vs):
+def iter_points(vs):
     """Iterate through all points in an N-dimensional space.
 
     Parameters
@@ -123,7 +123,7 @@ class Function(object):
         fst, rst = self.inputs[0], self.inputs[1:]
         for p, cf in self.iter_cofactors(fst):
             if cf == 1:
-                for point in iter_space(rst):
+                for point in iter_points(rst):
                     point[fst] = p[fst]
                     yield point
             elif cf != 0:
@@ -135,7 +135,7 @@ class Function(object):
         fst, rst = self.inputs[0], self.inputs[1:]
         for p, cf in self.iter_cofactors(fst):
             if cf == 0:
-                for point in iter_space(rst):
+                for point in iter_points(rst):
                     point[fst] = p[fst]
                     yield point
             elif cf != 1:
@@ -144,7 +144,7 @@ class Function(object):
                     yield point
 
     def iter_outputs(self):
-        for point in iter_space(self.inputs):
+        for point in iter_points(self.inputs):
             yield point, self.restrict(point)
 
     def reduce(self):
@@ -195,7 +195,7 @@ class Function(object):
             vs = list()
         elif isinstance(vs, Function):
             vs = [vs]
-        for point in iter_space(vs):
+        for point in iter_points(vs):
             yield point, self.restrict(point)
 
     def cofactors(self, vs=None):

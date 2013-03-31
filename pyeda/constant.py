@@ -8,7 +8,7 @@ Interface Classes:
 """
 
 from pyeda.common import boolify
-from pyeda.boolfunc import iter_space, Function
+from pyeda.boolfunc import iter_points, Function
 
 
 class Constant(Function):
@@ -103,7 +103,7 @@ class One(Constant):
 
     def satisfy_all(self):
         vs = sorted(self.support)
-        for point in iter_space(vs):
+        for point in iter_points(vs):
             yield point
 
     def satisfy_count(self):
