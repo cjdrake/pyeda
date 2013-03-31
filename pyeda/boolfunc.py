@@ -72,29 +72,10 @@ class Variable(object):
         return self.__str__()
 
     def __str__(self):
-        """Return the string representation.
-
-        >>> str(Variable("a"))
-        'a'
-        >>> str(Variable("v", 42))
-        'v[42]'
-        >>> str(Variable("v", (1, 2, 3)))
-        'v[1][2][3]'
-        """
         suffix = "".join("[{}]".format(idx) for idx in self.indices)
         return self.qualname + suffix
 
     def __lt__(self, other):
-        """Return rich "less than" result, for ordering.
-
-        >>> a, b = map(Variable, "ab")
-        >>> a < b, b < a
-        (True, False)
-
-        >>> c1, c2, c10 = Variable('c', 1), Variable('c', 2), Variable('c', 10)
-        >>> c1 < c2, c1 < c10, c2 < c10
-        (True, True, True)
-        """
         if self.name == other.name:
             return self.indices < other.indices
         else:

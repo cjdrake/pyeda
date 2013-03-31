@@ -11,11 +11,14 @@ from pyeda.expr import (
     Nor, Nand, OneHot0, OneHot,
     f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor, f_equal, f_implies, f_ite
 )
+from pyeda.vexpr import bitvec
 
 MAJOR = sys.version_info.major
 MINOR = sys.version_info.minor
 
 a, b, c, d, e, p, q, s = map(var, 'abcdepqs')
+X = bitvec('x', 16)
+Y = bitvec('y', 16, 16, 16)
 
 def test_ops():
     # __sub__, __rsub__
@@ -84,6 +87,10 @@ def test_var():
     assert a.compose({b: c}) == a
 
     # Expression
+    assert str(a) == 'a'
+    assert str(X[10]) == 'x[10]'
+    assert str(Y[1][2][3]) == 'y[1][2][3]'
+
     assert a.depth == 0
     assert a.factor() == a
     assert a.is_dnf()
@@ -131,6 +138,8 @@ def test_var_order():
     assert a * -b < a * b
 
     assert a * b < a * b * c
+
+    assert X[0] < X[1] < X[10]
 
 def test_or():
     # Function
