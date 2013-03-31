@@ -10,17 +10,17 @@ Interface Classes:
 """
 
 from pyeda.common import bit_on, boolify, cached_property
-from pyeda.boolfunc import iter_points, num2term, Function
+from pyeda.boolfunc import iter_points, index2term, Function
 from pyeda.expr import Or, And, Not
 
 # Positional Cube Notation
 PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
 
 PC_STR = {
-    PC_VOID : "?",
-    PC_ZERO : "0",
-    PC_ONE  : "1",
-    PC_DC   : "X"
+    PC_VOID : '?',
+    PC_ZERO : '0',
+    PC_ONE  : '1',
+    PC_DC   : 'X'
 }
 
 PC_DICT = {
@@ -52,10 +52,10 @@ def truthtable2expr(tt, cnf=False):
         output = (byte >> r) & tt.mask
         if cnf:
             if (not tt.pc and output == 0) or (tt.pc and output == PC_ZERO):
-                terms.append(num2term(n, tt.inputs, True))
+                terms.append(index2term(n, tt.inputs, True))
         else:
             if (not tt.pc and output == 1) or (tt.pc and output == PC_ONE):
-                terms.append(num2term(n, tt.inputs, False))
+                terms.append(index2term(n, tt.inputs, False))
     if cnf:
         return And(*[Or(*term) for term in terms])
     else:

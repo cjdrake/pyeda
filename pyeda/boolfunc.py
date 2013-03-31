@@ -4,7 +4,7 @@ Boolean Functions
 Interface Functions:
     iter_points
     iter_terms
-    num2term
+    index2term
 
 Interface Classes:
     Variable
@@ -34,29 +34,40 @@ def iter_terms(vs, cnf=False):
     vs: [Variable]
     """
     for n in range(1 << len(vs)):
-        yield num2term(n, vs, cnf)
+        yield index2term(n, vs, cnf)
 
-def num2term(num, vs, cnf=False):
+def index2term(index, vs, cnf=False):
     """Return a tuple of all variables for a given term index.
 
     Parameters
     ----------
-    num: int
+    index: int
     vs: [Variable]
     cnf: bool
         cnf=False for minterms, cnf=True for maxterms
 
     Examples
     --------
-    Minterm a' * b' * c, index = 4
-    Minterm a * b * c, index = 7
-    Maxterm a' + b' + c, index = 3
-    Maxterm a + b + c, index = 0
+
+    Table of min/max terms for Boolean space {a, b, c}
+
+    +-------+------------+------------+
+    | index |   minterm  |   maxterm  |
+    +=======+============+============+
+    | 0     | a', b', c' | a,  b,  c  |
+    | 1     | a,  b', c' | a', b,  c  |
+    | 2     | a', b,  c' | a,  b', c  |
+    | 3     | a,  b,  c' | a', b', c  |
+    | 4     | a', b', c  | a,  b,  c' |
+    | 5     | a,  b', c  | a', b,  c' |
+    | 6     | a', b,  c  | a,  b', c' |
+    | 7     | a,  b,  c  | a', b', c' |
+    +-------+------------+------------+
     """
     if cnf:
-        return tuple(-v if bit_on(num, i) else v for i, v in enumerate(vs))
+        return tuple(-v if bit_on(index, i) else v for i, v in enumerate(vs))
     else:
-        return tuple(v if bit_on(num, i) else -v for i, v in enumerate(vs))
+        return tuple(v if bit_on(index, i) else -v for i, v in enumerate(vs))
 
 
 class Variable(object):
@@ -64,12 +75,11 @@ class Variable(object):
     Abstract base class that defines an interface for a Boolean variable.
 
     A Boolean variable is a numerical quantity that may assume any value in the
-    set :math:`B = \{0, 1\}`.
+    set B = {0, 1}.
 
     This implementation includes optional indices, nonnegative integers that
     can be used to construct multi-dimensional bit vectors.
     """
-
     def __new__(cls, name, indices=None, namespace=None):
         self = super(Variable, cls).__new__(cls)
         self.name = name
@@ -135,6 +145,7 @@ class Function(object):
         return len(self.support)
 
     def iter_ones(self):
+        """Iterate through all points this function maps to output one."""
         rest, top = self.inputs[:-1], self.inputs[-1]
         for p, cf in self.iter_cofactors(top):
             if cf == 1:
@@ -147,6 +158,7 @@ class Function(object):
                     yield point
 
     def iter_zeros(self):
+        """Iterate through all points this function maps to output zero."""
         rest, top = self.inputs[:-1], self.inputs[-1]
         for p, cf in self.iter_cofactors(top):
             if cf == 0:
@@ -159,6 +171,7 @@ class Function(object):
                     yield point
 
     def iter_outputs(self):
+        """Iterate through all (point, output) pairs."""
         for point in iter_points(self.inputs):
             yield point, self.restrict(point)
 
