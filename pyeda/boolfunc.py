@@ -221,7 +221,7 @@ class Function(object):
         """Iterate through the cofactors of N variables."""
         if vs is None:
             vs = list()
-        elif isinstance(vs, Function):
+        elif isinstance(vs, Variable):
             vs = [vs]
         for point in iter_points(vs):
             yield point, self.restrict(point)

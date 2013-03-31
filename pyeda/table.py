@@ -142,7 +142,7 @@ class TruthTable(Function):
 
     @cached_property
     def mask(self):
-        return (2 ** self.width) - 1
+        return (1 << self.width) - 1
 
 
 def _bin_zext(num, w=None):
