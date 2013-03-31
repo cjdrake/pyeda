@@ -4,6 +4,7 @@ Boolean Functions
 Interface Functions:
     iter_points
     iter_terms
+    num2term
 
 Interface Classes:
     Variable
@@ -33,10 +34,29 @@ def iter_terms(vs, cnf=False):
     vs: [Variable]
     """
     for n in range(1 << len(vs)):
-        if cnf:
-            yield tuple(-v if bit_on(n, i) else v for i, v in enumerate(vs))
-        else:
-            yield tuple(v if bit_on(n, i) else -v for i, v in enumerate(vs))
+        yield num2term(n, vs, cnf)
+
+def num2term(num, vs, cnf=False):
+    """Return a tuple of all variables for a given term index.
+
+    Parameters
+    ----------
+    num: int
+    vs: [Variable]
+    cnf: bool
+        cnf=False for minterms, cnf=True for maxterms
+
+    Examples
+    --------
+    Minterm a' * b' * c, index = 4
+    Minterm a * b * c, index = 7
+    Maxterm a' + b' + c, index = 3
+    Maxterm a + b + c, index = 0
+    """
+    if cnf:
+        return tuple(-v if bit_on(num, i) else v for i, v in enumerate(vs))
+    else:
+        return tuple(v if bit_on(num, i) else -v for i, v in enumerate(vs))
 
 
 class Variable(object):

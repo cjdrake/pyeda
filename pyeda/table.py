@@ -10,7 +10,7 @@ Interface Classes:
 """
 
 from pyeda.common import bit_on, boolify, cached_property
-from pyeda.boolfunc import iter_points, Function
+from pyeda.boolfunc import iter_points, num2term, Function
 from pyeda.expr import Or, And, Not
 
 # Positional Cube Notation
@@ -35,7 +35,7 @@ PC_DICT = {
 COUNT_ONES = {n: sum(bit_on(n, i) for i in range(8))
               for n in range(256)}
 
-PC_COUNT_ONES = {n: sum((n >> (i << 1)) & 3 == PC_ONE for i in range(4))
+PC_COUNT_ONES = {n: sum((n >> i) & 3 == PC_ONE for i in range(0, 8, 2))
                  for n in range(256)}
 
 def expr2truthtable(expr):
@@ -52,12 +52,10 @@ def truthtable2expr(tt, cnf=False):
         output = (byte >> r) & tt.mask
         if cnf:
             if (not tt.pc and output == 0) or (tt.pc and output == PC_ZERO):
-                terms.append([-v if bit_on(n, i) else v
-                              for i, v in enumerate(tt.inputs)])
+                terms.append(num2term(n, tt.inputs, True))
         else:
             if (not tt.pc and output == 1) or (tt.pc and output == PC_ONE):
-                terms.append([v if bit_on(n, i) else -v
-                              for i, v in enumerate(tt.inputs)])
+                terms.append(num2term(n, tt.inputs, False))
     if cnf:
         return And(*[Or(*term) for term in terms])
     else:
