@@ -21,7 +21,7 @@ from pyeda.binop import (
     OP_ZERO, OP_AND,  OP_GT,   OP_FST, OP_LT,   OP_SND, OP_XOR,  OP_OR,
     OP_NOR,  OP_XNOR, OP_NSND, OP_GTE, OP_NFST, OP_LTE, OP_NAND, OP_ONE
 )
-from pyeda.common import clog2
+from pyeda.common import clog2, boolify, pcify
 from pyeda.dimacs import load_cnf, dump_cnf, load_sat, dump_sat
 from pyeda.boolfunc import iter_points, iter_terms
 from pyeda.expr import var, factor, simplify

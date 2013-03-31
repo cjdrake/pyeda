@@ -1,10 +1,14 @@
 """
 Interface Functions:
-    boolify
-    clog2
     bit_on
+    clog2
+    boolify
+    pcify
     cached_property
 """
+
+# Positional Cube Notation
+PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
 
 BOOL_DICT = {
     0: 0,
@@ -13,20 +17,22 @@ BOOL_DICT = {
     "1": 1
 }
 
-def boolify(arg):
-    """Convert 'arg' to an integer in B = {0, 1}.
+PC_DICT = {
+    0: PC_ZERO,
+    1: PC_ONE,
+    '0': PC_ZERO,
+    '1': PC_ONE,
+    'x': PC_DC,
+    'X': PC_DC,
+}
 
-    >>> [boolify(x) for x in (False, True, 0, 1, "0", "1")]
+def bit_on(num, bit):
+    """Return the value of a number's bit position.
+
+    >>> [bit_on(42, i) for i in range(clog2(42))]
     [0, 1, 0, 1, 0, 1]
-    >>> boolify(42)
-    Traceback (most recent call last):
-        ...
-    ValueError: arg not in {0, 1}
     """
-    try:
-        return BOOL_DICT[arg]
-    except KeyError:
-        raise ValueError("arg not in {0, 1}")
+    return (num >> bit) & 1
 
 def clog2(num):
     """Return the ceiling log base two of an integer >= 1.
@@ -50,13 +56,35 @@ def clog2(num):
         accum += 1
     return accum
 
-def bit_on(num, bit):
-    """Return the value of a number's bit position.
+def boolify(arg):
+    """Convert arg to an integer in B = {0, 1}.
 
-    >>> [bit_on(42, i) for i in range(clog2(42))]
+    >>> [boolify(x) for x in (False, True, 0, 1, '0', '1')]
     [0, 1, 0, 1, 0, 1]
+    >>> boolify(42)
+    Traceback (most recent call last):
+        ...
+    ValueError: arg not in {0, 1}
     """
-    return (num >> bit) & 1
+    try:
+        return BOOL_DICT[arg]
+    except KeyError:
+        raise ValueError("arg not in {0, 1}")
+
+def pcify(arg):
+    """Convert arg to a positional cube value.
+
+    >>> [pcify(x) for x in (False, True, 0, 1, '0', '1', 'x', 'X')]
+    [2, 1, 2, 1, 2, 1, 3, 3]
+    >>> pcify(42)
+    Traceback (most recent call last):
+        ...
+    ValueError: arg not in {0, 1, X}
+    """
+    try:
+        return PC_DICT[arg]
+    except KeyError:
+        raise ValueError("arg not in {0, 1, X}")
 
 def cached_property(func):
     """Return a cached property calculated by input function."""

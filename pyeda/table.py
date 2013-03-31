@@ -9,27 +9,18 @@ Interface Classes:
     TruthTable
 """
 
-from pyeda.common import bit_on, boolify, cached_property
+from pyeda.common import (
+    bit_on, boolify, pcify, cached_property,
+    PC_VOID, PC_ONE, PC_ZERO, PC_DC
+)
 from pyeda.boolfunc import iter_points, index2term, Function
-from pyeda.expr import Or, And, Not
-
-# Positional Cube Notation
-PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
+from pyeda.expr import Or, And
 
 PC_STR = {
     PC_VOID : '?',
     PC_ZERO : '0',
     PC_ONE  : '1',
     PC_DC   : 'X'
-}
-
-PC_DICT = {
-    0: PC_ZERO,
-    1: PC_ONE,
-    '0': PC_ZERO,
-    '1': PC_ONE,
-    'x': PC_DC,
-    'X': PC_DC,
 }
 
 COUNT_ONES = {n: sum(bit_on(n, i) for i in range(8))
@@ -153,13 +144,6 @@ class TruthTable(Function):
     def mask(self):
         return (2 ** self.width) - 1
 
-
-def pcify(arg):
-    """Convert 'arg' to a positional cube value."""
-    try:
-        return PC_DICT[arg]
-    except KeyError:
-        raise ValueError("arg not in {0, 1, X}")
 
 def _bin_zext(n, w=None):
     s = bin(n)[2:]
