@@ -108,8 +108,8 @@ class Function(object):
 
     @property
     def top(self):
-        """Return the first variable in the ordered support set."""
-        return self.inputs[0]
+        """Return the last variable in the ordered support set."""
+        return self.inputs[-1]
 
     @property
     def degree(self):

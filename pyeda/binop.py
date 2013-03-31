@@ -59,7 +59,7 @@ def apply2(op, f1, f2):
             f1x = f1.cofactors(x)
             f2x = (f2, f2)
         else:
-            x = f1.top if f1.top < f2.top else f2.top
+            x = max(f1.top, f2.top)
             f1x = f1.cofactors(x)
             f2x = f2.cofactors(x)
     return ( -x * apply2(op, f1x[0], f2x[0]) +
