@@ -145,8 +145,22 @@ class TruthTable(Function):
         return (2 ** self.width) - 1
 
 
-def _bin_zext(n, w=None):
-    s = bin(n)[2:]
+def _bin_zext(num, w=None):
+    """Convert a base-10 number to a binary string.
+
+    Parameters
+    num: int
+    w: int, optional
+        Zero-extend the string to this width.
+    Examples
+    --------
+
+    >>> _bin_zext(42)
+    '101010'
+    >>> _bin_zext(42, 8)
+    '00101010'
+    """
+    s = bin(num)[2:]
     if w is None:
         return s
     else:
