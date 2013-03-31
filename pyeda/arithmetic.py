@@ -1,5 +1,11 @@
 """
-Arithmetic Module
+Digital Arithmetic Module
+
+Interface Functions:
+    ripple_carry_add
+    kogge_stone_add
+    bin2gray
+    gray2bin
 """
 
 # pyeda

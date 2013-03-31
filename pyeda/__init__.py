@@ -8,6 +8,7 @@ common.py
 constant.py   -- Boolean constant functions
 dimacs.py     -- DIMACS parsing utilities
 expr.py       -- Boolean logic expressions
+nfexpr.py     -- Boolean normal form logic expressions
 sat.py        -- Boolean satisfiability algorithms
 table.py      -- Boolean tables
 vexpr.py      -- Boolean vector logic expressions

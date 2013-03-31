@@ -1,5 +1,6 @@
 """
 Interface Functions:
+    boolify
     clog2
     bit_on
     cached_property

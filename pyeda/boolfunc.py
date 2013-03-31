@@ -330,9 +330,9 @@ class VectorFunction(Slicer):
         """Convert vector to an unsigned integer, if possible."""
         num = 0
         for i, f in enumerate(self):
-            if type(f) is int:
+            if f in {0, 1}:
                 if f:
-                    num += 2 ** i
+                    num += 1 << i
             else:
                 raise ValueError("cannot convert to uint")
         return num
@@ -341,7 +341,7 @@ class VectorFunction(Slicer):
         """Convert vector to an integer, if possible."""
         num = self.to_uint()
         if self.items[-1]:
-            return num - 2 ** self.__len__()
+            return num - (1 << self.__len__())
         else:
             return num
 
@@ -361,9 +361,9 @@ class VectorFunction(Slicer):
 
 def _expand_vectors(mapping):
     """Expand all vectors in a substitution dict."""
-    temp = { k: v for k, v in mapping.items() if
-             isinstance(k, VectorFunction) }
-    mapping = {k: v for k, v in mapping.items() if k not in temp}
+    temp = { vf: val for vf, val in mapping.items() if
+             isinstance(vf, VectorFunction) }
+    mapping = {v: val for v, val in mapping.items() if v not in temp}
     while temp:
         key, val = temp.popitem()
         if isinstance(key, VectorFunction):
