@@ -510,9 +510,9 @@ def test_expand():
 def test_satisfy():
     points = [p for p in Xor(a, b, c).satisfy_all()]
     assert points == [
-        {a: 0, b: 0, c: 1},
-        {a: 0, b: 1, c: 0},
         {a: 1, b: 0, c: 0},
+        {a: 0, b: 1, c: 0},
+        {a: 0, b: 0, c: 1},
         {a: 1, b: 1, c: 1},
     ]
     assert Xor(a, b, c).satisfy_count() == 4

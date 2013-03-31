@@ -115,27 +115,27 @@ class Function(object):
         return len(self.support)
 
     def iter_ones(self):
-        fst, rst = self.inputs[0], self.inputs[1:]
-        for p, cf in self.iter_cofactors(fst):
+        rest, top = self.inputs[:-1], self.inputs[-1]
+        for p, cf in self.iter_cofactors(top):
             if cf == 1:
-                for point in iter_points(rst):
-                    point[fst] = p[fst]
+                for point in iter_points(rest):
+                    point[top] = p[top]
                     yield point
             elif cf != 0:
                 for point in cf.iter_ones():
-                    point[fst] = p[fst]
+                    point[top] = p[top]
                     yield point
 
     def iter_zeros(self):
-        fst, rst = self.inputs[0], self.inputs[1:]
-        for p, cf in self.iter_cofactors(fst):
+        rest, top = self.inputs[:-1], self.inputs[-1]
+        for p, cf in self.iter_cofactors(top):
             if cf == 0:
-                for point in iter_points(rst):
-                    point[fst] = p[fst]
+                for point in iter_points(rest):
+                    point[top] = p[top]
                     yield point
             elif cf != 1:
                 for point in cf.iter_zeros():
-                    point[fst] = p[fst]
+                    point[top] = p[top]
                     yield point
 
     def iter_outputs(self):
