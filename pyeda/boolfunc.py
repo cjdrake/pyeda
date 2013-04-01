@@ -51,18 +51,18 @@ def index2term(index, vs, cnf=False):
 
     Table of min/max terms for Boolean space {a, b, c}
 
-    +-------+------------+------------+
-    | index |   minterm  |   maxterm  |
-    +=======+============+============+
-    | 0     | a', b', c' | a,  b,  c  |
-    | 1     | a,  b', c' | a', b,  c  |
-    | 2     | a', b,  c' | a,  b', c  |
-    | 3     | a,  b,  c' | a', b', c  |
-    | 4     | a', b', c  | a,  b,  c' |
-    | 5     | a,  b', c  | a', b,  c' |
-    | 6     | a', b,  c  | a,  b', c' |
-    | 7     | a,  b,  c  | a', b', c' |
-    +-------+------------+------------+
+    +-------+----------+----------+
+    | index |  minterm |  maxterm |
+    +=======+==========+==========+
+    | 0     | a' b' c' | a  b  c  |
+    | 1     | a  b' c' | a' b  c  |
+    | 2     | a' b  c' | a  b' c  |
+    | 3     | a  b  c' | a' b' c  |
+    | 4     | a' b' c  | a  b  c' |
+    | 5     | a  b' c  | a' b  c' |
+    | 6     | a' b  c  | a  b' c' |
+    | 7     | a  b  c  | a' b' c' |
+    +-------+----------+----------+
     """
     if cnf:
         return tuple(-v if bit_on(index, i) else v for i, v in enumerate(vs))
