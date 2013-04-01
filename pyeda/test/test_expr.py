@@ -39,10 +39,9 @@ def test_factor():
 
 def test_simplify():
     assert simplify(0) == 0
-    assert simplify(And(1, 1, 1, 0), simplify=False) == 0
-    assert simplify(Or(0, 0, 0, 1), simplify=False) == 0
+    assert simplify(And(1, 1, 1, 0, simplify=False)) == 0
+    assert simplify(Or(0, 0, 0, 1, simplify=False)) == 1
 
-def test_simplify():
     f1 = And(a, And(b, And(c, 0, simplify=False), simplify=False), simplify=False)
     f2 = Or(a, Or(b, Or(c, 1, simplify=False), simplify=False), simplify=False)
     if MAJOR >= 3:
@@ -489,6 +488,11 @@ def test_absorb():
     assert (a * -b + a * -b * c).absorb().equivalent(a * -b)
     assert ((a + -b) * (a + -b + c)).absorb().equivalent(a + -b)
     assert ((a + -b + c) * (a + -b)).absorb().equivalent(a + -b)
+
+def test_reduce():
+    f = a * b + a * c + b * c
+    assert str(f.reduce()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
+    assert str(f.reduce(cnf=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
 
 def test_expand():
     assert a.expand() == a
