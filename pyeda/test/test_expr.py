@@ -13,6 +13,8 @@ from pyeda.expr import (
 )
 from pyeda.vexpr import bitvec
 
+import nose
+
 MAJOR = sys.version_info.major
 MINOR = sys.version_info.minor
 
@@ -512,6 +514,13 @@ def test_expand():
     assert len(f.args) == 4 and f.equivalent(a)
 
 def test_satisfy():
+    f = a * -b * c * -d
+    assert f.satisfy_one(algorithm='backtrack') == {a: 1, b: 0, c: 1, d: 0}
+    assert f.satisfy_one(algorithm='dpll') == {a: 1, b: 0, c: 1, d: 0}
+
+    f = a * b + a * c + b * c
+    nose.tools.assert_raises(TypeError, f.satisfy_one, 'dpll')
+
     points = [p for p in Xor(a, b, c).satisfy_all()]
     assert points == [
         {a: 1, b: 0, c: 0},
@@ -520,6 +529,24 @@ def test_satisfy():
         {a: 1, b: 1, c: 1},
     ]
     assert Xor(a, b, c).satisfy_count() == 4
+
+def test_terms():
+    f = a * b + a * c + b * c
+    assert str(sorted(f.minterms)) == "[a' * b * c, a * b' * c, a * b * c', a * b * c]"
+    assert str(sorted(f.maxterms)) == "[a + b + c, a + b + c', a + b' + c, a' + b + c]"
+
+def test_indices():
+    f = a * b + a * c + b * c
+    assert f.min_indices == {3, 5, 6, 7}
+    assert f.max_indices == {0, 1, 2, 4}
+
+def test_is_nf():
+    assert not Equal(a, b, c).is_dnf()
+    assert not Implies(p, q).is_dnf()
+    assert not ITE(s, a, b).is_dnf()
+    assert not Equal(a, b, c).is_cnf()
+    assert not Implies(p, q).is_cnf()
+    assert not ITE(s, a, b).is_cnf()
 
 def test_misc():
     f = a * b + a * c + b * c
