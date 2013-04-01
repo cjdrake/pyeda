@@ -8,6 +8,7 @@ Interface Functions:
     cnf2expr
 
 Interface Classes:
+    DisjNormalForm
     ConjNormalForm
 """
 
