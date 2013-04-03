@@ -1226,10 +1226,7 @@ class Exclusive(Expression):
         return max(arg.depth + 2 for arg in self._args)
 
     def invert(self):
-        if self._parity == Xor.PARITY:
-            return Xnor(*self._args, simplify=self._simplified)
-        else:
-            return Xor(*self._args, simplify=self._simplified)
+        return self.DUAL(*self._args, simplify=self._simplified)
 
     def factor(self):
         obj = self if self._simplified else self.simplify()
@@ -1237,12 +1234,8 @@ class Exclusive(Expression):
             return obj
         elif isinstance(obj, Exclusive):
             fst, rst = obj._args[0], obj._args[1:]
-            if obj._parity == Xor.PARITY:
-                return Or(And(Not(fst).factor(), Xor(*rst).factor()),
-                          And(fst.factor(), Xnor(*rst).factor()))
-            else:
-                return Or(And(Not(fst).factor(), Xnor(*rst).factor()),
-                          And(fst.factor(), Xor(*rst).factor()))
+            return Or(And(Not(fst).factor(), self.__class__(*rst).factor()),
+                      And(fst.factor(), self.DUAL(*rst).factor()))
         else:
             return obj.factor()
 
@@ -1268,6 +1261,9 @@ class Xor(Exclusive):
 class Xnor(Exclusive):
     """Boolean Exclusive NOR (XNOR) operator"""
     PARITY = 1
+
+Xor.DUAL = Xnor
+Xnor.DUAL = Xor
 
 
 class Equal(Expression):
