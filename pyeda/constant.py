@@ -52,10 +52,9 @@ class Constant(Function):
 class Zero(Constant):
     """Proxy class for the number zero."""
 
-    VAL = 0
-
     def __init__(self, support=None):
         super(Zero, self).__init__(support)
+        self.VAL = 0
 
     def __neg__(self):
         return One(self.support)
@@ -79,10 +78,9 @@ class Zero(Constant):
 class One(Constant):
     """Proxy class for the number one."""
 
-    VAL = 1
-
     def __init__(self, support=None):
         super(One, self).__init__(support)
+        self.VAL = 1
 
     def __neg__(self):
         return Zero(self.support)

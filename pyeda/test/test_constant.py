@@ -2,8 +2,13 @@
 Test constant Boolean functions
 """
 
+import sys
+
 from pyeda.constant import Zero, One
 from pyeda.expr import var
+
+MAJOR = sys.version_info.major
+MINOR = sys.version_info.minor
 
 a, b = map(var, 'ab')
 
@@ -24,7 +29,8 @@ def test_zero():
     assert zero_ab.support == {a, b}
     assert zero.restrict({a: 0, b: 1}) == zero
     assert zero.compose({a: 0, b: 1}) == zero
-    assert bool(zero) is False
+    if MAJOR >= 3:
+        assert bool(zero) == False
     assert int(zero) == 0
     assert zero.satisfy_one() is None
     assert not [p for p in zero.satisfy_all()]
@@ -38,7 +44,8 @@ def test_one():
     assert one_ab.support == {a, b}
     assert one.restrict({a: 0, b: 1}) == one
     assert one.compose({a: 0, b: 1}) == one
-    assert bool(one) is True
+    if MAJOR >= 3:
+        assert bool(one) == True
     assert int(one) == 1
     assert one.satisfy_one() == dict()
     assert [p for p in one.satisfy_all()] == [{}]
