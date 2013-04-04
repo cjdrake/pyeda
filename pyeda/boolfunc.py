@@ -144,6 +144,16 @@ class Function(object):
         """
         return len(self.support)
 
+    def iter_domain(self):
+        """Iterate through all points in the domain."""
+        for point in iter_points(self.inputs):
+            yield point
+
+    def iter_range(self):
+        """Iterate through all (point, output) pairs."""
+        for points in iter_points(self.inputs):
+            yield (point, self.restrict(point))
+
     def iter_ones(self):
         """Iterate through all points this function maps to output one."""
         rest, top = self.inputs[:-1], self.inputs[-1]
@@ -169,11 +179,6 @@ class Function(object):
                 for point in cf.iter_zeros():
                     point[top] = p[top]
                     yield point
-
-    def iter_outputs(self):
-        """Iterate through all (point, output) pairs."""
-        for point in iter_points(self.inputs):
-            yield point, self.restrict(point)
 
     def reduce(self):
         """Return the function reduced to a canonical form."""
