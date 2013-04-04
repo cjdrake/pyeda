@@ -111,21 +111,21 @@ class TruthTable(Function):
     def reduce(self):
         return self
 
-    def restrict(self, mapping):
-        intersect = {v: val for v, val in mapping.items() if v in self.support}
+    def restrict(self, point):
+        intersect = {v: val for v, val in point.items() if v in self.support}
         if intersect:
-            inputs = (v for v in self.inputs if v not in mapping)
+            inputs = (v for v in self.inputs if v not in point)
             outputs = self._iter_restrict(intersect)
             return TruthTable(inputs, outputs, pc=self.pc)
         else:
             return self
 
-    def _iter_restrict(self, mapping):
+    def _iter_restrict(self, point):
         for n in range(1 << self.degree):
             q, r = divmod(n * self.width, 8)
             point = {v: bit_on(n, i) for i, v in enumerate(self._inputs)
-                     if v in mapping}
-            if point == mapping:
+                     if v in point}
+            if point == point:
                 byte = self.data[q]
                 yield (byte >> r) & self.mask
 

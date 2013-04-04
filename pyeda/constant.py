@@ -32,10 +32,10 @@ class Constant(Function):
     def inputs(self):
         return sorted(self._support)
 
-    def restrict(self, mapping):
+    def restrict(self, point):
         return self
 
-    def compose(self, mapping):
+    def compose(self, point):
         return self
 
     # Specific to Constant

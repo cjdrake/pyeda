@@ -184,7 +184,7 @@ class Function(object):
         """Return the function reduced to a canonical form."""
         raise NotImplementedError()
 
-    def restrict(self, mapping):
+    def restrict(self, point):
         """
         Return the Boolean function that results after restricting a subset of
         its input variables to {0, 1}.
@@ -193,9 +193,9 @@ class Function(object):
         """
         raise NotImplementedError()
 
-    def vrestrict(self, mapping):
+    def vrestrict(self, point):
         """Expand all vectors before applying 'restrict'."""
-        return self.restrict(_expand_vectors(mapping))
+        return self.restrict(_expand_vectors(point))
 
     def compose(self, mapping):
         """
@@ -352,17 +352,17 @@ class VectorFunction(Slicer):
     """
     Abstract base class that defines an interface for a vector Boolean function.
     """
-    def restrict(self, mapping):
+    def restrict(self, point):
         """
         Return the vector that results from applying the 'restrict' method to
         all functions.
         """
-        items = [f.restrict(mapping) for f in self]
+        items = [f.restrict(point) for f in self]
         return self.__class__(items, self.start)
 
-    def vrestrict(self, mapping):
+    def vrestrict(self, point):
         """Expand all vectors before applying 'restrict'."""
-        return self.restrict(_expand_vectors(mapping))
+        return self.restrict(_expand_vectors(point))
 
     def to_uint(self):
         """Convert vector to an unsigned integer, if possible."""
@@ -397,17 +397,17 @@ class VectorFunction(Slicer):
         self.items.append(f)
 
 
-def _expand_vectors(mapping):
+def _expand_vectors(point):
     """Expand all vectors in a substitution dict."""
-    temp = { vf: val for vf, val in mapping.items() if
+    temp = { vf: val for vf, val in point.items() if
              isinstance(vf, VectorFunction) }
-    mapping = {v: val for v, val in mapping.items() if v not in temp}
+    point = {v: val for v, val in point.items() if v not in temp}
     while temp:
-        key, val = temp.popitem()
-        if isinstance(key, VectorFunction):
-            assert len(key) == len(val)
+        vf, val = temp.popitem()
+        if isinstance(vf, VectorFunction):
+            assert len(vf) == len(val)
             for i, f in enumerate(val):
-                mapping[key.getifz(i)] = f
+                point[vf.getifz(i)] = f
         else:
-            mapping[key] = val
-    return mapping
+            point[vf] = val
+    return point

@@ -85,10 +85,10 @@ class NormalForm(Function):
     def inputs(self):
         return sorted(self.support)
 
-    def restrict(self, mapping):
+    def restrict(self, point):
         idents = set()
         doms = set()
-        for v, val in mapping.items():
+        for v, val in point.items():
             low, high = (-v, v) if boolify(val) == self.IDENTITY else (v, -v)
             idents.add(low.gnum)
             doms.add(high.gnum)

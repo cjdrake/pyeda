@@ -311,8 +311,8 @@ class Expression(boolfunc.Function):
         else:
             return self.to_cdnf()
 
-    def restrict(self, mapping):
-        idx_arg = self._get_restrictions(mapping)
+    def restrict(self, point):
+        idx_arg = self._get_restrictions(point)
         return self._subs(idx_arg) if idx_arg else self
 
     def compose(self, mapping):
@@ -492,11 +492,11 @@ class Expression(boolfunc.Function):
             return f.satisfy_one(algorithm='backtrack') is None
 
     # Substitution helper methods
-    def _get_restrictions(self, mapping):
+    def _get_restrictions(self, point):
         restrictions = dict()
         for i, arg in enumerate(self._args):
             if isinstance(arg, Expression):
-                new_arg = arg.restrict(mapping)
+                new_arg = arg.restrict(point)
                 if id(new_arg) != id(arg):
                     restrictions[i] = new_arg
         return restrictions
@@ -556,9 +556,9 @@ class Variable(boolfunc.Variable, Literal):
         """Return the support set of a variable."""
         return self._support
 
-    def restrict(self, mapping):
+    def restrict(self, point):
         try:
-            return boolify(mapping[self])
+            return boolify(point[self])
         except KeyError:
             return self
 
@@ -631,9 +631,9 @@ class Complement(Literal):
         """Return the support set of a complement."""
         return self._support
 
-    def restrict(self, mapping):
+    def restrict(self, point):
         try:
-            return 1 - boolify(mapping[self.var])
+            return 1 - boolify(point[self.var])
         except KeyError:
             return self
 
@@ -730,8 +730,8 @@ class OrAnd(Expression):
         return False, tuple(args)
 
     # From Function
-    def restrict(self, mapping):
-        idx_arg = self._get_restrictions(mapping)
+    def restrict(self, point):
+        idx_arg = self._get_restrictions(point)
         if idx_arg:
             args = list(self._args)
             for i, arg in idx_arg.items():
@@ -1111,8 +1111,8 @@ class Exclusive(Expression):
             return "Xor(" + args_str + ")"
 
     # From Function
-    def restrict(self, mapping):
-        idx_arg = self._get_restrictions(mapping)
+    def restrict(self, point):
+        idx_arg = self._get_restrictions(point)
         if idx_arg:
             args = list(self._args)
             for i, arg in idx_arg.items():
