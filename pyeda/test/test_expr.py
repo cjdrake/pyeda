@@ -530,6 +530,35 @@ def test_satisfy():
     ]
     assert Xor(a, b, c).satisfy_count() == 4
 
+def test_depth():
+    assert (a + b).depth == 1
+    assert (a + (b * c)).depth == 2
+    assert (a + (b * (c + d))).depth == 3
+
+    assert (a * b).depth == 1
+    assert (a * (b + c)).depth == 2
+    assert (a * (b + (c * d))).depth == 3
+
+    assert Not(a + b).depth == 1
+    assert Not(a + (b * c)).depth == 2
+    assert Not(a + (b * (c + d))).depth == 3
+
+    assert Xor(a, b, c).depth == 2
+    assert Xor(a, b, c + d).depth == 3
+    assert Xor(a, b, c + Xor(d, e)).depth == 5
+
+    assert Equal(a, b, c).depth == 2
+    assert Equal(a, b, c + d).depth == 3
+    assert Equal(a, b, c + Xor(d, e)).depth == 5
+
+    assert Implies(p, q).depth == 1
+    assert Implies(p, a + b).depth == 2
+    assert Implies(p, Xor(a, b)).depth == 3
+
+    assert ITE(s, a, b).depth == 2
+    assert ITE(s, a + b, b).depth == 3
+    assert ITE(s, a + b, Xor(a, b)).depth == 4
+
 def test_terms():
     f = a * b + a * c + b * c
     assert str(sorted(f.minterms)) == "[a' * b * c, a * b' * c, a * b * c', a * b * c]"
@@ -540,7 +569,28 @@ def test_indices():
     assert f.min_indices == {3, 5, 6, 7}
     assert f.max_indices == {0, 1, 2, 4}
 
+def test_nf():
+    f = Xor(a, b, c)
+    g = a * b + a * c + b * c
+
+    assert str(f.to_dnf()) == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
+    assert str(f.to_cnf()) == "(a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)"
+
+    assert str(g.to_cdnf()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
+    assert str(g.to_ccnf()) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
+
+    assert g.min_indices == {3, 5, 6, 7}
+    assert g.max_indices == {0, 1, 2, 4}
+
 def test_is_nf():
+    assert (a + b + c).is_dnf()
+    assert (a + (b * c) + (c * d)).is_dnf()
+    assert not ((a * b) + (b * (c + d))).is_dnf()
+
+    assert (a * b * c).is_cnf()
+    assert (a * (b + c) * (c + d)).is_cnf()
+    assert not ((a + b) * (b + c * d)).is_cnf()
+
     assert not Equal(a, b, c).is_dnf()
     assert not Implies(p, q).is_dnf()
     assert not ITE(s, a, b).is_dnf()

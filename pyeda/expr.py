@@ -448,24 +448,12 @@ class Expression(boolfunc.Function):
         return False
 
     def to_dnf(self):
-        """Return the expression in disjunctive normal form.
-
-        >>> a, b, c = map(var, "abc")
-        >>> Xor(a, b, c).to_dnf()
-        a' * b' * c + a' * b * c' + a * b' * c' + a * b * c
-        >>> Xnor(a, b, c).to_dnf()
-        a' * b' * c' + a' * b * c + a * b' * c + a * b * c'
-        """
+        """Return the expression in disjunctive normal form."""
         f = self.factor()._flatten(And)
         return f.absorb() if isinstance(f, Expression) else f
 
     def to_cdnf(self):
-        """Return the expression in canonical disjunctive normal form.
-
-        >>> a, b, c = map(var, "abc")
-        >>> (a * b + a * c + b * c).to_cdnf()
-        a' * b * c + a * b' * c + a * b * c' + a * b * c
-        """
+        """Return the expression in canonical disjunctive normal form."""
         return Or(*[term for term in self.iter_minterms()])
 
     def is_cnf(self):
@@ -473,44 +461,22 @@ class Expression(boolfunc.Function):
         return False
 
     def to_cnf(self):
-        """Return the expression in conjunctive normal form.
-
-        >>> a, b, c = map(var, "abc")
-        >>> Xor(a, b, c).to_cnf()
-        (a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)
-        >>> Xnor(a, b, c).to_cnf()
-        (a + b + c') * (a + b' + c) * (a' + b + c) * (a' + b' + c')
-        """
+        """Return the expression in conjunctive normal form."""
         f = self.factor()._flatten(Or)
         return f.absorb() if isinstance(f, Expression) else f
 
     def to_ccnf(self):
-        """Return the expression in canonical conjunctive normal form.
-
-        >>> a, b, c = map(var, "abc")
-        >>> (a * b + a * c + b * c).to_ccnf()
-        (a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)
-        """
+        """Return the expression in canonical conjunctive normal form."""
         return And(*[term for term in self.iter_maxterms()])
 
     @cached_property
     def min_indices(self):
-        """Return the minterm indices.
-
-        >>> a, b, c = map(var, "abc")
-        >>> (a * b + a * c + b * c).min_indices
-        set([3, 5, 6, 7])
-        """
+        """Return the minterm indices."""
         return {term.minterm_index for term in self.iter_minterms()}
 
     @cached_property
     def max_indices(self):
-        """Return the maxterm indices.
-
-        >>> a, b, c = map(var, "abc")
-        >>> (a * b + a * c + b * c).max_indices
-        set([0, 1, 2, 4])
-        """
+        """Return the maxterm indices."""
         return {term.maxterm_index for term in self.iter_maxterms()}
 
     def equivalent(self, other):
@@ -557,7 +523,6 @@ class Literal(Expression):
     # From Expression
     @property
     def depth(self):
-        """Return the number of levels in the expression tree."""
         return 0
 
     def factor(self):
@@ -804,14 +769,6 @@ class OrAnd(Expression):
 
     @cached_property
     def depth(self):
-        """Return the number of levels in the expression tree.
-
-        >>> a, b, c, d = map(var, "abcd")
-        >>> (a + b).depth, (a + (b * c)).depth, (a + (b * (c + d))).depth
-        (1, 2, 3)
-        >>> (a * b).depth, (a * (b + c)).depth, (a * (b + (c * d))).depth
-        (1, 2, 3)
-        """
         return max(arg.depth + 1 for arg in self._args)
 
     def invert(self):
@@ -936,16 +893,7 @@ class Or(OrAnd):
         return " + ".join(str(arg) for arg in args)
 
     def is_dnf(self):
-        """Return whether this expression is in disjunctive normal form.
-
-        >>> a, b, c, d = map(var, "abcd")
-        >>> (a + b + c).is_dnf()
-        True
-        >>> (a + (b * c) + (c * d)).is_dnf()
-        True
-        >>> ((a * b) + (b * (c + d))).is_dnf()
-        False
-        """
+        """Return whether this expression is in disjunctive normal form."""
         return self.is_nf()
 
     # Specific to Or
@@ -986,16 +934,7 @@ class And(OrAnd):
         return " * ".join(s)
 
     def is_cnf(self):
-        """Return whether this expression is in conjunctive normal form.
-
-        >>> a, b, c, d = map(var, "abcd")
-        >>> (a * b * c).is_cnf()
-        True
-        >>> (a * (b + c) * (c + d)).is_cnf()
-        True
-        >>> ((a + b) * (b + c * d)).is_cnf()
-        False
-        """
+        """Return whether this expression is in conjunctive normal form."""
         return self.is_nf()
 
     # DPLL IF
@@ -1193,17 +1132,8 @@ class Exclusive(Expression):
             return self
 
     # From Expression
-    @property
+    @cached_property
     def depth(self):
-        """
-        >>> a, b, c, d, e = map(var, "abcde")
-        >>> Xor(a, b, c).depth
-        2
-        >>> Xor(a, b, c + d).depth
-        3
-        >>> Xor(a, b, c + Xor(d, e)).depth
-        5
-        """
         return max(arg.depth + 2 for arg in self._args)
 
     def invert(self):
@@ -1298,7 +1228,7 @@ class Equal(Expression):
         return "Equal(" + args_str + ")"
 
     # From Expression
-    @property
+    @cached_property
     def depth(self):
         return max(arg.depth + 2 for arg in self._args)
 
@@ -1380,7 +1310,7 @@ class Implies(Expression):
         return " => ".join(s)
 
     # From Expression
-    @property
+    @cached_property
     def depth(self):
         return max(arg.depth + 1 for arg in self._args)
 
