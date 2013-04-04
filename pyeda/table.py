@@ -123,9 +123,9 @@ class TruthTable(Function):
     def _iter_restrict(self, point):
         for n in range(1 << self.degree):
             q, r = divmod(n * self.width, 8)
-            point = {v: bit_on(n, i) for i, v in enumerate(self._inputs)
-                     if v in point}
-            if point == point:
+            _point = {v: bit_on(n, i) for i, v in enumerate(self._inputs)
+                      if v in point}
+            if _point == point:
                 byte = self.data[q]
                 yield (byte >> r) & self.mask
 
