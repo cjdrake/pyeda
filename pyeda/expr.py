@@ -311,6 +311,14 @@ class Expression(boolfunc.Function):
         else:
             return self.to_cdnf()
 
+    def restrict(self, mapping):
+        idx_arg = self._get_restrictions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
+    def compose(self, mapping):
+        idx_arg = self._get_compositions(mapping)
+        return self._subs(idx_arg) if idx_arg else self
+
     def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':
             return sat.backtrack(self)
@@ -517,21 +525,23 @@ class Expression(boolfunc.Function):
         else:
             return f.satisfy_one(algorithm='backtrack') is None
 
-    # Convenience methods
+    # Substitution helper methods
     def _get_restrictions(self, mapping):
         restrictions = dict()
         for i, arg in enumerate(self._args):
-            new_arg = arg.restrict(mapping)
-            if id(new_arg) != id(arg):
-                restrictions[i] = new_arg
+            if isinstance(arg, Expression):
+                new_arg = arg.restrict(mapping)
+                if id(new_arg) != id(arg):
+                    restrictions[i] = new_arg
         return restrictions
 
     def _get_compositions(self, mapping):
         compositions = dict()
         for i, arg in enumerate(self._args):
-            new_arg = arg.compose(mapping)
-            if id(new_arg) != id(arg):
-                compositions[i] = new_arg
+            if isinstance(arg, Expression):
+                new_arg = arg.compose(mapping)
+                if id(new_arg) != id(arg):
+                    compositions[i] = new_arg
         return compositions
 
     def _subs(self, idx_arg):
@@ -768,10 +778,6 @@ class OrAnd(Expression):
             return self.__class__(*args)
         else:
             return self
-
-    def compose(self, mapping):
-        idx_arg = self._get_compositions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
 
     # From Expression
     def __lt__(self, other):
@@ -1069,31 +1075,6 @@ class Not(Expression):
     def __str__(self):
         return "Not(" + str(self.arg) + ")"
 
-    # From Function
-    def restrict(self, mapping):
-        """
-        >>> a, b, c = map(var, "abc")
-        >>> Not(-a + b).restrict({a: 0}), Not(-a + b).restrict({a: 1})
-        (0, b')
-        >>> -(-a + b + c).restrict({a: 1})
-        Not(b + c)
-        """
-        arg = self.arg.restrict(mapping)
-        # speed hack
-        if arg in B:
-            return 1 - arg
-        elif id(arg) == id(self.arg):
-            return self
-        else:
-            return self.__class__(arg)
-
-    def compose(self, mapping):
-        expr = self.arg.compose(mapping)
-        if id(expr) == id(self.arg):
-            return self
-        else:
-            return self.__class__(expr)
-
     # From Expression
     @cached_property
     def depth(self):
@@ -1316,15 +1297,6 @@ class Equal(Expression):
         args_str = ", ".join(str(arg) for arg in self._args)
         return "Equal(" + args_str + ")"
 
-    # From Function
-    def restrict(self, mapping):
-        idx_arg = self._get_restrictions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
-
-    def compose(self, mapping):
-        idx_arg = self._get_compositions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
-
     # From Expression
     @property
     def depth(self):
@@ -1406,15 +1378,6 @@ class Implies(Expression):
             else:
                 s.append("(" + str(arg) + ")")
         return " => ".join(s)
-
-    # From Function
-    def restrict(self, mapping):
-        idx_arg = self._get_restrictions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
-
-    def compose(self, mapping):
-        idx_arg = self._get_compositions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
 
     # From Expression
     @property
@@ -1518,15 +1481,6 @@ class ITE(Expression):
             else:
                 s.append("(" + str(arg) + ")")
         return "{} ? {} : {}".format(*s)
-
-    # From Function
-    def restrict(self, mapping):
-        idx_arg = self._get_restrictions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
-
-    def compose(self, mapping):
-        idx_arg = self._get_compositions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
 
     # From Expression
     @cached_property
