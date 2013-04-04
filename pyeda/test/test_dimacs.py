@@ -1,5 +1,5 @@
 """
-Test the DIMACS parser
+Test DIMACS load/dump methods
 """
 
 from pyeda.vexpr import bitvec

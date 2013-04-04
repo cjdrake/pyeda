@@ -1,5 +1,5 @@
 """
-Test tables
+Test table Boolean functions
 """
 
 from pyeda.expr import var, Xor

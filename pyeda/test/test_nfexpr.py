@@ -1,5 +1,5 @@
 """
-Test normal form expressions
+Test normal form expression Boolean functions
 """
 
 from pyeda.expr import var

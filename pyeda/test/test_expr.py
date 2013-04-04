@@ -1,5 +1,5 @@
 """
-Test expressions
+Test expression Boolean functions
 """
 
 import sys
