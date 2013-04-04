@@ -7,8 +7,8 @@ Interface Classes:
         One
 """
 
-from pyeda.common import boolify
 from pyeda.boolfunc import iter_points, Function
+from pyeda.common import cached_property
 
 
 class Constant(Function):
@@ -28,6 +28,10 @@ class Constant(Function):
     def support(self):
         return self._support
 
+    @cached_property
+    def inputs(self):
+        return sorted(self._support)
+
     def restrict(self, mapping):
         return self
 
@@ -37,15 +41,6 @@ class Constant(Function):
     # Specific to Constant
     def __bool__(self):
         return bool(self.VAL)
-
-    def __eq__(self, other):
-        if isinstance(other, Constant):
-            return self.VAL == other.VAL
-        else:
-            return self.VAL == other
-
-    def __hash__(self):
-        return self.VAL
 
     def __int__(self):
         return self.VAL
@@ -99,12 +94,11 @@ class One(Constant):
         return other
 
     def satisfy_one(self):
-        return {}
+        return dict()
 
     def satisfy_all(self):
-        vs = sorted(self.support)
-        for point in iter_points(vs):
+        for point in iter_points(self.inputs):
             yield point
 
     def satisfy_count(self):
-        return 2 ** self.degree
+        return 1 << self.degree
