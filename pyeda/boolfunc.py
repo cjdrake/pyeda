@@ -149,13 +149,13 @@ class Function(object):
         for point in iter_points(self.inputs):
             yield point
 
-    def iter_range(self):
-        """Iterate through all values in the range."""
+    def iter_image(self):
+        """Iterate through all elements in the image."""
         for point in iter_points(self.inputs):
             yield self.restrict(point)
 
     def iter_relation(self):
-        """Iterate through all (point, value) pairs in the relation."""
+        """Iterate through all (point, element) pairs in the relation."""
         for point in iter_points(self.inputs):
             yield (point, self.restrict(point))
 
