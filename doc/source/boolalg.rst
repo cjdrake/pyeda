@@ -126,12 +126,12 @@ in your interpreter::
 
    >>> from pyeda import *
 
-Using the ``from ... import *`` syntax is generally frowned upon for Python
-programming,
-but is *extremely* convenient for interactive use.
-
 If you want to see all the symbols you import with this statement,
 look into ``pyeda/__init__.py``.
+
+.. note::
+   Using the ``from ... import *`` syntax is generally frowned upon for Python
+   programming, but is *extremely* convenient for interactive use.
 
 
 Built-in Python Boolean Operations
@@ -304,7 +304,6 @@ Use the variable :math:`z` to represent the result of the third flip.
 
 ::
 
-   # Put 'z' in the least-significant position
    >>> [point for point in iter_points([z, y, x])]
    [{x: 0, y: 0, z: 0},
     {x: 0, y: 0, z: 1},
