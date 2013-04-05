@@ -16,6 +16,7 @@ We will be using some mathematical language here and there,
 but please do not run away screaming in fear.
 This document assumes very little background knowledge.
 
+
 What is Boolean Algebra?
 ========================
 
@@ -27,14 +28,14 @@ You solve for :math:`x`, find the intersection of two lines,
 and you're done, right?
 
 As it turns out,
-the algebra you are familiar with just scratches the surface.
+the high school algebra you are familiar with just scratches the surface.
 There are many algebras with equally many theoretical and practical uses.
 An algebra is the combination of two things:
 
 1. a collection of mathematical objects, and
 2. a collection of rules to manipulate those objects
 
-For example, in your familiar algebra, you have numbers such as
+For example, in high school algebra, you have numbers such as
 :math:`\{1, 3, 5, \frac{1}{2}, .337\}`, and operators such as
 :math:`\{+, -, \cdot, \div\}`.
 The numbers are the mathematical objects,
@@ -43,15 +44,13 @@ Except in very extreme circumstances (division by zero),
 whenever you add, subtract, or divide two numbers, you get another number.
 
 Algebras are a big part of the "tools of the trade" for a mathematician.
-A plumber has pipes and wrenches, a carpenter has wood and saws,
+A plumber has a wrench, a carpenter has a saw,
 and a mathematician has algebras.
 To each his own. |smiley|
 
 A *Boolean* algebra defines the rules for working with the set :math:`\{0, 1\}`.
 So unlike in normal algebra class where you have more numbers than you can
 possibly imagine, in Boolean Algebra you only have two.
-Only two numbers? This is starting to sound pretty awesome.
-Wait, it gets better.
 
 Even though it is possible to define a Boolean Algebra using different
 operators,
@@ -101,11 +100,39 @@ is defined by:
 The Boolean product is called *AND* because the output of :math:`a` *AND*
 :math:`b` equals 1 *if and only if* both :math:`a = 1`, and :math:`b = 1`.
 
-So you are telling me that in Boolean algebra there are only two numbers you
-need to know about, and only three operators?
-Not exactly.
-There are many other significant operators,
-but they may all be reduced to these fundamental three.
+Additional Perspective
+----------------------
+
+You are probably thinking this is all very nice,
+but what can you possibly do with an algebra that only concerns itself with
+0, 1, *NOT*, *OR*, and *AND*?
+
+In 1937, `Claude Shannon <http://en.wikipedia.org/wiki/Claude_Shannon>`_
+realized that electronic circuits have two-value switches that can be combined
+into networks capable of solving any logical or numeric relationship.
+A transistor is nothing but an electrical switch.
+Similar to a light bulb, it has two states: off (0), and on (1).
+Wiring transistors together in serial imitates the *AND* function,
+and wiring them together in parallel imitates the *OR* function.
+If you wire a few thousand transistors together in interesting ways,
+you can build a computer.
+
+
+Import Symbols from PyEDA
+=========================
+
+All examples in this document require that you execute the following statements
+in your interpreter::
+
+   >>> from pyeda import *
+
+Using the ``from ... import *`` syntax is generally frowned upon for Python
+programming,
+but is *extremely* convenient for interactive use.
+
+If you want to see all the symbols you import with this statement,
+look into ``pyeda/__init__.py``.
+
 
 Built-in Python Boolean Operations
 ==================================
@@ -141,26 +168,24 @@ You can use the Python interpreter to evaluate complex expressions::
    >>> (True and False) or not (False or True)
    False
 
-Import Symbols from PyEDA
-=========================
+PyEDA recognizes ``False``, ``0``, and ``'0'`` as Boolean zero (0),
+and ``True``, ``1``, and ``'1'`` as Boolean one (1).
+You can use the ``boolify`` function to manually convert the ``bool`` and
+``str`` data types to integers::
 
-All examples in this document require that you execute the following statement
-in your interpreter::
+   >>> boolify(True)
+   1
+   >>> boolify('0')
+   0
 
-   >>> from pyeda import *
-
-This is generally frowned upon for Python programming,
-but *extremely* convenient for interactive use.
-If you want to see all the symbols you import with this statement,
-look into ``pyeda/__init__.py``.
 
 Boolean Variables
 =================
 
 Okay, so we already know what Boolean Algebra is,
-and Python can do everything we need already, right?
+and Python can already do everything we need, right?
 
-Just like in your algebra class,
+Just like in high school algebra,
 things start to get interesting when we introduce a few *variables*.
 
 A Boolean variable is a numerical quantity that may assume any value in the
@@ -181,9 +206,7 @@ After the coin is flipped, the result is a constant.
 Creating Variable Instances
 ---------------------------
 
-Let's create a few Boolean variables using the ``var`` convenience method:
-
-::
+Let's create a few Boolean variables using the ``var`` convenience method::
 
    >>> a, b, c, d = map(var, 'abcd')
    >>> a.name
@@ -217,6 +240,23 @@ use the ``namespace`` parameter::
    >>> id(eggs1) == id(eggs2)
    False
 
+Get All Alphabetic Variables
+----------------------------
+
+For convenience, you can just import all of the single-letter variable
+instances from the ``pyeda.alphas`` module::
+
+   >>> from pyeda.alphas import *
+   >>> a, b, c
+   (a, b, c)
+
+Indexing Variables
+------------------
+
+Ordering Variables
+------------------
+
+
 Points in Boolean Space
 =======================
 
@@ -237,37 +277,35 @@ So to create interesting functions in Boolean algebra,
 you use many variables.
 
 Let's revisit the coin-flipping example from before.
-You create a variable :math:`x` to represent the result of the first flip,
+This time we will flip the coin twice.
+Create a variable :math:`x` to represent the result of the first flip,
 and a variable :math:`y` to represent the result of the second flip.
-You use 0 to represent a "tails" result, and 1 to represent a "heads" result.
+Use zero (0) to represent "tails", and one (1) to represent "heads".
 
 The number of variables you use is called the "dimension".
 All the possible outcomes of this experiment is called the "space".
 Each possible outcome is called a "point".
 
-So let's put it all together.
 If you flip the coin twice, and the result is "heads", "tails",
 that result is point :math:`(1, 0)` in a 2-dimensional Boolean space.
 
-Use the ``iter_points`` iterator to iterate through all possible points in an
+Use the ``iter_points`` generator to iterate through all possible points in an
 N-dimensional Boolean space::
 
-   >>> x, y = map(var, 'xy')
-   >>> [ point for point in iter_points([x, y]) ]
+   >>> [point for point in iter_points([x, y])]
    [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}]
 
-The return value is a dictionary.
-The key is the variable instance, and the value is in :math:`{0, 1}`.
+PyEDA uses a dictionary to represent a point.
+The keys of the dictionary are the variable instances,
+and the values are numbers in :math:`{0, 1}`.
 
 Try doing the experiment with three coin flips.
 Use the variable :math:`z` to represent the result of the third flip.
 
 ::
 
-   >>> x, y, z = map(var, 'xyz')
-
    # Put 'z' in the least-significant position
-   >>> [ point for point in iter_points([z, y, x]) ]
+   >>> [point for point in iter_points([z, y, x])]
    [{x: 0, y: 0, z: 0},
     {x: 0, y: 0, z: 1},
     {x: 0, y: 1, z: 0},
@@ -282,8 +320,13 @@ The observant reader will notice that this is equivalent to:
 * generating all bit-strings of length :math:`N`
 * counting from 0 to 7 in the binary number system
 
+
 Boolean Functions
 =================
+
+A Boolean function is a rule that maps every point in an :math:`N`-dimensional
+Boolean space to an element in :math:`{0, 1}`.
+
 
 Truth Tables
 ============
