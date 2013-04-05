@@ -31,8 +31,7 @@ PC_COUNT_ONES = {n: sum((n >> i) & 3 == PC_ONE for i in range(0, 8, 2))
 
 def expr2truthtable(expr):
     """Convert an expression into a truth table."""
-    outputs = (expr.restrict(point) for point in iter_points(expr.inputs))
-    return TruthTable(expr.inputs, outputs)
+    return TruthTable(expr.inputs, expr.iter_range())
 
 def truthtable2expr(tt, cnf=False):
     """Convert a truth table into an expression."""
