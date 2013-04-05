@@ -150,8 +150,13 @@ class Function(object):
             yield point
 
     def iter_range(self):
-        """Iterate through all (point, output) pairs."""
-        for points in iter_points(self.inputs):
+        """Iterate through all values in the range."""
+        for point in iter_points(self.inputs):
+            yield self.restrict(point)
+
+    def iter_relation(self):
+        """Iterate through all (point, value) pairs in the relation."""
+        for point in iter_points(self.inputs):
             yield (point, self.restrict(point))
 
     def iter_ones(self):
