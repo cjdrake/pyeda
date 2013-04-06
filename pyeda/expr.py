@@ -107,55 +107,55 @@ def OneHot(*args):
     return And(Or(*args), OneHot0(*args))
 
 # factored operators
-def f_not(arg, conj=False):
+def f_not(arg):
     """Return factored NOT expression."""
-    f = Not(arg).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = Not(arg).factor()
+    return f if f in B else f.factor()
 
-def f_or(*args, conj=False):
+def f_or(*args):
     """Return factored OR expression."""
-    f = Or(*args).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = Or(*args).factor()
+    return f if f in B else f.factor()
 
-def f_nor(*args, conj=False):
+def f_nor(*args):
     """Return factored NOR expression."""
-    f = Nor(*args).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = Nor(*args).factor()
+    return f if f in B else f.factor()
 
-def f_and(*args, conj=False):
+def f_and(*args):
     """Return factored AND expression."""
-    f = And(*args).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = And(*args).factor()
+    return f if f in B else f.factor()
 
-def f_nand(*args, conj=False):
+def f_nand(*args):
     """Return factored NAND expression."""
-    f = Nand(*args).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = Nand(*args).factor()
+    return f if f in B else f.factor()
 
-def f_xor(*args, conj=False):
+def f_xor(*args):
     """Return factored XOR expression."""
-    f = Xor(*args).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = Xor(*args).factor()
+    return f if f in B else f.factor()
 
-def f_xnor(*args, conj=False):
+def f_xnor(*args):
     """Return factored XNOR expression."""
-    f = Xnor(*args).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = Xnor(*args).factor()
+    return f if f in B else f.factor()
 
-def f_equal(*args, conj=False):
+def f_equal(*args):
     """Return factored Equal expression."""
-    f = Equal(*args).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = Equal(*args).factor()
+    return f if f in B else f.factor()
 
-def f_implies(p, q, conj=False):
+def f_implies(p, q):
     """Return factored Implies expression."""
-    f = Implies(p, q).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = Implies(p, q).factor()
+    return f if f in B else f.factor()
 
-def f_ite(s, a, b, conj=False):
+def f_ite(s, a, b):
     """Return factored if-then-else expression."""
-    f = ITE(s, a, b).factor(conj)
-    return f if f in B else f.factor(conj)
+    f = ITE(s, a, b).factor()
+    return f if f in B else f.factor()
 
 
 class Expression(boolfunc.Function):
