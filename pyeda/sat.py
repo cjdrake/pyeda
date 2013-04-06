@@ -23,24 +23,24 @@ def backtrack(expr):
     {}
     >>> (a * b * (-a + -b)).satisfy_one(algorithm='backtrack')
     """
-    var = expr.top
-    cfs = {p[var]: cf for p, cf in expr.iter_cofactors(var)}
+    v = expr.top
+    cfs = {p[v]: cf for p, cf in expr.iter_cofactors(v)}
     if cfs[0] == 1:
         if cfs[1] == 1:
             # tautology
             point = {}
         else:
-            # var=0 satisfies the formula
-            point = {var: 0}
+            # v=0 satisfies the formula
+            point = {v: 0}
     elif cfs[1] == 1:
-        # var=1 satisfies the formula
-        point = {var: 1}
+        # v=1 satisfies the formula
+        point = {v: 1}
     else:
         for num, cf in cfs.items():
             if cf != 0:
                 point = backtrack(cf)
                 if point is not None:
-                    point[var] = num
+                    point[v] = num
                     break
         else:
             point = None
@@ -68,27 +68,27 @@ def dpll(cnf):
         return constraints
 
     # 3. Variable selection heuristic
-    var = cnf.top
-    #var = random.choice(cnf.inputs)
+    v = cnf.top
+    #v = random.choice(cnf.inputs)
 
     # 4. Backtracking
-    cfs = {p[var]: cf for p, cf in cnf.iter_cofactors(var)}
+    cfs = {p[v]: cf for p, cf in cnf.iter_cofactors(v)}
     if cfs[0] == 1:
         if cfs[1] == 1:
             # tautology
             point = {}
         else:
-            # var=0 satisfies the formula
-            point = {var: 0}
+            # v=0 satisfies the formula
+            point = {v: 0}
     elif cfs[1] == 1:
-        # var=1 satisfies the formula
-        point = {var: 1}
+        # v=1 satisfies the formula
+        point = {v: 1}
     else:
         for num, cf in cfs.items():
             if cf != 0:
                 point = dpll(cf)
                 if point is not None:
-                    point[var] = num
+                    point[v] = num
                     break
         else:
             point = None
