@@ -1103,27 +1103,6 @@ class Exclusive(Expression):
 
         return False, tuple(args), par
 
-    # From Function
-    def restrict(self, point):
-        idx_arg = self._get_restrictions(point)
-        if idx_arg:
-            args = list(self._args)
-            for i, arg in idx_arg.items():
-                args[i] = arg
-            return self.__class__(*args)
-        else:
-            return self
-
-    def compose(self, mapping):
-        idx_arg = self._get_compositions(mapping)
-        if idx_arg:
-            args = self._args[:]
-            for i, arg in idx_arg.items():
-                args[i] = arg
-            return self.__class__(*args)
-        else:
-            return self
-
     # From Expression
     @cached_property
     def depth(self):
