@@ -253,8 +253,60 @@ instances from the ``pyeda.alphas`` module::
 Indexing Variables
 ------------------
 
+   "There are only two hard things in Computer Science: cache invalidation and naming things."
+
+   -- Tim Bray
+
+In the coin-flipping example you could start naming your variables by assigning
+the first flip to :math:`x`, followed by :math:`y`, and so on.
+But there are only twenty-six letters in the English alphabet,
+so unless we start resorting to other alphabets,
+we will hit some limitations with this system very quickly.
+
+For cases like these, it is convenient to give variables an *index*.
+Then, you can name the variable for the first coin flip :math:`x[0]`,
+followed by :math:`x[1]`, :math:`x[2]`, and so on.
+
+Here is how to give variables indices using the ``var`` function::
+
+   >>> x_0 = var('x', 0)
+   >>> x_1 = var('x', 1)
+   >>> x_0, x_1
+   (x[0], x[1])
+
+You can even give variables multiple indices by using a tuple::
+
+   >>> x_0_1_2_3 = var('x', (0, 1, 2 ,3))
+   >>> x_0_1_2_3
+   x[0][1][2][3]
+
 Ordering Variables
 ------------------
+
+In order to provide a canonical representation, all variables are ordered.
+
+The rules for ordering variables are:
+
+* If both variables have the same name,
+  perform a tuple comparison of their indices
+* Otherwise, do a string compare of their names
+
+For example::
+
+   >>> a < b
+   True
+   >>> a < q < w
+   True
+
+   # x_0 == x[0]
+   # x_1 == x[1]
+   # x_10 == x[10]
+   >>> a < x_0
+   True
+   >>> x_0 < x_1
+   True
+   >>> x_1 < x_10
+   True
 
 
 Points in Boolean Space
@@ -324,11 +376,17 @@ Boolean Functions
 =================
 
 A Boolean function is a rule that maps every point in an :math:`N`-dimensional
-Boolean space to an element in :math:`{0, 1}`.
+Boolean space to an element in :math:`\{0, 1\}`.
 
+Boolean Function Interface
+--------------------------
 
-Truth Tables
-============
-
-Logical Expressions
-===================
+.. autoclass:: pyeda.boolfunc.Function
+   :members: support, inputs, top, degree, cardinality
+             iter_domain, iter_image, iter_relation, iter_ones, iter_zeros,
+             reduce, restrict, vrestrict, compose,
+             satisfy_one, satisfy_all, satisfy_count,
+             iter_cofactors, cofactors,
+             is_neg_unate, is_pos_unate, is_binate,
+             smoothing, consensus, derivative
+   :member-order: bysource
