@@ -86,7 +86,7 @@ def OneHot0(*args):
     """
     Return an expression that means:
         At most one input variable is true.
-   """
+    """
     nargs = len(args)
     return And(*[Or(Not(args[i]), Not(args[j]))
                  for i in range(nargs-1) for j in range(i+1, nargs)])
