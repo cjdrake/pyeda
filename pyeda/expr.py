@@ -788,7 +788,7 @@ class OrAnd(Expression):
         if obj in B:
             return obj
         elif isinstance(obj, OrAnd):
-            return obj.__class__(*[arg.factor() for arg in obj._args])
+            return obj.__class__(*[arg.factor() for arg in obj.args])
         else:
             return obj.factor()
 
@@ -1126,7 +1126,7 @@ class Exclusive(Expression):
                         args.append(inner(*term))
                 return outer(*args)
             else:
-                fst, rst = obj._args[0], obj._args[1:]
+                fst, rst = obj.args[0], obj.args[1:]
                 return Or(And(Not(fst).factor(), self.__class__(*rst).factor()),
                           And(fst.factor(), self.DUAL(*rst).factor()))
         else:
@@ -1234,14 +1234,14 @@ class Equal(Expression):
         elif isinstance(obj, Equal):
             if cnf:
                 args = list()
-                for i, argi in enumerate(obj._args):
-                    for j, argj in enumerate(obj._args, start=i):
+                for i, argi in enumerate(obj.args):
+                    for j, argj in enumerate(obj.args, start=i):
                         args.append(Or(argi, Not(argj).factor()))
                         args.append(Or(Not(argi).factor(), argj))
                 return And(*args)
             else:
-                return Or(And(*[Not(arg).factor() for arg in obj._args]),
-                          And(*[arg.factor() for arg in obj._args]))
+                return Or(And(*[Not(arg).factor() for arg in obj.args]),
+                          And(*[arg.factor() for arg in obj.args]))
         else:
             return obj.factor()
 
@@ -1323,7 +1323,7 @@ class Implies(Expression):
         if obj in B:
             return obj
         elif isinstance(obj, Implies):
-            a, b = obj._args
+            a, b = obj.args
             return Or(Not(a).factor(), b.factor())
         else:
             return obj.factor()
@@ -1426,7 +1426,7 @@ class ITE(Expression):
         if obj in B:
             return obj
         elif isinstance(obj, ITE):
-            s, a, b = obj._args
+            s, a, b = obj.args
             return Or(And(s, a), And(Not(s).factor(), b))
         else:
             return obj.factor()
