@@ -155,16 +155,7 @@ class Expression(boolfunc.Function):
 
     SOP, POS = range(2)
 
-    # From Function
-    @cached_property
-    def support(self):
-        """Return the support set of an expression."""
-        return frozenset.union(*[arg.support for arg in self._args])
-
-    @cached_property
-    def inputs(self):
-        return tuple(sorted(self.support))
-
+    # Operators
     def __neg__(self):
         """Boolean negation
 
@@ -292,18 +283,14 @@ class Expression(boolfunc.Function):
         """If-then-else operator"""
         return ITE(self, a, b)
 
-    def expand(self, vs=None, cnf=False):
-        """Return the Shannon expansion with respect to a list of variables."""
-        if vs is None:
-            vs = list()
-        elif isinstance(vs, Expression):
-            vs = [vs]
-        if vs:
-            outer, inner = (And, Or) if cnf else (Or, And)
-            return outer(*[inner(self, *term)
-                           for term in boolfunc.iter_terms(vs, cnf)])
-        else:
-            return self
+    # From Function
+    @cached_property
+    def support(self):
+        return frozenset.union(*[arg.support for arg in self._args])
+
+    @cached_property
+    def inputs(self):
+        return tuple(sorted(self.support))
 
     def reduce(self, cnf=False):
         if cnf:
@@ -331,7 +318,6 @@ class Expression(boolfunc.Function):
             raise ValueError("invalid algorithm")
 
     def satisfy_all(self):
-        """Iterate through all satisfying input points."""
         for point in self.iter_ones():
             yield point
 
@@ -339,7 +325,6 @@ class Expression(boolfunc.Function):
         return sum(1 for _ in self.satisfy_all())
 
     def is_neg_unate(self, vs=None):
-        """Return whether a function is negative unate."""
         if vs is None:
             vs = self.support
         elif isinstance(vs, boolfunc.Function):
@@ -354,7 +339,6 @@ class Expression(boolfunc.Function):
         return True
 
     def is_pos_unate(self, vs=None):
-        """Return whether a function is positive unate."""
         if vs is None:
             vs = self.support
         elif isinstance(vs, boolfunc.Function):
@@ -369,15 +353,12 @@ class Expression(boolfunc.Function):
         return True
 
     def smoothing(self, vs=None):
-        """Return the smoothing of a function."""
         return Or(*self.cofactors(vs))
 
     def consensus(self, vs=None):
-        """Return the consensus of a function."""
         return And(*self.cofactors(vs))
 
     def derivative(self, vs=None):
-        """Return the derivative of a function."""
         return Xor(*self.cofactors(vs))
 
     # Specific to Expression
@@ -386,12 +367,11 @@ class Expression(boolfunc.Function):
         return id(self) < id(other)
 
     def __repr__(self):
-        """Return a printable representation."""
         return self.__str__()
 
     @property
     def args(self):
-        """Return the expression argument list."""
+        """Return the expression arguments as a tuple."""
         return self._args
 
     @cached_property
@@ -403,6 +383,19 @@ class Expression(boolfunc.Function):
     def depth(self):
         """Return the number of levels in the expression tree."""
         raise NotImplementedError()
+
+    def expand(self, vs=None, cnf=False):
+        """Return the Shannon expansion with respect to a list of variables."""
+        if vs is None:
+            vs = list()
+        elif isinstance(vs, Expression):
+            vs = [vs]
+        if vs:
+            outer, inner = (And, Or) if cnf else (Or, And)
+            return outer(*[inner(self, *term)
+                           for term in boolfunc.iter_terms(vs, cnf)])
+        else:
+            return self
 
     def invert(self):
         """Return an inverted expression."""
@@ -561,7 +554,6 @@ class Variable(boolfunc.Variable, Literal):
     # From Function
     @property
     def support(self):
-        """Return the support set of a variable."""
         return self._support
 
     def restrict(self, point):
@@ -578,7 +570,6 @@ class Variable(boolfunc.Variable, Literal):
 
     # From Expression
     def __lt__(self, other):
-        """Overload the '<' operator."""
         if isinstance(other, Variable):
             return boolfunc.Variable.__lt__(self, other)
         if isinstance(other, Complement):
@@ -588,7 +579,6 @@ class Variable(boolfunc.Variable, Literal):
         return id(self) < id(other)
 
     def invert(self):
-        """Return an inverted variable."""
         return Complement(self)
 
     # DPLL IF
@@ -636,7 +626,6 @@ class Complement(Literal):
     # From Function
     @property
     def support(self):
-        """Return the support set of a complement."""
         return self._support
 
     def restrict(self, point):
@@ -653,7 +642,6 @@ class Complement(Literal):
 
     # From Expression
     def __lt__(self, other):
-        """Overload the '<' operator."""
         if isinstance(other, Variable):
             return ( self.var.name < other.name or
                          self.var.name == other.name and
@@ -665,7 +653,6 @@ class Complement(Literal):
         return id(self) < id(other)
 
     def invert(self):
-        """Return an inverted complement."""
         return self.var
 
     # DPLL IF
@@ -754,7 +741,6 @@ class OrAnd(Expression):
 
     # From Expression
     def __lt__(self, other):
-        """Overload the '<' operator."""
         if isinstance(other, Literal):
             return self.support < other.support
         if isinstance(other, self.__class__) and self.depth == other.depth == 1:
@@ -989,6 +975,7 @@ And.DUAL = Or
 
 class Not(Expression):
     """Boolean NOT operator"""
+
     def __new__(cls, arg, simplify=True):
         arg = arg if isinstance(arg, Expression) else boolify(arg)
         if simplify:
@@ -1148,6 +1135,7 @@ class Exclusive(Expression):
 
 class Xor(Exclusive):
     """Boolean Exclusive OR (XOR) operator"""
+
     PARITY = 1
 
     def __str__(self):
@@ -1157,6 +1145,7 @@ class Xor(Exclusive):
 
 class Xnor(Exclusive):
     """Boolean Exclusive NOR (XNOR) operator"""
+
     PARITY = 0
 
     def __str__(self):
