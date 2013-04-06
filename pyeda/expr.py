@@ -1248,13 +1248,21 @@ class Equal(Expression):
     def invert(self):
         return And(Or(*self._args), Not(And(*self._args)))
 
-    def factor(self):
+    def factor(self, cnf=False):
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
         elif isinstance(obj, Equal):
-            return Or(And(*[Not(arg).factor() for arg in obj._args]),
-                      And(*[arg.factor() for arg in obj._args]))
+            if cnf:
+                args = list()
+                for i, argi in enumerate(obj._args):
+                    for j, argj in enumerate(obj._args, start=i):
+                        args.append(Or(argi, Not(argj).factor()))
+                        args.append(Or(Not(argi).factor(), argj))
+                return And(*args)
+            else:
+                return Or(And(*[Not(arg).factor() for arg in obj._args]),
+                          And(*[arg.factor() for arg in obj._args]))
         else:
             return obj.factor()
 
