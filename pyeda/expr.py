@@ -38,7 +38,7 @@ from collections import deque, OrderedDict
 
 from pyeda import boolfunc
 from pyeda import sat
-from pyeda.common import bit_on, boolify, cached_property
+from pyeda.common import bit_on, parity, boolify, cached_property
 
 B = {0, 1}
 
@@ -1058,21 +1058,20 @@ class Exclusive(Expression):
         args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
                      for arg in args)
         if simplify:
-            degenerate, args, parity = cls._simplify(args)
+            degenerate, args, par = cls._simplify(args)
             if degenerate:
                 return args
         else:
-            parity = cls.PARITY
+            par = cls.PARITY
 
-        self = super(Exclusive, cls).__new__(cls)
+        self = super(Exclusive, cls).__new__(_PAR2CLS[par])
         self._args = args
         self._simplified = simplify
-        self._parity = parity
         return self
 
     @classmethod
     def _simplify(cls, args):
-        parity = cls.PARITY
+        par = cls.PARITY
         temps, args = deque(args), list()
 
         while temps:
@@ -1080,14 +1079,14 @@ class Exclusive(Expression):
             if isinstance(arg, Expression):
                 arg = arg.simplify()
             if arg in B:
-                parity ^= arg
+                par ^= arg
             # associative
             elif isinstance(arg, cls):
                 temps.extendleft(reversed(arg.args))
             # Xor(x, x') = 1
             elif isinstance(arg, Literal) and -arg in args:
                 args.remove(-arg)
-                parity ^= 1
+                par ^= 1
             # Xor(x, x) = 0
             elif arg in args:
                 args.remove(arg)
@@ -1096,19 +1095,12 @@ class Exclusive(Expression):
 
         # Xor() = 0; Xnor() = 1
         if len(args) == 0:
-            return True, parity, None
+            return True, 1 - par, None
         # Xor(x) = x; Xnor(x) = x'
         if len(args) == 1:
-            return True, Not(args[0]) if parity else args[0], None
+            return True, args[0] if par else Not(args[0]), None
 
-        return False, tuple(args), parity
-
-    def __str__(self):
-        args_str = ", ".join(str(arg) for arg in self._args)
-        if self._parity:
-            return "Xnor(" + args_str + ")"
-        else:
-            return "Xor(" + args_str + ")"
+        return False, tuple(args), par
 
     # From Function
     def restrict(self, point):
@@ -1117,7 +1109,7 @@ class Exclusive(Expression):
             args = list(self._args)
             for i, arg in idx_arg.items():
                 args[i] = arg
-            return Xnor(*args) if self._parity else Xor(*args)
+            return self.__class__(*args)
         else:
             return self
 
@@ -1127,7 +1119,7 @@ class Exclusive(Expression):
             args = self._args[:]
             for i, arg in idx_arg.items():
                 args[i] = arg
-            return Xnor(*args) if self._parity else Xor(*args)
+            return self.__class__(*args)
         else:
             return self
 
@@ -1154,27 +1146,37 @@ class Exclusive(Expression):
         if self._simplified:
             return self
 
-        degenerate, args, parity = self._simplify(self._args)
+        degenerate, args, par = self._simplify(self._args)
         if degenerate:
             return args
 
-        obj = super(Exclusive, self).__new__(self.__class__)
+        obj = super(Exclusive, self).__new__(_PAR2CLS[par])
         obj._args = args
         obj._simplified = True
-        obj._parity = parity
         return obj
 
 
 class Xor(Exclusive):
     """Boolean Exclusive OR (XOR) operator"""
-    PARITY = 0
+    PARITY = 1
+
+    def __str__(self):
+        args_str = ", ".join(str(arg) for arg in self._args)
+        return "Xor(" + args_str + ")"
+
 
 class Xnor(Exclusive):
     """Boolean Exclusive NOR (XNOR) operator"""
-    PARITY = 1
+    PARITY = 0
+
+    def __str__(self):
+        args_str = ", ".join(str(arg) for arg in self._args)
+        return "Xnor(" + args_str + ")"
+
 
 Xor.DUAL = Xnor
 Xnor.DUAL = Xor
+_PAR2CLS = {1: Xor, 0: Xnor}
 
 
 class Equal(Expression):

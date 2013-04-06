@@ -2,6 +2,7 @@
 Interface Functions:
     bit_on
     clog2
+    parity
     boolify
     pcify
     cached_property
@@ -55,6 +56,24 @@ def clog2(num):
         shifter <<= 1
         accum += 1
     return accum
+
+def parity(num):
+    """Return the parity of the number.
+
+    >>> [parity(n) for n in range(10)]
+    [0, 1, 1, 0, 1, 0, 0, 1, 1, 0]
+    >>> parity(-1)
+    Traceback (most recent call last):
+        ...
+    ValueError: num must be >= 0
+    """
+    if num < 0:
+        raise ValueError("num must be >= 0")
+    p = 0
+    while num:
+        p ^= (num & 1)
+        num >>= 1
+    return p
 
 def boolify(arg):
     """Convert arg to an integer in B = {0, 1}.

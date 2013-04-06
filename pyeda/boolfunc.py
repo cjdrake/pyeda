@@ -144,6 +144,11 @@ class Function(object):
         """
         return len(self.support)
 
+    @property
+    def cardinality(self):
+        """Return the cardinality of the relation B^N => B."""
+        return 1 << self.degree
+
     def iter_domain(self):
         """Iterate through all points in the domain."""
         for point in iter_points(self.inputs):

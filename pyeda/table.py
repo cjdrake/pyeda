@@ -36,7 +36,7 @@ def expr2truthtable(expr):
 def truthtable2expr(tt, cnf=False):
     """Convert a truth table into an expression."""
     terms = list()
-    for n in range(1 << tt.degree):
+    for n in range(tt.cardinality):
         q, r = divmod(n * tt.width, 8)
         byte = tt.data[q]
         output = (byte >> r) & tt.mask
@@ -85,7 +85,7 @@ class TruthTable(Function):
         s = ["inputs: "]
         s.append(" ".join(str(v) for v in reversed(self._inputs)))
         s.append("\n")
-        for n in range(1 << self.degree):
+        for n in range(self.cardinality):
             s.append(_bin_zext(n, self.degree))
             s.append(" ")
             q, r = divmod(n * self.width, 8)
@@ -120,7 +120,7 @@ class TruthTable(Function):
             return self
 
     def _iter_restrict(self, point):
-        for n in range(1 << self.degree):
+        for n in range(self.cardinality):
             q, r = divmod(n * self.width, 8)
             _point = {v: bit_on(n, i) for i, v in enumerate(self._inputs)
                       if v in point}

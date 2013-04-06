@@ -101,4 +101,4 @@ class One(Constant):
             yield point
 
     def satisfy_count(self):
-        return 1 << self.degree
+        return self.cardinality
