@@ -1187,7 +1187,7 @@ class Xnor(Exclusive):
 
 Xor.DUAL = Xnor
 Xnor.DUAL = Xor
-_PAR2CLS = {1: Xor, 0: Xnor}
+_PAR2CLS = {Xor.PARITY: Xor, Xnor.PARITY: Xnor}
 
 
 class Equal(Expression):
