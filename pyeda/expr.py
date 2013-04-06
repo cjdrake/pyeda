@@ -449,8 +449,12 @@ class Expression(boolfunc.Function):
 
     def to_dnf(self):
         """Return the expression in disjunctive normal form."""
-        f = self.factor()._flatten(And)
-        return f.absorb() if isinstance(f, Expression) else f
+        f = self.factor()
+        if isinstance(f, Expression):
+            f = f._flatten(And)
+        if isinstance(f, Expression):
+            f = f.absorb()
+        return f
 
     def to_cdnf(self):
         """Return the expression in canonical disjunctive normal form."""
@@ -462,8 +466,12 @@ class Expression(boolfunc.Function):
 
     def to_cnf(self):
         """Return the expression in conjunctive normal form."""
-        f = self.factor()._flatten(Or)
-        return f.absorb() if isinstance(f, Expression) else f
+        f = self.factor()
+        if isinstance(f, Expression):
+            f = f._flatten(Or)
+        if isinstance(f, Expression):
+            f = f.absorb()
+        return f
 
     def to_ccnf(self):
         """Return the expression in canonical conjunctive normal form."""
@@ -776,13 +784,6 @@ class OrAnd(Expression):
                          simplify=self._simplified)
 
     def factor(self):
-        """
-        >>> a, b, c = map(var, "abc")
-        >>> (a + -(b * c)).factor()
-        a + b' + c'
-        >>> (a * -(b + c)).factor()
-        a * b' * c'
-        """
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
@@ -925,13 +926,13 @@ class And(OrAnd):
             args = sorted(self._args)
         except (AttributeError, TypeError):
             args = list(self._args)
-        s = list()
+        parts = list()
         for arg in args:
             if isinstance(arg, Or):
-                s.append("(" + str(arg) + ")")
+                parts.append("(" + str(arg) + ")")
             else:
-                s.append(str(arg))
-        return " * ".join(s)
+                parts.append(str(arg))
+        return " * ".join(parts)
 
     def is_cnf(self):
         """Return whether this expression is in conjunctive normal form."""
@@ -1313,13 +1314,13 @@ class Implies(Expression):
         return False, (p, q)
 
     def __str__(self):
-        s = list()
+        parts = list()
         for arg in self._args:
             if arg in B or isinstance(arg, Literal):
-                s.append(str(arg))
+                parts.append(str(arg))
             else:
-                s.append("(" + str(arg) + ")")
-        return " => ".join(s)
+                parts.append("(" + str(arg) + ")")
+        return " => ".join(parts)
 
     # From Expression
     @cached_property
@@ -1416,13 +1417,13 @@ class ITE(Expression):
         return False, (s, a, b)
 
     def __str__(self):
-        s = list()
+        parts = list()
         for arg in self._args:
             if arg in B or isinstance(arg, Literal):
-                s.append(str(arg))
+                parts.append(str(arg))
             else:
-                s.append("(" + str(arg) + ")")
-        return "{} ? {} : {}".format(*s)
+                parts.append("(" + str(arg) + ")")
+        return "{} ? {} : {}".format(*parts)
 
     # From Expression
     @cached_property
