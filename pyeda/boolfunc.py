@@ -115,14 +115,15 @@ class Variable(object):
 class Function(object):
     """
     Abstract base class that defines an interface for a scalar Boolean function
-    of N variables.
+    of :math:`N` variables.
     """
     @property
     def support(self):
         """Return the support set of a function.
 
-        Let f(x1, x2, ..., xn) be a Boolean function of N variables. The set
-        {x1, x2, ..., xn} is called the *support* of the function.
+        Let :math:`f(x_1, x_2, ..., x_n)` be a Boolean function of :math:`N`
+        variables. The set :math:`\{x_1, x_2, ..., x_n\}` is called the
+        *support* of the function.
         """
         raise NotImplementedError()
 
@@ -140,13 +141,17 @@ class Function(object):
     def degree(self):
         """Return the degree of a function.
 
-        A function from B^N => B is called a Boolean function of *degree* N.
+        A function from :math:`B^{N} \Rightarrow B` is called a Boolean
+        function of *degree* :math:`N`.
         """
         return len(self.support)
 
     @property
     def cardinality(self):
-        """Return the cardinality of the relation B^N => B."""
+        """Return the cardinality of the relation :math:`B^{N} \Rightarrow B`.
+
+        Always equal to :math:`2^{N}`.
+        """
         return 1 << self.degree
 
     def iter_domain(self):
@@ -165,7 +170,7 @@ class Function(object):
             yield (point, self.restrict(point))
 
     def iter_ones(self):
-        """Iterate through all points this function maps to output one."""
+        """Iterate through all points this function maps to element one."""
         rest, top = self.inputs[:-1], self.inputs[-1]
         for p, cf in self.iter_cofactors(top):
             if cf == 1:
@@ -178,7 +183,7 @@ class Function(object):
                     yield point
 
     def iter_zeros(self):
-        """Iterate through all points this function maps to output zero."""
+        """Iterate through all points this function maps to element zero."""
         rest, top = self.inputs[:-1], self.inputs[-1]
         for p, cf in self.iter_cofactors(top):
             if cf == 0:
@@ -197,9 +202,9 @@ class Function(object):
     def restrict(self, point):
         """
         Return the Boolean function that results after restricting a subset of
-        its input variables to {0, 1}.
+        its input variables to :math:`\{0, 1\}`.
 
-        g = f | xi=b
+        :math:`g = f \: | \: x_i = b`
         """
         raise NotImplementedError()
 
@@ -212,14 +217,14 @@ class Function(object):
         Return the Boolean function that results after substituting a subset of
         its input variables for other Boolean functions.
 
-        g = f1 | xi=f2
+        :math:`g = f_1 \: | \: x_i = f2`
         """
         raise NotImplementedError()
 
     def satisfy_one(self):
         """
         If this function is satisfiable, return a satisfying input point. A
-        tautology *may* return an empty dictionary; a contradiction *must*
+        tautology *may* return a zero-dimensional point; a contradiction *must*
         return None.
         """
         raise NotImplementedError()
@@ -233,7 +238,7 @@ class Function(object):
         raise NotImplementedError()
 
     def iter_cofactors(self, vs=None):
-        """Iterate through the cofactors of N variables."""
+        """Iterate through the cofactors of :math:`N` variables."""
         if vs is None:
             vs = list()
         elif isinstance(vs, Variable):
@@ -244,59 +249,63 @@ class Function(object):
     def cofactors(self, vs=None):
         """Return a tuple of cofactors of N variables.
 
-        The *cofactor* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi is f[xi] = f(x1, x2, ..., 1, ..., xn)
+        The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
+        with respect to variable :math:`x_i` is
+        :math:`f_{x_i} = f(x_1, x_2, ..., 1, ..., x_n)`
 
-        The *cofactor* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi' is f[xi'] = f(x1, x2, ..., 0, ..., xn)
+        The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
+        with respect to variable :math:`x_i'` is
+        :math:`f_{x_i'} = f(x_1, x_2, ..., 0, ..., x_n)`
         """
         return tuple(cf for p, cf in self.iter_cofactors(vs))
 
     def is_neg_unate(self, vs=None):
         """Return whether a function is negative unate.
 
-        A function f(x1, x2, ..., xi, ..., xn) is negative unate in variable
-        xi if f[xi'] >= f[xi].
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
+        in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
         """
         raise NotImplementedError()
 
     def is_pos_unate(self, vs=None):
         """Return whether a function is positive unate.
 
-        A function f(x1, x2, ..., xi, ..., xn) is positive unate in variable
-        xi if f[xi] >= f[xi'].
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
+        in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
         """
         raise NotImplementedError()
 
     def is_binate(self, vs=None):
         """Return whether a function is binate.
 
-        A function f(x1, x2, ..., xi, ..., xn) is binate in variable xi if it
-        is neither negative nor positive unate in xi.
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
+        variable :math:`x_i` if it is neither negative nor positive unate in
+        :math:`x_i`.
         """
         return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
 
     def smoothing(self, vs=None):
         """Return the smoothing of a function.
 
-        The *smoothing* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi is S[xi](f) = f[xi] + f[xi']
+        The *smoothing* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
+        to variable :math:`x_i` is :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`.
         """
         raise NotImplementedError()
 
     def consensus(self, vs=None):
         """Return the consensus of a function.
 
-        The *consensus* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi is C[xi](f) = f[xi] * f[xi']
+        The *consensus* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
+        to variable :math:`x_i` is :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`.
         """
         raise NotImplementedError()
 
     def derivative(self, vs=None):
-        """Return the derivative of a function.
+        r"""Return the derivative of a function.
 
-        The *derivate* of f(x1, x2, ..., xi, ..., xn) with respect to
-        variable xi is df/dxi = f[xi] (xor) f[xi']
+        The *derivate* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
+        to variable :math:`x_i` is
+        :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`.
         """
         raise NotImplementedError()
 
