@@ -1131,14 +1131,24 @@ class Exclusive(Expression):
     def invert(self):
         return self.DUAL(*self._args, simplify=self._simplified)
 
-    def factor(self):
+    def factor(self, flat=True):
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
         elif isinstance(obj, Exclusive):
-            fst, rst = obj._args[0], obj._args[1:]
-            return Or(And(Not(fst).factor(), self.__class__(*rst).factor()),
-                      And(fst.factor(), self.DUAL(*rst).factor()))
+            if flat:
+                outer, inner = Or, And
+                args = list()
+                for n in range(1 << len(obj.args)):
+                    if parity(n) == obj.PARITY:
+                        term = [arg.factor() if bit_on(n, i) else Not(arg).factor()
+                                for i, arg in enumerate(obj.args)]
+                        args.append(inner(*term))
+                return outer(*args)
+            else:
+                fst, rst = obj._args[0], obj._args[1:]
+                return Or(And(Not(fst).factor(), self.__class__(*rst).factor()),
+                          And(fst.factor(), self.DUAL(*rst).factor()))
         else:
             return obj.factor()
 
