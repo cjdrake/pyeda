@@ -497,10 +497,8 @@ class Expression(boolfunc.Function):
     def equivalent(self, other):
         """Return whether this expression is equivalent to another."""
         f = And(Or(Not(self), Not(other)), Or(self, other))
-        if f == 0:
-            return True
-        elif f == 1:
-            return False
+        if f in B:
+            return not f
         elif f.is_cnf():
             return f.satisfy_one(algorithm='dpll') is None
         else:
