@@ -494,7 +494,7 @@ def test_absorb():
 def test_reduce():
     f = a * b + a * c + b * c
     assert str(f.reduce()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
-    assert str(f.reduce(cnf=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
+    assert str(f.reduce(conj=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
 
 def test_expand():
     assert a.expand() == a
@@ -505,12 +505,12 @@ def test_expand():
     f = a.expand([b, c])
     assert len(f.args) == 4 and f.equivalent(a)
 
-    assert a.expand(cnf=True) == a
+    assert a.expand(conj=True) == a
 
-    f = a.expand(b, cnf=True)
+    f = a.expand(b, conj=True)
     assert len(f.args) == 2 and f.equivalent(a)
 
-    f = a.expand([b, c], cnf=True)
+    f = a.expand([b, c], conj=True)
     assert len(f.args) == 4 and f.equivalent(a)
 
 def test_satisfy():

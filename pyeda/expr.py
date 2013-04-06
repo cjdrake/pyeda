@@ -59,18 +59,20 @@ def var(name, indices=None, namespace=None):
     """
     return Variable(name, indices, namespace)
 
-def factor(expr, cnf=False):
+def factor(expr, conj=False):
     """Return a factored expression.
 
     Parameters
     ----------
-    cnf : bool
-        If true, always choose a CNF factored form when there's a choice
+
+    expr : Expression
+    conj : bool
+        Always choose a conjunctive form when there's a choice
     """
     if expr in B:
         return expr
     else:
-        return expr.factor(cnf)
+        return expr.factor(conj)
 
 def simplify(expr):
     """Return a simplified expression."""
@@ -105,55 +107,55 @@ def OneHot(*args):
     return And(Or(*args), OneHot0(*args))
 
 # factored operators
-def f_not(arg, cnf=False):
+def f_not(arg, conj=False):
     """Return factored NOT expression."""
-    f = Not(arg).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = Not(arg).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_or(*args, cnf=False):
+def f_or(*args, conj=False):
     """Return factored OR expression."""
-    f = Or(*args).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = Or(*args).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_nor(*args, cnf=False):
+def f_nor(*args, conj=False):
     """Return factored NOR expression."""
-    f = Nor(*args).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = Nor(*args).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_and(*args, cnf=False):
+def f_and(*args, conj=False):
     """Return factored AND expression."""
-    f = And(*args).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = And(*args).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_nand(*args, cnf=False):
+def f_nand(*args, conj=False):
     """Return factored NAND expression."""
-    f = Nand(*args).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = Nand(*args).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_xor(*args, cnf=False):
+def f_xor(*args, conj=False):
     """Return factored XOR expression."""
-    f = Xor(*args).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = Xor(*args).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_xnor(*args, cnf=False):
+def f_xnor(*args, conj=False):
     """Return factored XNOR expression."""
-    f = Xnor(*args).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = Xnor(*args).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_equal(*args, cnf=False):
+def f_equal(*args, conj=False):
     """Return factored Equal expression."""
-    f = Equal(*args).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = Equal(*args).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_implies(p, q, cnf=False):
+def f_implies(p, q, conj=False):
     """Return factored Implies expression."""
-    f = Implies(p, q).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = Implies(p, q).factor(conj)
+    return f if f in B else f.factor(conj)
 
-def f_ite(s, a, b, cnf=False):
+def f_ite(s, a, b, conj=False):
     """Return factored if-then-else expression."""
-    f = ITE(s, a, b).factor(cnf)
-    return f if f in B else f.factor(cnf)
+    f = ITE(s, a, b).factor(conj)
+    return f if f in B else f.factor(conj)
 
 
 class Expression(boolfunc.Function):
@@ -298,8 +300,8 @@ class Expression(boolfunc.Function):
     def inputs(self):
         return tuple(sorted(self.support))
 
-    def reduce(self, cnf=False):
-        if cnf:
+    def reduce(self, conj=False):
+        if conj:
             return self.to_ccnf()
         else:
             return self.to_cdnf()
@@ -390,16 +392,16 @@ class Expression(boolfunc.Function):
         """Return the number of levels in the expression tree."""
         raise NotImplementedError()
 
-    def expand(self, vs=None, cnf=False):
+    def expand(self, vs=None, conj=False):
         """Return the Shannon expansion with respect to a list of variables."""
         if vs is None:
             vs = list()
         elif isinstance(vs, Expression):
             vs = [vs]
         if vs:
-            outer, inner = (And, Or) if cnf else (Or, And)
+            outer, inner = (And, Or) if conj else (Or, And)
             return outer(*[inner(self, *term)
-                           for term in boolfunc.iter_terms(vs, cnf)])
+                           for term in boolfunc.iter_terms(vs, conj)])
         else:
             return self
 
@@ -407,7 +409,7 @@ class Expression(boolfunc.Function):
         """Return an inverted expression."""
         raise NotImplementedError()
 
-    def factor(self, cnf=False):
+    def factor(self, conj=False):
         """Return a factored expression.
 
         A factored expression is one and only one of the following:
@@ -417,16 +419,8 @@ class Expression(boolfunc.Function):
         Parameters
         ----------
 
-        cnf : bool
+        conj : bool
             Always choose a conjunctive form when there's a choice
-
-        Examples
-        --------
-
-        >>> Xor(a, b, c).factor()
-        a' * b' * c + a' * b * c' + a * b' * c' + a * b * c
-        >>> Xor(a, b, c).factor(cnf=True)
-        (a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)
         """
         raise NotImplementedError()
 
@@ -546,7 +540,7 @@ class Literal(Expression):
     def depth(self):
         return 0
 
-    def factor(self, cnf=False):
+    def factor(self, conj=False):
         return self
 
     def is_dnf(self):
@@ -789,14 +783,14 @@ class OrAnd(Expression):
         return self.DUAL(*[Not(arg) for arg in self._args],
                          simplify=self._simplified)
 
-    def factor(self, cnf=False):
+    def factor(self, conj=False):
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
         elif isinstance(obj, OrAnd):
-            return obj.__class__(*[arg.factor(cnf) for arg in obj.args])
+            return obj.__class__(*[arg.factor(conj) for arg in obj.args])
         else:
-            return obj.factor(cnf)
+            return obj.factor(conj)
 
     def simplify(self):
         if self._simplified:
@@ -1030,14 +1024,14 @@ class Not(Expression):
     def invert(self):
         return self.arg
 
-    def factor(self, cnf=False):
+    def factor(self, conj=False):
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
         elif isinstance(obj, Not):
-            return obj.arg.invert().factor(cnf)
+            return obj.arg.invert().factor(conj)
         else:
-            return obj.factor(cnf)
+            return obj.factor(conj)
 
     def simplify(self):
         if self._simplified:
@@ -1118,21 +1112,21 @@ class Exclusive(Expression):
     def invert(self):
         return self.DUAL(*self._args, simplify=self._simplified)
 
-    def factor(self, cnf=False):
+    def factor(self, conj=False):
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
         elif isinstance(obj, Exclusive):
-            outer, inner = (And, Or) if cnf else (Or, And)
+            outer, inner = (And, Or) if conj else (Or, And)
             args = list()
             for n in range(1 << len(obj.args)):
                 if parity(n) == obj.PARITY:
-                    term = [arg.factor(cnf) if bit_on(n, i) else Not(arg).factor(cnf)
+                    term = [arg.factor(conj) if bit_on(n, i) else Not(arg).factor(conj)
                             for i, arg in enumerate(obj.args)]
                     args.append(inner(*term))
             return outer(*args)
         else:
-            return obj.factor(cnf)
+            return obj.factor(conj)
 
     def simplify(self):
         if self._simplified:
@@ -1231,23 +1225,23 @@ class Equal(Expression):
     def invert(self):
         return And(Or(*self._args), Not(And(*self._args)))
 
-    def factor(self, cnf=False):
+    def factor(self, conj=False):
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
         elif isinstance(obj, Equal):
-            if cnf:
+            if conj:
                 args = list()
                 for i, argi in enumerate(obj.args):
                     for j, argj in enumerate(obj.args, start=i):
-                        args.append(Or(argi, Not(argj).factor(cnf)))
-                        args.append(Or(Not(argi).factor(cnf), argj))
+                        args.append(Or(argi, Not(argj).factor(conj)))
+                        args.append(Or(Not(argi).factor(conj), argj))
                 return And(*args)
             else:
-                return Or(And(*[Not(arg).factor(cnf) for arg in obj.args]),
-                          And(*[arg.factor(cnf) for arg in obj.args]))
+                return Or(And(*[Not(arg).factor(conj) for arg in obj.args]),
+                          And(*[arg.factor(conj) for arg in obj.args]))
         else:
-            return obj.factor(cnf)
+            return obj.factor(conj)
 
     def simplify(self):
         if self._simplified:
@@ -1322,15 +1316,15 @@ class Implies(Expression):
         p, q = self._args
         return And(p, Not(q))
 
-    def factor(self, cnf=False):
+    def factor(self, conj=False):
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
         elif isinstance(obj, Implies):
             a, b = obj.args
-            return Or(Not(a).factor(cnf), b.factor(cnf))
+            return Or(Not(a).factor(conj), b.factor(conj))
         else:
-            return obj.factor(cnf)
+            return obj.factor(conj)
 
     def simplify(self):
         if self._simplified:
@@ -1425,15 +1419,15 @@ class ITE(Expression):
         s, a, b = self._args
         return ITE(s, Not(a), Not(b), simplify=self._simplified)
 
-    def factor(self, cnf=False):
+    def factor(self, conj=False):
         obj = self if self._simplified else self.simplify()
         if obj in B:
             return obj
         elif isinstance(obj, ITE):
             s, a, b = obj.args
-            return Or(And(s, a), And(Not(s).factor(cnf), b))
+            return Or(And(s, a), And(Not(s).factor(conj), b))
         else:
-            return obj.factor(cnf)
+            return obj.factor(conj)
 
     def simplify(self):
         if self._simplified:
