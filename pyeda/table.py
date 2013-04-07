@@ -108,6 +108,24 @@ class TruthTable(boolfunc.Function):
         obj.pc = self.pc
         return obj
 
+    def __add__(self, other):
+        raise NotImplementedError()
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        raise NotImplementedError()
+
+    def __rsub__(self, other):
+        return self.__neg__().__add__(other)
+
+    def __mul__(self, other):
+        raise NotImplementedError()
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     # From Function
     @cached_property
     def support(self):
@@ -116,6 +134,12 @@ class TruthTable(boolfunc.Function):
     @property
     def inputs(self):
         return self._inputs
+
+    def iter_zeros(self):
+        raise NotImplementedError()
+
+    def iter_ones(self):
+        raise NotImplementedError()
 
     def reduce(self):
         return self
@@ -129,20 +153,35 @@ class TruthTable(boolfunc.Function):
         else:
             return self
 
-    def _iter_restrict(self, point):
-        for n in range(self.cardinality):
-            q, r = divmod(n * self.width, 8)
-            _point = {v: bit_on(n, i) for i, v in enumerate(self._inputs)
-                      if v in point}
-            if _point == point:
-                byte = self.data[q]
-                yield (byte >> r) & self.mask
+    def compose(self, mapping):
+        raise NotImplementedError()
+
+    def satisfy_one(self):
+        raise NotImplementedError()
+
+    def satisfy_all(self):
+        raise NotImplementedError()
 
     def satisfy_count(self):
         if self.pc:
             return sum(PC_COUNT_ONES[byte] for byte in self.data)
         else:
             return sum(COUNT_ONES[byte] for byte in self.data)
+
+    def is_neg_unate(self, vs=None):
+        raise NotImplementedError()
+
+    def is_pos_unate(self, vs=None):
+        raise NotImplementedError()
+
+    def smoothing(self, vs=None):
+        raise NotImplementedError()
+
+    def consensus(self, vs=None):
+        raise NotImplementedError()
+
+    def derivative(self, vs=None):
+        raise NotImplementedError()
 
     # Specific to TruthTable
     @cached_property
@@ -152,6 +191,16 @@ class TruthTable(boolfunc.Function):
     @cached_property
     def mask(self):
         return (1 << self.width) - 1
+
+    # Helper methods
+    def _iter_restrict(self, point):
+        for n in range(self.cardinality):
+            q, r = divmod(n * self.width, 8)
+            _point = {v: bit_on(n, i) for i, v in enumerate(self._inputs)
+                      if v in point}
+            if _point == point:
+                byte = self.data[q]
+                yield (byte >> r) & self.mask
 
 
 def _bin_zext(num, w=None):
