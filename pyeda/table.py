@@ -9,11 +9,11 @@ Interface Classes:
     TruthTable
 """
 
+from pyeda import boolfunc
 from pyeda.common import (
     bit_on, boolify, pcify, cached_property,
     PC_VOID, PC_ONE, PC_ZERO, PC_DC
 )
-from pyeda.boolfunc import iter_points, index2term, Function
 from pyeda.expr import Or, And
 
 PC_STR = {
@@ -42,17 +42,15 @@ def truthtable2expr(tt, conj=False):
         output = (byte >> r) & tt.mask
         if conj:
             if (not tt.pc and output == 0) or (tt.pc and output == PC_ZERO):
-                terms.append(index2term(n, tt.inputs, True))
+                terms.append(boolfunc.index2term(n, tt.inputs, True))
         else:
             if (not tt.pc and output == 1) or (tt.pc and output == PC_ONE):
-                terms.append(index2term(n, tt.inputs, False))
-    if conj:
-        return And(*[Or(*term) for term in terms])
-    else:
-        return Or(*[And(*term) for term in terms])
+                terms.append(boolfunc.index2term(n, tt.inputs, False))
+    outer, inner = (And, Or) if conj else (Or, And)
+    return outer(*[inner(*term) for term in terms])
 
 
-class TruthTable(Function):
+class TruthTable(boolfunc.Function):
 
     def __new__(cls, inputs, outputs, pc=False):
         inputs = tuple(inputs)
