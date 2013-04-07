@@ -161,8 +161,6 @@ def f_ite(s, a, b):
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
 
-    SOP, POS = range(2)
-
     # Operators
     def __neg__(self):
         """Boolean negation
