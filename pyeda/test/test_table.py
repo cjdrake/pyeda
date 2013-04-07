@@ -35,7 +35,7 @@ def test_table():
     tt = expr2truthtable(f)
     assert len(tt.data) == 2
     assert truthtable2expr(tt).equivalent(f)
-    assert truthtable2expr(tt, cnf=True).equivalent(f)
+    assert truthtable2expr(tt, conj=True).equivalent(f)
     assert str(tt) == XOR_STR
     assert repr(tt) == XOR_STR
     assert tt.support == {a, b, c, d}

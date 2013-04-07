@@ -26,7 +26,7 @@ def iter_points(vs):
     for n in range(1 << len(vs)):
         yield {v: bit_on(n, i) for i, v in enumerate(vs)}
 
-def iter_terms(vs, cnf=False):
+def iter_terms(vs, conj=False):
     """Iterate through all terms in an N-dimensional space.
 
     Parameters
@@ -34,17 +34,17 @@ def iter_terms(vs, cnf=False):
     vs: [Variable]
     """
     for n in range(1 << len(vs)):
-        yield index2term(n, vs, cnf)
+        yield index2term(n, vs, conj)
 
-def index2term(index, vs, cnf=False):
+def index2term(index, vs, conj=False):
     """Return a tuple of all variables for a given term index.
 
     Parameters
     ----------
     index: int
     vs: [Variable]
-    cnf: bool
-        cnf=False for minterms, cnf=True for maxterms
+    conj: bool
+        conj=False for minterms, conj=True for maxterms
 
     Examples
     --------
@@ -64,7 +64,7 @@ def index2term(index, vs, cnf=False):
     | 7     | a  b  c  | a' b' c' |
     +-------+----------+----------+
     """
-    if cnf:
+    if conj:
         return tuple(-v if bit_on(index, i) else v for i, v in enumerate(vs))
     else:
         return tuple(v if bit_on(index, i) else -v for i, v in enumerate(vs))

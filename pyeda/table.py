@@ -33,20 +33,20 @@ def expr2truthtable(expr):
     """Convert an expression into a truth table."""
     return TruthTable(expr.inputs, expr.iter_image())
 
-def truthtable2expr(tt, cnf=False):
+def truthtable2expr(tt, conj=False):
     """Convert a truth table into an expression."""
     terms = list()
     for n in range(tt.cardinality):
         q, r = divmod(n * tt.width, 8)
         byte = tt.data[q]
         output = (byte >> r) & tt.mask
-        if cnf:
+        if conj:
             if (not tt.pc and output == 0) or (tt.pc and output == PC_ZERO):
                 terms.append(index2term(n, tt.inputs, True))
         else:
             if (not tt.pc and output == 1) or (tt.pc and output == PC_ONE):
                 terms.append(index2term(n, tt.inputs, False))
-    if cnf:
+    if conj:
         return And(*[Or(*term) for term in terms])
     else:
         return Or(*[And(*term) for term in terms])
