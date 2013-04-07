@@ -136,10 +136,22 @@ class TruthTable(boolfunc.Function):
         return self._inputs
 
     def iter_zeros(self):
-        raise NotImplementedError()
+        for n in range(self.cardinality):
+            q, r = divmod(n * self.width, 8)
+            byte = self.data[q]
+            output = (byte >> r) & self.mask
+            # NOTE: PC_ZERO and PC_DC are both "zeros"
+            if (self.pc and output & 2) or (not self.pc and output == 0):
+                yield {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
 
     def iter_ones(self):
-        raise NotImplementedError()
+        for n in range(self.cardinality):
+            q, r = divmod(n * self.width, 8)
+            byte = self.data[q]
+            output = (byte >> r) & self.mask
+            # NOTE: PC_ONE and PC_DC are both "ones"
+            if (self.pc and output & 1) or (not self.pc and output == 1):
+                yield {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
 
     def reduce(self):
         return self
@@ -157,10 +169,17 @@ class TruthTable(boolfunc.Function):
         raise NotImplementedError()
 
     def satisfy_one(self):
-        raise NotImplementedError()
+        for n in range(self.cardinality):
+            q, r = divmod(n * self.width, 8)
+            byte = self.data[q]
+            output = (byte >> r) & self.mask
+            if (self.pc and output & 1) or (not self.pc and output == 1):
+                return {v: bit_on(n, i) for i, v in enumerate(self.inputs)}
+        return None
 
     def satisfy_all(self):
-        raise NotImplementedError()
+        for point in self.iter_ones():
+            yield point
 
     def satisfy_count(self):
         if self.pc:

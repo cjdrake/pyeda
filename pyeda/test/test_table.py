@@ -45,17 +45,28 @@ def test_table():
     assert truthtable2expr(tt.restrict({a: 0})).equivalent(Xor(b, c, d))
     assert tt.restrict({e: 0}) == tt
 
-    #assert f.satisfy_one() == {a: 1, b: 0, c: 0, d: 0}
-    #assert [p for p in f.satisfy_all()] == [{a: 1, b: 0, c: 0, d: 0},
-    #                                        {a: 0, b: 1, c: 0, d: 0},
-    #                                        {a: 0, b: 0, c: 1, d: 0},
-    #                                        {a: 1, b: 1, c: 1, d: 0},
-    #                                        {a: 0, b: 0, c: 0, d: 1},
-    #                                        {a: 1, b: 1, c: 0, d: 1},
-    #                                        {a: 1, b: 0, c: 1, d: 1},
-    #                                        {a: 0, b: 1, c: 1, d: 1}]
+    assert [p for p in tt.iter_zeros()] == [{a: 0, b: 0, c: 0, d: 0},
+                                            {a: 1, b: 1, c: 0, d: 0},
+                                            {a: 1, b: 0, c: 1, d: 0},
+                                            {a: 0, b: 1, c: 1, d: 0},
+                                            {a: 1, b: 0, c: 0, d: 1},
+                                            {a: 0, b: 1, c: 0, d: 1},
+                                            {a: 0, b: 0, c: 1, d: 1},
+                                            {a: 1, b: 1, c: 1, d: 1}]
+
+    assert tt.satisfy_one() == {a: 1, b: 0, c: 0, d: 0}
+    assert [p for p in tt.satisfy_all()] == [{a: 1, b: 0, c: 0, d: 0},
+                                             {a: 0, b: 1, c: 0, d: 0},
+                                             {a: 0, b: 0, c: 1, d: 0},
+                                             {a: 1, b: 1, c: 1, d: 0},
+                                             {a: 0, b: 0, c: 0, d: 1},
+                                             {a: 1, b: 1, c: 0, d: 1},
+                                             {a: 1, b: 0, c: 1, d: 1},
+                                             {a: 0, b: 1, c: 1, d: 1}]
 
     assert tt.satisfy_count() == 8
+
+    assert TruthTable((a, b), "0000").satisfy_one() == None
 
 def test_pc_table():
     tt = TruthTable((a, b, c, d), "0110100110010110", pc=True)
