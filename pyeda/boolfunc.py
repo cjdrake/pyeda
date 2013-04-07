@@ -169,31 +169,13 @@ class Function(object):
         for point in iter_points(self.inputs):
             yield (point, self.restrict(point))
 
-    def iter_ones(self):
-        """Iterate through all points this function maps to element one."""
-        rest, top = self.inputs[:-1], self.inputs[-1]
-        for p, cf in self.iter_cofactors(top):
-            if cf == 1:
-                for point in iter_points(rest):
-                    point[top] = p[top]
-                    yield point
-            elif cf != 0:
-                for point in cf.iter_ones():
-                    point[top] = p[top]
-                    yield point
-
     def iter_zeros(self):
         """Iterate through all points this function maps to element zero."""
-        rest, top = self.inputs[:-1], self.inputs[-1]
-        for p, cf in self.iter_cofactors(top):
-            if cf == 0:
-                for point in iter_points(rest):
-                    point[top] = p[top]
-                    yield point
-            elif cf != 1:
-                for point in cf.iter_zeros():
-                    point[top] = p[top]
-                    yield point
+        raise NotImplementedError()
+
+    def iter_ones(self):
+        """Iterate through all points this function maps to element one."""
+        raise NotImplementedError()
 
     def reduce(self):
         """Return the function reduced to a canonical form."""

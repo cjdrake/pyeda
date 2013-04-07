@@ -298,6 +298,30 @@ class Expression(boolfunc.Function):
     def inputs(self):
         return tuple(sorted(self.support))
 
+    def iter_zeros(self):
+        rest, top = self.inputs[:-1], self.inputs[-1]
+        for p, cf in self.iter_cofactors(top):
+            if cf == 0:
+                for point in boolfunc.iter_points(rest):
+                    point[top] = p[top]
+                    yield point
+            elif cf != 1:
+                for point in cf.iter_zeros():
+                    point[top] = p[top]
+                    yield point
+
+    def iter_ones(self):
+        rest, top = self.inputs[:-1], self.inputs[-1]
+        for p, cf in self.iter_cofactors(top):
+            if cf == 1:
+                for point in boolfunc.iter_points(rest):
+                    point[top] = p[top]
+                    yield point
+            elif cf != 0:
+                for point in cf.iter_ones():
+                    point[top] = p[top]
+                    yield point
+
     def reduce(self, conj=False):
         if conj:
             return self.to_ccnf()
