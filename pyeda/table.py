@@ -96,6 +96,18 @@ class TruthTable(boolfunc.Function):
             s.append("\n")
         return "".join(s)
 
+    # Operators
+    def __neg__(self):
+        obj = super(TruthTable, self).__new__(TruthTable)
+        obj._inputs = self._inputs
+        if self.pc:
+            obj.data = bytearray(((byte & 0x55) << 1) | ((byte & 0xAA) >> 1)
+                                 for byte in self.data)
+        else:
+            obj.data = bytearray(255 - byte for byte in self.data)
+        obj.pc = self.pc
+        return obj
+
     # From Function
     @cached_property
     def support(self):

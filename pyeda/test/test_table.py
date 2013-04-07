@@ -65,3 +65,10 @@ def test_pc_table():
     tt = TruthTable((a, b), "100X", pc=True)
     assert len(tt.data) == 1
     assert str(tt) == "inputs: b a\n00 1\n01 0\n10 0\n11 X\n"
+
+def test_negate():
+    tt = TruthTable((a, b, c), "00010111", pc=False)
+    assert str(-tt) == "inputs: c b a\n000 1\n001 1\n010 1\n011 0\n100 1\n101 0\n110 0\n111 0\n"
+
+    tt = TruthTable((a, b, c), "0001011X", pc=True)
+    assert str(-tt) == "inputs: c b a\n000 1\n001 1\n010 1\n011 0\n100 1\n101 0\n110 0\n111 X\n"
