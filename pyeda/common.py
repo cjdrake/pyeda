@@ -15,7 +15,7 @@ BOOL_DICT = {
     0: 0,
     1: 1,
     "0": 0,
-    "1": 1
+    "1": 1,
 }
 
 PC_DICT = {
@@ -25,6 +25,7 @@ PC_DICT = {
     '1': PC_ONE,
     'x': PC_DC,
     'X': PC_DC,
+    '-': PC_DC,
 }
 
 def bit_on(num, bit):

@@ -20,7 +20,7 @@ PC_STR = {
     PC_VOID : '?',
     PC_ZERO : '0',
     PC_ONE  : '1',
-    PC_DC   : 'X'
+    PC_DC   : '-'
 }
 
 COUNT_ONES = {n: sum(bit_on(n, i) for i in range(8))
