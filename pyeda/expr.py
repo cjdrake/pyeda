@@ -176,7 +176,7 @@ class Expression(boolfunc.Function):
         """
         return Not(self)
 
-    def __add__(self, arg):
+    def __add__(self, other):
         """Boolean disjunction (addition, OR)
 
         DIMACS SAT format: +(f1, f2, ..., fn)
@@ -190,19 +190,19 @@ class Expression(boolfunc.Function):
         | 1 | 1 |   1   |
         +---+---+-------+
         """
-        return Or(self, arg)
+        return Or(self, other)
 
     def __radd__(self, other):
         return self.__add__(other)
 
-    def __sub__(self, arg):
+    def __sub__(self, other):
         """Alias: a - b = a + -b"""
-        return Or(self, Not(arg))
+        return Or(self, Not(other))
 
     def __rsub__(self, other):
         return self.__neg__().__add__(other)
 
-    def __mul__(self, arg):
+    def __mul__(self, other):
         """Boolean conjunction (multiplication, AND)
 
         DIMACS SAT format: *(f1, f2, ..., fn)
@@ -216,7 +216,7 @@ class Expression(boolfunc.Function):
         | 1 | 1 |   1   |
         +---+---+-------+
         """
-        return And(self, arg)
+        return And(self, other)
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -257,7 +257,7 @@ class Expression(boolfunc.Function):
         """
         return Equal(self, *args)
 
-    def __rshift__(self, arg):
+    def __rshift__(self, other):
         """Boolean implication
 
         +---+---+--------+
@@ -269,9 +269,9 @@ class Expression(boolfunc.Function):
         | 1 | 1 |    1   |
         +---+---+--------+
         """
-        return Implies(self, arg)
+        return Implies(self, other)
 
-    def __rrshift__(self, arg):
+    def __rrshift__(self, other):
         """Reverse Boolean implication
 
         +---+---+--------+
@@ -283,7 +283,7 @@ class Expression(boolfunc.Function):
         | 1 | 1 |    1   |
         +---+---+--------+
         """
-        return Implies(arg, self)
+        return Implies(other, self)
 
     def ite(self, a, b):
         """If-then-else operator"""
