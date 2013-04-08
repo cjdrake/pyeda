@@ -94,17 +94,17 @@ def boolify(arg):
 def pcify(arg):
     """Convert arg to a positional cube value.
 
-    >>> [pcify(x) for x in (False, True, 0, 1, '0', '1', 'x', 'X')]
-    [2, 1, 2, 1, 2, 1, 3, 3]
+    >>> [pcify(x) for x in (False, True, 0, 1, '0', '1', 'x', 'X', '-')]
+    [2, 1, 2, 1, 2, 1, 3, 3, 3]
     >>> pcify(42)
     Traceback (most recent call last):
         ...
-    ValueError: arg not in {0, 1, X}
+    ValueError: arg not in {0, 1, X, -}
     """
     try:
         return PC_DICT[arg]
     except KeyError:
-        raise ValueError("arg not in {0, 1, X}")
+        raise ValueError("arg not in {0, 1, X, -}")
 
 def cached_property(func):
     """Return a cached property calculated by input function."""

@@ -16,7 +16,7 @@ from pyeda.common import (
 )
 from pyeda.expr import Or, And
 
-PC_STR = {
+PC2STR = {
     PC_VOID : '?',
     PC_ZERO : '0',
     PC_ONE  : '1',
@@ -90,7 +90,7 @@ class TruthTable(boolfunc.Function):
             byte = self.data[q]
             output = (byte >> r) & self.mask
             if self.pc:
-                s.append(PC_STR[output])
+                s.append(PC2STR[output])
             else:
                 s.append(str(output))
             s.append("\n")
@@ -109,19 +109,64 @@ class TruthTable(boolfunc.Function):
         return obj
 
     def __add__(self, other):
-        raise NotImplementedError()
+        if other == 0:
+            return self
+        elif other == 1:
+            return 1
+        inputs = sorted(self.support | other.support)
+        pc = self.pc or other.pc
+        def _outputs():
+            for point in boolfunc.iter_points(inputs):
+                self_out = self.restrict(point)
+                other_out = other.restrict(point)
+                if pc:
+                    if not self.pc:
+                        self_out = pcify(self_out)
+                    if not other.pc:
+                        other_out = pcify(other_out)
+                    output = ( (self_out & other_out) & 2 |
+                               (self_out | other_out) & 1 )
+                    yield PC2STR[output]
+                else:
+                    yield self_out | other_out
+        return TruthTable(inputs, _outputs(), pc)
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
-        raise NotImplementedError()
+        if other == 0:
+            return 1
+        elif other == 1:
+            return self
+        else:
+            return self.__add__(-other)
 
     def __rsub__(self, other):
         return self.__neg__().__add__(other)
 
     def __mul__(self, other):
-        raise NotImplementedError()
+        if other == 0:
+            return 0
+        elif other == 1:
+            return self
+        inputs = sorted(self.support | other.support)
+        pc = self.pc or other.pc
+        def _outputs():
+            for point in boolfunc.iter_points(inputs):
+                self_out = self.restrict(point)
+                other_out = other.restrict(point)
+                if pc:
+                    if not self.pc:
+                        self_out = pcify(self_out)
+                    if not other.pc:
+                        other_out = pcify(other_out)
+                    output = ( (self_out | other_out) & 2 |
+                               (self_out & other_out) & 1 )
+                    yield PC2STR[output]
+                else:
+                    yield self_out & other_out
+        return TruthTable(inputs, _outputs(), pc)
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -219,7 +264,11 @@ class TruthTable(boolfunc.Function):
                       if v in point}
             if _point == point:
                 byte = self.data[q]
-                yield (byte >> r) & self.mask
+                output = (byte >> r) & self.mask
+                if self.pc:
+                    yield PC2STR[output]
+                else:
+                    yield output
 
 
 def _bin_zext(num, w=None):

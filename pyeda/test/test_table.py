@@ -77,9 +77,60 @@ def test_pc_table():
     assert len(tt.data) == 1
     assert str(tt) == "inputs: b a\n00 1\n01 0\n10 0\n11 -\n"
 
-def test_negate():
-    tt = TruthTable((a, b, c), "00010111", pc=False)
-    assert str(-tt) == "inputs: c b a\n000 1\n001 1\n010 1\n011 0\n100 1\n101 0\n110 0\n111 0\n"
+def test_ops():
+    f = TruthTable([a, b], "0001")
+    assert str(-f) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
 
-    tt = TruthTable((a, b, c), "0001011-", pc=True)
-    assert str(-tt) == "inputs: c b a\n000 1\n001 1\n010 1\n011 0\n100 1\n101 0\n110 0\n111 -\n"
+    assert f + 0 == f
+    assert f + 1 == 1
+    assert 0 + f == f
+    assert 1 + f == 1
+
+    assert f * 0 == 0
+    assert f * 1 == f
+    assert 0 * f == 0
+    assert 1 * f == f
+
+    assert f - 0 == 1
+    assert f - 1 == f
+    assert str(0 - f) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
+    assert 1 - f == 1
+
+    f = TruthTable([a, b], "01-0", pc=True)
+    assert str(-f) == "inputs: b a\n00 1\n01 0\n10 -\n11 1\n"
+
+    f = TruthTable([a, b], "0011")
+    g = TruthTable([a, b], "0101")
+    assert str(f + g) == "inputs: b a\n00 0\n01 1\n10 1\n11 1\n"
+
+    f = TruthTable([a, b], "0011")
+    g = TruthTable([a, b], "0101")
+    assert str(f * g) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
+
+    f = TruthTable([a, b, c], "00011-00", pc=True)
+    g = TruthTable([a, b, c], "01-1--00", pc=True)
+    assert str(f + g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 -\n110 0\n111 0\n"
+
+    f = TruthTable([a, b, c], "00011-00", pc=True)
+    g = TruthTable([a, b, c], "10-0--11", pc=True)
+    assert str(f - g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 -\n110 0\n111 0\n"
+
+    f = TruthTable([a, b, c], "00011-00", pc=True)
+    g = TruthTable([a, b, c], "01-1--00", pc=True)
+    assert str(f * g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 1\n100 -\n101 -\n110 0\n111 0\n"
+
+    f = TruthTable([a, b, c], "00011100", pc=False)
+    g = TruthTable([a, b, c], "01-01-00", pc=True)
+    assert str(f + g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 1\n110 0\n111 0\n"
+
+    f = TruthTable([a, b, c], "0011--00", pc=True)
+    g = TruthTable([a, b, c], "01010100", pc=False)
+    assert str(f + g) == "inputs: c b a\n000 0\n001 1\n010 1\n011 1\n100 -\n101 1\n110 0\n111 0\n"
+
+    f = TruthTable([a, b, c], "0011--00", pc=True)
+    g = TruthTable([a, b, c], "01010100", pc=False)
+    assert str(f * g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 1\n100 0\n101 -\n110 0\n111 0\n"
+
+    f = TruthTable([a, b, c], "00011100", pc=False)
+    g = TruthTable([a, b, c], "01-01-00", pc=True)
+    assert str(f * g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 0\n100 1\n101 -\n110 0\n111 0\n"
