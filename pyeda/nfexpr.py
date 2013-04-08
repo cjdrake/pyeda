@@ -19,6 +19,8 @@ from pyeda.boolfunc import Function
 from pyeda.expr import Expression, Or, And
 from pyeda.sat import backtrack, dpll
 
+B = {0, 1}
+
 def expr2dnf(expr):
     """Convert an expression into a DNF."""
     if expr.is_dnf():
@@ -207,8 +209,8 @@ class ConjNormalForm(NormalForm):
 
 
 def DNF_Or(*args):
-    args = [expr2dnf(arg) if isinstance(arg, Expression) else arg
-            for arg in args]
+    args = (expr2dnf(arg) if isinstance(arg, Expression) else arg
+            for arg in args)
 
     int2lit = dict()
     clauses = set()
@@ -219,8 +221,8 @@ def DNF_Or(*args):
     return DisjNormalForm(int2lit, clauses)
 
 def CNF_And(*args):
-    args = [expr2cnf(arg) if isinstance(arg, Expression) else arg
-            for arg in args]
+    args = (expr2cnf(arg) if isinstance(arg, Expression) else arg
+            for arg in args)
 
     int2lit = dict()
     clauses = set()
@@ -232,7 +234,7 @@ def CNF_And(*args):
 
 def _bcp(cnf):
     """Boolean Constraint Propagation"""
-    if cnf in {0, 1}:
+    if cnf in B:
         return cnf, {}
     else:
         point = dict()
