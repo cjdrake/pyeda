@@ -51,6 +51,7 @@ def truthtable2expr(tt, conj=False):
 
 
 class TruthTable(boolfunc.Function):
+    """Boolean function represented by a truth table"""
 
     def __new__(cls, inputs, outputs, pc=False):
         inputs = tuple(inputs)
