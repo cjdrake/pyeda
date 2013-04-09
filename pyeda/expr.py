@@ -729,7 +729,7 @@ class OrAnd(Expression):
 
     @classmethod
     def _simplify(cls, args):
-        temps, args = deque(args), list()
+        temps, args = deque(args), set()
 
         while temps:
             arg = temps.popleft()
@@ -745,16 +745,15 @@ class OrAnd(Expression):
             # complement
             elif isinstance(arg, Literal) and -arg in args:
                 return True, cls.DOMINATOR
-            # idempotent
-            elif arg not in args:
-                args.append(arg)
+            else:
+                args.add(arg)
 
         # Or() = 0; And() = 1
         if len(args) == 0:
             return True, cls.IDENTITY
         # Or(x) = x; And(x) = x
         if len(args) == 1:
-            return True, args[0]
+            return True, args.pop()
 
         return False, tuple(args)
 
@@ -1094,7 +1093,7 @@ class Exclusive(Expression):
     @classmethod
     def _simplify(cls, args):
         par = cls.PARITY
-        temps, args = deque(args), list()
+        temps, args = deque(args), set()
 
         while temps:
             arg = temps.popleft()
@@ -1113,14 +1112,17 @@ class Exclusive(Expression):
             elif arg in args:
                 args.remove(arg)
             else:
-                args.append(arg)
+                args.add(arg)
 
         # Xor() = 0; Xnor() = 1
         if len(args) == 0:
             return True, 1 - par, None
         # Xor(x) = x; Xnor(x) = x'
         if len(args) == 1:
-            return True, args[0] if par else Not(args[0]), None
+            if par:
+                return True, args.pop(), None
+            else:
+                return True, Not(args.pop()), None
 
         return False, tuple(args), par
 
@@ -1217,7 +1219,7 @@ class Equal(Expression):
         if 1 in args:
             return True, And(*args)
 
-        temps, args = deque(args), list()
+        temps, args = deque(args), set()
         while temps:
             arg = temps.popleft()
             # Equal(x, -x) = 0
@@ -1225,7 +1227,7 @@ class Equal(Expression):
                 return True, 0
             # Equal(x, x, ...) = Equal(x, ...)
             elif arg not in args:
-                args.append(arg)
+                args.add(arg)
 
         # Equal(x) = Equal() = 1
         if len(args) <= 1:
