@@ -95,7 +95,7 @@ Let's say I have three variables, **a**, **b**, and **c**.
 
 ::
 
-   >>> a, b, c = map(var, "abc")
+   >>> a, b, c = map(var, 'abc')
 
 I want to write a Boolean formula that guarantees that only one of them is
 True at any given moment.
@@ -109,9 +109,7 @@ You can use PyEDA to automatically produce the truth table, in Espresso format.
 ::
 
    >>> expr2truthtable(f)
-   .i 3
-   .o 1
-   .ilb a b c
+   inputs: c b a
    000 0
    001 1
    010 1
@@ -120,7 +118,6 @@ You can use PyEDA to automatically produce the truth table, in Espresso format.
    101 0
    110 0
    111 0
-   .e
 
 By default, the OneHot function returns a formula in conjunctive normal
 (product-of-sums) form.
@@ -203,7 +200,7 @@ Putting It All Together
 
 Now that we have the value, row, column, and box constraints,
 we need to combine them all into a single formula.
-We will use the And function to join the constraints,
+We will use the ``And`` function to join the constraints,
 because all constraints must be true for the puzzle to be solved.
 
 Instead of using the ``And`` constructor,
