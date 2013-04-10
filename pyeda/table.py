@@ -14,7 +14,7 @@ import functools
 
 from pyeda import boolfunc
 from pyeda.common import (
-    bit_on, boolify, pcify, cached_property,
+    boolify, pcify, cached_property,
     PC_VOID, PC_ONE, PC_ZERO, PC_DC
 )
 from pyeda.expr import Or, And
@@ -175,8 +175,8 @@ class _BaseTruthTable(boolfunc.Function):
 
         vs = sorted(unmapped.keys())
         for n in range(1 << len(vs)):
-            for i, v in enumerate(vs):
-                inputs[unmapped[v]] = bit_on(n, i)
+            for v, val in boolfunc.num2point(n, vs).items():
+                inputs[unmapped[v]] = val
             index = sum((val << i) for i, val in enumerate(inputs))
             q, r = divmod(index * self.WIDTH, 8)
             yield (self.data[q] >> r) & self.MASK
