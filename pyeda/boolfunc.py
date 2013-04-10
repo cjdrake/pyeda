@@ -2,9 +2,11 @@
 Boolean Functions
 
 Interface Functions:
+    num2point
+    point2term
+    num2term
     iter_points
     iter_terms
-    index2term
 
 Interface Classes:
     Variable
@@ -16,32 +18,23 @@ Interface Classes:
 from pyeda.common import bit_on
 
 
-def iter_points(vs):
-    """Iterate through all points in an N-dimensional space.
+def num2point(num, vs):
+    """Convert a number to a point in an N-dimensional space."""
+    return {v: bit_on(num, i) for i, v in enumerate(vs)}
 
-    Parameters
-    ----------
-    vs : [Variable]
-    """
-    for n in range(1 << len(vs)):
-        yield {v: bit_on(n, i) for i, v in enumerate(vs)}
+def point2term(point, conj=False):
+    """Convert a point in an N-dimension space to a min/max term."""
+    if conj:
+        return tuple(-v if val else v for v, val in point.items())
+    else:
+        return tuple(v if val else -v for v, val in point.items())
 
-def iter_terms(vs, conj=False):
-    """Iterate through all terms in an N-dimensional space.
-
-    Parameters
-    ----------
-    vs: [Variable]
-    """
-    for n in range(1 << len(vs)):
-        yield index2term(n, vs, conj)
-
-def index2term(index, vs, conj=False):
+def num2term(num, vs, conj=False):
     """Return a tuple of all variables for a given term index.
 
     Parameters
     ----------
-    index: int
+    num: int
     vs: [Variable]
     conj: bool
         conj=False for minterms, conj=True for maxterms
@@ -51,23 +44,43 @@ def index2term(index, vs, conj=False):
 
     Table of min/max terms for Boolean space {a, b, c}
 
-    +-------+----------+----------+
-    | index |  minterm |  maxterm |
-    +=======+==========+==========+
-    | 0     | a' b' c' | a  b  c  |
-    | 1     | a  b' c' | a' b  c  |
-    | 2     | a' b  c' | a  b' c  |
-    | 3     | a  b  c' | a' b' c  |
-    | 4     | a' b' c  | a  b  c' |
-    | 5     | a  b' c  | a' b  c' |
-    | 6     | a' b  c  | a  b' c' |
-    | 7     | a  b  c  | a' b' c' |
+    +-----+----------+----------+
+    | num |  minterm |  maxterm |
+    +=====+==========+==========+
+    | 0   | a' b' c' | a  b  c  |
+    | 1   | a  b' c' | a' b  c  |
+    | 2   | a' b  c' | a  b' c  |
+    | 3   | a  b  c' | a' b' c  |
+    | 4   | a' b' c  | a  b  c' |
+    | 5   | a  b' c  | a' b  c' |
+    | 6   | a' b  c  | a  b' c' |
+    | 7   | a  b  c  | a' b' c' |
     +-------+----------+----------+
     """
     if conj:
-        return tuple(-v if bit_on(index, i) else v for i, v in enumerate(vs))
+        return tuple(-v if bit_on(num, i) else v for i, v in enumerate(vs))
     else:
-        return tuple(v if bit_on(index, i) else -v for i, v in enumerate(vs))
+        return tuple(v if bit_on(num, i) else -v for i, v in enumerate(vs))
+
+def iter_points(vs):
+    """Iterate through all points in an N-dimensional space.
+
+    Parameters
+    ----------
+    vs : [Variable]
+    """
+    for num in range(1 << len(vs)):
+        yield num2point(num, vs)
+
+def iter_terms(vs, conj=False):
+    """Iterate through all terms in an N-dimensional space.
+
+    Parameters
+    ----------
+    vs: [Variable]
+    """
+    for num in range(1 << len(vs)):
+        yield num2term(num, vs, conj)
 
 
 class Variable(object):

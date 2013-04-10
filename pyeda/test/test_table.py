@@ -3,7 +3,10 @@ Test table Boolean functions
 """
 
 from pyeda.expr import var, Xor
-from pyeda.table import expr2truthtable, truthtable2expr, TruthTable
+from pyeda.table import (
+    expr2truthtable, truthtable2expr,
+    TruthTable, PCTable
+)
 
 a, b, c, d, e = map(var, 'abcde')
 
@@ -69,11 +72,11 @@ def test_table():
     assert TruthTable((a, b), "0000").satisfy_one() == None
 
 def test_pc_table():
-    tt = TruthTable((a, b, c, d), "0110100110010110", pc=True)
+    tt = PCTable((a, b, c, d), "0110100110010110")
     assert str(tt) == XOR_STR
     assert tt.satisfy_count() == 8
 
-    tt = TruthTable((a, b), "100-", pc=True)
+    tt = PCTable((a, b), "100-")
     assert len(tt.data) == 1
     assert str(tt) == "inputs: b a\n00 1\n01 0\n10 0\n11 -\n"
 
@@ -96,7 +99,7 @@ def test_ops():
     assert str(0 - f) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
     assert 1 - f == 1
 
-    f = TruthTable([a, b], "01-0", pc=True)
+    f = PCTable([a, b], "01-0")
     assert str(-f) == "inputs: b a\n00 1\n01 0\n10 -\n11 1\n"
 
     f = TruthTable([a, b], "0011")
@@ -107,30 +110,30 @@ def test_ops():
     g = TruthTable([a, b], "0101")
     assert str(f * g) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
 
-    f = TruthTable([a, b, c], "00011-00", pc=True)
-    g = TruthTable([a, b, c], "01-1--00", pc=True)
+    f = PCTable([a, b, c], "00011-00")
+    g = PCTable([a, b, c], "01-1--00")
     assert str(f + g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 -\n110 0\n111 0\n"
 
-    f = TruthTable([a, b, c], "00011-00", pc=True)
-    g = TruthTable([a, b, c], "10-0--11", pc=True)
+    f = PCTable([a, b, c], "00011-00")
+    g = PCTable([a, b, c], "10-0--11")
     assert str(f - g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 -\n110 0\n111 0\n"
 
-    f = TruthTable([a, b, c], "00011-00", pc=True)
-    g = TruthTable([a, b, c], "01-1--00", pc=True)
+    f = PCTable([a, b, c], "00011-00")
+    g = PCTable([a, b, c], "01-1--00")
     assert str(f * g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 1\n100 -\n101 -\n110 0\n111 0\n"
 
-    f = TruthTable([a, b, c], "00011100", pc=False)
-    g = TruthTable([a, b, c], "01-01-00", pc=True)
+    f = TruthTable([a, b, c], "00011100")
+    g = PCTable([a, b, c], "01-01-00")
     assert str(f + g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 1\n110 0\n111 0\n"
 
-    f = TruthTable([a, b, c], "0011--00", pc=True)
-    g = TruthTable([a, b, c], "01010100", pc=False)
+    f = PCTable([a, b, c], "0011--00")
+    g = TruthTable([a, b, c], "01010100")
     assert str(f + g) == "inputs: c b a\n000 0\n001 1\n010 1\n011 1\n100 -\n101 1\n110 0\n111 0\n"
 
-    f = TruthTable([a, b, c], "0011--00", pc=True)
-    g = TruthTable([a, b, c], "01010100", pc=False)
+    f = PCTable([a, b, c], "0011--00")
+    g = TruthTable([a, b, c], "01010100")
     assert str(f * g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 1\n100 0\n101 -\n110 0\n111 0\n"
 
-    f = TruthTable([a, b, c], "00011100", pc=False)
-    g = TruthTable([a, b, c], "01-01-00", pc=True)
+    f = TruthTable([a, b, c], "00011100")
+    g = PCTable([a, b, c], "01-01-00")
     assert str(f * g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 0\n100 1\n101 -\n110 0\n111 0\n"
