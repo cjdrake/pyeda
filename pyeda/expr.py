@@ -336,7 +336,7 @@ class Expression(boolfunc.Function):
         idx_arg = self._get_compositions(mapping)
         return self._subs(idx_arg) if idx_arg else self
 
-    def satisfy_one(self, algorithm='dpll'):
+    def satisfy_one(self, algorithm='backtrack'):
         if algorithm == 'backtrack':
             return sat.backtrack(self)
         elif algorithm == 'dpll':
@@ -516,15 +516,17 @@ class Expression(boolfunc.Function):
         """Return the maxterm indices."""
         return {term.maxterm_index for term in self.iter_maxterms()}
 
-    def equivalent(self, other):
+    def equivalent(self, other, algorithm='backtrack'):
         """Return whether this expression is equivalent to another."""
         f = And(Or(Not(self), Not(other)), Or(self, other))
         if f in B:
             return not f
-        elif f.is_cnf():
-            return f.satisfy_one(algorithm='dpll') is None
-        else:
+        if algorithm == 'backtrack':
             return f.satisfy_one(algorithm='backtrack') is None
+        elif algorithm == 'dpll':
+            return f.to_cnf().satisfy_one(algorithm='dpll') is None
+        else:
+            raise ValueError("invalid algorithm")
 
     # Substitution helper methods
     def _get_restrictions(self, point):
