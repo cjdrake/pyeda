@@ -299,7 +299,7 @@ class Expression(boolfunc.Function):
         return tuple(sorted(self.support))
 
     def iter_zeros(self):
-        rest, top = self.inputs[:-1], self.inputs[-1]
+        top, rest = self.inputs[0], self.inputs[1:]
         for p, cf in self.iter_cofactors(top):
             if cf == 0:
                 for point in boolfunc.iter_points(rest):
