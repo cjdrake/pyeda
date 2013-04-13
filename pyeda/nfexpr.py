@@ -2,10 +2,8 @@
 Normal Form Expressions
 
 Interface Functions:
-    expr2dnf
-    expr2cnf
-    dnf2expr
-    cnf2expr
+    expr2nfexpr
+    nfexpr2expr
 
 Interface Classes:
     DisjNormalForm
@@ -21,43 +19,35 @@ from pyeda.sat import backtrack, dpll
 
 B = {0, 1}
 
-def expr2dnf(expr):
-    """Convert an expression into a DNF."""
+def expr2nfexpr(expr):
+    """Convert an expression into a normal form representation."""
     if expr.is_dnf():
-        int2lit = dict()
-        for v in expr.inputs:
-            int2lit[-v.gnum] = -v
-            int2lit[v.gnum] = v
-        clauses = {frozenset(lit.gnum for lit in clause.args)
-                   for clause in expr.args}
-        return DisjNormalForm(int2lit, clauses)
+        cls = DisjNormalForm
+    elif expr.is_cnf():
+        cls = ConjNormalForm
     else:
-        raise TypeError("expression is not a DNF")
+        raise TypeError("input is not an expression in normal form")
 
-def expr2cnf(expr):
-    """Convert an expression into a CNF."""
-    if expr.is_cnf():
-        int2lit = dict()
-        for v in expr.inputs:
-            int2lit[-v.gnum] = -v
-            int2lit[v.gnum] = v
-        clauses = {frozenset(lit.gnum for lit in clause.args)
-                   for clause in expr.args}
-        return ConjNormalForm(int2lit, clauses)
+    int2lit = dict()
+    for v in expr.inputs:
+        int2lit[-v.gnum] = -v
+        int2lit[v.gnum] = v
+    clauses = {frozenset(lit.gnum for lit in clause.args)
+               for clause in expr.args}
+    return cls(int2lit, clauses)
+
+def nfexpr2expr(nfexpr):
+    """Convert a normal form representation into an expression."""
+    if isinstance(nfexpr, DisjNormalForm):
+        outer, inner = Or, And
+    elif isinstance(nfexpr, ConjNormalForm):
+        outer, inner = And, Or
     else:
-        raise TypeError("expression is not a CNF")
+        raise TypeError("input is not a NormalForm instance")
 
-def dnf2expr(dnf):
-    """Convert a DNF into an expression."""
-    return Or(*[
-              And(*[ dnf.int2lit[num] for num in clause ])
-                     for clause in dnf.clauses ])
-
-def cnf2expr(cnf):
-    """Convert a CNF into an expression."""
-    return And(*[
-               Or(*[ cnf.int2lit[num] for num in clause ])
-                     for clause in cnf.clauses ])
+    return outer(*[
+               inner(*[ nfexpr.int2lit[num] for num in clause ])
+                        for clause in nfexpr.clauses ])
 
 
 class NormalForm(Function):
@@ -116,7 +106,7 @@ class DisjNormalForm(NormalForm):
     DOMINATOR = 1
 
     def __str__(self):
-        return str(dnf2expr(self))
+        return str(nfexpr2expr(self))
 
     def __neg__(self):
         clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
@@ -126,9 +116,9 @@ class DisjNormalForm(NormalForm):
         return DNF_Or(self, other)
 
     def __mul__(self, other):
-        f = dnf2expr(self)
-        g = dnf2expr(other)
-        return expr2dnf((f * g).to_dnf())
+        f = nfexpr2expr(self)
+        g = nfexpr2expr(other)
+        return expr2nfexpr((f * g).to_dnf())
 
 
 class ConjNormalForm(NormalForm):
@@ -140,16 +130,16 @@ class ConjNormalForm(NormalForm):
     DOMINATOR = 0
 
     def __str__(self):
-        return str(cnf2expr(self))
+        return str(nfexpr2expr(self))
 
     def __neg__(self):
         clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
         return DisjNormalForm(self.int2lit, clauses)
 
     def __add__(self, other):
-        f = cnf2expr(self)
-        g = cnf2expr(other)
-        return expr2cnf((f + g).to_cnf())
+        f = nfexpr2expr(self)
+        g = nfexpr2expr(other)
+        return expr2nfexpr((f + g).to_cnf())
 
     def __mul__(self, other):
         return CNF_And(self, other)
@@ -177,18 +167,18 @@ class ConjNormalForm(NormalForm):
         >>> a, b, c = map(var, "abc")
 
         In this CNF, 'a' is pure: (a + b + c) * (a + -b + -c)
-        >>> cnf = expr2cnf((a + b + c) * (a + -b + -c))
+        >>> cnf = expr2nfexpr((a + b + c) * (a + -b + -c))
 
         Eliminating 'a' results in a true statement.
         >>> cnf.ple()
         (1, {a: 1})
 
         In this CNF, '-a' is pure: (-a + b) * (-a + c) * (-b + -c)
-        >>> cnf = expr2cnf((-a + b) * (-a + c) * (-b + -c))
+        >>> cnf = expr2nfexpr((-a + b) * (-a + c) * (-b + -c))
 
         Eliminating '-a' results in: -b + -c
         >>> cnf, point = cnf.ple()
-        >>> cnf2expr(cnf), point
+        >>> nfexpr2expr(cnf), point
         (b' + c', {a: 0})
         """
         cntr = Counter()
@@ -209,7 +199,7 @@ class ConjNormalForm(NormalForm):
 
 
 def DNF_Or(*args):
-    args = (expr2dnf(arg) if isinstance(arg, Expression) else arg
+    args = (expr2nfexpr(arg) if isinstance(arg, Expression) else arg
             for arg in args)
 
     int2lit = dict()
@@ -221,7 +211,7 @@ def DNF_Or(*args):
     return DisjNormalForm(int2lit, clauses)
 
 def CNF_And(*args):
-    args = (expr2cnf(arg) if isinstance(arg, Expression) else arg
+    args = (expr2nfexpr(arg) if isinstance(arg, Expression) else arg
             for arg in args)
 
     int2lit = dict()

@@ -2,10 +2,10 @@
 Test normal form expression Boolean functions
 """
 
-from pyeda.expr import var
+from pyeda.expr import var, Xor
 
 from pyeda.nfexpr import (
-    expr2dnf, expr2cnf, dnf2expr, cnf2expr,
+    expr2nfexpr, nfexpr2expr,
     DisjNormalForm, ConjNormalForm
 )
 
@@ -17,11 +17,11 @@ def test_conversion():
     f = -a * b + a * -b
     g = (a + b) * (-a + -b)
 
-    nose.tools.assert_raises(TypeError, expr2dnf, g)
-    nose.tools.assert_raises(TypeError, expr2cnf, f)
+    nose.tools.assert_raises(TypeError, expr2nfexpr, Xor(a, b))
+    nose.tools.assert_raises(TypeError, nfexpr2expr, "what?")
 
-    dnf2expr(expr2dnf(f)).equivalent(f)
-    cnf2expr(expr2cnf(g)).equivalent(g)
+    nfexpr2expr(expr2nfexpr(f)).equivalent(f)
+    nfexpr2expr(expr2nfexpr(g)).equivalent(g)
 
 def test_basic():
     assert DisjNormalForm(dict(), set()) == 0
@@ -29,8 +29,8 @@ def test_basic():
 
     f = -a * b + a * -b
     g = (a + b) * (-a + -b)
-    dnf = expr2dnf(f)
-    cnf = expr2cnf(g)
+    dnf = expr2nfexpr(f)
+    cnf = expr2nfexpr(g)
 
     assert str(dnf) == "a' * b + a * b'"
     assert str(cnf) == "(a + b) * (a' + b')"
@@ -44,7 +44,7 @@ def test_basic():
     assert cnf.inputs == [a, b]
 
     assert isinstance(-dnf, ConjNormalForm)
-    assert cnf2expr(-dnf).equivalent(-f)
+    assert nfexpr2expr(-dnf).equivalent(-f)
 
     assert isinstance(-cnf, DisjNormalForm)
-    assert dnf2expr(-cnf).equivalent(-g)
+    assert nfexpr2expr(-cnf).equivalent(-g)

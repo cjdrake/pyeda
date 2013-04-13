@@ -24,6 +24,6 @@ from pyeda.expr import (
     f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor, f_equal, f_implies, f_ite,
     Not, Or, And, Xor, Xnor, Equal, Implies, ITE
 )
-from pyeda.nfexpr import expr2dnf, expr2cnf, dnf2expr, cnf2expr, DNF_Or, CNF_And
+from pyeda.nfexpr import expr2nfexpr, expr2nfexpr, CNF_And, DNF_Or
 from pyeda.table import expr2truthtable, truthtable2expr, TruthTable, PCTable
 from pyeda.vexpr import BitVector, bitvec, uint2vec, int2vec

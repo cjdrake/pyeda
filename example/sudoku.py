@@ -72,7 +72,7 @@ def parse_grid(grid):
     assert len(chars) == 9 ** 2
     I = And(*[ X[i // 9 + 1][i % 9 + 1][int(c)]
                for i, c in enumerate(chars) if c in DIGITS ])
-    return expr2cnf(I)
+    return expr2nfexpr(I)
 
 def get_val(point, r, c):
     for v in range(1, 10):
