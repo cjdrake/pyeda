@@ -13,7 +13,7 @@ init:
 html:
 	@cd doc && $(MAKE) html
 
-.PHONY: cover
+.PHONY: test
 test:
 	@$(NOSETESTS) --with-doctest
 
