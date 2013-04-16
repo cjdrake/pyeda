@@ -407,7 +407,7 @@ class Expression(boolfunc.Function):
     @cached_property
     def arg_set(self):
         """Return the expression arguments as a set."""
-        return set(self._args)
+        return frozenset(self._args)
 
     @property
     def depth(self):
