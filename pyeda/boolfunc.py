@@ -15,7 +15,9 @@ Interface Classes:
     VectorFunction
 """
 
-from pyeda.common import bit_on
+import collections
+
+from pyeda.common import bit_on, cached_property
 
 
 def num2point(num, vs):
@@ -93,22 +95,22 @@ class Variable(object):
     This implementation includes optional indices, nonnegative integers that
     can be used to construct multi-dimensional bit vectors.
     """
+
+    _MEM = collections.OrderedDict()
+
     def __new__(cls, name, indices=None, namespace=None):
-        self = super(Variable, cls).__new__(cls)
-        self.name = name
         if indices is None:
-            self.indices = tuple()
+            indices = tuple()
         elif type(indices) is int:
-            self.indices = (indices, )
-        elif type(indices) is tuple:
-            self.indices = indices
-        else:
-            raise ValueError("invalid indices")
-        if namespace is None or type(namespace) is str:
+            indices = (indices, )
+        try:
+            self = cls._MEM[(namespace, name, indices)]
+        except KeyError:
+            self = super(Variable, cls).__new__(cls)
             self.namespace = namespace
-        else:
-            raise ValueError("invalid namespace")
-        self.qualname = name if namespace is None else namespace + "." + name
+            self.name = name
+            self.indices = indices
+            cls._MEM[(self.namespace, self.name, self.indices)] = self
         return self
 
     def __repr__(self):
@@ -123,6 +125,19 @@ class Variable(object):
             return self.indices < other.indices
         else:
             return self.name < other.name
+
+    @cached_property
+    def qualname(self):
+        if self.namespace is None:
+            return self.name
+        else:
+            return self.namespace + "." + self.name
+
+    @cached_property
+    def gnum(self):
+        for i, v in enumerate(self._MEM.values(), start=1):
+            if v == self:
+                return i
 
 
 class Function(object):
@@ -241,7 +256,7 @@ class Function(object):
         """Iterate through the cofactors of :math:`N` variables."""
         if vs is None:
             vs = list()
-        elif isinstance(vs, Variable):
+        elif not isinstance(vs, collections.Iterable):
             vs = [vs]
         for point in iter_points(vs):
             yield point, self.restrict(point)

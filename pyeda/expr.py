@@ -20,7 +20,7 @@ Interface Functions:
 Interface Classes:
     Expression
         Literal
-            Variable
+            ExprVariable
             Complement
         OrAnd
             Or
@@ -34,7 +34,7 @@ Interface Classes:
         ITE
 """
 
-from collections import deque, OrderedDict
+import collections
 
 from pyeda import boolfunc
 from pyeda import sat
@@ -57,7 +57,7 @@ def var(name, indices=None, namespace=None):
         A container for a set of variables. Since a Variable instance is global,
         a namespace can be used for local scoping.
     """
-    return Variable(name, indices, namespace)
+    return ExprVariable(name, indices, namespace)
 
 def factor(expr, conj=False):
     """Return a factored expression.
@@ -572,20 +572,25 @@ class Literal(Expression):
         return True
 
 
-class Variable(boolfunc.Variable, Literal):
-    """Boolean variable (expression)"""
+class ExprVariable(Literal):
+    """Boolean expression variable"""
 
-    _MEM = OrderedDict()
+    _MEM = dict()
 
     def __new__(cls, name, indices=None, namespace=None):
+        _var = boolfunc.Variable(name, indices, namespace)
         try:
-            self = cls._MEM[(namespace, name, indices)]
+            self = cls._MEM[_var]
         except KeyError:
-            self = boolfunc.Variable.__new__(cls, name, indices, namespace)
-            self._support = frozenset([self, ])
+            self = super(Literal, cls).__new__(cls)
+            self._var = _var
+            self._support = frozenset((self, ))
             self._args = (self, )
-            cls._MEM[(namespace, name, indices)] = self
+            cls._MEM[_var] = self
         return self
+
+    def __str__(self):
+        return str(self._var)
 
     # From Function
     @property
@@ -606,10 +611,10 @@ class Variable(boolfunc.Variable, Literal):
 
     # From Expression
     def __lt__(self, other):
-        if isinstance(other, Variable):
-            return boolfunc.Variable.__lt__(self, other)
+        if isinstance(other, ExprVariable):
+            return self._var < other.var
         if isinstance(other, Complement):
-            return boolfunc.Variable.__lt__(self, other.var)
+            return self._var < other.exprvar.var
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
@@ -625,11 +630,13 @@ class Variable(boolfunc.Variable, Literal):
         return 1, {self: 1}
 
     # Specific to Variable
-    @cached_property
+    @property
+    def var(self):
+        return self._var
+
+    @property
     def gnum(self):
-        for i, v in enumerate(self._MEM.values(), start=1):
-            if v == self:
-                return i
+        return self._var.gnum
 
     @property
     def minterm_index(self):
@@ -645,19 +652,19 @@ class Complement(Literal):
 
     _MEM = dict()
 
-    def __new__(cls, v):
+    def __new__(cls, exprvar):
         try:
-            self = cls._MEM[v]
+            self = cls._MEM[exprvar]
         except KeyError:
             self = super(Complement, cls).__new__(cls)
-            self.var = v
-            self._support = frozenset([v, ])
+            self._exprvar = exprvar
+            self._support = frozenset((exprvar, ))
             self._args = (self, )
-            cls._MEM[v] = self
+            cls._MEM[exprvar] = self
         return self
 
     def __str__(self):
-        return str(self.var) + "'"
+        return str(self._exprvar.var) + "'"
 
     # From Function
     @property
@@ -666,42 +673,46 @@ class Complement(Literal):
 
     def restrict(self, point):
         try:
-            return 1 - boolify(point[self.var])
+            return 1 - boolify(point[self.exprvar])
         except KeyError:
             return self
 
     def compose(self, mapping):
         try:
-            return Not(mapping[self.var])
+            return Not(mapping[self.exprvar])
         except KeyError:
             return self
 
     # From Expression
     def __lt__(self, other):
-        if isinstance(other, Variable):
-            return ( self.var.name < other.name or
-                         self.var.name == other.name and
-                         self.var.indices <= other.indices )
+        if isinstance(other, ExprVariable):
+            return ( self._exprvar.var.name < other.var.name or
+                     self._exprvar.var.name == other.var.name and
+                     self._exprvar.var.indices <= other.var.indices )
         if isinstance(other, Complement):
-            return boolfunc.Variable.__lt__(self.var, other.var)
+            return self._exprvar.var < other.exprvar.var
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
     def invert(self):
-        return self.var
+        return self._exprvar
 
     # DPLL IF
     def bcp(self):
-        return 1, {self.var: 0}
+        return 1, {self._exprvar: 0}
 
     def ple(self):
-        return 1, {self.var: 0}
+        return 1, {self._exprvar: 0}
 
     # Specific to Complement
     @property
+    def exprvar(self):
+        return self._exprvar
+
+    @property
     def gnum(self):
-        return -self.var.gnum
+        return -self._exprvar.var.gnum
 
     @property
     def minterm_index(self):
@@ -731,7 +742,7 @@ class OrAnd(Expression):
 
     @classmethod
     def _simplify(cls, args):
-        temps, args = deque(args), set()
+        temps, args = collections.deque(args), set()
 
         while temps:
             arg = temps.popleft()
@@ -979,7 +990,7 @@ class And(OrAnd):
                 counter.pop(-lit)
             elif cnt == 1:
                 if isinstance(lit, Complement):
-                    point[lit.var] = 0
+                    point[lit.exprvar] = 0
                 else:
                     point[lit] = 1
         if point:
@@ -1095,7 +1106,7 @@ class Exclusive(Expression):
     @classmethod
     def _simplify(cls, args):
         par = cls.PARITY
-        temps, args = deque(args), set()
+        temps, args = collections.deque(args), set()
 
         while temps:
             arg = temps.popleft()
@@ -1221,7 +1232,7 @@ class Equal(Expression):
         if 1 in args:
             return True, And(*args)
 
-        temps, args = deque(args), set()
+        temps, args = collections.deque(args), set()
         while temps:
             arg = temps.popleft()
             # Equal(x, -x) = 0
@@ -1477,7 +1488,7 @@ def _bcp(cnf):
             if len(clause.args) == 1:
                 lit = clause.args[0]
                 if isinstance(lit, Complement):
-                    point[lit.var] = 0
+                    point[lit.exprvar] = 0
                 else:
                     point[lit] = 1
         if point:
