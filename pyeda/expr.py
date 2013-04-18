@@ -584,7 +584,6 @@ class ExprVariable(Literal):
         except KeyError:
             self = super(Literal, cls).__new__(cls)
             self._var = _var
-            self._support = frozenset((self, ))
             self._args = (self, )
             cls._MEM[_var] = self
         return self
@@ -593,9 +592,9 @@ class ExprVariable(Literal):
         return str(self._var)
 
     # From Function
-    @property
+    @cached_property
     def support(self):
-        return self._support
+        return frozenset([self, ])
 
     def restrict(self, point):
         try:
@@ -658,7 +657,6 @@ class Complement(Literal):
         except KeyError:
             self = super(Complement, cls).__new__(cls)
             self._exprvar = exprvar
-            self._support = frozenset((exprvar, ))
             self._args = (self, )
             cls._MEM[exprvar] = self
         return self
@@ -667,9 +665,9 @@ class Complement(Literal):
         return str(self._exprvar.var) + "'"
 
     # From Function
-    @property
+    @cached_property
     def support(self):
-        return self._support
+        return frozenset([self._exprvar, ])
 
     def restrict(self, point):
         try:
