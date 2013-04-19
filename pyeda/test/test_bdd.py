@@ -1,0 +1,3 @@
+"""
+Test binary decision diagrams
+"""
