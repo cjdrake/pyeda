@@ -76,7 +76,7 @@ def parse_grid(grid):
 
 def get_val(point, r, c):
     for v in range(1, 10):
-        if point[X[r][c][v]]:
+        if point[X[r][c][v].var]:
             return DIGITS[v-1]
     return "X"
 

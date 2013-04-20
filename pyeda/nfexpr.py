@@ -13,8 +13,8 @@ Interface Classes:
 from collections import Counter
 
 from pyeda.common import boolify, cached_property
-from pyeda.boolfunc import Function
-from pyeda.expr import Expression, Or, And
+from pyeda.boolfunc import VARIDS, Function
+from pyeda.expr import Expression, ExprVariable, Complement, Or, And
 from pyeda.sat import backtrack, dpll
 
 B = {0, 1}
@@ -28,13 +28,9 @@ def expr2nfexpr(expr):
     else:
         raise TypeError("input is not an expression in normal form")
 
-    int2lit = dict()
-    for v in expr.inputs:
-        int2lit[-v.uniqid] = -v
-        int2lit[v.uniqid] = v
     clauses = {frozenset(lit.uniqid for lit in clause.args)
                for clause in expr.args}
-    return cls(int2lit, clauses)
+    return cls(clauses)
 
 def nfexpr2expr(nfexpr):
     """Convert a normal form representation into an expression."""
@@ -45,24 +41,35 @@ def nfexpr2expr(nfexpr):
     else:
         raise TypeError("input is not a NormalForm instance")
 
-    return outer(*[
-               inner(*[ nfexpr.int2lit[num] for num in clause ])
-                        for clause in nfexpr.clauses ])
+    terms = list()
+    for clause in nfexpr.clauses:
+        term = list()
+        for num in clause:
+            v = VARIDS[abs(num)]
+            lit = ExprVariable(v.name, v.indices, v.namespace)
+            if num < 0:
+                lit = Complement(lit)
+            term.append(lit)
+        terms.append(term)
+
+    return outer(*[inner(*term) for term in terms])
 
 
 class NormalForm(Function):
     """
     Normal Form Representation
     """
-    def __new__(cls, int2lit, clauses):
+    def __new__(cls, clauses):
         if clauses:
             return super(NormalForm, cls).__new__(cls)
         else:
             return cls.IDENTITY
 
-    def __init__(self, int2lit, clauses):
-        self.int2lit = int2lit
+    def __init__(self, clauses):
         self.clauses = clauses
+
+    def __str__(self):
+        return str(nfexpr2expr(self))
 
     def __repr__(self):
         return self.__str__()
@@ -70,8 +77,8 @@ class NormalForm(Function):
     # From Function
     @cached_property
     def support(self):
-        return {self.int2lit[abs(num)]
-                for clause in self.clauses for num in clause}
+        return frozenset(VARIDS[abs(num)]
+                         for clause in self.clauses for num in clause)
 
     @cached_property
     def inputs(self):
@@ -81,20 +88,23 @@ class NormalForm(Function):
         idents = set()
         doms = set()
         for v, val in point.items():
-            low, high = (-v, v) if boolify(val) == self.IDENTITY else (v, -v)
-            idents.add(low.uniqid)
-            doms.add(high.uniqid)
+            if boolify(val) == self.IDENTITY:
+                idents.add(-v.uniqid)
+                doms.add(v.uniqid)
+            else:
+                idents.add(v.uniqid)
+                doms.add(-v.uniqid)
 
         new_clauses = set()
         for clause in self.clauses:
-            if not any(n in clause for n in doms):
-                new_clause = frozenset(n for n in clause if n not in idents)
+            if not clause & doms:
+                new_clause = frozenset(clause - idents)
                 if new_clause:
                     new_clauses.add(new_clause)
                 else:
                     return self.DOMINATOR
 
-        return self.__class__(self.int2lit, new_clauses)
+        return self.__class__(new_clauses)
 
 
 class DisjNormalForm(NormalForm):
@@ -105,12 +115,9 @@ class DisjNormalForm(NormalForm):
     IDENTITY = 0
     DOMINATOR = 1
 
-    def __str__(self):
-        return str(nfexpr2expr(self))
-
     def __neg__(self):
         clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
-        return ConjNormalForm(self.int2lit, clauses)
+        return ConjNormalForm(clauses)
 
     def __add__(self, other):
         return DNF_Or(self, other)
@@ -129,12 +136,9 @@ class ConjNormalForm(NormalForm):
     IDENTITY = 1
     DOMINATOR = 0
 
-    def __str__(self):
-        return str(nfexpr2expr(self))
-
     def __neg__(self):
         clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
-        return DisjNormalForm(self.int2lit, clauses)
+        return DisjNormalForm(clauses)
 
     def __add__(self, other):
         f = nfexpr2expr(self)
@@ -191,7 +195,7 @@ class ConjNormalForm(NormalForm):
             if -num in cntr:
                 cntr.pop(-num)
             else:
-                point[self.int2lit[abs(num)]] = int(num > 0)
+                point[VARIDS[abs(num)]] = int(num > 0)
         if point:
             return self.restrict(point), point
         else:
@@ -202,25 +206,21 @@ def DNF_Or(*args):
     args = (expr2nfexpr(arg) if isinstance(arg, Expression) else arg
             for arg in args)
 
-    int2lit = dict()
     clauses = set()
     for arg in args:
-        int2lit.update(arg.int2lit)
         clauses.update(arg.clauses)
 
-    return DisjNormalForm(int2lit, clauses)
+    return DisjNormalForm(clauses)
 
 def CNF_And(*args):
     args = (expr2nfexpr(arg) if isinstance(arg, Expression) else arg
             for arg in args)
 
-    int2lit = dict()
     clauses = set()
     for arg in args:
-        int2lit.update(arg.int2lit)
         clauses.update(arg.clauses)
 
-    return ConjNormalForm(int2lit, clauses)
+    return ConjNormalForm(clauses)
 
 def _bcp(cnf):
     """Boolean Constraint Propagation"""
@@ -231,10 +231,7 @@ def _bcp(cnf):
         for clause in cnf.clauses:
             if len(clause) == 1:
                 num = list(clause)[0]
-                if num > 0:
-                    point[cnf.int2lit[num]] = 1
-                else:
-                    point[cnf.int2lit[-num]] = 0
+                point[VARIDS[abs(num)]] = int(num > 0)
         if point:
             _cnf, _point = _bcp(cnf.restrict(point))
             point.update(_point)
