@@ -132,9 +132,9 @@ def dump_cnf(expr):
         raise ValueError("input is not an expression")
     if not expr.is_cnf():
         raise ValueError("expression is not a CNF")
-    formula = " 0\n".join(" ".join(str(arg.gnum) for arg in clause.args)
+    formula = " 0\n".join(" ".join(str(arg.uniqid) for arg in clause.args)
                           for clause in expr.args)
-    nvars = max(v.gnum for v in expr.support)
+    nvars = max(v.uniqid for v in expr.support)
     ncls = len(expr.args)
     return "p cnf {} {}\n{}".format(nvars, ncls, formula)
 
@@ -239,12 +239,12 @@ def dump_sat(expr):
         fmt = 'sate'
     else:
         fmt = 'sat'
-    nvars = max(v.gnum for v in expr.support)
+    nvars = max(v.uniqid for v in expr.support)
     return "p {} {}\n{}".format(fmt, nvars, formula)
 
 def _expr2sat(expr):
     if isinstance(expr, Literal):
-        return str(expr.gnum)
+        return str(expr.uniqid)
     elif isinstance(expr, Not):
         return "-(" + _expr2sat(expr.arg) + ")"
     elif isinstance(expr, Or):

@@ -30,9 +30,9 @@ def expr2nfexpr(expr):
 
     int2lit = dict()
     for v in expr.inputs:
-        int2lit[-v.gnum] = -v
-        int2lit[v.gnum] = v
-    clauses = {frozenset(lit.gnum for lit in clause.args)
+        int2lit[-v.uniqid] = -v
+        int2lit[v.uniqid] = v
+    clauses = {frozenset(lit.uniqid for lit in clause.args)
                for clause in expr.args}
     return cls(int2lit, clauses)
 
@@ -82,8 +82,8 @@ class NormalForm(Function):
         doms = set()
         for v, val in point.items():
             low, high = (-v, v) if boolify(val) == self.IDENTITY else (v, -v)
-            idents.add(low.gnum)
-            doms.add(high.gnum)
+            idents.add(low.uniqid)
+            doms.add(high.uniqid)
 
         new_clauses = set()
         for clause in self.clauses:

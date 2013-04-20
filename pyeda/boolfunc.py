@@ -17,7 +17,7 @@ Interface Classes:
 
 import collections
 
-from pyeda.common import bit_on, cached_property
+from pyeda.common import bit_on
 
 
 def num2point(num, vs):
@@ -85,6 +85,8 @@ def iter_terms(vs, conj=False):
         yield num2term(num, vs, conj)
 
 
+VARIDS = dict()
+
 class Variable(object):
     """
     Abstract base class that defines an interface for a Boolean variable.
@@ -96,7 +98,8 @@ class Variable(object):
     can be used to construct multi-dimensional bit vectors.
     """
 
-    _MEM = collections.OrderedDict()
+    _MEM = dict()
+    _CNT = 1
 
     def __new__(cls, name, indices=None, namespace=None):
         if indices is None:
@@ -110,7 +113,11 @@ class Variable(object):
             self.namespace = namespace
             self.name = name
             self.indices = indices
+            self.uniqid = cls._CNT
+            # NOTE: this is not thread-safe
             cls._MEM[(self.namespace, self.name, self.indices)] = self
+            cls._CNT += 1
+            VARIDS[self.uniqid] = self
         return self
 
     def __repr__(self):
@@ -126,18 +133,12 @@ class Variable(object):
         else:
             return self.name < other.name
 
-    @cached_property
+    @property
     def qualname(self):
         if self.namespace is None:
             return self.name
         else:
             return self.namespace + "." + self.name
-
-    @cached_property
-    def gnum(self):
-        for i, v in enumerate(self._MEM.values(), start=1):
-            if v == self:
-                return i
 
 
 class Function(object):

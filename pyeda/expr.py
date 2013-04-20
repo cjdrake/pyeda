@@ -634,8 +634,8 @@ class ExprVariable(Literal):
         return self._var
 
     @property
-    def gnum(self):
-        return self._var.gnum
+    def uniqid(self):
+        return self._var.uniqid
 
     @property
     def minterm_index(self):
@@ -709,8 +709,8 @@ class Complement(Literal):
         return self._exprvar
 
     @property
-    def gnum(self):
-        return -self._exprvar.var.gnum
+    def uniqid(self):
+        return -self._exprvar.var.uniqid
 
     @property
     def minterm_index(self):
