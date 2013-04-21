@@ -19,3 +19,6 @@ def test_expr2bdd():
     assert bdd_f.high.high.root == 1
     assert bdd_f.low.high.low.root == 0
     assert bdd_f.high.low.high.root == 1
+
+    assert bdd_f.support == {a.var, b.var, c.var}
+    assert bdd_f.inputs == [a.var, b.var, c.var]

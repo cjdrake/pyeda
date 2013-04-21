@@ -7,11 +7,13 @@ Interface Functions:
 
 Interface Classes:
     BinaryDecisionDiagram
-        BDDZero
-        BDDOne
+        BDDConstant
+            BDDZero
+            BDDOne
 """
 
 from pyeda import boolfunc
+from pyeda.common import cached_property
 
 TABLE = dict()
 
@@ -48,17 +50,36 @@ class BinaryDecisionDiagram(boolfunc.Function):
         self.low = low
         self.high = high
 
-class BDDZero(BinaryDecisionDiagram):
-    def __init__(self):
-        self.root = 0
-        self.low = None
-        self.high = None
+    @cached_property
+    def support(self):
+        s = set()
+        s.update(self.low.support | self.high.support)
+        s.add(self.root)
+        return frozenset(s)
 
-class BDDOne(BinaryDecisionDiagram):
+    @cached_property
+    def inputs(self):
+        return sorted(self.support)
+
+
+class BDDConstant(BinaryDecisionDiagram):
+    """BDD representation of zero/one"""
+
+    @cached_property
+    def support(self):
+        return frozenset()
+
+
+class BDDZero(BDDConstant):
+    """BDD representation of the number zero"""
     def __init__(self):
-        self.root = 1
-        self.low = None
-        self.high = None
+        super(BDDZero, self).__init__(0, None, None)
+
+
+class BDDOne(BDDConstant):
+    """BDD representation of the number one"""
+    def __init__(self):
+        super(BDDOne, self).__init__(1, None, None)
 
 
 NUM2BDD = {0: BDDZero(), 1: BDDOne()}
