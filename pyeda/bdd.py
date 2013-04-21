@@ -2,26 +2,39 @@
 Binary Decision Diagrams
 
 Interface Functions:
-    bddvar
     expr2bdd
     bdd2expr
 
 Interface Classes:
     BinaryDecisionDiagram
-        BDDVariable
+        BDDZero
+        BDDOne
 """
 
 from pyeda import boolfunc
 
-UNIQUE_TABLE = dict()
+TABLE = dict()
 
-def bddvar(name, indices=None, namespace=None):
-    """Return a variable binary decision diagram."""
-    return BDDVariable(name, indices, namespace)
 
 def expr2bdd(expr):
     """Convert an expression into a binary decision diagram."""
-    pass
+    root = expr.top.var
+    fv0, fv1 = expr.cofactors(expr.top)
+    try:
+        low = NUM2BDD[fv0]
+    except KeyError:
+        low = expr2bdd(fv0)
+    try:
+        high = NUM2BDD[fv1]
+    except KeyError:
+        high = expr2bdd(fv1)
+    key = (root, low.root, high.root)
+    try:
+        node = TABLE[key]
+    except KeyError:
+        node = BinaryDecisionDiagram(root, low, high)
+        TABLE[key] = node
+    return node
 
 def bdd2expr(bdd):
     """Convert a binary decision diagram into an expression."""
@@ -30,17 +43,22 @@ def bdd2expr(bdd):
 
 class BinaryDecisionDiagram(boolfunc.Function):
     """Boolean function represented by a binary decision diagram"""
-    def __new__(cls, root, low, high):
-        pass
+    def __init__(self, root, low, high):
+        self.root = root
+        self.low = low
+        self.high = high
+
+class BDDZero(BinaryDecisionDiagram):
+    def __init__(self):
+        self.root = 0
+        self.low = None
+        self.high = None
+
+class BDDOne(BinaryDecisionDiagram):
+    def __init__(self):
+        self.root = 1
+        self.low = None
+        self.high = None
 
 
-class BDDVariable(BinaryDecisionDiagram):
-    """Binary decision diagram variable"""
-
-    _MEM = dict()
-
-    def __new__(cls, name, indices=None, namespace=None):
-        _var = boolfunc.Variable(name, indices, namespace)
-
-    def __str__(self):
-        return str(self._var)
+NUM2BDD = {0: BDDZero(), 1: BDDOne()}
