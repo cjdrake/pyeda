@@ -98,7 +98,7 @@ class NormalForm(Function):
         new_clauses = set()
         for clause in self.clauses:
             if not clause & doms:
-                new_clause = frozenset(clause - idents)
+                new_clause = clause - idents
                 if new_clause:
                     new_clauses.add(new_clause)
                 else:
