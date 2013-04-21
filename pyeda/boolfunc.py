@@ -1,6 +1,9 @@
 """
 Boolean Functions
 
+Globals:
+    VARIABLES
+
 Interface Functions:
     num2point
     point2term
