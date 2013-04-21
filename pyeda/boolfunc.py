@@ -85,7 +85,7 @@ def iter_terms(vs, conj=False):
         yield num2term(num, vs, conj)
 
 
-VARIDS = dict()
+VARIABLES = dict()
 
 class Variable(object):
     """
@@ -115,9 +115,9 @@ class Variable(object):
             self.indices = indices
             self.uniqid = cls._CNT
             # NOTE: this is not thread-safe
-            cls._MEM[(self.namespace, self.name, self.indices)] = self
             cls._CNT += 1
-            VARIDS[self.uniqid] = self
+            cls._MEM[(self.namespace, self.name, self.indices)] = self
+            VARIABLES[self.uniqid] = self
         return self
 
     def __repr__(self):
