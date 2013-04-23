@@ -8,7 +8,6 @@ Interface Functions:
     gray2bin
 """
 
-# pyeda
 from pyeda.common import clog2
 from pyeda.expr import Xor
 from pyeda.vexpr import BitVector

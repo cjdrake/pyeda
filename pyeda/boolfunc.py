@@ -18,9 +18,9 @@ Interface Classes:
     VectorFunction
 """
 
-import collections
-
 from pyeda.common import bit_on
+
+VARIABLES = dict()
 
 
 def num2point(num, vs):
@@ -88,8 +88,6 @@ def iter_terms(vs, conj=False):
         yield num2term(num, vs, conj)
 
 
-VARIABLES = dict()
-
 class Variable(object):
     """
     Abstract base class that defines an interface for a Boolean variable.
@@ -101,7 +99,7 @@ class Variable(object):
     can be used to construct multi-dimensional bit vectors.
     """
 
-    _MEM = dict()
+    _UNIQIDS = dict()
     _CNT = 1
 
     def __new__(cls, name, indices=None, namespace=None):
@@ -110,16 +108,19 @@ class Variable(object):
         elif type(indices) is int:
             indices = (indices, )
         try:
-            self = cls._MEM[(namespace, name, indices)]
+            uniqid = cls._UNIQIDS[(namespace, name, indices)]
+        except KeyError:
+            uniqid = cls._CNT
+            cls._CNT += 1
+            cls._UNIQIDS[(namespace, name, indices)] = uniqid
+        try:
+            self = VARIABLES[uniqid]
         except KeyError:
             self = super(Variable, cls).__new__(cls)
             self.namespace = namespace
             self.name = name
             self.indices = indices
-            self.uniqid = cls._CNT
-            # NOTE: this is not thread-safe
-            cls._CNT += 1
-            cls._MEM[(self.namespace, self.name, self.indices)] = self
+            self.uniqid = uniqid
             VARIABLES[self.uniqid] = self
         return self
 
@@ -260,7 +261,7 @@ class Function(object):
         """Iterate through the cofactors of :math:`N` variables."""
         if vs is None:
             vs = list()
-        elif not isinstance(vs, collections.Iterable):
+        elif isinstance(vs, Variable):
             vs = [vs]
         for point in iter_points(vs):
             yield point, self.restrict(point)

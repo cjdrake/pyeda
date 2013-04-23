@@ -42,6 +42,10 @@ from pyeda.common import bit_on, parity, boolify, cached_property
 
 B = {0, 1}
 
+EXPRVARIABLES = dict()
+COMPLEMENTS = dict()
+
+
 def var(name, indices=None, namespace=None):
     """Return a variable expression.
 
@@ -572,24 +576,19 @@ class Literal(Expression):
         return True
 
 
-class ExprVariable(Literal):
+class ExprVariable(boolfunc.Variable, Literal):
     """Boolean expression variable"""
-
-    _MEM = dict()
 
     def __new__(cls, name, indices=None, namespace=None):
         _var = boolfunc.Variable(name, indices, namespace)
         try:
-            self = cls._MEM[_var]
+            self = EXPRVARIABLES[_var.uniqid]
         except KeyError:
             self = super(Literal, cls).__new__(cls)
             self._var = _var
             self._args = (self, )
-            cls._MEM[_var] = self
+            EXPRVARIABLES[_var.uniqid] = self
         return self
-
-    def __str__(self):
-        return str(self._var)
 
     # From Function
     @cached_property
@@ -628,14 +627,27 @@ class ExprVariable(Literal):
     def ple(self):
         return 1, {self: 1}
 
-    # Specific to Variable
-    @property
-    def var(self):
-        return self._var
-
+    # From Variable
     @property
     def uniqid(self):
         return self._var.uniqid
+
+    @property
+    def namespace(self):
+        return self._var.namespace
+
+    @property
+    def name(self):
+        return self._var.name
+
+    @property
+    def indices(self):
+        return self._var.indices
+
+    # Specific to ExprVariable
+    @property
+    def var(self):
+        return self._var
 
     @property
     def minterm_index(self):
@@ -649,20 +661,20 @@ class ExprVariable(Literal):
 class Complement(Literal):
     """Boolean complement"""
 
-    _MEM = dict()
-
     def __new__(cls, exprvar):
+        uniqid = -exprvar.uniqid
         try:
-            self = cls._MEM[exprvar]
+            self = COMPLEMENTS[uniqid]
         except KeyError:
             self = super(Complement, cls).__new__(cls)
+            self.uniqid = uniqid
             self._exprvar = exprvar
             self._args = (self, )
-            cls._MEM[exprvar] = self
+            COMPLEMENTS[-exprvar.uniqid] = self
         return self
 
     def __str__(self):
-        return str(self._exprvar.var) + "'"
+        return str(self._exprvar) + "'"
 
     # From Function
     @cached_property
@@ -684,9 +696,9 @@ class Complement(Literal):
     # From Expression
     def __lt__(self, other):
         if isinstance(other, ExprVariable):
-            return ( self._exprvar.var.name < other.var.name or
-                     self._exprvar.var.name == other.var.name and
-                     self._exprvar.var.indices <= other.var.indices )
+            return ( self._exprvar.name < other.name or
+                     self._exprvar.name == other.name and
+                     self._exprvar.indices <= other.indices )
         if isinstance(other, Complement):
             return self._exprvar.var < other.exprvar.var
         if isinstance(other, Expression):
@@ -707,10 +719,6 @@ class Complement(Literal):
     @property
     def exprvar(self):
         return self._exprvar
-
-    @property
-    def uniqid(self):
-        return -self._exprvar.var.uniqid
 
     @property
     def minterm_index(self):

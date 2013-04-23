@@ -38,10 +38,10 @@ def test_basic():
     assert repr(dnf) == "a' * b + a * b'"
     assert repr(cnf) == "(a + b) * (a' + b')"
 
-    assert dnf.support == {a.var, b.var}
-    assert cnf.support == {a.var, b.var}
-    assert dnf.inputs == [a.var, b.var]
-    assert cnf.inputs == [a.var, b.var]
+    assert dnf.support == {a, b}
+    assert cnf.support == {a, b}
+    assert dnf.inputs == [a, b]
+    assert cnf.inputs == [a, b]
 
     assert isinstance(-dnf, ConjNormalForm)
     assert nfexpr2expr(-dnf).equivalent(-f)

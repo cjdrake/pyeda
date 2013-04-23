@@ -13,8 +13,9 @@ Interface Classes:
 from collections import Counter
 
 from pyeda.common import boolify, cached_property
-from pyeda.boolfunc import VARIABLES, Function
-from pyeda.expr import Expression, ExprVariable, Complement, Or, And
+from pyeda.boolfunc import Function
+from pyeda.expr import EXPRVARIABLES, COMPLEMENTS
+from pyeda.expr import Expression, Or, And
 from pyeda.sat import backtrack, dpll
 
 B = {0, 1}
@@ -45,10 +46,10 @@ def nfexpr2expr(nfexpr):
     for clause in nfexpr.clauses:
         term = list()
         for num in clause:
-            v = VARIABLES[abs(num)]
-            lit = ExprVariable(v.name, v.indices, v.namespace)
             if num < 0:
-                lit = Complement(lit)
+                lit = COMPLEMENTS[num]
+            else:
+                lit = EXPRVARIABLES[num]
             term.append(lit)
         terms.append(term)
 
@@ -77,7 +78,7 @@ class NormalForm(Function):
     # From Function
     @cached_property
     def support(self):
-        return frozenset(VARIABLES[abs(num)]
+        return frozenset(EXPRVARIABLES[abs(num)]
                          for clause in self.clauses for num in clause)
 
     @cached_property
@@ -195,7 +196,7 @@ class ConjNormalForm(NormalForm):
             if -num in cntr:
                 cntr.pop(-num)
             else:
-                point[VARIABLES[abs(num)]] = int(num > 0)
+                point[EXPRVARIABLES[abs(num)]] = int(num > 0)
         if point:
             return self.restrict(point), point
         else:
@@ -231,7 +232,7 @@ def _bcp(cnf):
         for clause in cnf.clauses:
             if len(clause) == 1:
                 num = list(clause)[0]
-                point[VARIABLES[abs(num)]] = int(num > 0)
+                point[EXPRVARIABLES[abs(num)]] = int(num > 0)
         if point:
             _cnf, _point = _bcp(cnf.restrict(point))
             point.update(_point)
