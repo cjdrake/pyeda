@@ -95,7 +95,7 @@ class _BaseTruthTable(boolfunc.Function):
             byte = self.data[q]
             r = 0
             while r < 8 and n < self.cardinality:
-                parts.append(_bin_zext(n, self.degree))
+                parts.append(_bin_zfill(n, self.degree))
                 parts.append(" ")
                 output = (byte >> r) & self.MASK
                 parts.append(self.output2str(output))
@@ -462,7 +462,7 @@ class PCTable(_BaseTruthTable):
         return None
 
 
-def _bin_zext(num, w=None):
+def _bin_zfill(num, w=None):
     """Convert a base-10 number to a binary string.
 
     Parameters
@@ -472,13 +472,10 @@ def _bin_zext(num, w=None):
     Examples
     --------
 
-    >>> _bin_zext(42)
+    >>> _bin_zfill(42)
     '101010'
-    >>> _bin_zext(42, 8)
+    >>> _bin_zfill(42, 8)
     '00101010'
     """
     s = bin(num)[2:]
-    if w is None:
-        return s
-    else:
-        return "0" * (w - len(s)) + s
+    return s if w is None else s.zfill(w)
