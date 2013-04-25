@@ -748,10 +748,10 @@ class OrAnd(Expression):
 
     @classmethod
     def _simplify(cls, args):
-        temps, args = collections.deque(args), set()
+        temps, args = list(args), set()
 
         while temps:
-            arg = temps.popleft()
+            arg = temps.pop()
             if isinstance(arg, Expression):
                 arg = arg.simplify()
             if arg == cls.DOMINATOR:
@@ -760,7 +760,7 @@ class OrAnd(Expression):
                 pass
             # associative
             elif isinstance(arg, cls):
-                temps.extendleft(reversed(arg.args))
+                temps.extend(arg.args)
             # complement
             elif isinstance(arg, Literal) and -arg in args:
                 return True, cls.DOMINATOR
@@ -1112,17 +1112,17 @@ class Exclusive(Expression):
     @classmethod
     def _simplify(cls, args):
         par = cls.PARITY
-        temps, args = collections.deque(args), set()
+        temps, args = list(args), set()
 
         while temps:
-            arg = temps.popleft()
+            arg = temps.pop()
             if isinstance(arg, Expression):
                 arg = arg.simplify()
             if arg in B:
                 par ^= arg
             # associative
             elif isinstance(arg, cls):
-                temps.extendleft(reversed(arg.args))
+                temps.extend(arg.args)
             # Xor(x, x') = 1
             elif isinstance(arg, Literal) and -arg in args:
                 args.remove(-arg)
@@ -1238,9 +1238,9 @@ class Equal(Expression):
         if 1 in args:
             return True, And(*args)
 
-        temps, args = collections.deque(args), set()
+        temps, args = list(args), set()
         while temps:
-            arg = temps.popleft()
+            arg = temps.pop()
             # Equal(x, -x) = 0
             if isinstance(arg, Literal) and -arg in args:
                 return True, 0
