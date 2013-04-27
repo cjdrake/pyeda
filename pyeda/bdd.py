@@ -84,6 +84,29 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return self
 
     # Operators
+    def __neg__(self):
+        raise NotImplementedError()
+
+    def __add__(self, other):
+        raise NotImplementedError()
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        raise NotImplementedError()
+
+    def __rsub__(self, other):
+        return self.__neg__().__add__(other)
+
+    def __mul__(self, other):
+        raise NotImplementedError()
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def xor(self, *args):
+        raise NotImplementedError()
 
     # From Function
     @cached_property
@@ -94,6 +117,30 @@ class BinaryDecisionDiagram(boolfunc.Function):
     @cached_property
     def inputs(self):
         return tuple(sorted(self.support))
+
+    def iter_zeros(self):
+        raise NotImplementedError()
+
+    def iter_ones(self):
+        raise NotImplementedError()
+
+    def reduce(self):
+        return self
+
+    def restrict(self, point):
+        raise NotImplementedError()
+
+    def compose(self, point):
+        raise NotImplementedError()
+
+    def satisfy_one(self):
+        raise NotImplementedError()
+
+    def satisfy_all(self):
+        raise NotImplementedError()
+
+    def satisfy_count(self):
+        raise NotImplementedError()
 
     # Specific to BinaryDecisionDiagram
     def equivalent(self, other):
