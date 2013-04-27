@@ -23,6 +23,12 @@ def test_expr2bdd():
     assert f.support == {aa, bb, cc}
     assert f.inputs == (aa, bb, cc)
 
+def test_traverse():
+    f = expr2bdd(a * b + a * c + b * c)
+    path = [node.root for node in f.traverse()]
+    # 0, 1, c, b(0, c), b(c, 1), a
+    assert path == [-2, -1, 3, 2, 2, 1]
+
 def test_equivalent():
     f = expr2bdd(a * -b + -a * b)
     g = expr2bdd((-a + -b) * (a + b))

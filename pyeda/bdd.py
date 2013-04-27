@@ -59,23 +59,6 @@ def bdd2expr(bdd):
     """Convert a binary decision diagram into an expression."""
     pass
 
-def traverse(node):
-    visited = set()
-    for n in _dfs(node, visited):
-        visited.add(n)
-        yield n
-
-def _dfs(node, visited):
-    low, high = node.low, node.high
-    if low not in visited and low is not None:
-        for n in _dfs(low, visited):
-            yield n
-    if high not in visited and high is not None:
-        for n in _dfs(high, visited):
-            yield n
-    if node not in visited:
-        yield node
-
 
 class BinaryDecisionDiagram(boolfunc.Function):
     def __new__(cls, node):
@@ -143,6 +126,12 @@ class BinaryDecisionDiagram(boolfunc.Function):
         raise NotImplementedError()
 
     # Specific to BinaryDecisionDiagram
+    def traverse(self):
+        visited = set()
+        for node in _dfs(self.node, visited):
+            visited.add(node)
+            yield node
+
     def equivalent(self, other):
         return self.node == other.node
 
@@ -182,3 +171,15 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
     @property
     def indices(self):
         return self._var.indices
+
+
+def _dfs(node, visited):
+    low, high = node.low, node.high
+    if low not in visited and low is not None:
+        for n in _dfs(low, visited):
+            yield n
+    if high not in visited and high is not None:
+        for n in _dfs(high, visited):
+            yield n
+    if node not in visited and node is not None:
+        yield node
