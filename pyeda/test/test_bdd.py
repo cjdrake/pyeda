@@ -35,3 +35,37 @@ def test_equivalent():
     assert f != g
     assert f.equivalent(f)
     assert g.equivalent(f)
+
+def test_restrict():
+    f = expr2bdd(a * b + a * c + b * c)
+
+    assert f.restrict({aa: 0}).equivalent(expr2bdd(b * c))
+    assert f.restrict({aa: 1}).equivalent(expr2bdd(b + c))
+    assert f.restrict({bb: 0}).equivalent(expr2bdd(a * c))
+    assert f.restrict({bb: 1}).equivalent(expr2bdd(a + c))
+    assert f.restrict({cc: 0}).equivalent(expr2bdd(a * b))
+    assert f.restrict({cc: 1}).equivalent(expr2bdd(a + b))
+
+    assert f.restrict({aa: 0, bb: 0}) == 0
+    assert f.restrict({aa: 0, bb: 1}) == cc
+    assert f.restrict({aa: 1, bb: 0}) == cc
+    assert f.restrict({aa: 1, bb: 1}) == 1
+
+    assert f.restrict({aa: 0, cc: 0}) == 0
+    assert f.restrict({aa: 0, cc: 1}) == bb
+    assert f.restrict({aa: 1, cc: 0}) == bb
+    assert f.restrict({aa: 1, cc: 1}) == 1
+
+    assert f.restrict({bb: 0, cc: 0}) == 0
+    assert f.restrict({bb: 0, cc: 1}) == aa
+    assert f.restrict({bb: 1, cc: 0}) == aa
+    assert f.restrict({bb: 1, cc: 1}) == 1
+
+    assert f.restrict({aa: 0, bb: 0, cc: 0}) == 0
+    assert f.restrict({aa: 0, bb: 0, cc: 1}) == 0
+    assert f.restrict({aa: 0, bb: 1, cc: 0}) == 0
+    assert f.restrict({aa: 0, bb: 1, cc: 1}) == 1
+    assert f.restrict({aa: 1, bb: 0, cc: 0}) == 0
+    assert f.restrict({aa: 1, bb: 0, cc: 1}) == 1
+    assert f.restrict({aa: 1, bb: 1, cc: 0}) == 1
+    assert f.restrict({aa: 1, bb: 1, cc: 1}) == 1

@@ -23,8 +23,11 @@ TABLE = dict()
 
 BDDNode = collections.namedtuple('BDDNode', ['root', 'low', 'high'])
 
-BDDZERO = BDDNode(-2, None, None)
-BDDONE = BDDNode(-1, None, None)
+ZERO_ROOT = -2
+ONE_ROOT = -1
+
+BDDZERO = BDDNode(ZERO_ROOT, None, None)
+BDDONE = BDDNode(ONE_ROOT, None, None)
 
 _NUM2BDD = {0: BDDZERO, 1: BDDONE}
 
@@ -111,7 +114,18 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return self
 
     def restrict(self, point):
-        raise NotImplementedError()
+        node = _restrict(self.node, point)
+        if node == BDDZERO:
+            return 0
+        elif node == BDDONE:
+            return 1
+        elif node == self.node:
+            return self
+        else:
+            if node.low == BDDZERO and node.high == BDDONE:
+                return BDDVARIABLES[node.root]
+            else:
+                return BinaryDecisionDiagram(node)
 
     def compose(self, point):
         raise NotImplementedError()
@@ -143,7 +157,7 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
         try:
             self = BDDVARIABLES[uniqid]
         except KeyError:
-            key = (uniqid, -2, -1)
+            key = (uniqid, ZERO_ROOT, ONE_ROOT)
             try:
                 node = TABLE[key]
             except KeyError:
@@ -172,6 +186,35 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
     def indices(self):
         return self._var.indices
 
+
+# FIXME: Need a computed table
+def _restrict(node, point):
+    if node.root in {ZERO_ROOT, ONE_ROOT}:
+        return node
+
+    v = BDDVARIABLES[node.root]
+    if v in point:
+        if point[v] == 0:
+            return _restrict(node.low, point)
+        elif point[v] == 1:
+            return _restrict(node.high, point)
+        else:
+            raise ValueError("invalid point")
+    else:
+        low = _restrict(node.low, point)
+        high = _restrict(node.high, point)
+        if low != node.low or high != node.high:
+            if low == high:
+                return low
+            else:
+                key = (node.root, low.root, high.root)
+                try:
+                    ret = TABLE[key]
+                except KeyError:
+                    ret = TABLE[key] = BDDNode(node.root, low, high)
+                return ret
+        else:
+            return node
 
 def _dfs(node, visited):
     low, high = node.low, node.high
