@@ -165,6 +165,11 @@ def f_ite(s, a, b):
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
 
+    def __new__(cls):
+        self = super(Expression, cls).__new__(cls)
+        self._RESTRICT_CACHE = dict()
+        return self
+
     # Operators
     def __neg__(self):
         """Boolean negation
@@ -333,8 +338,14 @@ class Expression(boolfunc.Function):
             return self.to_cdnf()
 
     def restrict(self, point):
-        idx_arg = self._get_restrictions(point)
-        return self._subs(idx_arg) if idx_arg else self
+        key = frozenset((v.uniqid, val) for v, val in point.items())
+        try:
+            ret = self._RESTRICT_CACHE[key]
+        except KeyError:
+            idx_arg = self._get_restrictions(point)
+            ret = self._subs(idx_arg) if idx_arg else self
+            self._RESTRICT_CACHE[key] = ret
+        return ret
 
     def compose(self, mapping):
         idx_arg = self._get_compositions(mapping)
@@ -778,18 +789,26 @@ class OrAnd(Expression):
 
     # From Function
     def restrict(self, point):
-        idx_arg = self._get_restrictions(point)
-        if idx_arg:
-            args = list(self._args)
-            for i, arg in idx_arg.items():
-                # speed hack
-                if arg == self.DOMINATOR:
-                    return self.DOMINATOR
+        key = frozenset((var.uniqid, val) for var, val in point.items())
+        try:
+            ret = self._RESTRICT_CACHE[key]
+        except KeyError:
+            idx_arg = self._get_restrictions(point)
+            if idx_arg:
+                args = list(self._args)
+                for i, arg in idx_arg.items():
+                    # speed hack
+                    if arg == self.DOMINATOR:
+                        ret = self.DOMINATOR
+                        break
+                    else:
+                        args[i] = arg
                 else:
-                    args[i] = arg
-            return self.__class__(*args)
-        else:
-            return self
+                    ret = self.__class__(*args)
+            else:
+                ret = self
+            self._RESTRICT_CACHE[key] = ret
+        return ret
 
     # From Expression
     def __lt__(self, other):
