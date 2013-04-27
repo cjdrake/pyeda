@@ -88,11 +88,8 @@ class BinaryDecisionDiagram(boolfunc.Function):
     # From Function
     @cached_property
     def support(self):
-        s = set()
-        for n in traverse(self.node):
-            if n.root > 0:
-                s.add(BDDVARIABLES[n.root])
-        return frozenset(s)
+        return frozenset(BDDVARIABLES[n.root]
+                         for n in self.traverse() if n.root > 0)
 
     @cached_property
     def inputs(self):
