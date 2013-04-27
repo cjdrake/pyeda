@@ -99,6 +99,8 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return tuple(sorted(self.support))
 
     # Specific to BinaryDecisionDiagram
+    def equivalent(self, other):
+        return self.node == other.node
 
 
 class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):

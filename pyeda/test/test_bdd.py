@@ -2,17 +2,13 @@
 Test binary decision diagrams
 """
 
-from pyeda.bdd import expr2bdd, BDDVARIABLES
-from pyeda.expr import var
+from pyeda.alphas import *
+from pyeda.bdd import expr2bdd, BDDVariable
 
-a, b, c = map(var, 'abc')
+aa, bb, cc, dd = [BDDVariable(v.name) for v in (a, b, c, d)]
 
 def test_expr2bdd():
     f = expr2bdd(a * b + a * c + b * c)
-
-    aa = BDDVARIABLES[a.uniqid]
-    bb = BDDVARIABLES[b.uniqid]
-    cc = BDDVARIABLES[c.uniqid]
 
     assert f.node.root == a.uniqid
     assert f.node.low.root == b.uniqid
@@ -26,3 +22,10 @@ def test_expr2bdd():
 
     assert f.support == {aa, bb, cc}
     assert f.inputs == (aa, bb, cc)
+
+def test_equivalent():
+    f = expr2bdd(a * -b + -a * b)
+    g = expr2bdd((-a + -b) * (a + b))
+    assert f != g
+    assert f.equivalent(f)
+    assert g.equivalent(f)
