@@ -1,40 +1,57 @@
 """
 Binary Decision Diagrams
 
+Globals:
+    BDDVARIABLES
+
 Interface Functions:
     expr2bdd
     bdd2expr
 
 Interface Classes:
     BinaryDecisionDiagram
-        BDDConstant
-            BDDZero
-            BDDOne
+    BDDVariable
 """
+
+import collections
 
 from pyeda import boolfunc
 from pyeda.common import cached_property
 
+BDDVARIABLES = dict()
 TABLE = dict()
+
+BDDNode = collections.namedtuple('BDDNode', ['root', 'low', 'high'])
+
+BDDZERO = BDDNode(-2, None, None)
+BDDONE = BDDNode(-1, None, None)
+
+_NUM2BDD = {0: BDDZERO, 1: BDDONE}
 
 
 def expr2bdd(expr):
     """Convert an expression into a binary decision diagram."""
-    root = expr.top.var
-    fv0, fv1 = expr.cofactors(expr.top)
+    node = _expr2node(expr)
+    return BinaryDecisionDiagram(node)
+
+def _expr2node(expr):
+    expr_top = expr.top
+    bdd_top = BDDVariable(expr_top.name, expr_top.indices, expr_top.namespace)
+
+    fv0, fv1 = expr.cofactors(expr_top)
     try:
-        low = NUM2BDD[fv0]
+        low = _NUM2BDD[fv0]
     except KeyError:
-        low = expr2bdd(fv0)
+        low = _expr2node(fv0)
     try:
-        high = NUM2BDD[fv1]
+        high = _NUM2BDD[fv1]
     except KeyError:
-        high = expr2bdd(fv1)
-    key = (root, low.root, high.root)
+        high = _expr2node(fv1)
+    key = (bdd_top.uniqid, low.root, high.root)
     try:
         node = TABLE[key]
     except KeyError:
-        node = BinaryDecisionDiagram(root, low, high)
+        node = BDDNode(bdd_top.uniqid, low, high)
         TABLE[key] = node
     return node
 
@@ -42,44 +59,80 @@ def bdd2expr(bdd):
     """Convert a binary decision diagram into an expression."""
     pass
 
+def traverse(node):
+    visited = set()
+    for n in _dfs(node, visited):
+        visited.add(n)
+        yield n
+
+def _dfs(node, visited):
+    low, high = node.low, node.high
+    if low not in visited and low is not None:
+        for n in _dfs(low, visited):
+            yield n
+    if high not in visited and high is not None:
+        for n in _dfs(high, visited):
+            yield n
+    if node not in visited:
+        yield node
+
 
 class BinaryDecisionDiagram(boolfunc.Function):
-    """Boolean function represented by a binary decision diagram"""
-    def __init__(self, root, low, high):
-        self.root = root
-        self.low = low
-        self.high = high
+    def __new__(cls, node):
+        self = super(BinaryDecisionDiagram, cls).__new__(cls)
+        self.node = node
+        return self
 
+    # Operators
+
+    # From Function
     @cached_property
     def support(self):
         s = set()
-        s.update(self.low.support | self.high.support)
-        s.add(self.root)
+        for n in traverse(self.node):
+            if n.root > 0:
+                s.add(BDDVARIABLES[n.root])
         return frozenset(s)
 
     @cached_property
     def inputs(self):
-        return sorted(self.support)
+        return tuple(sorted(self.support))
+
+    # Specific to BinaryDecisionDiagram
 
 
-class BDDConstant(BinaryDecisionDiagram):
-    """BDD representation of zero/one"""
+class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
+    def __new__(cls, name, indices=None, namespace=None):
+        _var = boolfunc.Variable(name, indices, namespace)
+        uniqid = _var.uniqid
+        try:
+            self = BDDVARIABLES[uniqid]
+        except KeyError:
+            key = (uniqid, -2, -1)
+            try:
+                node = TABLE[key]
+            except KeyError:
+                node = BDDNode(uniqid, BDDZERO, BDDONE)
+                TABLE[key] = node
+            self = super(BinaryDecisionDiagram, cls).__new__(cls)
+            self.node = node
+            self._var = _var
+            BDDVARIABLES[uniqid] = self
+        return self
 
-    @cached_property
-    def support(self):
-        return frozenset()
+    # From Variable
+    @property
+    def uniqid(self):
+        return self._var.uniqid
 
+    @property
+    def namespace(self):
+        return self._var.namespace
 
-class BDDZero(BDDConstant):
-    """BDD representation of the number zero"""
-    def __init__(self):
-        super(BDDZero, self).__init__(0, None, None)
+    @property
+    def name(self):
+        return self._var.name
 
-
-class BDDOne(BDDConstant):
-    """BDD representation of the number one"""
-    def __init__(self):
-        super(BDDOne, self).__init__(1, None, None)
-
-
-NUM2BDD = {0: BDDZero(), 1: BDDOne()}
+    @property
+    def indices(self):
+        return self._var.indices
