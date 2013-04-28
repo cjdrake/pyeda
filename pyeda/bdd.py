@@ -54,8 +54,7 @@ def _expr2node(expr):
     try:
         node = TABLE[key]
     except KeyError:
-        node = BDDNode(bdd_top.uniqid, low, high)
-        TABLE[key] = node
+        node = TABLE[key] = BDDNode(bdd_top.uniqid, low, high)
     return node
 
 def bdd2expr(bdd):
@@ -161,8 +160,7 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
             try:
                 node = TABLE[key]
             except KeyError:
-                node = BDDNode(uniqid, BDDZERO, BDDONE)
-                TABLE[key] = node
+                node = TABLE[key] = BDDNode(uniqid, BDDZERO, BDDONE)
             self = super(BinaryDecisionDiagram, cls).__new__(cls)
             self.node = node
             self._var = _var
