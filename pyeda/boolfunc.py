@@ -49,7 +49,9 @@ def num2upoint(num, vs):
     upoint = [set(), set()]
     for i, v in enumerate(vs):
         upoint[bit_on(num, i)].add(v.uniqid)
-    return upoint
+    upoint[0] = frozenset(upoint[0])
+    upoint[1] = frozenset(upoint[1])
+    return tuple(upoint)
 
 def num2term(num, vs, conj=False):
     """Convert a number into a min/max term.
@@ -94,7 +96,9 @@ def point2upoint(point):
     upoint = [set(), set()]
     for v, val in point.items():
         upoint[val].add(v.uniqid)
-    return upoint
+    upoint[0] = frozenset(upoint[0])
+    upoint[1] = frozenset(upoint[1])
+    return tuple(upoint)
 
 def point2term(point, conj=False):
     """Convert a point in an N-dimension space into a min/max term.
