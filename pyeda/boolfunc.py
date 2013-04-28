@@ -158,6 +158,20 @@ class Variable(object):
             indices = tuple()
         elif type(indices) is int:
             indices = (indices, )
+        if namespace is None:
+            namespace = tuple()
+        elif type(namespace) is str:
+            namespace = (namespace, )
+
+        # Check input types
+        assert type(name) is str
+        assert type(indices) is tuple
+        for idx in indices:
+            assert type(idx) is int
+        assert type(namespace) is tuple
+        for n in namespace:
+            assert type(n) is str
+
         try:
             uniqid = cls._UNIQIDS[(namespace, name, indices)]
         except KeyError:
@@ -190,10 +204,9 @@ class Variable(object):
 
     @property
     def qualname(self):
-        if self.namespace is None:
-            return self.name
-        else:
-            return self.namespace + "." + self.name
+        names = [n for n in reversed(self.namespace)]
+        names.append(self.name)
+        return ".".join(names)
 
 
 class Function(object):
