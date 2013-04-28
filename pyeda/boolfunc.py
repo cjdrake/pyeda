@@ -6,9 +6,14 @@ Globals:
 
 Interface Functions:
     num2point
-    point2term
+    num2upoint
     num2term
+
+    point2upoint
+    point2term
+
     iter_points
+    iter_upoints
     iter_terms
 
 Interface Classes:
@@ -24,24 +29,36 @@ VARIABLES = dict()
 
 
 def num2point(num, vs):
-    """Convert a number to a point in an N-dimensional space."""
-    return {v: bit_on(num, i) for i, v in enumerate(vs)}
-
-def point2term(point, conj=False):
-    """Convert a point in an N-dimension space to a min/max term."""
-    if conj:
-        return tuple(-v if val else v for v, val in point.items())
-    else:
-        return tuple(v if val else -v for v, val in point.items())
-
-def num2term(num, vs, conj=False):
-    """Return a tuple of all variables for a given term index.
+    """Convert a number into a point in an N-dimensional space.
 
     Parameters
     ----------
-    num: int
-    vs: [Variable]
-    conj: bool
+    num : int
+    vs : [Variable]
+    """
+    return {v: bit_on(num, i) for i, v in enumerate(vs)}
+
+def num2upoint(num, vs):
+    """Convert a number into an untyped point in an N-dimensional space.
+
+    Parameters
+    ----------
+    num : int
+    vs : [Variable]
+    """
+    upoint = [set(), set()]
+    for i, v in enumerate(vs):
+        upoint[bit_on(num, i)].add(v.uniqid)
+    return upoint
+
+def num2term(num, vs, conj=False):
+    """Convert a number into a min/max term.
+
+    Parameters
+    ----------
+    num : int
+    vs : [Variable]
+    conj : bool
         conj=False for minterms, conj=True for maxterms
 
     Examples
@@ -67,6 +84,30 @@ def num2term(num, vs, conj=False):
     else:
         return tuple(v if bit_on(num, i) else -v for i, v in enumerate(vs))
 
+def point2upoint(point):
+    """Convert a point into an untyped point.
+
+    Parameters
+    ----------
+    point : {Variable: int}
+    """
+    upoint = [set(), set()]
+    for v, val in point.items():
+        upoint[val].add(v.uniqid)
+    return upoint
+
+def point2term(point, conj=False):
+    """Convert a point in an N-dimension space into a min/max term.
+
+    Parameters
+    ----------
+    point : {Variable: int}
+    """
+    if conj:
+        return tuple(-v if val else v for v, val in point.items())
+    else:
+        return tuple(v if val else -v for v, val in point.items())
+
 def iter_points(vs):
     """Iterate through all points in an N-dimensional space.
 
@@ -77,8 +118,18 @@ def iter_points(vs):
     for num in range(1 << len(vs)):
         yield num2point(num, vs)
 
+def iter_upoints(vs):
+    """Iterate through all untyped points in an N-dimensional space.
+
+    Parameters
+    ----------
+    vs : [Variable]
+    """
+    for num in range(1 << len(vs)):
+        yield num2upoint(num, vs)
+
 def iter_terms(vs, conj=False):
-    """Iterate through all terms in an N-dimensional space.
+    """Iterate through all min/max terms in an N-dimensional space.
 
     Parameters
     ----------

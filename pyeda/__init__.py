@@ -14,8 +14,8 @@ from pyeda.binop import (
 )
 
 from pyeda.boolfunc import (
-    num2point, point2term, num2term,
-    iter_points, iter_terms
+    num2point, num2upoint, num2term, point2upoint, point2term,
+    iter_points, iter_upoints, iter_terms
 )
 
 from pyeda.common import clog2, boolify, pcify
