@@ -3,11 +3,14 @@ Test binary decision diagrams
 """
 
 from pyeda.alphas import *
-from pyeda.bdd import expr2bdd, BDDVariable
+from pyeda.bdd import expr2bdd, bdd2expr, BDDVariable
 
 aa, bb, cc, dd = [BDDVariable(v.name) for v in (a, b, c, d)]
 
 def test_expr2bdd():
+    assert expr2bdd(-a * -b + a * -b + -a * b + a * b) == 1
+    assert expr2bdd(-(-a * -b + a * -b + -a * b + a * b)) == 0
+
     f = expr2bdd(a * b + a * c + b * c)
 
     assert f.node.root == a.uniqid
@@ -22,6 +25,10 @@ def test_expr2bdd():
 
     assert f.support == {aa, bb, cc}
     assert f.inputs == (aa, bb, cc)
+
+def test_bdd2expr():
+    f = a * b + a * c + b * c
+    assert bdd2expr(expr2bdd(f)).equivalent(f)
 
 def test_traverse():
     f = expr2bdd(a * b + a * c + b * c)
