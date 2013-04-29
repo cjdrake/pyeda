@@ -337,14 +337,13 @@ class Expression(boolfunc.Function):
         else:
             return self.to_cdnf()
 
-    def restrict(self, point):
-        key = frozenset((v.uniqid, val) for v, val in point.items())
+    def urestrict(self, upoint):
         try:
-            ret = self._RESTRICT_CACHE[key]
+            ret = self._RESTRICT_CACHE[upoint]
         except KeyError:
-            idx_arg = self._get_restrictions(point)
+            idx_arg = self._get_restrictions(upoint)
             ret = self._subs(idx_arg) if idx_arg else self
-            self._RESTRICT_CACHE[key] = ret
+            self._RESTRICT_CACHE[upoint] = ret
         return ret
 
     def compose(self, mapping):
@@ -544,11 +543,11 @@ class Expression(boolfunc.Function):
             raise ValueError("invalid algorithm")
 
     # Substitution helper methods
-    def _get_restrictions(self, point):
+    def _get_restrictions(self, upoint):
         restrictions = dict()
         for i, arg in enumerate(self._args):
             if isinstance(arg, Expression):
-                new_arg = arg.restrict(point)
+                new_arg = arg.urestrict(upoint)
                 if id(new_arg) != id(arg):
                     restrictions[i] = new_arg
         return restrictions
@@ -606,10 +605,12 @@ class ExprVariable(boolfunc.Variable, Literal):
     def support(self):
         return frozenset([self, ])
 
-    def restrict(self, point):
-        try:
-            return boolify(point[self])
-        except KeyError:
+    def urestrict(self, upoint):
+        if self.uniqid in upoint[0]:
+            return 0
+        elif self.uniqid in upoint[1]:
+            return 1
+        else:
             return self
 
     def compose(self, mapping):
@@ -692,10 +693,12 @@ class Complement(Literal):
     def support(self):
         return frozenset([self._exprvar, ])
 
-    def restrict(self, point):
-        try:
-            return 1 - boolify(point[self.exprvar])
-        except KeyError:
+    def urestrict(self, upoint):
+        if self._exprvar.uniqid in upoint[0]:
+            return 1
+        elif self._exprvar.uniqid in upoint[1]:
+            return 0
+        else:
             return self
 
     def compose(self, mapping):
@@ -788,12 +791,11 @@ class OrAnd(Expression):
         return False, tuple(args)
 
     # From Function
-    def restrict(self, point):
-        key = frozenset((var.uniqid, val) for var, val in point.items())
+    def urestrict(self, upoint):
         try:
-            ret = self._RESTRICT_CACHE[key]
+            ret = self._RESTRICT_CACHE[upoint]
         except KeyError:
-            idx_arg = self._get_restrictions(point)
+            idx_arg = self._get_restrictions(upoint)
             if idx_arg:
                 args = list(self._args)
                 for i, arg in idx_arg.items():
@@ -807,7 +809,7 @@ class OrAnd(Expression):
                     ret = self.__class__(*args)
             else:
                 ret = self
-            self._RESTRICT_CACHE[key] = ret
+            self._RESTRICT_CACHE[upoint] = ret
         return ret
 
     # From Expression

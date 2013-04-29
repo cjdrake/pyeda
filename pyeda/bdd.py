@@ -112,8 +112,8 @@ class BinaryDecisionDiagram(boolfunc.Function):
     def reduce(self):
         return self
 
-    def restrict(self, point):
-        node = _restrict(self.node, point)
+    def urestrict(self, upoint):
+        node = urestrict(self.node, upoint)
         if node == BDDZERO:
             return 0
         elif node == BDDONE:
@@ -185,34 +185,28 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
         return self._var.indices
 
 
-# FIXME: Need a computed table
-def _restrict(node, point):
+def urestrict(node, upoint):
     if node.root in {ZERO_ROOT, ONE_ROOT}:
-        return node
-
-    v = BDDVARIABLES[node.root]
-    if v in point:
-        if point[v] == 0:
-            return _restrict(node.low, point)
-        elif point[v] == 1:
-            return _restrict(node.high, point)
-        else:
-            raise ValueError("invalid point")
+        ret = node
+    elif node.root in upoint[0]:
+        ret = urestrict(node.low, upoint)
+    elif node.root in upoint[1]:
+        ret = urestrict(node.high, upoint)
     else:
-        low = _restrict(node.low, point)
-        high = _restrict(node.high, point)
+        low = urestrict(node.low, upoint)
+        high = urestrict(node.high, upoint)
         if low != node.low or high != node.high:
             if low == high:
-                return low
+                ret = low
             else:
                 key = (node.root, low.root, high.root)
                 try:
                     ret = TABLE[key]
                 except KeyError:
                     ret = TABLE[key] = BDDNode(node.root, low, high)
-                return ret
         else:
-            return node
+            ret = node
+    return ret
 
 def _dfs(node, visited):
     low, high = node.low, node.high

@@ -85,16 +85,14 @@ class NormalForm(Function):
     def inputs(self):
         return sorted(self.support)
 
-    def restrict(self, point):
+    def urestrict(self, upoint):
         idents = set()
+        idents.update(upoint[self.DOMINATOR])
+        idents.update(-n for n in upoint[self.IDENTITY])
+
         doms = set()
-        for v, val in point.items():
-            if boolify(val) == self.IDENTITY:
-                idents.add(-v.uniqid)
-                doms.add(v.uniqid)
-            else:
-                idents.add(v.uniqid)
-                doms.add(-v.uniqid)
+        doms.update(upoint[self.IDENTITY])
+        doms.update(-n for n in upoint[self.DOMINATOR])
 
         new_clauses = set()
         for clause in self.clauses:

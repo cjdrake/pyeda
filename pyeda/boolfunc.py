@@ -23,7 +23,7 @@ Interface Classes:
     VectorFunction
 """
 
-from pyeda.common import bit_on
+from pyeda.common import bit_on, boolify
 
 VARIABLES = dict()
 
@@ -49,9 +49,7 @@ def num2upoint(num, vs):
     upoint = [set(), set()]
     for i, v in enumerate(vs):
         upoint[bit_on(num, i)].add(v.uniqid)
-    upoint[0] = frozenset(upoint[0])
-    upoint[1] = frozenset(upoint[1])
-    return tuple(upoint)
+    return (frozenset(upoint[0]), frozenset(upoint[1]))
 
 def num2term(num, vs, conj=False):
     """Convert a number into a min/max term.
@@ -294,11 +292,21 @@ class Function(object):
 
         :math:`g = f \: | \: x_i = b`
         """
+        upoint = point2upoint(point)
+        return self.urestrict(upoint)
+
+    def urestrict(self, upoint):
+        """
+        Return the Boolean function that results after restricting a subset of
+        its input variables to :math:`\{0, 1\}`.
+
+        :math:`g = f \: | \: x_i = b`
+        """
         raise NotImplementedError()
 
-    def vrestrict(self, point):
+    def vrestrict(self, vpoint):
         """Expand all vectors before applying 'restrict'."""
-        return self.restrict(_expand_vectors(point))
+        return self.restrict(_expand_vectors(vpoint))
 
     def compose(self, mapping):
         """
@@ -467,9 +475,9 @@ class VectorFunction(Slicer):
         items = [f.restrict(point) for f in self]
         return self.__class__(items, self.start)
 
-    def vrestrict(self, point):
+    def vrestrict(self, vpoint):
         """Expand all vectors before applying 'restrict'."""
-        return self.restrict(_expand_vectors(point))
+        return self.restrict(_expand_vectors(vpoint))
 
     def to_uint(self):
         """Convert vector to an unsigned integer, if possible."""
@@ -504,17 +512,15 @@ class VectorFunction(Slicer):
         self.items.append(f)
 
 
-def _expand_vectors(point):
+def _expand_vectors(vpoint):
     """Expand all vectors in a substitution dict."""
-    temp = { vf: val for vf, val in point.items() if
-             isinstance(vf, VectorFunction) }
-    point = {v: val for v, val in point.items() if v not in temp}
-    while temp:
-        vf, val = temp.popitem()
+    temp = dict()
+    point = dict()
+    for vf, vals in vpoint.items():
         if isinstance(vf, VectorFunction):
-            assert len(vf) == len(val)
-            for i, f in enumerate(val):
-                point[vf.getifz(i)] = f
+            assert len(vf) == len(vals)
+            for i, val in enumerate(vals):
+                point[vf.getifz(i)] = boolify(val)
         else:
-            point[vf] = val
+            point[vf] = boolify(vals)
     return point
