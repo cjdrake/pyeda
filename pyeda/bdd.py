@@ -42,11 +42,11 @@ _NUM2BDD = {0: BDDZERO, 1: BDDONE}
 def expr2bdd(expr):
     """Convert an expression into a binary decision diagram."""
     node = _expr2node(expr)
-    if node == BDDZERO:
+    if node is BDDZERO:
         return 0
-    elif node == BDDONE:
+    elif node is BDDONE:
         return 1
-    elif node.low == BDDZERO and node.high == BDDONE:
+    elif node.low is BDDZERO and node.high is BDDONE:
         return BDDVARIABLES[node.root]
     else:
         key = (node.root, node.low.root, node.high.root)
@@ -70,7 +70,7 @@ def _expr2node(expr):
     except KeyError:
         high = _expr2node(fv1)
 
-    if low == high:
+    if low is high:
         node = low
     else:
         key = (bdd_top.uniqid, low.root, high.root)
@@ -83,9 +83,9 @@ def _expr2node(expr):
 
 def bdd2expr(bdd):
     """Convert a binary decision diagram into an expression."""
-    if bdd.node == BDDZERO:
+    if bdd.node is BDDZERO:
         return 0
-    elif bdd.node == BDDONE:
+    elif bdd.node is BDDONE:
         return 1
     else:
         terms = list()
@@ -93,9 +93,9 @@ def bdd2expr(bdd):
         for path in paths:
             term = list()
             for i, node in enumerate(path[:-1]):
-                if node.low == path[i+1]:
+                if node.low is path[i+1]:
                     term.append(-EXPRVARIABLES[node.root])
-                elif node.high == path[i+1]:
+                elif node.high is path[i+1]:
                     term.append(EXPRVARIABLES[node.root])
             terms.append(term)
         return Or(*[And(*term) for term in terms])
@@ -153,13 +153,13 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     def urestrict(self, upoint):
         node = urestrict(self.node, upoint)
-        if node == BDDZERO:
+        if node is BDDZERO:
             return 0
-        elif node == BDDONE:
+        elif node is BDDONE:
             return 1
-        elif node == self.node:
+        elif node is self.node:
             return self
-        elif node.low == BDDZERO and node.high == BDDONE:
+        elif node.low is BDDZERO and node.high is BDDONE:
             return BDDVARIABLES[node.root]
         else:
             key = (node.root, node.low.root, node.high.root)
@@ -189,7 +189,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
             yield node
 
     def equivalent(self, other):
-        return self.node == other.node
+        return self.node is other.node
 
 
 class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
@@ -229,7 +229,7 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
 
 
 def urestrict(node, upoint):
-    if node.root in {ZERO_ROOT, ONE_ROOT}:
+    if node is BDDZERO or node is BDDONE:
         ret = node
     elif node.root in upoint[0]:
         ret = urestrict(node.low, upoint)
@@ -238,8 +238,8 @@ def urestrict(node, upoint):
     else:
         low = urestrict(node.low, upoint)
         high = urestrict(node.high, upoint)
-        if low != node.low or high != node.high:
-            if low == high:
+        if low is not node.low or high is not node.high:
+            if low is high:
                 ret = low
             else:
                 key = (node.root, low.root, high.root)
@@ -253,7 +253,7 @@ def urestrict(node, upoint):
 
 def iter_all_paths(start, end, path=tuple()):
     path = path + (start, )
-    if start == end:
+    if start is end:
         yield path
     else:
         if start.low is not None:
