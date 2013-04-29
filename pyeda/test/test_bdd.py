@@ -3,25 +3,30 @@ Test binary decision diagrams
 """
 
 from pyeda.alphas import *
-from pyeda.bdd import expr2bdd, bdd2expr, BDDVariable
+from pyeda.bdd import expr2bdd, bdd2expr, BDDVariable, BDDZERO, BDDONE
 
 aa, bb, cc, dd = [BDDVariable(v.name) for v in (a, b, c, d)]
 
 def test_expr2bdd():
+    assert expr2bdd(a) == aa
+
     assert expr2bdd(-a * -b + a * -b + -a * b + a * b) == 1
     assert expr2bdd(-(-a * -b + a * -b + -a * b + a * b)) == 0
 
     f = expr2bdd(a * b + a * c + b * c)
+    g = expr2bdd(a * b + a * c + b * c)
+
+    assert f == g
 
     assert f.node.root == a.uniqid
     assert f.node.low.root == b.uniqid
     assert f.node.high.root == b.uniqid
-    assert f.node.low.low.root == -2
+    assert f.node.low.low == BDDZERO
     assert f.node.low.high.root == c.uniqid
     assert f.node.high.low.root == c.uniqid
-    assert f.node.high.high.root == -1
-    assert f.node.low.high.low.root == -2
-    assert f.node.high.low.high.root == -1
+    assert f.node.high.high == BDDONE
+    assert f.node.low.high.low == BDDZERO
+    assert f.node.high.low.high == BDDONE
 
     assert f.support == {aa, bb, cc}
     assert f.inputs == (aa, bb, cc)
@@ -39,7 +44,6 @@ def test_traverse():
 def test_equivalent():
     f = expr2bdd(a * -b + -a * b)
     g = expr2bdd((-a + -b) * (a + b))
-    assert f != g
     assert f.equivalent(f)
     assert g.equivalent(f)
 

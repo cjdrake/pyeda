@@ -19,7 +19,13 @@ from pyeda import boolfunc
 from pyeda.common import cached_property
 from pyeda.expr import EXPRVARIABLES, And, Or
 
+# existing BDDVariable references
 BDDVARIABLES = dict()
+
+# existing BinaryDecisionDiagram references
+BDDS = dict()
+
+# { (int, int, int) : BDDNode }
 TABLE = dict()
 
 BDDNode = collections.namedtuple('BDDNode', ['root', 'low', 'high'])
@@ -40,8 +46,15 @@ def expr2bdd(expr):
         return 0
     elif node == BDDONE:
         return 1
+    elif node.low == BDDZERO and node.high == BDDONE:
+        return BDDVARIABLES[node.root]
     else:
-        return BinaryDecisionDiagram(node)
+        key = (node.root, node.low.root, node.high.root)
+        try:
+            ret = BDDS[key]
+        except KeyError:
+            ret = BDDS[key] = BinaryDecisionDiagram(node)
+        return ret
 
 def _expr2node(expr):
     expr_top = expr.top
@@ -146,11 +159,15 @@ class BinaryDecisionDiagram(boolfunc.Function):
             return 1
         elif node == self.node:
             return self
+        elif node.low == BDDZERO and node.high == BDDONE:
+            return BDDVARIABLES[node.root]
         else:
-            if node.low == BDDZERO and node.high == BDDONE:
-                return BDDVARIABLES[node.root]
-            else:
-                return BinaryDecisionDiagram(node)
+            key = (node.root, node.low.root, node.high.root)
+            try:
+                ret = BDDS[key]
+            except KeyError:
+                ret = BDDS[key] = BinaryDecisionDiagram(node)
+            return ret
 
     def compose(self, point):
         raise NotImplementedError()
