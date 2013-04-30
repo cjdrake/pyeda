@@ -131,9 +131,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
         except KeyError:
             return BinaryDecisionDiagram(node)
 
-    def __radd__(self, other):
-        return self.__add__(other)
-
     def __sub__(self, other):
         try:
             other_node = _NUM2BDDNODE[other]
@@ -145,9 +142,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
         except KeyError:
             return BinaryDecisionDiagram(node)
 
-    def __rsub__(self, other):
-        return self.__neg__().__add__(other)
-
     def __mul__(self, other):
         try:
             other_node = _NUM2BDDNODE[other]
@@ -158,9 +152,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
             return _BDDNODE2NUM[node]
         except KeyError:
             return BinaryDecisionDiagram(node)
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
 
     def xor(self, other):
         try:

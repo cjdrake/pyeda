@@ -201,15 +201,9 @@ class Expression(boolfunc.Function):
         """
         return Or(self, other)
 
-    def __radd__(self, other):
-        return self.__add__(other)
-
     def __sub__(self, other):
         """Alias: a - b = a + -b"""
         return Or(self, Not(other))
-
-    def __rsub__(self, other):
-        return self.__neg__().__add__(other)
 
     def __mul__(self, other):
         """Boolean conjunction (multiplication, AND)
@@ -226,9 +220,6 @@ class Expression(boolfunc.Function):
         +---+---+-------+
         """
         return And(self, other)
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
 
     def xor(self, *args):
         """Boolean XOR (odd parity)

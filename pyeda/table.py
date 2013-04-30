@@ -109,9 +109,6 @@ class _BaseTruthTable(boolfunc.Function):
         return self.__str__()
 
     # Operators
-    def __radd__(self, other):
-        return self.__add__(other)
-
     def __sub__(self, other):
         if other == 0:
             return 1
@@ -119,12 +116,6 @@ class _BaseTruthTable(boolfunc.Function):
             return self
         else:
             return self.__add__(-other)
-
-    def __rsub__(self, other):
-        return self.__neg__().__add__(other)
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
 
     # From Function
     @cached_property

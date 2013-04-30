@@ -216,6 +216,17 @@ class Function(object):
     Abstract base class that defines an interface for a scalar Boolean function
     of :math:`N` variables.
     """
+
+    # Operators
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __rsub__(self, other):
+        return self.__neg__().__add__(other)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     @property
     def support(self):
         """Return the support set of a function.
