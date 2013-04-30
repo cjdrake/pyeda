@@ -594,7 +594,7 @@ class ExprVariable(boolfunc.Variable, Literal):
         try:
             self = EXPRVARIABLES[_var.uniqid]
         except KeyError:
-            self = super(Literal, cls).__new__(cls)
+            self = Literal.__new__(cls)
             self._var = _var
             self._args = (self, )
             EXPRVARIABLES[_var.uniqid] = self
