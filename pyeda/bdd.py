@@ -173,13 +173,30 @@ class BinaryDecisionDiagram(boolfunc.Function):
         raise NotImplementedError()
 
     def satisfy_one(self):
-        raise NotImplementedError()
+        path = find_path(self.node, BDDONE)
+        if path is None:
+            return None
+        else:
+            point = dict()
+            for i, node in enumerate(path[:-1]):
+                if node.low is path[i+1]:
+                    point[EXPRVARIABLES[node.root]] = 0
+                elif node.high is path[i+1]:
+                    point[EXPRVARIABLES[node.root]] = 1
+            return point
 
     def satisfy_all(self):
-        raise NotImplementedError()
+        for path in iter_all_paths(self.node, BDDONE):
+            point = dict()
+            for i, node in enumerate(path[:-1]):
+                if node.low is path[i+1]:
+                    point[EXPRVARIABLES[node.root]] = 0
+                elif node.high is path[i+1]:
+                    point[EXPRVARIABLES[node.root]] = 1
+            yield point
 
     def satisfy_count(self):
-        raise NotImplementedError()
+        return sum(1 for _ in self.satisfy_all())
 
     # Specific to BinaryDecisionDiagram
     def traverse(self):
@@ -267,6 +284,18 @@ def urestrict(node, upoint):
                 return get_bdd_node(node.root, low, high)
         else:
             return node
+
+def find_path(start, end, path=tuple()):
+    path = path + (start, )
+    if start is end:
+        return path
+    else:
+        ret = None
+        if start.low is not None:
+            ret = find_path(start.low, end, path)
+        if ret is None and start.high is not None:
+            ret = find_path(start.high, end, path)
+        return ret
 
 def iter_all_paths(start, end, path=tuple()):
     path = path + (start, )

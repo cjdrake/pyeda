@@ -91,3 +91,10 @@ def test_negate():
     f = a * b + a * c + b * c
     ff = expr2bdd(f)
     assert bdd2expr(-ff).equivalent(-f)
+
+def test_satisfy():
+    f = a * b + a * c + b * c
+    ff = expr2bdd(f)
+    assert [p for p in ff.satisfy_all()] == [{a: 0, b: 1, c: 1}, {a: 1, b: 0, c: 1}, {a: 1, b: 1}]
+    assert ff.satisfy_count() == 3
+    assert ff.satisfy_one() == {a: 0, b: 1, c: 1}
