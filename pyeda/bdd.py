@@ -95,6 +95,8 @@ def bdd2expr(bdd, conj=False):
         else:
             outer, inner = (Or, And)
             points = bdd.iter_ones()
+        points = [{EXPRVARIABLES[v.uniqid]: val for v, val in point.items()}
+                  for point in points]
         terms = [boolfunc.point2term(point, conj) for point in points]
         return outer(*[inner(*term) for term in terms])
 
@@ -176,9 +178,9 @@ class BinaryDecisionDiagram(boolfunc.Function):
             point = dict()
             for i, node in enumerate(path[:-1]):
                 if node.low is path[i+1]:
-                    point[EXPRVARIABLES[node.root]] = 0
+                    point[BDDVARIABLES[node.root]] = 0
                 elif node.high is path[i+1]:
-                    point[EXPRVARIABLES[node.root]] = 1
+                    point[BDDVARIABLES[node.root]] = 1
             yield point
 
     def iter_ones(self):
@@ -186,9 +188,9 @@ class BinaryDecisionDiagram(boolfunc.Function):
             point = dict()
             for i, node in enumerate(path[:-1]):
                 if node.low is path[i+1]:
-                    point[EXPRVARIABLES[node.root]] = 0
+                    point[BDDVARIABLES[node.root]] = 0
                 elif node.high is path[i+1]:
-                    point[EXPRVARIABLES[node.root]] = 1
+                    point[BDDVARIABLES[node.root]] = 1
             yield point
 
     def reduce(self):
@@ -218,9 +220,9 @@ class BinaryDecisionDiagram(boolfunc.Function):
             point = dict()
             for i, node in enumerate(path[:-1]):
                 if node.low is path[i+1]:
-                    point[EXPRVARIABLES[node.root]] = 0
+                    point[BDDVARIABLES[node.root]] = 0
                 elif node.high is path[i+1]:
-                    point[EXPRVARIABLES[node.root]] = 1
+                    point[BDDVARIABLES[node.root]] = 1
             return point
 
     def satisfy_all(self):
