@@ -82,24 +82,21 @@ def _expr2node(expr):
     else:
         return get_bdd_node(root, low, high)
 
-def bdd2expr(bdd):
+def bdd2expr(bdd, conj=False):
     """Convert a binary decision diagram into an expression."""
     if bdd.node is BDDZERO:
         return 0
     elif bdd.node is BDDONE:
         return 1
     else:
-        terms = list()
-        paths = [path for path in iter_all_paths(bdd.node, BDDONE)]
-        for path in paths:
-            term = list()
-            for i, node in enumerate(path[:-1]):
-                if node.low is path[i+1]:
-                    term.append(-EXPRVARIABLES[node.root])
-                elif node.high is path[i+1]:
-                    term.append(EXPRVARIABLES[node.root])
-            terms.append(term)
-        return Or(*[And(*term) for term in terms])
+        if conj:
+            outer, inner = (And, Or)
+            points = bdd.iter_zeros()
+        else:
+            outer, inner = (Or, And)
+            points = bdd.iter_ones()
+        terms = [boolfunc.point2term(point, conj) for point in points]
+        return outer(*[inner(*term) for term in terms])
 
 
 # existing BinaryDecisionDiagram references
@@ -175,10 +172,24 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return tuple(sorted(self.support))
 
     def iter_zeros(self):
-        raise NotImplementedError()
+        for path in iter_all_paths(self.node, BDDZERO):
+            point = dict()
+            for i, node in enumerate(path[:-1]):
+                if node.low is path[i+1]:
+                    point[EXPRVARIABLES[node.root]] = 0
+                elif node.high is path[i+1]:
+                    point[EXPRVARIABLES[node.root]] = 1
+            yield point
 
     def iter_ones(self):
-        raise NotImplementedError()
+        for path in iter_all_paths(self.node, BDDONE):
+            point = dict()
+            for i, node in enumerate(path[:-1]):
+                if node.low is path[i+1]:
+                    point[EXPRVARIABLES[node.root]] = 0
+                elif node.high is path[i+1]:
+                    point[EXPRVARIABLES[node.root]] = 1
+            yield point
 
     def reduce(self):
         return self
@@ -213,14 +224,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
             return point
 
     def satisfy_all(self):
-        for path in iter_all_paths(self.node, BDDONE):
-            point = dict()
-            for i, node in enumerate(path[:-1]):
-                if node.low is path[i+1]:
-                    point[EXPRVARIABLES[node.root]] = 0
-                elif node.high is path[i+1]:
-                    point[EXPRVARIABLES[node.root]] = 1
-            yield point
+        return self.iter_ones()
 
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
