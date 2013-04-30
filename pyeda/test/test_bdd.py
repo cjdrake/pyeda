@@ -4,6 +4,7 @@ Test binary decision diagrams
 
 from pyeda.alphas import *
 from pyeda.bdd import expr2bdd, bdd2expr, BDDVariable, BDDZERO, BDDONE
+from pyeda.expr import Xor
 
 aa, bb, cc, dd = [BDDVariable(v.name) for v in (a, b, c, d)]
 
@@ -80,6 +81,11 @@ def test_restrict():
     assert ff.restrict({aa: 1, bb: 0, cc: 1}) == 1
     assert ff.restrict({aa: 1, bb: 1, cc: 0}) == 1
     assert ff.restrict({aa: 1, bb: 1, cc: 1}) == 1
+
+def test_ops():
+    assert bdd2expr(-aa * bb + aa * -bb).equivalent(-a * b + a * -b)
+    assert bdd2expr(aa - bb).equivalent(a - b)
+    assert bdd2expr(aa.xor(bb)).equivalent(Xor(a, b))
 
 def test_negate():
     f = a * b + a * c + b * c

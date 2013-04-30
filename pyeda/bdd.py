@@ -9,6 +9,7 @@ Interface Functions:
     bdd2expr
 
 Interface Classes:
+    BDDNode
     BinaryDecisionDiagram
     BDDVariable
 """
@@ -22,22 +23,23 @@ from pyeda.expr import EXPRVARIABLES, And, Or
 # existing BDDVariable references
 BDDVARIABLES = dict()
 
-# existing BinaryDecisionDiagram references
-BDDS = dict()
-
-# { (int, int, int) : BDDNode }
-TABLE = dict()
-
 BDDNode = collections.namedtuple('BDDNode', ['root', 'low', 'high'])
 
-ZERO_ROOT = -2
-ONE_ROOT = -1
-
-BDDZERO = BDDNode(ZERO_ROOT, None, None)
-BDDONE = BDDNode(ONE_ROOT, None, None)
+BDDZERO = BDDNode(-2, None, None)
+BDDONE = BDDNode(-1, None, None)
 
 _NUM2BDD = {0: BDDZERO, 1: BDDONE}
 
+# { (int, int, int) : BDDNode }
+BDD_NODES = dict()
+
+def get_bdd_node(root, low, high):
+    key = (root, low, high)
+    try:
+        node = BDD_NODES[key]
+    except KeyError:
+        node = BDD_NODES[key] = BDDNode(*key)
+    return node
 
 def expr2bdd(expr):
     """Convert an expression into a binary decision diagram."""
@@ -49,11 +51,7 @@ def expr2bdd(expr):
     elif node.low is BDDZERO and node.high is BDDONE:
         return BDDVARIABLES[node.root]
     else:
-        try:
-            ret = BDDS[node]
-        except KeyError:
-            ret = BDDS[node] = BinaryDecisionDiagram(node)
-        return ret
+        return BinaryDecisionDiagram(node)
 
 def _expr2node(expr):
     top = expr.top
@@ -72,15 +70,9 @@ def _expr2node(expr):
         high = _expr2node(fv1)
 
     if low is high:
-        node = low
+        return low
     else:
-        key = (root, low, high)
-        try:
-            node = TABLE[key]
-        except KeyError:
-            node = TABLE[key] = BDDNode(*key)
-
-    return node
+        return get_bdd_node(root, low, high)
 
 def bdd2expr(bdd):
     """Convert a binary decision diagram into an expression."""
@@ -102,41 +94,48 @@ def bdd2expr(bdd):
         return Or(*[And(*term) for term in terms])
 
 
+# existing BinaryDecisionDiagram references
+_BDDS = dict()
+
 class BinaryDecisionDiagram(boolfunc.Function):
     def __new__(cls, node):
-        self = super(BinaryDecisionDiagram, cls).__new__(cls)
-        self.node = node
+        try:
+            self = _BDDS[node]
+        except KeyError:
+            self = super(BinaryDecisionDiagram, cls).__new__(cls)
+            self.node = node
+            _BDDS[node] = self
         return self
 
     # Operators
     def __neg__(self):
         node = neg(self.node)
-        try:
-            ret = BDDS[node]
-        except KeyError:
-            ret = BDDS[node] = BinaryDecisionDiagram(node)
-        return ret
+        return BinaryDecisionDiagram(node)
 
     def __add__(self, other):
-        raise NotImplementedError()
+        node = ite(self.node, BDDONE, other.node)
+        return BinaryDecisionDiagram(node)
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
-        raise NotImplementedError()
+        node = ite(self.node, BDDONE, neg(other.node))
+        return BinaryDecisionDiagram(node)
 
     def __rsub__(self, other):
         return self.__neg__().__add__(other)
 
     def __mul__(self, other):
-        raise NotImplementedError()
+        node = ite(self.node, other.node, BDDZERO)
+        return BinaryDecisionDiagram(node)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    def xor(self, *args):
-        raise NotImplementedError()
+    def xor(self, other):
+        node = ite(self.node, neg(other.node), other.node)
+        return BinaryDecisionDiagram(node)
 
     # From Function
     @cached_property
@@ -168,11 +167,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         elif node.low is BDDZERO and node.high is BDDONE:
             return BDDVARIABLES[node.root]
         else:
-            try:
-                ret = BDDS[node]
-            except KeyError:
-                ret = BDDS[node] = BinaryDecisionDiagram(node)
-            return ret
+            return BinaryDecisionDiagram(node)
 
     def compose(self, point):
         raise NotImplementedError()
@@ -204,11 +199,7 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
         try:
             self = BDDVARIABLES[uniqid]
         except KeyError:
-            key = (uniqid, BDDZERO, BDDONE)
-            try:
-                node = TABLE[key]
-            except KeyError:
-                node = TABLE[key] = BDDNode(*key)
+            node = get_bdd_node(uniqid, BDDZERO, BDDONE)
             self = BinaryDecisionDiagram.__new__(cls, node)
             self._var = _var
             BDDVARIABLES[uniqid] = self
@@ -238,37 +229,44 @@ def neg(node):
     elif node is BDDONE:
         return BDDZERO
     else:
-        low = neg(node.low)
-        high = neg(node.high)
-        key = (node.root, low, high)
-        try:
-            ret = TABLE[key]
-        except KeyError:
-            ret = TABLE[key] = BDDNode(*key)
-        return ret
+        return get_bdd_node(node.root, neg(node.low), neg(node.high))
+
+def ite(nf, ng, nh):
+    if ng is BDDONE and nh is BDDZERO:
+        return nf
+    elif ng is BDDZERO and nh is BDDONE:
+        return -nf
+    elif nf is BDDONE:
+        return ng
+    elif nf is BDDZERO:
+        return nh
+    elif ng is nh:
+        return ng
+    else:
+        root = min(node.root for node in (nf, ng, nh) if node.root > 0)
+        upoint0 = (frozenset([root]), frozenset())
+        upoint1 = (frozenset(), frozenset([root]))
+        nf0, ng0, nh0 = [urestrict(node, upoint0) for node in (nf, ng, nh)]
+        nf1, ng1, nh1 = [urestrict(node, upoint1) for node in (nf, ng, nh)]
+        return get_bdd_node(root, ite(nf0, ng0, nh0), ite(nf1, ng1, nh1))
 
 def urestrict(node, upoint):
     if node is BDDZERO or node is BDDONE:
-        ret = node
+        return node
     elif node.root in upoint[0]:
-        ret = urestrict(node.low, upoint)
+        return urestrict(node.low, upoint)
     elif node.root in upoint[1]:
-        ret = urestrict(node.high, upoint)
+        return urestrict(node.high, upoint)
     else:
         low = urestrict(node.low, upoint)
         high = urestrict(node.high, upoint)
         if low is not node.low or high is not node.high:
             if low is high:
-                ret = low
+                return low
             else:
-                key = (node.root, low, high)
-                try:
-                    ret = TABLE[key]
-                except KeyError:
-                    ret = TABLE[key] = BDDNode(*key)
+                return get_bdd_node(node.root, low, high)
         else:
-            ret = node
-    return ret
+            return node
 
 def iter_all_paths(start, end, path=tuple()):
     path = path + (start, )
