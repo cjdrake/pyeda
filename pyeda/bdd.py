@@ -49,18 +49,19 @@ def expr2bdd(expr):
     elif node.low is BDDZERO and node.high is BDDONE:
         return BDDVARIABLES[node.root]
     else:
-        key = (node.root, node.low.root, node.high.root)
         try:
-            ret = BDDS[key]
+            ret = BDDS[node]
         except KeyError:
-            ret = BDDS[key] = BinaryDecisionDiagram(node)
+            ret = BDDS[node] = BinaryDecisionDiagram(node)
         return ret
 
 def _expr2node(expr):
-    expr_top = expr.top
-    bdd_top = BDDVariable(expr_top.name, expr_top.indices, expr_top.namespace)
+    top = expr.top
+    fv0, fv1 = expr.cofactors(top)
 
-    fv0, fv1 = expr.cofactors(expr_top)
+    top = BDDVariable(top.name, top.indices, top.namespace)
+
+    root = top.uniqid
     try:
         low = _NUM2BDD[fv0]
     except KeyError:
@@ -73,11 +74,11 @@ def _expr2node(expr):
     if low is high:
         node = low
     else:
-        key = (bdd_top.uniqid, low.root, high.root)
+        key = (root, low, high)
         try:
             node = TABLE[key]
         except KeyError:
-            node = TABLE[key] = BDDNode(bdd_top.uniqid, low, high)
+            node = TABLE[key] = BDDNode(*key)
 
     return node
 
@@ -109,7 +110,12 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     # Operators
     def __neg__(self):
-        raise NotImplementedError()
+        node = neg(self.node)
+        try:
+            ret = BDDS[node]
+        except KeyError:
+            ret = BDDS[node] = BinaryDecisionDiagram(node)
+        return ret
 
     def __add__(self, other):
         raise NotImplementedError()
@@ -162,11 +168,10 @@ class BinaryDecisionDiagram(boolfunc.Function):
         elif node.low is BDDZERO and node.high is BDDONE:
             return BDDVARIABLES[node.root]
         else:
-            key = (node.root, node.low.root, node.high.root)
             try:
-                ret = BDDS[key]
+                ret = BDDS[node]
             except KeyError:
-                ret = BDDS[key] = BinaryDecisionDiagram(node)
+                ret = BDDS[node] = BinaryDecisionDiagram(node)
             return ret
 
     def compose(self, point):
@@ -199,13 +204,12 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
         try:
             self = BDDVARIABLES[uniqid]
         except KeyError:
-            key = (uniqid, ZERO_ROOT, ONE_ROOT)
+            key = (uniqid, BDDZERO, BDDONE)
             try:
                 node = TABLE[key]
             except KeyError:
-                node = TABLE[key] = BDDNode(uniqid, BDDZERO, BDDONE)
-            self = super(BinaryDecisionDiagram, cls).__new__(cls)
-            self.node = node
+                node = TABLE[key] = BDDNode(*key)
+            self = BinaryDecisionDiagram.__new__(cls, node)
             self._var = _var
             BDDVARIABLES[uniqid] = self
         return self
@@ -228,6 +232,21 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
         return self._var.indices
 
 
+def neg(node):
+    if node is BDDZERO:
+        return BDDONE
+    elif node is BDDONE:
+        return BDDZERO
+    else:
+        low = neg(node.low)
+        high = neg(node.high)
+        key = (node.root, low, high)
+        try:
+            ret = TABLE[key]
+        except KeyError:
+            ret = TABLE[key] = BDDNode(*key)
+        return ret
+
 def urestrict(node, upoint):
     if node is BDDZERO or node is BDDONE:
         ret = node
@@ -242,11 +261,11 @@ def urestrict(node, upoint):
             if low is high:
                 ret = low
             else:
-                key = (node.root, low.root, high.root)
+                key = (node.root, low, high)
                 try:
                     ret = TABLE[key]
                 except KeyError:
-                    ret = TABLE[key] = BDDNode(node.root, low, high)
+                    ret = TABLE[key] = BDDNode(*key)
         else:
             ret = node
     return ret
