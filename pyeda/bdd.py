@@ -212,14 +212,14 @@ class BinaryDecisionDiagram(boolfunc.Function):
 class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
     def __new__(cls, name, indices=None, namespace=None):
         _var = boolfunc.Variable(name, indices, namespace)
-        uniqid = _var.uniqid
+        root = _var.uniqid
         try:
-            self = BDDVARIABLES[uniqid]
+            self = BDDVARIABLES[root]
         except KeyError:
-            node = get_bdd_node(uniqid, BDDZERO, BDDONE)
+            node = get_bdd_node(root, BDDZERO, BDDONE)
             self = BinaryDecisionDiagram.__new__(cls, node)
             self._var = _var
-            BDDVARIABLES[uniqid] = self
+            BDDVARIABLES[root] = self
         return self
 
     # From Variable
