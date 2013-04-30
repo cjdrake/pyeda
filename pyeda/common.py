@@ -14,8 +14,8 @@ PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
 BOOL_DICT = {
     0: 0,
     1: 1,
-    "0": 0,
-    "1": 1,
+    '0': 0,
+    '1': 1,
 }
 
 PC_DICT = {

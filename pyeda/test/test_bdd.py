@@ -83,6 +83,24 @@ def test_restrict():
     assert ff.restrict({aa: 1, bb: 1, cc: 1}) == 1
 
 def test_ops():
+    assert aa + 0 == aa
+    assert aa + 1 == 1
+    assert 0 + aa == aa
+    assert 1 + aa == 1
+
+    assert aa - 0 == 1
+    assert aa - 1 == aa
+    assert 0 - aa == -aa
+    assert 1 - aa == 1
+
+    assert aa * 0 == 0
+    assert aa * 1 == aa
+    assert 0 * aa == 0
+    assert 1 * aa == aa
+
+    assert aa.xor(0) == aa
+    assert aa.xor(1) == -aa
+
     assert bdd2expr(-aa * bb + aa * -bb).equivalent(-a * b + a * -b)
     assert bdd2expr(aa - bb).equivalent(a - b)
     assert bdd2expr(aa.xor(bb)).equivalent(Xor(a, b))

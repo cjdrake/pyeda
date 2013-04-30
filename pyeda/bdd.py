@@ -28,7 +28,15 @@ BDDNode = collections.namedtuple('BDDNode', ['root', 'low', 'high'])
 BDDZERO = BDDNode(-2, None, None)
 BDDONE = BDDNode(-1, None, None)
 
-_NUM2BDD = {0: BDDZERO, 1: BDDONE}
+_NUM2BDDNODE = {
+    0: BDDZERO,
+    1: BDDONE,
+}
+
+_BDDNODE2NUM = {
+    BDDZERO: 0,
+    BDDONE: 1,
+}
 
 # { (int, int, int) : BDDNode }
 BDD_NODES = dict()
@@ -61,11 +69,11 @@ def _expr2node(expr):
 
     root = top.uniqid
     try:
-        low = _NUM2BDD[fv0]
+        low = _NUM2BDDNODE[fv0]
     except KeyError:
         low = _expr2node(fv0)
     try:
-        high = _NUM2BDD[fv1]
+        high = _NUM2BDDNODE[fv1]
     except KeyError:
         high = _expr2node(fv1)
 
@@ -113,29 +121,57 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return BinaryDecisionDiagram(node)
 
     def __add__(self, other):
-        node = ite(self.node, BDDONE, other.node)
-        return BinaryDecisionDiagram(node)
+        try:
+            other_node = _NUM2BDDNODE[other]
+        except KeyError:
+            other_node = other.node
+        node = ite(self.node, BDDONE, other_node)
+        try:
+            return _BDDNODE2NUM[node]
+        except KeyError:
+            return BinaryDecisionDiagram(node)
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
-        node = ite(self.node, BDDONE, neg(other.node))
-        return BinaryDecisionDiagram(node)
+        try:
+            other_node = _NUM2BDDNODE[other]
+        except KeyError:
+            other_node = other.node
+        node = ite(self.node, BDDONE, neg(other_node))
+        try:
+            return _BDDNODE2NUM[node]
+        except KeyError:
+            return BinaryDecisionDiagram(node)
 
     def __rsub__(self, other):
         return self.__neg__().__add__(other)
 
     def __mul__(self, other):
-        node = ite(self.node, other.node, BDDZERO)
-        return BinaryDecisionDiagram(node)
+        try:
+            other_node = _NUM2BDDNODE[other]
+        except KeyError:
+            other_node = other.node
+        node = ite(self.node, other_node, BDDZERO)
+        try:
+            return _BDDNODE2NUM[node]
+        except KeyError:
+            return BinaryDecisionDiagram(node)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def xor(self, other):
-        node = ite(self.node, neg(other.node), other.node)
-        return BinaryDecisionDiagram(node)
+        try:
+            other_node = _NUM2BDDNODE[other]
+        except KeyError:
+            other_node = other.node
+        node = ite(self.node, neg(other_node), other_node)
+        try:
+            return _BDDNODE2NUM[node]
+        except KeyError:
+            return BinaryDecisionDiagram(node)
 
     # From Function
     @cached_property
@@ -206,7 +242,11 @@ class BinaryDecisionDiagram(boolfunc.Function):
             yield node
 
     def equivalent(self, other):
-        return self.node is other.node
+        try:
+            other_node = _NUM2BDDNODE[other]
+        except KeyError:
+            other_node = other.node
+        return self.node is other_node
 
 
 class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
@@ -252,7 +292,7 @@ def ite(nf, ng, nh):
     if ng is BDDONE and nh is BDDZERO:
         return nf
     elif ng is BDDZERO and nh is BDDONE:
-        return -nf
+        return neg(nf)
     elif nf is BDDONE:
         return ng
     elif nf is BDDZERO:
