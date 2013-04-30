@@ -354,5 +354,5 @@ def dfs(node, visited):
     if high not in visited and high is not None:
         for n in dfs(high, visited):
             yield n
-    if node not in visited and node is not None:
+    if node not in visited:
         yield node
