@@ -35,7 +35,7 @@ class Constant(Function):
     def restrict(self, point):
         return self
 
-    def compose(self, point):
+    def compose(self, mapping):
         return self
 
     # Specific to Constant

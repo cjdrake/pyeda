@@ -196,7 +196,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         else:
             return BinaryDecisionDiagram(node)
 
-    def compose(self, point):
+    def compose(self, mapping):
         raise NotImplementedError()
 
     def satisfy_one(self):
