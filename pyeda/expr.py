@@ -34,8 +34,6 @@ Interface Classes:
         ITE
 """
 
-import collections
-
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.common import bit_on, parity, boolify, cached_property
