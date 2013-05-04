@@ -55,7 +55,7 @@ def var(name, indices=None, namespace=None):
     indices : int or tuple[int], optional
         One or more integer suffixes for variables that are part of a
         multi-dimensional bit-vector, eg x[1], x[1][2][3]
-    namespace : str, optional
+    namespace : str or tuple[str], optional
         A container for a set of variables. Since a Variable instance is global,
         a namespace can be used for local scoping.
     """

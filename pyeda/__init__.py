@@ -20,7 +20,7 @@ from pyeda.boolfunc import (
 
 from pyeda.common import clog2, boolify, pcify
 
-from pyeda.bdd import expr2bdd, bdd2expr
+from pyeda.bdd import bddvar, expr2bdd, bdd2expr
 from pyeda.expr import (
     var, factor, simplify,
     Nor, Nand, OneHot0, OneHot,

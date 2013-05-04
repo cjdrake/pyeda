@@ -5,6 +5,7 @@ Globals:
     BDDVARIABLES
 
 Interface Functions:
+    bddvar
     expr2bdd
     bdd2expr
 
@@ -15,6 +16,7 @@ Interface Classes:
 """
 
 import collections
+import functools
 
 from pyeda import boolfunc
 from pyeda.common import cached_property
@@ -48,6 +50,22 @@ def get_bdd_node(root, low, high):
     except KeyError:
         node = BDD_NODES[key] = BDDNode(*key)
     return node
+
+def bddvar(name, indices=None, namespace=None):
+    """Return a BDD variable.
+
+    Parameters
+    ----------
+    name : str
+        The variable's identifier string.
+    indices : int or tuple[int], optional
+        One or more integer suffixes for variables that are part of a
+        multi-dimensional bit-vector, eg x[1], x[1][2][3]
+    namespace : str or tuple[str], optional
+        A container for a set of variables. Since a Variable instance is global,
+        a namespace can be used for local scoping.
+    """
+    return BDDVariable(name, indices, namespace)
 
 def expr2bdd(expr):
     """Convert an expression into a binary decision diagram."""
@@ -230,6 +248,21 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
+
+    def is_neg_unate(self, vs=None):
+        raise NotImplementedError()
+
+    def is_pos_unate(self, vs=None):
+        raise NotImplementedError()
+
+    def smoothing(self, vs=None):
+        return functools.reduce(self.__class__.__add__, self.cofactors(vs))
+
+    def consensus(self, vs=None):
+        return functools.reduce(self.__class__.__mul__, self.cofactors(vs))
+
+    def derivative(self, vs=None):
+        return functools.reduce(self.__class__.xor, self.cofactors(vs))
 
     # Specific to BinaryDecisionDiagram
     def traverse(self):
