@@ -3,10 +3,19 @@ Test binary decision diagrams
 """
 
 from pyeda.alphas import *
-from pyeda.bdd import expr2bdd, bdd2expr, BDDVariable, BDDZERO, BDDONE
+from pyeda.bdd import (
+    bddvar, expr2bdd, bdd2expr,
+    BinaryDecisionDiagram,
+    BDDZERO, BDDONE
+)
 from pyeda.expr import Xor
 
-aa, bb, cc, dd = [BDDVariable(v.name) for v in (a, b, c, d)]
+aa, bb, cc, dd = map(bddvar, 'abcd')
+
+def test_bddvar():
+    assert aa.name == 'a'
+    assert aa.indices == tuple()
+    assert aa.namespace == tuple()
 
 def test_expr2bdd():
     assert expr2bdd(a) == aa
@@ -34,7 +43,12 @@ def test_expr2bdd():
 
 def test_bdd2expr():
     f = a * b + a * c + b * c
+    zero = BinaryDecisionDiagram(BDDZERO)
+    one = BinaryDecisionDiagram(BDDONE)
+    assert bdd2expr(zero) == 0
+    assert bdd2expr(one) == 1
     assert bdd2expr(expr2bdd(f)).equivalent(f)
+    assert bdd2expr(expr2bdd(f), conj=True).equivalent(f)
 
 def test_traverse():
     ff = expr2bdd(a * b + a * c + b * c)
@@ -50,6 +64,8 @@ def test_equivalent():
 
 def test_restrict():
     ff = expr2bdd(a * b + a * c + b * c)
+
+    assert ff.restrict({}).equivalent(ff)
 
     assert ff.restrict({aa: 0}).equivalent(expr2bdd(b * c))
     assert ff.restrict({aa: 1}).equivalent(expr2bdd(b + c))
@@ -116,3 +132,14 @@ def test_satisfy():
     assert [p for p in ff.satisfy_all()] == [{aa: 0, bb: 1, cc: 1}, {aa: 1, bb: 0, cc: 1}, {aa: 1, bb: 1}]
     assert ff.satisfy_count() == 3
     assert ff.satisfy_one() == {aa: 0, bb: 1, cc: 1}
+
+def test_misc():
+    f = a * b + a * c + b * c
+    ff = expr2bdd(f)
+    assert ff.reduce() == ff
+    assert ff.smoothing(aa).equivalent(bb + cc)
+    assert ff.consensus(aa).equivalent(bb * cc)
+    assert ff.derivative(aa).equivalent(bb.xor(cc))
+
+    zero = BinaryDecisionDiagram(BDDZERO)
+    assert zero.satisfy_one() is None
