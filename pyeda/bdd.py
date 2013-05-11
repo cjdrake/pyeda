@@ -20,7 +20,7 @@ import functools
 
 from pyeda import boolfunc
 from pyeda.common import cached_property
-from pyeda.expr import EXPRVARIABLES, And, Or
+from pyeda.expr import EXPRVARIABLES, Or, And
 
 # existing BDDVariable references
 BDDVARIABLES = dict()

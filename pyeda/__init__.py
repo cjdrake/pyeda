@@ -29,6 +29,6 @@ from pyeda.expr import (
 )
 from pyeda.vexpr import BitVector, bitvec, uint2vec, int2vec
 from pyeda.nfexpr import expr2nfexpr, expr2nfexpr, CNF_And, DNF_Or
-from pyeda.table import expr2truthtable, truthtable2expr, TruthTable, PCTable
+from pyeda.table import ttvar, expr2truthtable, truthtable2expr, TruthTable
 
 from pyeda.dimacs import load_cnf, dump_cnf, load_sat, dump_sat
