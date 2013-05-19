@@ -77,6 +77,9 @@ def truthtable2expr(tt, conj=False):
 
 
 class PCData(object):
+
+    _NEG = {0: 0, 1: 2, 2: 1, 3: 3}
+
     def __init__(self, outputs):
         data = array.array('L')
         width = data.itemsize << 3
@@ -176,11 +179,7 @@ class PCData(object):
             q += 1
 
     def __neg__(self):
-        new = deepcopy(self)
-        gen = (((item & self.one_mask) << 1) | ((item & self.zero_mask) >> 1)
-               for item in self.data)
-        new.data = array.array('L', gen)
-        return new
+        return PCData(self._NEG[item] for item in self)
 
 
 class TruthTable(boolfunc.Function):
