@@ -16,7 +16,6 @@ Interface Classes:
 
 import array
 import functools
-from copy import deepcopy
 
 from pyeda import boolfunc
 from pyeda.common import (
