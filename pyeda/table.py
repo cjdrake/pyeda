@@ -77,7 +77,12 @@ def truthtable2expr(tt, conj=False):
 
 class PCData(object):
 
-    _NEG = {0: 0, 1: 2, 2: 1, 3: 3}
+    _NEG = {
+        PC_VOID : PC_VOID,
+        PC_ONE  : PC_ZERO,
+        PC_ZERO : PC_ONE,
+        PC_DC   : PC_DC,
+    }
 
     def __init__(self, outputs):
         data = array.array('L')
