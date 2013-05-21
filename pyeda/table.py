@@ -84,15 +84,15 @@ class PCData(object):
         PC_DC   : PC_DC,
     }
 
-    def __init__(self, outputs):
+    def __init__(self, items):
         data = array.array('L')
         width = data.itemsize << 3
 
         pos = n = 0
-        for output in outputs:
+        for item in items:
             if pos == 0:
                 data.append(0)
-            data[-1] += (output << pos)
+            data[-1] += (item << pos)
             pos = (pos + 2) % width
             n += 1
 
@@ -118,6 +118,9 @@ class PCData(object):
                 r += 2
                 n += 1
             q += 1
+
+    def __neg__(self):
+        return PCData(self._NEG[item] for item in self)
 
     @cached_property
     def zero_mask(self):
@@ -182,9 +185,6 @@ class PCData(object):
                 n += (self.width >> 1)
             q += 1
 
-    def __neg__(self):
-        return PCData(self._NEG[item] for item in self)
-
 
 class TruthTable(boolfunc.Function):
     """Boolean function represented by a truth table."""
@@ -229,8 +229,8 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def outputs():
             for upoint in boolfunc.iter_upoints(inputs):
-                ab = self.urestrict(upoint).pcdata[0]
-                cd = other.urestrict(upoint).pcdata[0]
+                ab = self._urestrict(upoint).pcdata[0]
+                cd = other._urestrict(upoint).pcdata[0]
                 # a * c, b + d
                 yield ((ab & cd) & 2) | ((ab | cd) & 1)
 
@@ -256,8 +256,8 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def outputs():
             for upoint in boolfunc.iter_upoints(inputs):
-                ab = self.urestrict(upoint).pcdata[0]
-                cd = other.urestrict(upoint).pcdata[0]
+                ab = self._urestrict(upoint).pcdata[0]
+                cd = other._urestrict(upoint).pcdata[0]
                 # a + c, b * d
                 yield ((ab | cd) & 2) | ((ab & cd) & 1)
 
@@ -275,8 +275,8 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def outputs():
             for upoint in boolfunc.iter_upoints(inputs):
-                ab = self.urestrict(upoint).pcdata[0]
-                cd = other.urestrict(upoint).pcdata[0]
+                ab = self._urestrict(upoint).pcdata[0]
+                cd = other._urestrict(upoint).pcdata[0]
                 # a * c + b * d, a * d + b * c
                 a, b, c, d = ab >> 1, ab & 1, cd >> 1, cd & 1
                 yield (((a & c | b & d) << 1) | (a & d | b & c))
@@ -307,6 +307,13 @@ class TruthTable(boolfunc.Function):
         return self
 
     def urestrict(self, upoint):
+        obj = self._urestrict(upoint)
+        if len(obj.inputs) == 0:
+            return _PC2NUM[obj.pcdata[0]]
+        else:
+            return obj
+
+    def _urestrict(self, upoint):
         usupport = {v.uniqid for v in self.support}
         zeros = usupport & upoint[0]
         ones = usupport & upoint[1]
