@@ -4,12 +4,14 @@ Test expression Boolean functions
 
 import sys
 
+from pyeda import boolfunc
+from pyeda.alphas import *
 from pyeda.expr import (
+    exprify, constify,
     factor, simplify,
-    var,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
-    f_not, f_or, f_nor, f_and, f_nand, f_xor, f_xnor, f_equal, f_implies, f_ite
+    EXPRZERO, EXPRONE,
 )
 from pyeda.vexpr import bitvec
 
@@ -18,39 +20,44 @@ import nose
 MAJOR = sys.version_info.major
 MINOR = sys.version_info.minor
 
-a, b, c, d, e, p, q, s = map(var, 'abcdepqs')
 X = bitvec('x', 16)
 Y = bitvec('y', 16, 16, 16)
 
-def test_ops():
-    # __sub__, __rsub__
-    assert (a - 0) == 1
-    assert (0 - a) == -a
-    assert (a - 1) == a
-    assert (1 - a) == 1
-    assert (a - b).equivalent(a + -b)
-    # xor, equal, ite
-    assert a.xor(b, c).equivalent(-a * -b * c + -a * b * -c + a * -b * -c + a * b * c)
-    assert a.equal(b, c).equivalent(-a * -b * -c + a * b * c)
-    assert s.ite(a, b).equivalent(s * a + -s * b)
+def test_exprify():
+    assert exprify(0) is EXPRZERO
+    assert exprify('0') is EXPRZERO
+    assert exprify(1) is EXPRONE
+    assert exprify('1') is EXPRONE
+    assert exprify(a) is a
+    nose.tools.assert_raises(ValueError, exprify, "foo")
 
-def test_factor():
-    assert factor(0) == 0
-    assert factor(Implies(p, q)).equivalent(-p + q)
-    assert factor(Xor(a, b)).equivalent(-a * b + a * -b)
+def test_constify():
+    assert constify(EXPRZERO) == 0
+    assert constify(EXPRONE) == 1
+    assert constify(a) is a
+    nose.tools.assert_raises(ValueError, constify, "foo")
 
 def test_simplify():
     assert simplify(0) == 0
-    assert simplify(And(1, 1, 1, 0, simplify=False)) == 0
-    assert simplify(Or(0, 0, 0, 1, simplify=False)) == 1
+    assert simplify(1) == 1
 
-    f1 = And(a, And(b, And(c, 0, simplify=False), simplify=False), simplify=False)
-    f2 = Or(a, Or(b, Or(c, 1, simplify=False), simplify=False), simplify=False)
-    if MAJOR >= 3:
-        assert str(f1) == "a * b * c * 0"
-        assert str(f2) == "a + b + c + 1"
-    assert simplify(f1) == 0
-    assert simplify(f2) == 1
+def test_factor():
+    assert factor(0) == 0
+    assert factor(1) == 1
+
+def test_nor():
+    assert Nor(0, 0) == 1
+    assert Nor(0, 1) == 0
+    assert Nor(1, 0) == 0
+    assert Nor(1, 1) == 0
+    assert Nor(a, b).equivalent(-a * -b)
+
+def test_nand():
+    assert Nand(0, 0) == 1
+    assert Nand(0, 1) == 1
+    assert Nand(1, 0) == 1
+    assert Nand(1, 1) == 0
+    assert Nand(a, b).equivalent(-a + -b)
 
 def test_onehot0():
     assert OneHot0(0, 0, 0) == 1
@@ -61,7 +68,6 @@ def test_onehot0():
     assert OneHot0(1, 0, 1) == 0
     assert OneHot0(1, 1, 0) == 0
     assert OneHot0(1, 1, 1) == 0
-
     assert OneHot0(a, b, c).equivalent((-a + -b) * (-a + -c) * (-b + -c))
 
 def test_onehot():
@@ -73,8 +79,50 @@ def test_onehot():
     assert OneHot(1, 0, 1) == 0
     assert OneHot(1, 1, 0) == 0
     assert OneHot(1, 1, 1) == 0
-
     assert OneHot(a, b, c).equivalent((-a + -b) * (-a + -c) * (-b + -c) * (a + b + c))
+
+def test_ops():
+    # __sub__, __rsub__
+    assert (a - 0) == 1
+    assert (0 - a) == -a
+    assert (a - 1) == a
+    assert (1 - a) == 1
+    assert (a - b).equivalent(a + -b)
+    # xor, equal, ite
+    assert a.xor(b, c).equivalent(-a * -b * c + -a * b * -c + a * -b * -c + a * b * c)
+    assert a.equal(b, c).equivalent(-a * -b * -c + a * b * c)
+    assert a >> 0 == -a
+    assert 0 >> a == 1
+    assert a >> 1 == 1
+    assert 1 >> a == a
+    assert (a >> b).equivalent(-a + b)
+    assert s.ite(a, b).equivalent(s * a + -s * b)
+
+def test_const():
+    if MAJOR >= 3:
+        assert bool(EXPRZERO) is False
+        assert bool(EXPRONE) is True
+    assert int(EXPRZERO) == 0
+    assert int(EXPRONE) == 1
+    assert str(EXPRZERO) == '0'
+    assert str(EXPRONE) == '1'
+
+    assert not EXPRZERO.support
+    assert not EXPRONE.support
+
+    assert EXPRZERO.restrict({a: 0, b: 1, c: 0, d: 1}) == 0
+    assert EXPRONE.restrict({a: 0, b: 1, c: 0, d: 1}) == 1
+
+    assert EXPRZERO.compose({a: 0, b: 1, c: 0, d: 1}) == 0
+    assert EXPRONE.compose({a: 0, b: 1, c: 0, d: 1}) == 1
+
+    assert EXPRZERO.simplify() == 0
+    assert EXPRONE.simplify() == 1
+    assert EXPRZERO.factor() == 0
+    assert EXPRONE.factor() == 1
+
+    assert EXPRZERO.depth == 0
+    assert EXPRONE.depth == 0
 
 def test_var():
     # Function
@@ -92,11 +140,14 @@ def test_var():
     assert str(X[10]) == 'x[10]'
     assert str(Y[1][2][3]) == 'y[1][2][3]'
 
-    assert a.depth == 0
+    assert a.simplify() == a
     assert a.factor() == a
+    assert a.depth == 0
     assert a.is_dnf()
     assert a.is_cnf()
-    assert a.invert() == -a
+
+    assert a.minterm_index == 1
+    assert a.maxterm_index == 0
 
 def test_comp():
     # Function
@@ -110,14 +161,28 @@ def test_comp():
     assert (-a).compose({b: c}) == -a
 
     # Expression
-    assert (-a).depth == 0
+    assert (-a).simplify() == -a
     assert (-a).factor() == -a
+    assert (-a).depth == 0
     assert (-a).is_dnf()
     assert (-a).is_cnf()
-    assert (-a).invert() == a
 
-def test_var_order():
-    assert -a < a < -b < b
+    assert (-a).minterm_index == 0
+    assert (-a).maxterm_index == 1
+
+def test_order():
+    assert EXPRZERO < EXPRONE < -a < a < -b < b
+
+    assert EXPRZERO < EXPRONE
+    assert not EXPRONE < EXPRZERO
+    assert EXPRZERO < a
+    assert not a < EXPRZERO
+    assert EXPRZERO < -a
+    assert not -a < EXPRZERO
+    assert EXPRZERO < (a + b)
+    assert not (a + b) < EXPRZERO
+    assert EXPRONE < (a * b)
+    assert not (a * b) < EXPRONE
 
     assert a < a + b
     assert b < a + b
@@ -145,6 +210,15 @@ def test_var_order():
 def test_or():
     # Function
     assert (-a + b).support == {a, b}
+
+    f = -a * b * c + a * -b * c + a * b * -c
+    assert f.restrict({a: 0}).equivalent(b * c)
+    assert f.restrict({a: 1}).equivalent(b * -c + -b * c)
+    assert f.restrict({a: 0, b: 0}) == 0
+    assert f.restrict({a: 0, b: 1}) == c
+    assert f.restrict({a: 1, b: 0}) == c
+    assert f.restrict({a: 1, b: 1}) == -c
+    assert f.compose({a: d, b: c}).equivalent(-d * c)
 
     # Expression
     assert Or() == 0
@@ -174,6 +248,8 @@ def test_or():
     assert (1 + a + b) == 1
     assert (a + b + 1) == 1
 
+    assert str(Or(a, 0, simplify=False)) == "0 + a"
+
     # associative
     assert str((a + b) + c + d) == "a + b + c + d"
     assert str(a + (b + c) + d) == "a + b + c + d"
@@ -190,27 +266,22 @@ def test_or():
     assert a + a + a + a == a
     assert (a + a) + (a + a) == a
 
-    # iverse
+    # inverse
     assert -a + a == 1
     assert a + -a == 1
-
-    f = -a * b * c + a * -b * c + a * b * -c
-    assert f.restrict({a: 0}).equivalent(b * c)
-    assert f.restrict({a: 1}).equivalent(Xor(b, c))
-    assert f.restrict({a: 0, b: 0}) == 0
-    assert f.restrict({a: 0, b: 1}) == c
-    assert f.restrict({a: 1, b: 0}) == c
-    assert f.restrict({a: 1, b: 1}) == -c
-
-    assert f_or(a >> b, c >> d).equivalent(-a + b + -c + d)
-
-def test_nor():
-    assert Nor(a, b).equivalent(-a * -b)
-    assert str(f_nor(a, b)) == "a' * b'"
 
 def test_and():
     # Function
     assert (-a * b).support == {a, b}
+
+    f = (-a + b + c) * (a + -b + c) * (a + b + -c)
+    assert f.restrict({a: 0}).equivalent(b * c + -b * -c)
+    assert f.restrict({a: 1}).equivalent(b + c)
+    assert f.restrict({a: 0, b: 0}) == -c
+    assert f.restrict({a: 0, b: 1}) == c
+    assert f.restrict({a: 1, b: 0}) == c
+    assert f.restrict({a: 1, b: 1}) == 1
+    assert f.compose({a: d, b: c}).equivalent(-d + c)
 
     # Expression
     assert And() == 1
@@ -240,6 +311,8 @@ def test_and():
     assert (1 * a * b).equivalent(a * b)
     assert (a * b * 1).equivalent(a * b)
 
+    assert str(And(a, 1, simplify=False)) == "1 * a"
+
     # associative
     assert str((a * b) * c * d) == "a * b * c * d"
     assert str(a * (b * c) * d) == "a * b * c * d"
@@ -260,20 +333,6 @@ def test_and():
     assert -a * a == 0
     assert a * -a == 0
 
-    f = (-a + b + c) * (a + -b + c) * (a + b + -c)
-    assert f.restrict({a: 0}).equivalent(Xnor(b, c))
-    assert f.restrict({a: 1}).equivalent(b + c)
-    assert f.restrict({a: 0, b: 0}) == -c
-    assert f.restrict({a: 0, b: 1}) == c
-    assert f.restrict({a: 1, b: 0}) == c
-    assert f.restrict({a: 1, b: 1}) == 1
-
-    assert f_and(a >> b, c >> d).equivalent((-a + b) * (-c + d))
-
-def test_nand():
-    assert Nand(a, b).equivalent(-a + -b)
-    assert str(f_nand(a, b)) == "a' + b'"
-
 def test_not():
     # Function
     assert Not(-a + b).support == {a, b}
@@ -290,9 +349,6 @@ def test_not():
 
     assert Not(a + -a) == 0
     assert Not(a * -a) == 1
-
-    assert f_not(-a * b * -c * d).equivalent(a + -b + c + -d)
-    assert f_not(-a + b + -c + d).equivalent(a * -b * c * -d)
 
 def test_xor():
     # Function
@@ -325,8 +381,7 @@ def test_xor():
     assert Xor(a, -a) == 1
     assert Xor(-a, a) == 1
 
-    assert f_xor(a, b).equivalent(-a * b + a * -b)
-    assert f_xor(a, b, c).equivalent(-a * -b * c + -a * b * -c + a * -b * -c + a * b * c)
+    assert str(Xor(a, 0, simplify=False)) == "Xor(0, a)"
 
 def test_xnor():
     # Function
@@ -359,8 +414,7 @@ def test_xnor():
     assert Xnor(a, -a) == 0
     assert Xnor(-a, a) == 0
 
-    assert f_xnor(a, b).equivalent(-a * -b + a * b)
-    assert f_xnor(a, b, c).equivalent(-a * -b * -c + -a * b * c + a * -b * c + a * b * -c)
+    assert str(Xnor(a, 0, simplify=False)) == "Xnor(0, a)"
 
 def test_equal():
     # Function
@@ -393,9 +447,6 @@ def test_equal():
     assert Equal(a, -a) == 0
     assert Equal(-a, a) == 0
 
-    assert f_equal(a, b).equivalent(-a * -b + a * b)
-    assert f_equal(a, b, c).equivalent(-a * -b * -c + a * b * c)
-
 def test_implies():
     # Function
     assert Implies(-p, q).support == {p, q}
@@ -406,28 +457,26 @@ def test_implies():
     assert Implies(1, 0) == 0
     assert Implies(1, 1) == 1
 
-    assert (0 >> p) == 1
-    assert (1 >> p) == p
-    assert (p >> 0) == -p
-    assert (p >> 1) == 1
+    assert Implies(0, p) == 1
+    assert Implies(1, p) == p
+    assert Implies(p, 0) == -p
+    assert Implies(p, 1) == 1
 
-    assert (p >> p) == 1
-    assert (p >> -p) == -p
-    assert (-p >> p) == p
+    assert Implies(p, p) == 1
+    assert Implies(p, -p) == -p
+    assert Implies(-p, p) == p
 
     assert str(p >> q) == "p => q"
     assert str((a * b) >> (c + d)) == "(a * b) => (c + d)"
 
     assert (p >> q).restrict({p: 0}) == 1
     assert (p >> q).compose({q: a}).equivalent(p >> a)
-    assert (p >> q).invert().equivalent(p * -q)
+    assert Not(p >> q).equivalent(p * -q)
     assert ((a * b) >> (c + d)).depth == 2
 
     f = Implies(p, 1, simplify=False)
     assert str(f) == "p => 1"
     assert simplify(f) == 1
-
-    assert f_implies(p, q).equivalent(-p + q)
 
 def test_ite():
     # Function
@@ -469,14 +518,11 @@ def test_ite():
 
     assert ITE(s, a, b).restrict({a: 1, b: 1}) == 1
     assert ITE(s, a, b).compose({a: b, b: a}).equivalent(s * b + -s * a)
-    assert ITE(s, a, b).invert().equivalent((-s + -a) * (s + -b))
     assert ITE(s, a * b, c + d).depth == 3
 
     f = ITE(s, 1, 1, simplify=False)
     assert str(f) == "s ? 1 : 1"
     assert simplify(f) == 1
-
-    assert f_ite(s, a, b).equivalent(s * a + -s * b)
 
 def test_absorb():
     assert (a * b + a * b).absorb().equivalent(a * b)
@@ -520,6 +566,7 @@ def test_satisfy():
 
     f = a * b + a * c + b * c
     nose.tools.assert_raises(TypeError, f.satisfy_one, 'dpll')
+    nose.tools.assert_raises(ValueError, f.satisfy_one, 'foo')
 
     points = [p for p in Xor(a, b, c).satisfy_all()]
     assert points == [
@@ -559,11 +606,6 @@ def test_depth():
     assert ITE(s, a + b, b).depth == 3
     assert ITE(s, a + b, Xor(a, b)).depth == 4
 
-def test_terms():
-    f = a * b + a * c + b * c
-    assert str(sorted(f.minterms)) == "[a' * b * c, a * b' * c, a * b * c', a * b * c]"
-    assert str(sorted(f.maxterms)) == "[a + b + c, a + b + c', a + b' + c, a' + b + c]"
-
 def test_indices():
     f = a * b + a * c + b * c
     assert f.min_indices == {3, 5, 6, 7}
@@ -598,9 +640,15 @@ def test_is_nf():
     assert not Implies(p, q).is_cnf()
     assert not ITE(s, a, b).is_cnf()
 
+def test_dpll():
+    assert a.bcp() == (1, {a: 1})
+    assert a.ple() == (1, {a: 1})
+    assert (-a).bcp() == (1, {a: 0})
+    assert (-a).ple() == (1, {a: 0})
+
 def test_misc():
     f = a * b + a * c + b * c
 
     assert f.smoothing(a).equivalent(b + c)
     assert f.consensus(a).equivalent(b * c)
-    assert f.derivative(a).equivalent(Xor(b, c))
+    assert f.derivative(a).equivalent(b * -c + -b * c)

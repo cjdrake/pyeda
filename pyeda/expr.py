@@ -8,42 +8,63 @@ Interface Functions:
     factor
     simplify
 
+    Or, And, Not
+    Xor, Xnor,
+    Equal, Implies, ITE
+
     Nor, Nand
     OneHot0, OneHot
 
-    f_not
-    f_or, f_nor
-    f_and, f_nand
-    f_xor, f_xnor
-    f_equal
-    f_implies
-
 Interface Classes:
     Expression
-        Literal
+        ExprLiteral
             ExprVariable
-            Complement
-        OrAnd
-            Or
-            And
-        Not
-        Exclusive
-            Xor
-            Xnor
-        Equal
-        Implies
-        ITE
+            ExprComplement
+        ExprOrAnd
+            ExprOr
+            ExprAnd
+        ExprNot
+
+        ExprExclusive
+            ExprXor
+            ExprXnor
+        ExprEqual
+        ExprImplies
+        ExprITE
 """
+
+import weakref
+from collections import Counter
 
 from pyeda import boolfunc
 from pyeda import sat
-from pyeda.common import bit_on, parity, boolify, cached_property
+from pyeda.common import bit_on, parity, cached_property
 
 B = {0, 1}
 
 EXPRVARIABLES = dict()
-COMPLEMENTS = dict()
+EXPRCOMPLEMENTS = dict()
 
+
+def exprify(arg):
+    """Convert the input argument to an expression."""
+    if arg == 0 or arg == '0':
+        return EXPRZERO
+    elif arg == 1 or arg == '1':
+        return EXPRONE
+    elif isinstance(arg, Expression):
+        return arg
+    else:
+        raise ValueError("invalid argument: " + str(arg))
+
+def constify(expr):
+    """Convert constant expressions to integers."""
+    if isinstance(expr, ExprConstant):
+        return expr.VAL
+    elif isinstance(expr, Expression):
+        return expr
+    else:
+        raise ValueError("not an expression: " + str(expr))
 
 def exprvar(name, indices=None, namespace=None):
     """Return an Expression variable.
@@ -79,29 +100,71 @@ def var(name, indices=None, namespace=None):
     """
     return ExprVariable(name, indices, namespace)
 
-def factor(expr, conj=False):
+def simplify(arg):
+    """Return a simplified expression.
+
+    Parameters
+    ----------
+    arg : {0, 1} or str or Expression
+    """
+    return exprify(arg).simplify()
+
+def factor(arg, conj=False):
     """Return a factored expression.
 
     Parameters
     ----------
 
-    expr : Expression
+    arg : {0, 1} or str or Expression
     conj : bool
         Always choose a conjunctive form when there's a choice
     """
-    if expr in B:
-        return expr
-    else:
-        return expr.factor(conj)
-
-def simplify(expr):
-    """Return a simplified expression."""
-    if expr in B:
-        return expr
-    else:
-        return expr.simplify()
+    return exprify(arg).factor(conj)
 
 # convenience functions
+def Or(*args, **kwargs):
+    args = tuple(exprify(arg) for arg in args)
+    expr = ExprOr(*args, **kwargs)
+    return constify(expr)
+
+def And(*args, **kwargs):
+    args = tuple(exprify(arg) for arg in args)
+    expr = ExprAnd(*args, **kwargs)
+    return constify(expr)
+
+def Not(arg, simplify=True):
+    arg = exprify(arg)
+    expr = ExprNot(arg, simplify)
+    return constify(expr)
+
+def Xor(*args, **kwargs):
+    args = tuple(exprify(arg) for arg in args)
+    expr = ExprXor(*args, **kwargs)
+    return constify(expr)
+
+def Xnor(*args, **kwargs):
+    args = tuple(exprify(arg) for arg in args)
+    expr = ExprXnor(*args, **kwargs)
+    return constify(expr)
+
+def Equal(*args, **kwargs):
+    args = tuple(exprify(arg) for arg in args)
+    expr = ExprEqual(*args, **kwargs)
+    return constify(expr)
+
+def Implies(p, q, simplify=True):
+    p = exprify(p)
+    q = exprify(q)
+    expr = ExprImplies(p, q, simplify)
+    return constify(expr)
+
+def ITE(s, a, b, simplify=True):
+    s = exprify(s)
+    a = exprify(a)
+    b = exprify(b)
+    expr = ExprITE(s, a, b, simplify)
+    return constify(expr)
+
 def Nor(*args):
     """Alias for Not Or"""
     return Not(Or(*args))
@@ -126,121 +189,30 @@ def OneHot(*args):
     """
     return And(Or(*args), OneHot0(*args))
 
-# factored operators
-def f_not(arg):
-    """Return factored NOT expression."""
-    f = Not(arg).factor()
-    return f if f in B else f.factor()
-
-def f_or(*args):
-    """Return factored OR expression."""
-    f = Or(*args).factor()
-    return f if f in B else f.factor()
-
-def f_nor(*args):
-    """Return factored NOR expression."""
-    f = Nor(*args).factor()
-    return f if f in B else f.factor()
-
-def f_and(*args):
-    """Return factored AND expression."""
-    f = And(*args).factor()
-    return f if f in B else f.factor()
-
-def f_nand(*args):
-    """Return factored NAND expression."""
-    f = Nand(*args).factor()
-    return f if f in B else f.factor()
-
-def f_xor(*args):
-    """Return factored XOR expression."""
-    f = Xor(*args).factor()
-    return f if f in B else f.factor()
-
-def f_xnor(*args):
-    """Return factored XNOR expression."""
-    f = Xnor(*args).factor()
-    return f if f in B else f.factor()
-
-def f_equal(*args):
-    """Return factored Equal expression."""
-    f = Equal(*args).factor()
-    return f if f in B else f.factor()
-
-def f_implies(p, q):
-    """Return factored Implies expression."""
-    f = Implies(p, q).factor()
-    return f if f in B else f.factor()
-
-def f_ite(s, a, b):
-    """Return factored if-then-else expression."""
-    f = ITE(s, a, b).factor()
-    return f if f in B else f.factor()
-
 
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
 
     def __new__(cls):
         self = super(Expression, cls).__new__(cls)
-        self._RESTRICT_CACHE = dict()
+        self._RESTRICT_CACHE = weakref.WeakValueDictionary()
         return self
 
     # Operators
     def __neg__(self):
-        """Boolean negation
-
-        DIMACS SAT format: -f
-
-        +---+----+
-        | f | -f |
-        +---+----+
-        | 0 |  1 |
-        | 1 |  0 |
-        +---+----+
-        """
         return Not(self)
 
     def __add__(self, other):
-        """Boolean disjunction (addition, OR)
-
-        DIMACS SAT format: +(f1, f2, ..., fn)
-
-        +---+---+-------+
-        | f | g | f + g |
-        +---+---+-------+
-        | 0 | 0 |   0   |
-        | 0 | 1 |   1   |
-        | 1 | 0 |   1   |
-        | 1 | 1 |   1   |
-        +---+---+-------+
-        """
         return Or(self, other)
 
     def __sub__(self, other):
-        """Alias: a - b = a + -b"""
         return Or(self, Not(other))
 
     def __mul__(self, other):
-        """Boolean conjunction (multiplication, AND)
-
-        DIMACS SAT format: *(f1, f2, ..., fn)
-
-        +---+---+-------+
-        | f | g | f * g |
-        +---+---+-------+
-        | 0 | 0 |   0   |
-        | 0 | 1 |   0   |
-        | 1 | 0 |   0   |
-        | 1 | 1 |   1   |
-        +---+---+-------+
-        """
         return And(self, other)
 
     def xor(self, *args):
         """Boolean XOR (odd parity)
-
-        DIMACS SAT format: xor(f1, f2, ..., fn)
 
         +---+---+----------+
         | f | g | XOR(f,g) |
@@ -255,8 +227,6 @@ class Expression(boolfunc.Function):
 
     def equal(self, *args):
         """Boolean equality
-
-        DIMACS SAT format: =(f1, f2, ..., fn)
 
         +-------+-----------+
         | f g h | EQ(f,g,h) |
@@ -308,7 +278,7 @@ class Expression(boolfunc.Function):
     # From Function
     @cached_property
     def support(self):
-        return frozenset.union(*[arg.support for arg in self._args])
+        return frozenset.union(*[arg.support for arg in self.args])
 
     @cached_property
     def inputs(self):
@@ -316,24 +286,24 @@ class Expression(boolfunc.Function):
 
     def iter_zeros(self):
         top, rest = self.inputs[0], self.inputs[1:]
-        for p, cf in self.iter_cofactors(top):
-            if cf == 0:
+        for p, cf in self._iter_cofactors(top):
+            if cf is EXPRZERO:
                 for point in boolfunc.iter_points(rest):
                     point[top] = p[top]
                     yield point
-            elif cf != 1:
+            elif cf is not EXPRONE:
                 for point in cf.iter_zeros():
                     point[top] = p[top]
                     yield point
 
     def iter_ones(self):
         rest, top = self.inputs[:-1], self.inputs[-1]
-        for p, cf in self.iter_cofactors(top):
-            if cf == 1:
+        for p, cf in self._iter_cofactors(top):
+            if cf is EXPRONE:
                 for point in boolfunc.iter_points(rest):
                     point[top] = p[top]
                     yield point
-            elif cf != 0:
+            elif cf is not EXPRZERO:
                 for point in cf.iter_ones():
                     point[top] = p[top]
                     yield point
@@ -344,16 +314,28 @@ class Expression(boolfunc.Function):
         else:
             return self.to_cdnf()
 
+    def _restrict(self, point):
+        upoint = boolfunc.point2upoint(point)
+        return self._urestrict1(upoint)
+
     def urestrict(self, upoint):
+        return constify(self._urestrict1(upoint))
+
+    def _urestrict1(self, upoint):
         try:
             ret = self._RESTRICT_CACHE[upoint]
         except KeyError:
-            idx_arg = self._get_restrictions(upoint)
-            ret = self._subs(idx_arg) if idx_arg else self
-            self._RESTRICT_CACHE[upoint] = ret
+            ret = self._RESTRICT_CACHE[upoint] = self._urestrict2(upoint)
         return ret
 
+    def _urestrict2(self, upoint):
+        idx_arg = self._get_restrictions(upoint)
+        return self._subs(idx_arg) if idx_arg else self
+
     def compose(self, mapping):
+        return constify(self._compose(mapping))
+
+    def _compose(self, mapping):
         idx_arg = self._get_compositions(mapping)
         return self._subs(idx_arg) if idx_arg else self
 
@@ -375,33 +357,23 @@ class Expression(boolfunc.Function):
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
 
-    def is_neg_unate(self, vs=None):
+    def iter_cofactors(self, vs=None):
+        for point, expr in self._iter_cofactors(vs):
+            yield point, constify(expr)
+
+    def _iter_cofactors(self, vs=None):
         if vs is None:
-            vs = self.support
-        elif isinstance(vs, boolfunc.Function):
+            vs = list()
+        elif isinstance(vs, ExprVariable):
             vs = [vs]
-        for v in vs:
-            fv0, fv1 = self.cofactors(v)
-            if fv0 in B or fv1 in B:
-                if not (fv0 == 1 or fv1 == 0):
-                    return False
-            elif not fv0.min_indices >= fv1.min_indices:
-                return False
-        return True
+        for point in boolfunc.iter_points(vs):
+            yield point, self._restrict(point)
+
+    def is_neg_unate(self, vs=None):
+        raise NotImplementedError()
 
     def is_pos_unate(self, vs=None):
-        if vs is None:
-            vs = self.support
-        elif isinstance(vs, boolfunc.Function):
-            vs = [vs]
-        for v in vs:
-            fv0, fv1 = self.cofactors(v)
-            if fv0 in B or fv1 in B:
-                if not (fv1 == 1 or fv0 == 0):
-                    return False
-            elif not fv1.min_indices >= fv0.min_indices:
-                return False
-        return True
+        raise NotImplementedError()
 
     def smoothing(self, vs=None):
         return Or(*self.cofactors(vs))
@@ -420,37 +392,20 @@ class Expression(boolfunc.Function):
     def __repr__(self):
         return self.__str__()
 
-    @property
-    def args(self):
-        """Return the expression arguments as a tuple."""
-        return self._args
-
-    @cached_property
-    def arg_set(self):
-        """Return the expression arguments as a set."""
-        return frozenset(self._args)
-
-    @property
-    def depth(self):
-        """Return the number of levels in the expression tree."""
-        raise NotImplementedError()
-
-    def expand(self, vs=None, conj=False):
-        """Return the Shannon expansion with respect to a list of variables."""
-        if vs is None:
-            vs = list()
-        elif isinstance(vs, ExprVariable):
-            vs = [vs]
-        if vs:
-            outer, inner = (And, Or) if conj else (Or, And)
-            return outer(*[inner(self, *term)
-                           for term in boolfunc.iter_terms(vs, conj)])
-        else:
-            return self
-
-    def invert(self):
+    def _invert(self):
         """Return an inverted expression."""
         raise NotImplementedError()
+
+    def simplify(self):
+        """Return a simplified expression."""
+        ret = self._simplify()
+        return constify(ret)
+
+    def _simplify(self):
+        if self._simplified:
+            return self
+        else:
+            return self._init1(*self.args)
 
     def factor(self, conj=False):
         """Return a factored expression.
@@ -465,33 +420,42 @@ class Expression(boolfunc.Function):
         conj : bool
             Always choose a conjunctive form when there's a choice
         """
+        ret = self._simplify()
+        ret = self._factor(conj)
+        return constify(ret)
+
+    def _factor(self, conj=False):
         raise NotImplementedError()
 
-    def simplify(self):
-        """Return a simplified expression."""
-        return self
+    @property
+    def depth(self):
+        """Return the number of levels in the expression tree."""
+        raise NotImplementedError()
+
+    def expand(self, vs=None, conj=False):
+        """Return the Shannon expansion with respect to a list of variables."""
+        if vs is None:
+            vs = list()
+        elif isinstance(vs, ExprVariable):
+            vs = [vs]
+        if vs:
+            outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
+            terms = [inner(self, *term) for term in boolfunc.iter_terms(vs, conj)]
+            return outer(*terms)
+        else:
+            return self
 
     def iter_minterms(self):
         """Iterate through the sum of products of N literals."""
         for point in self.iter_ones():
             space = [(v if val else -v) for v, val in point.items()]
-            yield And(*space)
-
-    @cached_property
-    def minterms(self):
-        """The sum of products of N literals"""
-        return {term for term in self.iter_minterms()}
+            yield ExprAnd(*space)
 
     def iter_maxterms(self):
         """Iterate through the product of sums of N literals."""
         for point in self.iter_zeros():
             space = [(-v if val else v) for v, val in point.items()]
-            yield Or(*space)
-
-    @cached_property
-    def maxterms(self):
-        """The product of sums of N literals"""
-        return {term for term in self.iter_maxterms()}
+            yield ExprOr(*space)
 
     def is_dnf(self):
         """Return whether this expression is in disjunctive normal form."""
@@ -499,11 +463,9 @@ class Expression(boolfunc.Function):
 
     def to_dnf(self):
         """Return the expression in disjunctive normal form."""
-        f = self.factor()
-        if isinstance(f, Expression):
-            f = f._flatten(And)
-        if isinstance(f, Expression):
-            f = f.absorb()
+        f = self._factor()
+        f = f._flatten(ExprAnd)
+        f = f.absorb()
         return f
 
     def to_cdnf(self):
@@ -516,11 +478,9 @@ class Expression(boolfunc.Function):
 
     def to_cnf(self):
         """Return the expression in conjunctive normal form."""
-        f = self.factor()
-        if isinstance(f, Expression):
-            f = f._flatten(Or)
-        if isinstance(f, Expression):
-            f = f.absorb()
+        f = self._factor()
+        f = f._flatten(ExprOr)
+        f = f.absorb()
         return f
 
     def to_ccnf(self):
@@ -539,8 +499,10 @@ class Expression(boolfunc.Function):
 
     def equivalent(self, other, algorithm='backtrack'):
         """Return whether this expression is equivalent to another."""
-        f = And(Or(Not(self), Not(other)), Or(self, other))
-        if f in B:
+        other = exprify(other)
+
+        f = ExprAnd(ExprOr(ExprNot(self), ExprNot(other)), ExprOr(self, other))
+        if isinstance(f, ExprConstant):
             return not f
         if algorithm == 'backtrack':
             return f.satisfy_one(algorithm='backtrack') is None
@@ -549,42 +511,113 @@ class Expression(boolfunc.Function):
         else:
             raise ValueError("invalid algorithm")
 
-    # Substitution helper methods
+    # Helper methods
     def _get_restrictions(self, upoint):
         restrictions = dict()
-        for i, arg in enumerate(self._args):
-            if isinstance(arg, Expression):
-                new_arg = arg.urestrict(upoint)
-                if id(new_arg) != id(arg):
-                    restrictions[i] = new_arg
+        for i, arg in enumerate(self.args):
+            new_arg = arg._urestrict2(upoint)
+            if id(new_arg) != id(arg):
+                restrictions[i] = new_arg
         return restrictions
 
     def _get_compositions(self, mapping):
         compositions = dict()
-        for i, arg in enumerate(self._args):
-            if isinstance(arg, Expression):
-                new_arg = arg.compose(mapping)
-                if id(new_arg) != id(arg):
-                    compositions[i] = new_arg
+        for i, arg in enumerate(self.args):
+            new_arg = arg._compose(mapping)
+            if id(new_arg) != id(arg):
+                compositions[i] = new_arg
         return compositions
 
     def _subs(self, idx_arg):
-        args = list(self._args)
+        args = list(self.args)
         for i, arg in idx_arg.items():
             args[i] = arg
-        return self.__class__(*args)
+        return self._init1(*args)
 
 
-class Literal(Expression):
-    """An instance of a variable or of its complement"""
+class ExprConstant(Expression):
+    """Boolean Constant"""
+    def __new__(cls):
+        return super(ExprConstant, cls).__new__(cls)
+
+    def __bool__(self):
+        return bool(self.VAL)
+
+    def __int__(self):
+        return self.VAL
+
+    def __str__(self):
+        return str(self.VAL)
+
+    # From Function
+    @cached_property
+    def support(self):
+        return frozenset()
+
+    def _urestrict2(self, upoint):
+        return self
+
+    def _compose(self, mapping):
+        return self
 
     # From Expression
+    def _simplify(self):
+        return self
+
+    def _factor(self, conj=False):
+        return self
+
     @property
     def depth(self):
         return 0
 
-    def factor(self, conj=False):
+    def _flatten(self, op):
         return self
+
+
+class _ExprZero(ExprConstant):
+    VAL = 0
+
+    def __lt__(self, other):
+        if isinstance(other, Expression):
+            return True
+        return id(self) < id(other)
+
+    def _invert(self):
+        return EXPRONE
+
+
+class _ExprOne(ExprConstant):
+    VAL = 1
+
+    def __lt__(self, other):
+        if other is EXPRZERO:
+            return False
+        if isinstance(other, Expression):
+            return True
+        return id(self) < id(other)
+
+    def _invert(self):
+        return EXPRZERO
+
+
+EXPRZERO = _ExprZero()
+EXPRONE = _ExprOne()
+
+
+class ExprLiteral(Expression):
+    """An instance of a variable or of its complement"""
+
+    # From Expression
+    def _simplify(self):
+        return self
+
+    def _factor(self, conj=False):
+        return self
+
+    @property
+    def depth(self):
+        return 0
 
     def is_dnf(self):
         return True
@@ -592,8 +625,11 @@ class Literal(Expression):
     def is_cnf(self):
         return True
 
+    def _flatten(self, op):
+        return self
 
-class ExprVariable(boolfunc.Variable, Literal):
+
+class ExprVariable(boolfunc.Variable, ExprLiteral):
     """Boolean expression variable"""
 
     def __new__(cls, name, indices=None, namespace=None):
@@ -601,9 +637,10 @@ class ExprVariable(boolfunc.Variable, Literal):
         try:
             self = EXPRVARIABLES[_var.uniqid]
         except KeyError:
-            self = Literal.__new__(cls)
+            self = ExprLiteral.__new__(cls)
+            self.args = (self, )
+            self.arg_set = {self, }
             self._var = _var
-            self._args = (self, )
             EXPRVARIABLES[_var.uniqid] = self
         return self
 
@@ -612,15 +649,15 @@ class ExprVariable(boolfunc.Variable, Literal):
     def support(self):
         return frozenset([self, ])
 
-    def urestrict(self, upoint):
+    def _urestrict2(self, upoint):
         if self.uniqid in upoint[0]:
-            return 0
+            return EXPRZERO
         elif self.uniqid in upoint[1]:
-            return 1
+            return EXPRONE
         else:
             return self
 
-    def compose(self, mapping):
+    def _compose(self, mapping):
         try:
             return mapping[self]
         except KeyError:
@@ -628,16 +665,18 @@ class ExprVariable(boolfunc.Variable, Literal):
 
     # From Expression
     def __lt__(self, other):
+        if isinstance(other, ExprConstant):
+            return False
         if isinstance(other, ExprVariable):
             return self._var < other.var
-        if isinstance(other, Complement):
+        if isinstance(other, ExprComplement):
             return self._var < other.exprvar.var
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
-    def invert(self):
-        return Complement(self)
+    def _invert(self):
+        return ExprComplement(self)
 
     # DPLL IF
     def bcp(self):
@@ -677,19 +716,20 @@ class ExprVariable(boolfunc.Variable, Literal):
         return 0
 
 
-class Complement(Literal):
+class ExprComplement(ExprLiteral):
     """Boolean complement"""
 
     def __new__(cls, exprvar):
         uniqid = -exprvar.uniqid
         try:
-            self = COMPLEMENTS[uniqid]
+            self = EXPRCOMPLEMENTS[uniqid]
         except KeyError:
-            self = super(Complement, cls).__new__(cls)
+            self = super(ExprComplement, cls).__new__(cls)
+            self.args = (self, )
+            self.arg_set = {self, }
             self.uniqid = uniqid
             self._exprvar = exprvar
-            self._args = (self, )
-            COMPLEMENTS[-exprvar.uniqid] = self
+            EXPRCOMPLEMENTS[-exprvar.uniqid] = self
         return self
 
     def __str__(self):
@@ -700,33 +740,35 @@ class Complement(Literal):
     def support(self):
         return frozenset([self._exprvar, ])
 
-    def urestrict(self, upoint):
+    def _urestrict2(self, upoint):
         if self._exprvar.uniqid in upoint[0]:
-            return 1
+            return EXPRONE
         elif self._exprvar.uniqid in upoint[1]:
-            return 0
+            return EXPRZERO
         else:
             return self
 
-    def compose(self, mapping):
+    def _compose(self, mapping):
         try:
-            return Not(mapping[self.exprvar])
+            return ExprNot(mapping[self.exprvar])
         except KeyError:
             return self
 
     # From Expression
     def __lt__(self, other):
+        if isinstance(other, ExprConstant):
+            return False
         if isinstance(other, ExprVariable):
             return ( self._exprvar.name < other.name or
                      self._exprvar.name == other.name and
                      self._exprvar.indices <= other.indices )
-        if isinstance(other, Complement):
+        if isinstance(other, ExprComplement):
             return self._exprvar.var < other.exprvar.var
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
-    def invert(self):
+    def _invert(self):
         return self._exprvar
 
     # DPLL IF
@@ -736,7 +778,7 @@ class Complement(Literal):
     def ple(self):
         return 1, {self._exprvar: 0}
 
-    # Specific to Complement
+    # Specific to ExprComplement
     @property
     def exprvar(self):
         return self._exprvar
@@ -750,78 +792,76 @@ class Complement(Literal):
         return 1
 
 
-class OrAnd(Expression):
+class ExprOrAnd(Expression):
     """Base class for Boolean OR/AND expressions"""
 
     def __new__(cls, *args, **kwargs):
         simplify = kwargs.get('simplify', True)
-        args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
-                     for arg in args)
         if simplify:
-            degenerate, args = cls._simplify(args)
-            if degenerate:
-                return args
-
-        self = super(OrAnd, cls).__new__(cls)
-        self._args = args
-        self._simplified = simplify
+            self = cls._init1(*args)
+        else:
+            self = cls._init0(*args)
         return self
 
     @classmethod
-    def _simplify(cls, args):
+    def _init0(cls, *args, **kwargs):
+        obj = super(ExprOrAnd, cls).__new__(cls)
+        obj.args = args
+        obj.arg_set = frozenset(args)
+        obj._simplified = kwargs.get('simplified', False)
+        return obj
+
+    @classmethod
+    def _init1(cls, *args):
         temps, args = list(args), set()
 
         while temps:
             arg = temps.pop()
-            if isinstance(arg, Expression):
-                arg = arg.simplify()
-            if arg == cls.DOMINATOR:
-                return True, cls.DOMINATOR
-            elif arg == cls.IDENTITY:
+            arg = arg._simplify()
+            if arg is cls.DOMINATOR:
+                return arg
+            elif arg is cls.IDENTITY:
                 pass
             # associative
             elif isinstance(arg, cls):
                 temps.extend(arg.args)
             # complement
-            elif isinstance(arg, Literal) and -arg in args:
-                return True, cls.DOMINATOR
+            elif isinstance(arg, ExprLiteral) and -arg in args:
+                return cls.DOMINATOR
             else:
                 args.add(arg)
 
         # Or() = 0; And() = 1
         if len(args) == 0:
-            return True, cls.IDENTITY
+            return cls.IDENTITY
         # Or(x) = x; And(x) = x
         if len(args) == 1:
-            return True, args.pop()
+            return args.pop()
 
-        return False, tuple(args)
+        args = tuple(args)
+        return cls._init0(*args, simplified=True)
 
     # From Function
-    def urestrict(self, upoint):
-        try:
-            ret = self._RESTRICT_CACHE[upoint]
-        except KeyError:
-            idx_arg = self._get_restrictions(upoint)
-            if idx_arg:
-                args = list(self._args)
-                for i, arg in idx_arg.items():
-                    # speed hack
-                    if arg == self.DOMINATOR:
-                        ret = self.DOMINATOR
-                        break
-                    else:
-                        args[i] = arg
+    def _urestrict2(self, upoint):
+        idx_arg = self._get_restrictions(upoint)
+        if idx_arg:
+            args = list(self.args)
+            for i, arg in idx_arg.items():
+                # speed hack
+                if arg == self.DOMINATOR:
+                    return self.DOMINATOR
                 else:
-                    ret = self.__class__(*args)
+                    args[i] = arg
             else:
-                ret = self
-            self._RESTRICT_CACHE[upoint] = ret
-        return ret
+                return self._init1(*args)
+        else:
+            return self
 
     # From Expression
     def __lt__(self, other):
-        if isinstance(other, Literal):
+        if isinstance(other, ExprConstant):
+            return False
+        if isinstance(other, ExprLiteral):
             return self.support < other.support
         if isinstance(other, self.__class__) and self.depth == other.depth == 1:
             # min/max term
@@ -841,43 +881,25 @@ class OrAnd(Expression):
                     return False
         return id(self) < id(other)
 
+    def _invert(self):
+        args = [arg._invert() for arg in self.args]
+        return self.DUAL(*args, simplify=self._simplified)
+
+    def _factor(self, conj=False):
+        args = [arg._factor(conj) for arg in self.args]
+        return self._init1(*args)
+
     @cached_property
     def depth(self):
-        return max(arg.depth + 1 for arg in self._args)
+        return max(arg.depth + 1 for arg in self.args)
 
-    def invert(self):
-        return self.DUAL(*[Not(arg) for arg in self._args],
-                         simplify=self._simplified)
-
-    def factor(self, conj=False):
-        obj = self if self._simplified else self.simplify()
-        if obj in B:
-            return obj
-        elif isinstance(obj, OrAnd):
-            return obj.__class__(*[arg.factor(conj) for arg in obj.args])
-        else:
-            return obj.factor(conj)
-
-    def simplify(self):
-        if self._simplified:
-            return self
-
-        degenerate, args = self._simplify(self._args)
-        if degenerate:
-            return args
-
-        obj = super(OrAnd, self).__new__(self.__class__)
-        obj._args = args
-        obj._simplified = True
-        return obj
-
-    # Specific to OrAnd
+    # Specific to ExprOrAnd
     def is_nf(self):
         """Return whether this expression is in normal form."""
         return (
             self.depth <= 2 and
-            all(isinstance(arg, Literal) or isinstance(arg, self.DUAL)
-                for arg in self._args)
+            all(isinstance(arg, ExprLiteral) or isinstance(arg, self.DUAL)
+                for arg in self.args)
         )
 
     def absorb(self):
@@ -893,7 +915,7 @@ class OrAnd(Expression):
         if not self.is_nf():
             raise TypeError("expression is not in normal form")
 
-        temps, args = list(self._args), list()
+        temps, args = list(self.args), list()
 
         # Drop all terms that are a subset of other terms
         while temps:
@@ -910,7 +932,7 @@ class OrAnd(Expression):
             if not drop_fst:
                 args.append(fst)
 
-        return self.__class__(*args)
+        return self._init1(*args)
 
     def _flatten(self, op):
         """Return a flattened OR/AND expression.
@@ -920,23 +942,21 @@ class OrAnd(Expression):
         x * (y + z) = (x * y) + (x * z)
 
         NOTE: This function assumes the expression is already factored. Do NOT
-              call this method directly -- use the "to_dnf" or "to_cnf" methods
+              call this method directly -- use the 'to_dnf' or 'to_cnf' methods
               instead.
         """
         if isinstance(self, op):
-            for i, arg in enumerate(self._args):
+            for i, arg in enumerate(self.args):
                 if isinstance(arg, self.DUAL):
-                    others = self._args[:i] + self._args[i+1:]
-                    expr = op.DUAL(*[op(a, *others) for a in arg.args])
-                    if isinstance(expr, OrAnd):
-                        return expr._flatten(op)
-                    else:
-                        return expr
+                    others = self.args[:i] + self.args[i+1:]
+                    args = [op(a, *others) for a in arg.args]
+                    expr = op.DUAL(*args)
+                    return expr._flatten(op)
             else:
                 return self
         else:
             nested, others = list(), list()
-            for arg in self._args:
+            for arg in self.args:
                 if arg.depth > 1:
                     nested.append(arg)
                 else:
@@ -945,19 +965,15 @@ class OrAnd(Expression):
             return op.DUAL(*args)
 
 
-class Or(OrAnd):
+class ExprOr(ExprOrAnd):
     """Boolean OR operator"""
 
     # Infix symbol used in string representation
-    IDENTITY = 0
-    DOMINATOR = 1
+    IDENTITY = EXPRZERO
+    DOMINATOR = EXPRONE
 
     def __str__(self):
-        try:
-            args = sorted(self._args)
-        except (AttributeError, TypeError):
-            args = list(self._args)
-        return " + ".join(str(arg) for arg in args)
+        return " + ".join(str(arg) for arg in sorted(self.args))
 
     def is_dnf(self):
         """Return whether this expression is in disjunctive normal form."""
@@ -975,27 +991,24 @@ class Or(OrAnd):
         n = self.degree - 1
         index = 0
         for i, v in enumerate(self.inputs):
-            if -v in self._args:
+            if -v in self.args:
                 index |= 1 << (n - i)
         return index
 
 
-class And(OrAnd):
+class ExprAnd(ExprOrAnd):
     """Boolean AND operator"""
 
     # Infix symbol used in string representation
-    IDENTITY = 1
-    DOMINATOR = 0
+    IDENTITY = EXPRONE
+    DOMINATOR = EXPRZERO
 
     def __str__(self):
-        try:
-            args = sorted(self._args)
-        except (AttributeError, TypeError):
-            args = list(self._args)
+        args = sorted(self.args)
         parts = list()
         for arg in args:
-            if isinstance(arg, Or):
-                parts.append("(" + str(arg) + ")")
+            if isinstance(arg, ExprOr):
+                parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
         return " * ".join(parts)
@@ -1006,24 +1019,25 @@ class And(OrAnd):
 
     # DPLL IF
     def bcp(self):
+        """Boolean Constraint Propagation"""
+        assert self.is_nf()
         return _bcp(self)
 
     def ple(self):
-        counter = dict()
+        """Pure Literal Elimination"""
+        assert self.is_nf()
+
+        cntr = Counter()
         for clause in self.args:
-            for lit in clause.args:
-                if lit in counter:
-                    counter[lit] += 1
-                else:
-                    counter[lit] = 0
+            cntr.update(clause.args)
 
         point = dict()
-        while counter:
-            lit, cnt = counter.popitem()
-            if -lit in counter:
-                counter.pop(-lit)
-            elif cnt == 1:
-                if isinstance(lit, Complement):
+        while cntr:
+            lit, cnt = cntr.popitem()
+            if -lit in cntr:
+                cntr.pop(-lit)
+            else:
+                if isinstance(lit, ExprComplement):
                     point[lit.exprvar] = 0
                 else:
                     point[lit] = 1
@@ -1032,7 +1046,7 @@ class And(OrAnd):
         else:
             return self, {}
 
-    # Specific to And
+    # Specific to ExprAnd
     @property
     def term_index(self):
         return self.minterm_index
@@ -1044,115 +1058,113 @@ class And(OrAnd):
         n = self.degree - 1
         index = 0
         for i, v in enumerate(self.inputs):
-            if v in self._args:
+            if v in self.args:
                 index |= 1 << (n - i)
         return index
 
 
-Or.DUAL = And
-And.DUAL = Or
+ExprOr.DUAL = ExprAnd
+ExprAnd.DUAL = ExprOr
 
 
-class Not(Expression):
+class ExprNot(Expression):
     """Boolean NOT operator"""
 
     def __new__(cls, arg, simplify=True):
-        arg = arg if isinstance(arg, Expression) else boolify(arg)
         if simplify:
-            degenerate, arg = cls._simplify(arg)
-            if degenerate:
-                return arg
-
-        self = super(Not, cls).__new__(cls)
-        self._args = (arg, )
-        self._simplified = simplify
-        return self
-
-    @classmethod
-    def _simplify(cls, arg):
-        if isinstance(arg, Expression):
-            arg = arg.simplify()
-        if arg in B:
-            return True, 1 - arg
-        elif isinstance(arg, Literal):
-            return True, arg.invert()
+            self = cls._init1(arg)
         else:
-            return False, arg
+            self = cls._init0(arg)
+        return self
 
     def __str__(self):
         return "Not(" + str(self.arg) + ")"
 
+    @classmethod
+    def _init0(cls, arg, simplified=False):
+        obj = super(ExprNot, cls).__new__(cls)
+        obj.arg = arg
+        obj._simplified = simplified
+        return obj
+
+    @classmethod
+    def _init1(cls, arg):
+        arg = arg._simplify()
+        if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
+            return arg._invert()
+        else:
+            return cls._init0(arg, simplified=True)
+
+    # From Function
+    @property
+    def support(self):
+        return self.arg.support
+
+    def _urestrict2(self, upoint):
+        new_arg = self.arg._urestrict2(upoint)
+        if id(new_arg) != id(self.arg):
+            return self._init1(new_arg)
+        else:
+            return self
+
+    def _compose(self, mapping):
+        new_arg = self.arg._compose(mapping)
+        if id(new_arg) != id(self.arg):
+            return self._init1(new_arg)
+        else:
+            return self
+
     # From Expression
+    def _invert(self):
+        return self.arg
+
+    def _simplify(self):
+        if self._simplified:
+            return self
+        else:
+            return self._init1(self.arg)
+
+    def _factor(self, conj=False):
+        return self.arg._invert()._factor(conj)
+
     @cached_property
     def depth(self):
         return self.arg.depth
 
-    def invert(self):
-        return self.arg
 
-    def factor(self, conj=False):
-        obj = self if self._simplified else self.simplify()
-        if obj in B:
-            return obj
-        elif isinstance(obj, Not):
-            return obj.arg.invert().factor(conj)
-        else:
-            return obj.factor(conj)
-
-    def simplify(self):
-        if self._simplified:
-            return self
-
-        degenerate, arg = self._simplify(self.arg)
-        if degenerate:
-            return arg
-
-        obj = super(Not, self).__new__(self.__class__)
-        obj._args = (arg, )
-        obj._simplified = True
-        return obj
-
-    # Specific to Not
-    @property
-    def arg(self):
-        return self._args[0]
-
-
-class Exclusive(Expression):
+class ExprExclusive(Expression):
     """Boolean exclusive (XOR, XNOR) operator"""
 
     def __new__(cls, *args, **kwargs):
         simplify = kwargs.get('simplify', True)
-        args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
-                     for arg in args)
         if simplify:
-            degenerate, args, par = cls._simplify(args)
-            if degenerate:
-                return args
+            self = cls._init1(*args)
         else:
-            par = cls.PARITY
-
-        self = super(Exclusive, cls).__new__(_PAR2CLS[par])
-        self._args = args
-        self._simplified = simplify
+            self = cls._init0(*args)
         return self
 
     @classmethod
-    def _simplify(cls, args):
+    def _init0(cls, *args, **kwargs):
+        obj = super(ExprExclusive, cls).__new__(cls)
+        obj.args = args
+        obj._simplified = kwargs.get('simplified', False)
+        return obj
+
+    @classmethod
+    def _init1(cls, *args):
         par = cls.PARITY
         temps, args = list(args), set()
 
         while temps:
             arg = temps.pop()
-            if isinstance(arg, Expression):
-                arg = arg.simplify()
-            if arg in B:
-                par ^= arg
+            arg = arg._simplify()
+            if isinstance(arg, ExprConstant):
+                par ^= arg.VAL
             # associative
             elif isinstance(arg, cls):
                 temps.extend(arg.args)
             # Xor(x, x') = 1
-            elif isinstance(arg, Literal) and -arg in args:
+            elif isinstance(arg, ExprLiteral) and -arg in args:
                 args.remove(-arg)
                 par ^= 1
             # Xor(x, x) = 0
@@ -1163,353 +1175,289 @@ class Exclusive(Expression):
 
         # Xor() = 0; Xnor() = 1
         if len(args) == 0:
-            return True, 1 - par, None
+            return { ExprXor.PARITY  : EXPRZERO,
+                     ExprXnor.PARITY : EXPRONE }[par]
         # Xor(x) = x; Xnor(x) = x'
         if len(args) == 1:
             if par:
-                return True, args.pop(), None
+                return args.pop()
             else:
-                return True, Not(args.pop()), None
+                return ExprNot(args.pop())
 
-        return False, tuple(args), par
+        xcls = { ExprXor.PARITY  : ExprXor,
+                 ExprXnor.PARITY : ExprXnor }[par]
+        return xcls._init0(*args, simplified=True)
 
     # From Expression
+    def _invert(self):
+        return self.DUAL(*self.args, simplify=self._simplified)
+
+    def _factor(self, conj=False):
+        outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
+        terms = list()
+        for n in range(1 << len(self.args)):
+            if parity(n) == self.PARITY:
+                term = list()
+                for i, arg in enumerate(self.args):
+                    if bit_on(n, i):
+                        term.append(arg._factor(conj))
+                    else:
+                        term.append(arg._invert()._factor(conj))
+                terms.append(inner(*term))
+        return outer(*terms)
+
     @cached_property
     def depth(self):
-        return max(arg.depth + 2 for arg in self._args)
-
-    def invert(self):
-        return self.DUAL(*self._args, simplify=self._simplified)
-
-    def factor(self, conj=False):
-        obj = self if self._simplified else self.simplify()
-        if obj in B:
-            return obj
-        elif isinstance(obj, Exclusive):
-            outer, inner = (And, Or) if conj else (Or, And)
-            args = list()
-            for n in range(1 << len(obj.args)):
-                if parity(n) == obj.PARITY:
-                    term = [arg.factor(conj) if bit_on(n, i) else Not(arg).factor(conj)
-                            for i, arg in enumerate(obj.args)]
-                    args.append(inner(*term))
-            return outer(*args)
-        else:
-            return obj.factor(conj)
-
-    def simplify(self):
-        if self._simplified:
-            return self
-
-        degenerate, args, par = self._simplify(self._args)
-        if degenerate:
-            return args
-
-        obj = super(Exclusive, self).__new__(_PAR2CLS[par])
-        obj._args = args
-        obj._simplified = True
-        return obj
+        return max(arg.depth + 2 for arg in self.args)
 
 
-class Xor(Exclusive):
+class ExprXor(ExprExclusive):
     """Boolean Exclusive OR (XOR) operator"""
 
     PARITY = 1
 
     def __str__(self):
-        args_str = ", ".join(str(arg) for arg in self._args)
+        args_str = ", ".join(str(arg) for arg in sorted(self.args))
         return "Xor(" + args_str + ")"
 
 
-class Xnor(Exclusive):
+class ExprXnor(ExprExclusive):
     """Boolean Exclusive NOR (XNOR) operator"""
 
     PARITY = 0
 
     def __str__(self):
-        args_str = ", ".join(str(arg) for arg in self._args)
+        args_str = ", ".join(str(arg) for arg in sorted(self.args))
         return "Xnor(" + args_str + ")"
 
 
-Xor.DUAL = Xnor
-Xnor.DUAL = Xor
-_PAR2CLS = {Xor.PARITY: Xor, Xnor.PARITY: Xnor}
+ExprXor.DUAL = ExprXnor
+ExprXnor.DUAL = ExprXor
 
 
-class Equal(Expression):
+class ExprEqual(Expression):
     """Boolean EQUAL operator"""
 
     def __new__(cls, *args, **kwargs):
         simplify = kwargs.get('simplify', True)
-        args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
-                     for arg in args)
         if simplify:
-            degenerate, args = cls._simplify(args)
-            if degenerate:
-                return args
-
-        self = super(Equal, cls).__new__(cls)
-        self._args = args
-        self._simplified = simplify
+            self = cls._init1(*args)
+        else:
+            self = cls._init0(*args)
         return self
 
+    def __str__(self):
+        args_str = ", ".join(str(arg) for arg in sorted(self.args))
+        return "Equal(" + args_str + ")"
+
     @classmethod
-    def _simplify(cls, args):
-        if 0 in args:
+    def _init0(cls, *args, **kwargs):
+        obj = super(ExprEqual, cls).__new__(cls)
+        obj.args = args
+        obj._simplified = kwargs.get('simplified', False)
+        return obj
+
+    @classmethod
+    def _init1(cls, *args):
+        args = tuple(arg._simplify() for arg in args)
+
+        if EXPRZERO in args:
             # Equal(0, 1, ...) = 0
-            if 1 in args:
-                return True, 0
+            if EXPRONE in args:
+                return EXPRZERO
             # Equal(0, x0, x1, ...) = Nor(x0, x1, ...)
             else:
-                return True, Not(Or(*args))
+                return ExprNot(ExprOr(*args))
         # Equal(1, x0, x1, ...)
-        if 1 in args:
-            return True, And(*args)
+        if EXPRONE in args:
+            return ExprAnd(*args)
 
+        # no constants; all simplified
         temps, args = list(args), set()
         while temps:
             arg = temps.pop()
             # Equal(x, -x) = 0
-            if isinstance(arg, Literal) and -arg in args:
-                return True, 0
+            if isinstance(arg, ExprLiteral) and -arg in args:
+                return EXPRZERO
             # Equal(x, x, ...) = Equal(x, ...)
             elif arg not in args:
                 args.add(arg)
 
         # Equal(x) = Equal() = 1
         if len(args) <= 1:
-            return True, 1
+            return EXPRONE
 
-        return False, tuple(args)
-
-    def __str__(self):
-        args_str = ", ".join(str(arg) for arg in self._args)
-        return "Equal(" + args_str + ")"
+        return cls._init0(*args, simplified=True)
 
     # From Expression
+    def _invert(self):
+        a = ExprOr(*self.args, simplify=self._simplified)
+        b = ExprAnd(*self.args, simplify=self._simplified)._invert()
+        return ExprAnd(a, b, simplify=self._simplified)
+
+    def _factor(self, conj=False):
+        if conj:
+            args = list()
+            for i, argi in enumerate(self.args):
+                for j, argj in enumerate(self.args, start=i):
+                    args.append(ExprOr(argi, argj._invert()._factor(conj)))
+                    args.append(ExprOr(argi._invert()._factor(conj), argj))
+            return ExprAnd(*args)
+        else:
+            all_zero = ExprAnd(*[arg._invert()._factor(conj) for arg in self.args])
+            all_one = ExprAnd(*[arg._factor(conj) for arg in self.args])
+            return ExprOr(all_zero, all_one)
+
     @cached_property
     def depth(self):
-        return max(arg.depth + 2 for arg in self._args)
-
-    def invert(self):
-        return And(Or(*self._args), Not(And(*self._args)))
-
-    def factor(self, conj=False):
-        obj = self if self._simplified else self.simplify()
-        if obj in B:
-            return obj
-        elif isinstance(obj, Equal):
-            if conj:
-                args = list()
-                for i, argi in enumerate(obj.args):
-                    for j, argj in enumerate(obj.args, start=i):
-                        args.append(Or(argi, Not(argj).factor(conj)))
-                        args.append(Or(Not(argi).factor(conj), argj))
-                return And(*args)
-            else:
-                return Or(And(*[Not(arg).factor(conj) for arg in obj.args]),
-                          And(*[arg.factor(conj) for arg in obj.args]))
-        else:
-            return obj.factor(conj)
-
-    def simplify(self):
-        if self._simplified:
-            return self
-
-        degenerate, args = self._simplify(self._args)
-        if degenerate:
-            return args
-
-        obj = super(Equal, self).__new__(self.__class__)
-        obj._args = args
-        obj._simplified = True
-        return obj
+        return max(arg.depth + 2 for arg in self.args)
 
 
-class Implies(Expression):
+class ExprImplies(Expression):
     """Boolean implication operator"""
 
     def __new__(cls, p, q, simplify=True):
-        args = tuple(arg if isinstance(arg, Expression) else boolify(arg)
-                     for arg in (p, q))
         if simplify:
-            degenerate, args = cls._simplify(args)
-            if degenerate:
-                return args
+            self = cls._init1(p, q)
         else:
-            args = (p, q)
-
-        self = super(Implies, cls).__new__(cls)
-        self._args = args
-        self._simplified = simplify
+            self = cls._init0(p, q)
         return self
-
-    @classmethod
-    def _simplify(cls, args):
-        p, q = (arg.simplify() if isinstance(arg, Expression) else arg
-                for arg in args)
-
-        # 0 => q = 1; p => 1 = 1
-        if p == 0 or q == 1:
-            return True, 1
-        # 1 => q = q
-        elif p == 1:
-            return True, q
-        # p => 0 = p'
-        elif q == 0:
-            return True, Not(p)
-        # p -> p = 1
-        elif p == q:
-            return True, 1
-        # -p -> p = p
-        elif isinstance(p, Literal) and -p == q:
-            return True, q
-
-        return False, (p, q)
 
     def __str__(self):
         parts = list()
-        for arg in self._args:
-            if arg in B or isinstance(arg, Literal):
+        for arg in self.args:
+            if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
                 parts.append(str(arg))
             else:
                 parts.append("(" + str(arg) + ")")
         return " => ".join(parts)
 
-    # From Expression
-    @cached_property
-    def depth(self):
-        return max(arg.depth + 1 for arg in self._args)
-
-    def invert(self):
-        p, q = self._args
-        return And(p, Not(q))
-
-    def factor(self, conj=False):
-        obj = self if self._simplified else self.simplify()
-        if obj in B:
-            return obj
-        elif isinstance(obj, Implies):
-            a, b = obj.args
-            return Or(Not(a).factor(conj), b.factor(conj))
-        else:
-            return obj.factor(conj)
-
-    def simplify(self):
-        if self._simplified:
-            return self
-
-        degenerate, args = self._simplify(self._args)
-        if degenerate:
-            return args
-
-        obj = super(Implies, self).__new__(self.__class__)
-        obj._args = args
-        obj._simplified = True
+    @classmethod
+    def _init0(cls, p, q, simplified=False):
+        obj = super(ExprImplies, cls).__new__(cls)
+        obj.args = (p, q)
+        obj._simplified = simplified
         return obj
 
+    @classmethod
+    def _init1(cls, p, q):
+        p = p._simplify()
+        q = q._simplify()
 
-class ITE(Expression):
+        # 0 => q = 1; p => 1 = 1
+        if p is EXPRZERO or q is EXPRONE:
+            return EXPRONE
+        # 1 => q = q
+        elif p is EXPRONE:
+            return q
+        # p => 0 = p'
+        elif q is EXPRZERO:
+            return ExprNot(p)
+        # p -> p = 1
+        elif p == q:
+            return EXPRONE
+        # -p -> p = p
+        elif isinstance(p, ExprLiteral) and -p == q:
+            return q
+
+        return cls._init0(p, q, simplified=True)
+
+    # From Expression
+    def _invert(self):
+        p, q = self.args
+        return ExprAnd(p, q._invert(), simplify=self._simplified)
+
+    def _factor(self, conj=False):
+        p, q = self.args
+        return ExprOr(p._invert()._factor(conj), q._factor(conj))
+
+    @cached_property
+    def depth(self):
+        return max(arg.depth + 1 for arg in self.args)
+
+
+class ExprITE(Expression):
     """Boolean if-then-else ternary operator"""
 
     def __new__(cls, s, a, b, simplify=True):
-        args = (arg if isinstance(arg, Expression) else boolify(arg)
-                for arg in (s, a, b))
         if simplify:
-            degenerate, args = cls._simplify(args)
-            if degenerate:
-                return args
+            self = cls._init1(s, a, b)
         else:
-            args = (s, a, b)
-
-        self = super(ITE, cls).__new__(cls)
-        self._args = args
-        self._simplified = simplify
+            self = cls._init0(s, a, b)
         return self
-
-    @classmethod
-    def _simplify(cls, args):
-        s, a, b = (arg.simplify() if isinstance(arg, Expression) else arg
-                   for arg in args)
-
-        # 0 ? a : b = b
-        if s == 0:
-            return True, b
-        # 1 ? a : b = a
-        elif s == 1:
-            return True, a
-        elif a == 0:
-            # s ? 0 : 0 = 0
-            if b == 0:
-                return True, 0
-            # s ? 0 : 1 = s'
-            elif b == 1:
-                return True, Not(s)
-            # s ? 0 : b = s' * b
-            else:
-                return True, And(Not(s), b)
-        elif a == 1:
-            # s ? 1 : 0 = s
-            if b == 0:
-                return True, s
-            # s ? 1 : 1 = 1
-            elif b == 1:
-                return True, 1
-            # s ? 1 : b = s + b
-            else:
-                return True, Or(s, b)
-        # s ? a : 0 = s * a
-        elif b == 0:
-            return True, And(s, a)
-        # s ? a : 1 = s' + a
-        elif b == 1:
-            return True, Or(Not(s), a)
-        # s ? a : a = a
-        elif a == b:
-            return True, a
-
-        return False, (s, a, b)
 
     def __str__(self):
         parts = list()
-        for arg in self._args:
-            if arg in B or isinstance(arg, Literal):
+        for arg in self.args:
+            if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
                 parts.append(str(arg))
             else:
                 parts.append("(" + str(arg) + ")")
         return "{} ? {} : {}".format(*parts)
 
+    @classmethod
+    def _init0(cls, s, a, b, simplified=False):
+        obj = super(ExprITE, cls).__new__(cls)
+        obj.args = (s, a, b)
+        obj._simplified = simplified
+        return obj
+
+    @classmethod
+    def _init1(cls, s, a, b):
+        s = s._simplify()
+        a = a._simplify()
+        b = b._simplify()
+
+        # 0 ? a : b = b
+        if s is EXPRZERO:
+            return b
+        # 1 ? a : b = a
+        elif s is EXPRONE:
+            return a
+        elif a is EXPRZERO:
+            # s ? 0 : 0 = 0
+            if b is EXPRZERO:
+                return EXPRZERO
+            # s ? 0 : 1 = s'
+            elif b is EXPRONE:
+                return ExprNot(s)
+            # s ? 0 : b = s' * b
+            else:
+                return ExprAnd(ExprNot(s), b)
+        elif a is EXPRONE:
+            # s ? 1 : 0 = s
+            if b is EXPRZERO:
+                return s
+            # s ? 1 : 1 = 1
+            elif b is EXPRONE:
+                return EXPRONE
+            # s ? 1 : b = s + b
+            else:
+                return ExprOr(s, b)
+        # s ? a : 0 = s * a
+        elif b is EXPRZERO:
+            return ExprAnd(s, a)
+        # s ? a : 1 = s' + a
+        elif b is EXPRONE:
+            return ExprOr(ExprNot(s), a)
+        # s ? a : a = a
+        elif a == b:
+            return a
+
+        return cls._init0(s, a, b, simplified=True)
+
     # From Expression
+    def _invert(self):
+        s, a, b = self.args
+        return ExprITE(s, a._invert(), b._invert(), simplify=self._simplified)
+
+    def _factor(self, conj=False):
+        s, a, b = self.args
+        return ExprOr(ExprAnd(s, a), ExprAnd(s._invert()._factor(conj), b))
+
     @cached_property
     def depth(self):
-        return max(arg.depth + 2 for arg in self._args)
-
-    def invert(self):
-        s, a, b = self._args
-        return ITE(s, Not(a), Not(b), simplify=self._simplified)
-
-    def factor(self, conj=False):
-        obj = self if self._simplified else self.simplify()
-        if obj in B:
-            return obj
-        elif isinstance(obj, ITE):
-            s, a, b = obj.args
-            return Or(And(s, a), And(Not(s).factor(conj), b))
-        else:
-            return obj.factor(conj)
-
-    def simplify(self):
-        if self._simplified:
-            return self
-
-        degenerate, args = self._simplify(self._args)
-        if degenerate:
-            return args
-
-        obj = super(ITE, self).__new__(self.__class__)
-        obj._args = args
-        obj._simplified = True
-        return obj
+        return max(arg.depth + 2 for arg in self.args)
 
 
 def _bcp(cnf):
@@ -1521,7 +1469,7 @@ def _bcp(cnf):
         for clause in cnf.args:
             if len(clause.args) == 1:
                 lit = clause.args[0]
-                if isinstance(lit, Complement):
+                if isinstance(lit, ExprComplement):
                     point[lit.exprvar] = 0
                 else:
                     point[lit] = 1

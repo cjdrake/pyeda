@@ -12,9 +12,9 @@ Interface Classes:
 
 from collections import Counter
 
-from pyeda.common import boolify, cached_property
+from pyeda.common import cached_property
 from pyeda.boolfunc import Function
-from pyeda.expr import EXPRVARIABLES, COMPLEMENTS
+from pyeda.expr import EXPRVARIABLES, EXPRCOMPLEMENTS
 from pyeda.expr import Expression, Or, And
 from pyeda.sat import backtrack, dpll
 
@@ -47,7 +47,7 @@ def nfexpr2expr(nfexpr):
         term = list()
         for num in clause:
             if num < 0:
-                lit = COMPLEMENTS[num]
+                lit = EXPRCOMPLEMENTS[num]
             else:
                 lit = EXPRVARIABLES[num]
             term.append(lit)
@@ -155,35 +155,13 @@ class ConjNormalForm(NormalForm):
         else:
             raise ValueError("invalid algorithm")
 
+    # DPLL IF
     def bcp(self):
         """Boolean Constraint Propagation"""
         return _bcp(self)
 
     def ple(self):
-        """Pure Literal Elimination
-
-        A literal is *pure* if it only exists with one polarity in the CNF.
-
-        For example:
-
-        >>> from pyeda import *
-        >>> a, b, c = map(var, "abc")
-
-        In this CNF, 'a' is pure: (a + b + c) * (a + -b + -c)
-        >>> cnf = expr2nfexpr((a + b + c) * (a + -b + -c))
-
-        Eliminating 'a' results in a true statement.
-        >>> cnf.ple()
-        (1, {a: 1})
-
-        In this CNF, '-a' is pure: (-a + b) * (-a + c) * (-b + -c)
-        >>> cnf = expr2nfexpr((-a + b) * (-a + c) * (-b + -c))
-
-        Eliminating '-a' results in: -b + -c
-        >>> cnf, point = cnf.ple()
-        >>> nfexpr2expr(cnf), point
-        (b' + c', {a: 0})
-        """
+        """Pure Literal Elimination"""
         cntr = Counter()
         for clause in self.clauses:
             cntr.update(clause)

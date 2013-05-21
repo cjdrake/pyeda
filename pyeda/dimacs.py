@@ -16,7 +16,10 @@ import collections
 import re
 
 # pyeda
-from pyeda.expr import Expression, Literal, Not, Or, And, Xor, Equal
+from pyeda.expr import (
+    Expression,
+    ExprLiteral, ExprOr, ExprAnd, ExprNot, ExprXor, ExprEqual
+)
 from pyeda.vexpr import bitvec
 
 Token = collections.namedtuple('Token', ['typ', 'val', 'line', 'col'])
@@ -125,7 +128,7 @@ def load_cnf(s, varname='x'):
         pass
 
     assert len(clauses) == ncls
-    return And(*[Or(*clause) for clause in clauses])
+    return ExprAnd(*[ExprOr(*clause) for clause in clauses])
 
 def dump_cnf(expr):
     if not isinstance(expr, Expression):
@@ -167,11 +170,11 @@ _SAT_OP_TOKS = {
 }
 
 _SAT_TOK2OP = {
-    'NOT': Not,
-    'OR': Or,
-    'AND': And,
-    'XOR': Xor,
-    'EQUAL': Equal,
+    'OR': ExprOr,
+    'AND': ExprAnd,
+    'NOT': ExprNot,
+    'XOR': ExprXor,
+    'EQUAL': ExprEqual,
 }
 
 def load_sat(s, varname='x'):
@@ -243,17 +246,17 @@ def dump_sat(expr):
     return "p {} {}\n{}".format(fmt, nvars, formula)
 
 def _expr2sat(expr):
-    if isinstance(expr, Literal):
+    if isinstance(expr, ExprLiteral):
         return str(expr.uniqid)
-    elif isinstance(expr, Not):
-        return "-(" + _expr2sat(expr.arg) + ")"
-    elif isinstance(expr, Or):
+    elif isinstance(expr, ExprOr):
         return "+(" + " ".join(_expr2sat(arg) for arg in expr.args) + ")"
-    elif isinstance(expr, And):
+    elif isinstance(expr, ExprAnd):
         return "*(" + " ".join(_expr2sat(arg) for arg in expr.args) + ")"
-    elif isinstance(expr, Xor):
+    elif isinstance(expr, ExprNot):
+        return "-(" + _expr2sat(expr.arg) + ")"
+    elif isinstance(expr, ExprXor):
         return "xor(" + " ".join(_expr2sat(arg) for arg in expr.args) + ")"
-    elif isinstance(expr, Equal):
+    elif isinstance(expr, ExprEqual):
         return "=(" + " ".join(_expr2sat(arg) for arg in expr.args) + ")"
     else:
         raise ValueError("invalid expression")

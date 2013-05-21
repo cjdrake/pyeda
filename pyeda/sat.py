@@ -10,18 +10,10 @@ Interface functions:
 
 def backtrack(expr):
     """
-    If this function is satisfiable, return a satisfying input point. A
-    tautology *may* return an empty dictionary; a contradiction *must*
-    return None.
+    If this function is satisfiable, return a satisfying input point.
 
-    >>> from pyeda import var
-    >>> a, b, c = map(var, "abc")
-    >>> point = (-a * b).satisfy_one(algorithm='backtrack')
-    >>> sorted(point.items())
-    [(a, 0), (b, 1)]
-    >>> (-a * -b + -a * b + a * -b + a * b).satisfy_one(algorithm='backtrack')
-    {}
-    >>> (a * b * (-a + -b)).satisfy_one(algorithm='backtrack')
+    A tautology *may* return an empty dictionary.
+    A contradiction *must* return None.
     """
     v = expr.top
     cfs = {p[v]: cf for p, cf in expr.iter_cofactors(v)}
