@@ -2,6 +2,7 @@
 Boolean Logic Expressions
 
 Interface Functions:
+    exprvar
     var
 
     factor
@@ -43,6 +44,23 @@ B = {0, 1}
 EXPRVARIABLES = dict()
 COMPLEMENTS = dict()
 
+
+def exprvar(name, indices=None, namespace=None):
+    """Return an Expression variable.
+
+    Parameters
+    ----------
+
+    name : str
+        The variable's identifier string.
+    indices : int or tuple[int], optional
+        One or more integer suffixes for variables that are part of a
+        multi-dimensional bit-vector, eg x[1], x[1][2][3]
+    namespace : str or tuple[str], optional
+        A container for a set of variables. Since a Variable instance is global,
+        a namespace can be used for local scoping.
+    """
+    return ExprVariable(name, indices, namespace)
 
 def var(name, indices=None, namespace=None):
     """Return a variable expression.
@@ -421,7 +439,7 @@ class Expression(boolfunc.Function):
         """Return the Shannon expansion with respect to a list of variables."""
         if vs is None:
             vs = list()
-        elif isinstance(vs, Expression):
+        elif isinstance(vs, ExprVariable):
             vs = [vs]
         if vs:
             outer, inner = (And, Or) if conj else (Or, And)
