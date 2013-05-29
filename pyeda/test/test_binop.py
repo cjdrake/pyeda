@@ -2,12 +2,10 @@
 Test binary operators
 """
 
+from pyeda.alphas import *
 from pyeda.binop import *
-from pyeda.expr import var
 
 def test_all_ops():
-    a, b = map(var, 'ab')
-
     assert apply2(OP_ZERO, 0, 0) == 0
     assert apply2(OP_ZERO, 0, 1) == 0
     assert apply2(OP_ZERO, 1, 0) == 0

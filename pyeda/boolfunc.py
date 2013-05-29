@@ -218,11 +218,55 @@ class Function(object):
     """
 
     # Operators
+    def __neg__(self):
+        """Boolean negation
+
+        +---+----+
+        | f | -f |
+        +---+----+
+        | 0 |  1 |
+        | 1 |  0 |
+        +---+----+
+        """
+        raise NotImplementedError()
+
+    def __add__(self, other):
+        """Boolean disjunction (addition, OR)
+
+        +---+---+-------+
+        | f | g | f + g |
+        +---+---+-------+
+        | 0 | 0 |   0   |
+        | 0 | 1 |   1   |
+        | 1 | 0 |   1   |
+        | 1 | 1 |   1   |
+        +---+---+-------+
+        """
+        raise NotImplementedError()
+
     def __radd__(self, other):
         return self.__add__(other)
 
+    def __sub__(self, other):
+        """Alias: a - b = a + -b"""
+        raise NotImplementedError()
+
     def __rsub__(self, other):
         return self.__neg__().__add__(other)
+
+    def __mul__(self, other):
+        """Boolean conjunction (multiplication, AND)
+
+        +---+---+-------+
+        | f | g | f * g |
+        +---+---+-------+
+        | 0 | 0 |   0   |
+        | 0 | 1 |   0   |
+        | 1 | 0 |   0   |
+        | 1 | 1 |   1   |
+        +---+---+-------+
+        """
+        raise NotImplementedError()
 
     def __rmul__(self, other):
         return self.__mul__(other)

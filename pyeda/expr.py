@@ -503,7 +503,7 @@ class Expression(boolfunc.Function):
 
         f = ExprAnd(ExprOr(ExprNot(self), ExprNot(other)), ExprOr(self, other))
         if isinstance(f, ExprConstant):
-            return not f
+            return not f.__bool__()
         if algorithm == 'backtrack':
             return f.satisfy_one(algorithm='backtrack') is None
         elif algorithm == 'dpll':
