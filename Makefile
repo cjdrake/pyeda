@@ -1,8 +1,9 @@
 # Filename: Makefile
 
 NOSETESTS := nosetests
-
 PIP := pip
+PYLINT := pylint
+
 PIP_INSTALL_FLAGS := -r requirements.txt --use-mirrors
 
 .PHONY: init
@@ -12,6 +13,10 @@ init:
 .PHONY: html
 html:
 	@cd doc && $(MAKE) html
+
+.PHONY: lint
+lint:
+	@$(PYLINT) pyeda --rcfile .pylintrc
 
 .PHONY: test
 test:
