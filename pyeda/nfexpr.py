@@ -105,15 +105,15 @@ class NormalForm(Function):
 
         return self.__class__(new_clauses)
 
+    # Specific to NormalForm
+    IDENTITY = NotImplemented
+    DOMINATOR = NotImplemented
+
 
 class DisjNormalForm(NormalForm):
     """
     Disjunctive Normal Form
     """
-
-    IDENTITY = 0
-    DOMINATOR = 1
-
     def __neg__(self):
         clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
         return ConjNormalForm(clauses)
@@ -126,15 +126,15 @@ class DisjNormalForm(NormalForm):
         g = nfexpr2expr(other)
         return expr2nfexpr((f * g).to_dnf())
 
+    # Specific to NormalForm
+    IDENTITY = 0
+    DOMINATOR = 1
+
 
 class ConjNormalForm(NormalForm):
     """
     Conjunctive Normal Form
     """
-
-    IDENTITY = 1
-    DOMINATOR = 0
-
     def __neg__(self):
         clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
         return DisjNormalForm(clauses)
@@ -168,7 +168,7 @@ class ConjNormalForm(NormalForm):
 
         point = dict()
         while cntr:
-            num, cnt = cntr.popitem()
+            num, _ = cntr.popitem()
             if -num in cntr:
                 cntr.pop(-num)
             else:
@@ -177,6 +177,10 @@ class ConjNormalForm(NormalForm):
             return self.restrict(point), point
         else:
             return self, {}
+
+    # Specific to NormalForm
+    IDENTITY = 1
+    DOMINATOR = 0
 
 
 def DNF_Or(*args):

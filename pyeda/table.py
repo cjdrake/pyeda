@@ -386,7 +386,7 @@ class TTVariable(boolfunc.Variable, TruthTable):
         try:
             self = TTVARIABLES[uniqid]
         except KeyError:
-            self = super(TruthTable, cls).__new__(cls)
+            self = boolfunc.Function.__new__(cls)
             self._inputs = [self]
             self.data = array.array('L', [0b0110])
             self._var = _var

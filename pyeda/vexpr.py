@@ -12,7 +12,7 @@ Interface Classes:
 
 from pyeda.common import clog2, bit_on
 from pyeda.boolfunc import Slicer, VectorFunction
-from pyeda.expr import var, Not, Or, And, Xor, Xnor
+from pyeda.expr import var, Not, Or, And, Xor
 
 def bitvec(name, *slices):
     """Return a vector of variables."""

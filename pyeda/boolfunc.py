@@ -273,7 +273,7 @@ class Function(object):
 
     @property
     def support(self):
-        """Return the support set of a function.
+        r"""Return the support set of a function.
 
         Let :math:`f(x_1, x_2, ..., x_n)` be a Boolean function of :math:`N`
         variables. The set :math:`\{x_1, x_2, ..., x_n\}` is called the
@@ -298,7 +298,7 @@ class Function(object):
 
     @property
     def degree(self):
-        """Return the degree of a function.
+        r"""Return the degree of a function.
 
         A function from :math:`B^{N} \Rightarrow B` is called a Boolean
         function of *degree* :math:`N`.
@@ -307,7 +307,7 @@ class Function(object):
 
     @property
     def cardinality(self):
-        """Return the cardinality of the relation :math:`B^{N} \Rightarrow B`.
+        r"""Return the cardinality of the relation :math:`B^{N} \Rightarrow B`.
 
         Always equal to :math:`2^{N}`.
         """
@@ -341,7 +341,7 @@ class Function(object):
         raise NotImplementedError()
 
     def restrict(self, point):
-        """
+        r"""
         Return the Boolean function that results after restricting a subset of
         its input variables to :math:`\{0, 1\}`.
 
@@ -351,7 +351,7 @@ class Function(object):
         return self.urestrict(upoint)
 
     def urestrict(self, upoint):
-        """
+        r"""
         Return the Boolean function that results after restricting a subset of
         its input variables to :math:`\{0, 1\}`.
 
@@ -364,7 +364,7 @@ class Function(object):
         return self.restrict(_expand_vectors(vpoint))
 
     def compose(self, mapping):
-        """
+        r"""
         Return the Boolean function that results after substituting a subset of
         its input variables for other Boolean functions.
 
@@ -411,7 +411,7 @@ class Function(object):
         return tuple(cf for p, cf in self.iter_cofactors(vs))
 
     def is_neg_unate(self, vs=None):
-        """Return whether a function is negative unate.
+        r"""Return whether a function is negative unate.
 
         A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
         in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
@@ -419,7 +419,7 @@ class Function(object):
         raise NotImplementedError()
 
     def is_pos_unate(self, vs=None):
-        """Return whether a function is positive unate.
+        r"""Return whether a function is positive unate.
 
         A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
         in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
@@ -444,7 +444,7 @@ class Function(object):
         raise NotImplementedError()
 
     def consensus(self, vs=None):
-        """Return the consensus of a function.
+        r"""Return the consensus of a function.
 
         The *consensus* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
         to variable :math:`x_i` is :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`.
@@ -569,7 +569,6 @@ class VectorFunction(Slicer):
 
 def _expand_vectors(vpoint):
     """Expand all vectors in a substitution dict."""
-    temp = dict()
     point = dict()
     for vf, vals in vpoint.items():
         if isinstance(vf, VectorFunction):

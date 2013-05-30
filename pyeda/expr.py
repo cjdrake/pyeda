@@ -392,6 +392,14 @@ class Expression(boolfunc.Function):
     def __repr__(self):
         return self.__str__()
 
+    @classmethod
+    def _init0(cls, *args, **kwargs):
+        raise NotImplementedError()
+
+    @classmethod
+    def _init1(cls, *args):
+        raise NotImplementedError()
+
     def _invert(self):
         """Return an inverted expression."""
         raise NotImplementedError()
@@ -574,9 +582,11 @@ class ExprConstant(Expression):
     def _flatten(self, op):
         return self
 
+    # Specific to ExprConstant
+    VAL = NotImplemented
+
 
 class _ExprZero(ExprConstant):
-    VAL = 0
 
     def __lt__(self, other):
         if isinstance(other, Expression):
@@ -586,9 +596,11 @@ class _ExprZero(ExprConstant):
     def _invert(self):
         return EXPRONE
 
+    # Specific to ExprConstant
+    VAL = 0
+
 
 class _ExprOne(ExprConstant):
-    VAL = 1
 
     def __lt__(self, other):
         if other is EXPRZERO:
@@ -599,6 +611,9 @@ class _ExprOne(ExprConstant):
 
     def _invert(self):
         return EXPRZERO
+
+    # Specific to ExprConstant
+    VAL = 1
 
 
 EXPRZERO = _ExprZero()
@@ -894,6 +909,13 @@ class ExprOrAnd(Expression):
         return max(arg.depth + 1 for arg in self.args)
 
     # Specific to ExprOrAnd
+    IDENTITY = NotImplemented
+    DOMINATOR = NotImplemented
+
+    @property
+    def term_index(self):
+        raise NotImplementedError()
+
     def is_nf(self):
         """Return whether this expression is in normal form."""
         return (
@@ -968,10 +990,6 @@ class ExprOrAnd(Expression):
 class ExprOr(ExprOrAnd):
     """Boolean OR operator"""
 
-    # Infix symbol used in string representation
-    IDENTITY = EXPRZERO
-    DOMINATOR = EXPRONE
-
     def __str__(self):
         return " + ".join(str(arg) for arg in sorted(self.args))
 
@@ -979,11 +997,15 @@ class ExprOr(ExprOrAnd):
         """Return whether this expression is in disjunctive normal form."""
         return self.is_nf()
 
-    # Specific to Or
+    # Specific to ExprOrAnd
+    IDENTITY = EXPRZERO
+    DOMINATOR = EXPRONE
+
     @property
     def term_index(self):
         return self.maxterm_index
 
+    # Specific to ExprOr
     @cached_property
     def maxterm_index(self):
         if self.depth > 1:
@@ -998,10 +1020,6 @@ class ExprOr(ExprOrAnd):
 
 class ExprAnd(ExprOrAnd):
     """Boolean AND operator"""
-
-    # Infix symbol used in string representation
-    IDENTITY = EXPRONE
-    DOMINATOR = EXPRZERO
 
     def __str__(self):
         args = sorted(self.args)
@@ -1046,11 +1064,15 @@ class ExprAnd(ExprOrAnd):
         else:
             return self, {}
 
-    # Specific to ExprAnd
+    # Specific to ExprOrAnd
+    IDENTITY = EXPRONE
+    DOMINATOR = EXPRZERO
+
     @property
     def term_index(self):
         return self.minterm_index
 
+    # Specific to ExprAnd
     @cached_property
     def minterm_index(self):
         if self.depth > 1:
@@ -1210,25 +1232,28 @@ class ExprExclusive(Expression):
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
 
+    # Specific to ExprExclusive
+    PARITY = NotImplemented
+
 
 class ExprXor(ExprExclusive):
     """Boolean Exclusive OR (XOR) operator"""
-
-    PARITY = 1
 
     def __str__(self):
         args_str = ", ".join(str(arg) for arg in sorted(self.args))
         return "Xor(" + args_str + ")"
 
+    PARITY = 1
+
 
 class ExprXnor(ExprExclusive):
     """Boolean Exclusive NOR (XNOR) operator"""
 
-    PARITY = 0
-
     def __str__(self):
         args_str = ", ".join(str(arg) for arg in sorted(self.args))
         return "Xnor(" + args_str + ")"
+
+    PARITY = 0
 
 
 ExprXor.DUAL = ExprXnor
