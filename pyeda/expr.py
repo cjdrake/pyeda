@@ -898,7 +898,7 @@ class ExprOrAnd(Expression):
 
     def _invert(self):
         args = [arg._invert() for arg in self.args]
-        return self.DUAL(*args, simplify=self._simplified)
+        return self.get_dual()(*args, simplify=self._simplified)
 
     def _factor(self, conj=False):
         args = [arg._factor(conj) for arg in self.args]
@@ -912,6 +912,10 @@ class ExprOrAnd(Expression):
     IDENTITY = NotImplemented
     DOMINATOR = NotImplemented
 
+    @staticmethod
+    def get_dual():
+        raise NotImplementedError()
+
     @property
     def term_index(self):
         raise NotImplementedError()
@@ -920,7 +924,7 @@ class ExprOrAnd(Expression):
         """Return whether this expression is in normal form."""
         return (
             self.depth <= 2 and
-            all(isinstance(arg, ExprLiteral) or isinstance(arg, self.DUAL)
+            all(isinstance(arg, ExprLiteral) or isinstance(arg, self.get_dual())
                 for arg in self.args)
         )
 
@@ -969,10 +973,10 @@ class ExprOrAnd(Expression):
         """
         if isinstance(self, op):
             for i, arg in enumerate(self.args):
-                if isinstance(arg, self.DUAL):
+                if isinstance(arg, self.get_dual()):
                     others = self.args[:i] + self.args[i+1:]
                     args = [op(a, *others) for a in arg.args]
-                    expr = op.DUAL(*args)
+                    expr = op.get_dual()(*args)
                     return expr._flatten(op)
             else:
                 return self
@@ -984,7 +988,7 @@ class ExprOrAnd(Expression):
                 else:
                     others.append(arg)
             args = [arg._flatten(op) for arg in nested] + others
-            return op.DUAL(*args)
+            return op.get_dual()(*args)
 
 
 class ExprOr(ExprOrAnd):
@@ -998,6 +1002,10 @@ class ExprOr(ExprOrAnd):
         return self.is_nf()
 
     # Specific to ExprOrAnd
+    @staticmethod
+    def get_dual():
+        return ExprAnd
+
     IDENTITY = EXPRZERO
     DOMINATOR = EXPRONE
 
@@ -1068,6 +1076,10 @@ class ExprAnd(ExprOrAnd):
     IDENTITY = EXPRONE
     DOMINATOR = EXPRZERO
 
+    @staticmethod
+    def get_dual():
+        return ExprOr
+
     @property
     def term_index(self):
         return self.minterm_index
@@ -1083,10 +1095,6 @@ class ExprAnd(ExprOrAnd):
             if v in self.args:
                 index |= 1 << (n - i)
         return index
-
-
-ExprOr.DUAL = ExprAnd
-ExprAnd.DUAL = ExprOr
 
 
 class ExprNot(Expression):
@@ -1212,7 +1220,7 @@ class ExprExclusive(Expression):
 
     # From Expression
     def _invert(self):
-        return self.DUAL(*self.args, simplify=self._simplified)
+        return self.get_dual()(*self.args, simplify=self._simplified)
 
     def _factor(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
@@ -1235,6 +1243,10 @@ class ExprExclusive(Expression):
     # Specific to ExprExclusive
     PARITY = NotImplemented
 
+    @staticmethod
+    def get_dual():
+        raise NotImplementedError()
+
 
 class ExprXor(ExprExclusive):
     """Boolean Exclusive OR (XOR) operator"""
@@ -1244,6 +1256,10 @@ class ExprXor(ExprExclusive):
         return "Xor(" + args_str + ")"
 
     PARITY = 1
+
+    @staticmethod
+    def get_dual():
+        return Xnor
 
 
 class ExprXnor(ExprExclusive):
@@ -1255,9 +1271,9 @@ class ExprXnor(ExprExclusive):
 
     PARITY = 0
 
-
-ExprXor.DUAL = ExprXnor
-ExprXnor.DUAL = ExprXor
+    @staticmethod
+    def get_dual():
+        return Xor
 
 
 class ExprEqual(Expression):
