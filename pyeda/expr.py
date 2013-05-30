@@ -472,7 +472,7 @@ class Expression(boolfunc.Function):
     def to_dnf(self):
         """Return the expression in disjunctive normal form."""
         f = self._factor()
-        f = f._flatten(ExprAnd)
+        f = f.flatten(ExprAnd)
         f = f.absorb()
         return f
 
@@ -487,7 +487,7 @@ class Expression(boolfunc.Function):
     def to_cnf(self):
         """Return the expression in conjunctive normal form."""
         f = self._factor()
-        f = f._flatten(ExprOr)
+        f = f.flatten(ExprOr)
         f = f.absorb()
         return f
 
@@ -579,7 +579,8 @@ class ExprConstant(Expression):
     def depth(self):
         return 0
 
-    def _flatten(self, op):
+    # FactoredExpression
+    def flatten(self, op):
         return self
 
     # Specific to ExprConstant
@@ -640,7 +641,8 @@ class ExprLiteral(Expression):
     def is_cnf(self):
         return True
 
-    def _flatten(self, op):
+    # FactoredExpression
+    def flatten(self, op):
         return self
 
 
@@ -938,6 +940,37 @@ class ExprOrAnd(Expression):
                 for arg in self.args)
         )
 
+    # FactoredExpression
+    def flatten(self, op):
+        """Return a flattened OR/AND expression.
+
+        Use the distributive law to flatten all nested expressions:
+        x + (y * z) = (x + y) * (x + z)
+        x * (y + z) = (x * y) + (x * z)
+
+        NOTE: This function assumes the expression is already factored. Do NOT
+              call this method directly -- use the 'to_dnf' or 'to_cnf' methods
+              instead.
+        """
+        if isinstance(self, op):
+            for i, arg in enumerate(self.args):
+                if isinstance(arg, self.get_dual()):
+                    others = self.args[:i] + self.args[i+1:]
+                    args = [op(a, *others) for a in arg.args]
+                    expr = op.get_dual()(*args)
+                    return expr.flatten(op)
+            return self
+        else:
+            nested, others = list(), list()
+            for arg in self.args:
+                if arg.depth > 1:
+                    nested.append(arg)
+                else:
+                    others.append(arg)
+            args = [arg.flatten(op) for arg in nested] + others
+            return op.get_dual()(*args)
+
+    # FlattenedExpression
     def absorb(self):
         """Return the OR/AND expression after absorption.
 
@@ -969,36 +1002,6 @@ class ExprOrAnd(Expression):
                 args.append(fst)
 
         return self._init1(*args)
-
-    def _flatten(self, op):
-        """Return a flattened OR/AND expression.
-
-        Use the distributive law to flatten all nested expressions:
-        x + (y * z) = (x + y) * (x + z)
-        x * (y + z) = (x * y) + (x * z)
-
-        NOTE: This function assumes the expression is already factored. Do NOT
-              call this method directly -- use the 'to_dnf' or 'to_cnf' methods
-              instead.
-        """
-        if isinstance(self, op):
-            for i, arg in enumerate(self.args):
-                if isinstance(arg, self.get_dual()):
-                    others = self.args[:i] + self.args[i+1:]
-                    args = [op(a, *others) for a in arg.args]
-                    expr = op.get_dual()(*args)
-                    return expr._flatten(op)
-            else:
-                return self
-        else:
-            nested, others = list(), list()
-            for arg in self.args:
-                if arg.depth > 1:
-                    nested.append(arg)
-                else:
-                    others.append(arg)
-            args = [arg._flatten(op) for arg in nested] + others
-            return op.get_dual()(*args)
 
 
 class ExprOr(ExprOrAnd):
