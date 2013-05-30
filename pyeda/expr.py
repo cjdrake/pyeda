@@ -195,7 +195,7 @@ class Expression(boolfunc.Function):
 
     def __new__(cls):
         self = super(Expression, cls).__new__(cls)
-        self._RESTRICT_CACHE = weakref.WeakValueDictionary()
+        self._restrict_cache = weakref.WeakValueDictionary()
         return self
 
     # Operators
@@ -323,9 +323,9 @@ class Expression(boolfunc.Function):
 
     def _urestrict1(self, upoint):
         try:
-            ret = self._RESTRICT_CACHE[upoint]
+            ret = self._restrict_cache[upoint]
         except KeyError:
-            ret = self._RESTRICT_CACHE[upoint] = self._urestrict2(upoint)
+            ret = self._restrict_cache[upoint] = self._urestrict2(upoint)
         return ret
 
     def _urestrict2(self, upoint):
@@ -369,11 +369,11 @@ class Expression(boolfunc.Function):
         for point in boolfunc.iter_points(vs):
             yield point, self._restrict(point)
 
-    def is_neg_unate(self, vs=None):
-        raise NotImplementedError()
+    #def is_neg_unate(self, vs=None):
+    #    raise NotImplementedError()
 
-    def is_pos_unate(self, vs=None):
-        raise NotImplementedError()
+    #def is_pos_unate(self, vs=None):
+    #    raise NotImplementedError()
 
     def smoothing(self, vs=None):
         return Or(*self.cofactors(vs))
@@ -400,7 +400,7 @@ class Expression(boolfunc.Function):
     def _init1(cls, *args):
         raise NotImplementedError()
 
-    def _invert(self):
+    def invert(self):
         """Return an inverted expression."""
         raise NotImplementedError()
 
@@ -593,7 +593,7 @@ class _ExprZero(ExprConstant):
             return True
         return id(self) < id(other)
 
-    def _invert(self):
+    def invert(self):
         return EXPRONE
 
     # Specific to ExprConstant
@@ -609,7 +609,7 @@ class _ExprOne(ExprConstant):
             return True
         return id(self) < id(other)
 
-    def _invert(self):
+    def invert(self):
         return EXPRZERO
 
     # Specific to ExprConstant
@@ -690,7 +690,7 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
             return True
         return id(self) < id(other)
 
-    def _invert(self):
+    def invert(self):
         return ExprComplement(self)
 
     # DPLL IF
@@ -722,13 +722,16 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
     def var(self):
         return self._var
 
-    @property
-    def minterm_index(self):
-        return 1
+    #@property
+    #def minterm_index(self):
+    #    return 1
 
-    @property
-    def maxterm_index(self):
-        return 0
+    #@property
+    #def maxterm_index(self):
+    #    return 0
+
+    minterm_index = 1
+    maxterm_index = 0
 
 
 class ExprComplement(ExprLiteral):
@@ -783,7 +786,7 @@ class ExprComplement(ExprLiteral):
             return True
         return id(self) < id(other)
 
-    def _invert(self):
+    def invert(self):
         return self._exprvar
 
     # DPLL IF
@@ -798,13 +801,16 @@ class ExprComplement(ExprLiteral):
     def exprvar(self):
         return self._exprvar
 
-    @property
-    def minterm_index(self):
-        return 0
+    #@property
+    #def minterm_index(self):
+    #    return 0
 
-    @property
-    def maxterm_index(self):
-        return 1
+    #@property
+    #def maxterm_index(self):
+    #    return 1
+
+    minterm_index = 0
+    maxterm_index = 1
 
 
 class ExprOrAnd(Expression):
@@ -896,8 +902,8 @@ class ExprOrAnd(Expression):
                     return False
         return id(self) < id(other)
 
-    def _invert(self):
-        args = [arg._invert() for arg in self.args]
+    def invert(self):
+        args = [arg.invert() for arg in self.args]
         return self.get_dual()(*args, simplify=self._simplified)
 
     def _factor(self, conj=False):
@@ -914,6 +920,10 @@ class ExprOrAnd(Expression):
 
     @staticmethod
     def get_dual():
+        """Return the dual function.
+
+        The dual of Or and And, and the dual of And is Or.
+        """
         raise NotImplementedError()
 
     @property
@@ -1018,11 +1028,11 @@ class ExprOr(ExprOrAnd):
     def maxterm_index(self):
         if self.depth > 1:
             return None
-        n = self.degree - 1
+        num = self.degree - 1
         index = 0
         for i, v in enumerate(self.inputs):
             if -v in self.args:
-                index |= 1 << (n - i)
+                index |= 1 << (num - i)
         return index
 
 
@@ -1089,11 +1099,11 @@ class ExprAnd(ExprOrAnd):
     def minterm_index(self):
         if self.depth > 1:
             return None
-        n = self.degree - 1
+        num = self.degree - 1
         index = 0
         for i, v in enumerate(self.inputs):
             if v in self.args:
-                index |= 1 << (n - i)
+                index |= 1 << (num - i)
         return index
 
 
@@ -1121,7 +1131,7 @@ class ExprNot(Expression):
     def _init1(cls, arg):
         arg = arg._simplify()
         if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
-            return arg._invert()
+            return arg.invert()
         else:
             return cls._init0(arg, simplified=True)
 
@@ -1145,7 +1155,7 @@ class ExprNot(Expression):
             return self
 
     # From Expression
-    def _invert(self):
+    def invert(self):
         return self.arg
 
     def _simplify(self):
@@ -1155,7 +1165,7 @@ class ExprNot(Expression):
             return self._init1(self.arg)
 
     def _factor(self, conj=False):
-        return self.arg._invert()._factor(conj)
+        return self.arg.invert()._factor(conj)
 
     @cached_property
     def depth(self):
@@ -1219,20 +1229,20 @@ class ExprExclusive(Expression):
         return xcls._init0(*args, simplified=True)
 
     # From Expression
-    def _invert(self):
+    def invert(self):
         return self.get_dual()(*self.args, simplify=self._simplified)
 
     def _factor(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
         terms = list()
-        for n in range(1 << len(self.args)):
-            if parity(n) == self.PARITY:
+        for num in range(1 << len(self.args)):
+            if parity(num) == self.PARITY:
                 term = list()
                 for i, arg in enumerate(self.args):
-                    if bit_on(n, i):
+                    if bit_on(num, i):
                         term.append(arg._factor(conj))
                     else:
-                        term.append(arg._invert()._factor(conj))
+                        term.append(arg.invert()._factor(conj))
                 terms.append(inner(*term))
         return outer(*terms)
 
@@ -1245,6 +1255,10 @@ class ExprExclusive(Expression):
 
     @staticmethod
     def get_dual():
+        """Return the dual function.
+
+        The dual of Xor and Xnor, and the dual of Xnor is Xor.
+        """
         raise NotImplementedError()
 
 
@@ -1331,9 +1345,9 @@ class ExprEqual(Expression):
         return cls._init0(*args, simplified=True)
 
     # From Expression
-    def _invert(self):
+    def invert(self):
         a = ExprOr(*self.args, simplify=self._simplified)
-        b = ExprAnd(*self.args, simplify=self._simplified)._invert()
+        b = ExprAnd(*self.args, simplify=self._simplified).invert()
         return ExprAnd(a, b, simplify=self._simplified)
 
     def _factor(self, conj=False):
@@ -1341,11 +1355,11 @@ class ExprEqual(Expression):
             args = list()
             for i, argi in enumerate(self.args):
                 for j, argj in enumerate(self.args, start=i):
-                    args.append(ExprOr(argi, argj._invert()._factor(conj)))
-                    args.append(ExprOr(argi._invert()._factor(conj), argj))
+                    args.append(ExprOr(argi, argj.invert()._factor(conj)))
+                    args.append(ExprOr(argi.invert()._factor(conj), argj))
             return ExprAnd(*args)
         else:
-            all_zero = ExprAnd(*[arg._invert()._factor(conj) for arg in self.args])
+            all_zero = ExprAnd(*[arg.invert()._factor(conj) for arg in self.args])
             all_one = ExprAnd(*[arg._factor(conj) for arg in self.args])
             return ExprOr(all_zero, all_one)
 
@@ -1404,13 +1418,13 @@ class ExprImplies(Expression):
         return cls._init0(p, q, simplified=True)
 
     # From Expression
-    def _invert(self):
+    def invert(self):
         p, q = self.args
-        return ExprAnd(p, q._invert(), simplify=self._simplified)
+        return ExprAnd(p, q.invert(), simplify=self._simplified)
 
     def _factor(self, conj=False):
         p, q = self.args
-        return ExprOr(p._invert()._factor(conj), q._factor(conj))
+        return ExprOr(p.invert()._factor(conj), q._factor(conj))
 
     @cached_property
     def depth(self):
@@ -1488,13 +1502,13 @@ class ExprITE(Expression):
         return cls._init0(s, a, b, simplified=True)
 
     # From Expression
-    def _invert(self):
+    def invert(self):
         s, a, b = self.args
-        return ExprITE(s, a._invert(), b._invert(), simplify=self._simplified)
+        return ExprITE(s, a.invert(), b.invert(), simplify=self._simplified)
 
     def _factor(self, conj=False):
         s, a, b = self.args
-        return ExprOr(ExprAnd(s, a), ExprAnd(s._invert()._factor(conj), b))
+        return ExprOr(ExprAnd(s, a), ExprAnd(s.invert()._factor(conj), b))
 
     @cached_property
     def depth(self):

@@ -15,7 +15,15 @@ from pyeda.boolfunc import Slicer, VectorFunction
 from pyeda.expr import var, Not, Or, And, Xor
 
 def bitvec(name, *slices):
-    """Return a vector of variables."""
+    """Return a BitVector with an arbitrary number of slices.
+
+    Parameters
+    ----------
+    name : str
+    slices : (int or (int, int))
+        An int N means a slice from [0:N]
+        A tuple (M, N) means a slice from [M:N]
+    """
     sls = list()
     for sl in slices:
         if type(sl) is int:
@@ -30,6 +38,11 @@ def bitvec(name, *slices):
     return _rbitvec(name, sls, tuple())
 
 def _rbitvec(name, slices, indices):
+    """Return a BitVector with an arbitrary number of slices.
+
+    NOTE: This is a recursive helper function for 'bitvec'.
+          Do not invoke this function directly.
+    """
     fst, rst = slices[0], slices[1:]
     if rst:
         items = [ _rbitvec(name, rst, indices + (i, ))
@@ -86,12 +99,15 @@ class BitVector(VectorFunction):
 
     # Operators
     def uor(self):
+        """Return the unary OR of a vector of expressions."""
         return Or(*self)
 
     def uand(self):
+        """Return the unary AND of a vector of expressions."""
         return And(*self)
 
     def uxor(self):
+        """Return the unary XOR of a vector of expressions."""
         return Xor(*self)
 
     def __invert__(self):
@@ -111,38 +127,41 @@ class BitVector(VectorFunction):
         return self.__class__(items)
 
     # Shift operators
-    def lsh(self, y, cin=None):
-        assert 0 <= y <= len(self)
+    def lsh(self, num, cin=None):
+        """Return the vector left shifted by N places."""
+        assert 0 <= num <= len(self)
         if cin is None:
-            cin = BitVector([0] * y)
+            cin = BitVector([0] * num)
         else:
-            assert len(cin) == y
-        if y == 0:
+            assert len(cin) == num
+        if num == 0:
             return self, BitVector([])
         else:
-            return ( BitVector(cin.items + self.items[:-y], self.start),
-                     BitVector(self.items[-y:]) )
+            return ( BitVector(cin.items + self.items[:-num], self.start),
+                     BitVector(self.items[-num:]) )
 
-    def rsh(self, y, cin=None):
-        assert 0 <= y <= len(self)
+    def rsh(self, num, cin=None):
+        """Return the vector right shifted by N places."""
+        assert 0 <= num <= len(self)
         if cin is None:
-            cin = BitVector([0] * y)
+            cin = BitVector([0] * num)
         else:
-            assert len(cin) == y
-        if y == 0:
+            assert len(cin) == num
+        if num == 0:
             return self, BitVector([])
         else:
-            return ( BitVector(self.items[y:] + cin.items, self.start),
-                     BitVector(self.items[:y]) )
+            return ( BitVector(self.items[num:] + cin.items, self.start),
+                     BitVector(self.items[:num]) )
 
-    def arsh(self, y):
-        assert 0 <= y <= len(self)
-        if y == 0:
+    def arsh(self, num):
+        """Return the vector arithmetically right shifted by N places."""
+        assert 0 <= num <= len(self)
+        if num == 0:
             return self, BitVector([])
         else:
             sign = self.items[-1]
-            return ( BitVector(self.items[y:] + [sign] * y, self.start),
-                     BitVector(self.items[:y]) )
+            return ( BitVector(self.items[num:] + [sign] * num, self.start),
+                     BitVector(self.items[:num]) )
 
     # Other logic
     def decode(self):

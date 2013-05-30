@@ -184,6 +184,7 @@ class ConjNormalForm(NormalForm):
 
 
 def DNF_Or(*args):
+    """Return the disjunction of normal form expressions."""
     args = (expr2nfexpr(arg) if isinstance(arg, Expression) else arg
             for arg in args)
 
@@ -194,6 +195,7 @@ def DNF_Or(*args):
     return DisjNormalForm(clauses)
 
 def CNF_And(*args):
+    """Return the conjunction of normal form expression."""
     args = (expr2nfexpr(arg) if isinstance(arg, Expression) else arg
             for arg in args)
 

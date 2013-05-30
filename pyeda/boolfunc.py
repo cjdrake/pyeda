@@ -171,8 +171,8 @@ class Variable(object):
         for idx in indices:
             assert type(idx) is int
         assert type(namespace) is tuple
-        for n in namespace:
-            assert type(n) is str
+        for ns_part in namespace:
+            assert type(ns_part) is str
 
         try:
             uniqid = cls._UNIQIDS[(namespace, name, indices)]
@@ -206,6 +206,7 @@ class Variable(object):
 
     @property
     def qualname(self):
+        """Return the fully qualified name."""
         names = [n for n in reversed(self.namespace)]
         names.append(self.name)
         return ".".join(names)
@@ -410,30 +411,30 @@ class Function(object):
         """
         return tuple(cf for p, cf in self.iter_cofactors(vs))
 
-    def is_neg_unate(self, vs=None):
-        r"""Return whether a function is negative unate.
+    #def is_neg_unate(self, vs=None):
+    #    r"""Return whether a function is negative unate.
 
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
-        in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
-        """
-        raise NotImplementedError()
+    #    A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
+    #    in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
+    #    """
+    #    raise NotImplementedError()
 
-    def is_pos_unate(self, vs=None):
-        r"""Return whether a function is positive unate.
+    #def is_pos_unate(self, vs=None):
+    #    r"""Return whether a function is positive unate.
 
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
-        in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
-        """
-        raise NotImplementedError()
+    #    A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
+    #    in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
+    #    """
+    #    raise NotImplementedError()
 
-    def is_binate(self, vs=None):
-        """Return whether a function is binate.
+    #def is_binate(self, vs=None):
+    #    """Return whether a function is binate.
 
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
-        variable :math:`x_i` if it is neither negative nor positive unate in
-        :math:`x_i`.
-        """
-        return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
+    #    A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
+    #    variable :math:`x_i` if it is neither negative nor positive unate in
+    #    :math:`x_i`.
+    #    """
+    #    return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
 
     def smoothing(self, vs=None):
         """Return the smoothing of a function.
@@ -462,12 +463,25 @@ class Function(object):
 
 
 class Slicer(object):
+    """Interface for vector objects that supports non-zero start index.
+
+    Similar to a Python list, this class can be used to support arbitrarily
+    nested vectors. Unlike Python lists, you can use a Slicer object to
+    instantiate a vector with arbitrary start, stop indices.
+
+    NOTE: This is a general-purpose utility class, but for the purposes of
+          creating and manipulating BitVectors, we recommend using the
+          BitVector class from pyeda.vexpr, or the 'bitvec' convenience
+          function.
+    """
+
     def __init__(self, items, start=0):
         self.items = items
         self.start = start
 
     @property
     def stop(self):
+        """Return the stop index."""
         return self.start + self.__len__()
 
     def __iter__(self):
@@ -492,6 +506,12 @@ class Slicer(object):
             self.items[self._norm_idx(sl)] = item
         else:
             self.items[self._norm_slice(sl)] = item
+
+    def __delitem__(self, sl):
+        if isinstance(sl, int):
+            del self.items[self._norm_idx(sl)]
+        else:
+            del self.items[self._norm_slice(sl)]
 
     def _norm_idx(self, i):
         """Return an index normalized to vector start index."""

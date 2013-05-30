@@ -41,26 +41,26 @@ OP_LTE  = ((1, 1), (0, 1))
 OP_NAND = ((1, 1), (1, 0))
 OP_ONE  = ((1, 1), (1, 1))
 
-def apply2(op, f1, f2):
+def apply2(op, f, g):
     """Recursively apply a binary operator to two Boolean functions.
 
-    NOTE: Both f1 and f2 must implement '-', '*', and '+' operators.
+    NOTE: Both f and g must implement '-', '*', and '+' operators.
     """
-    if f1 in {0, 1}:
-        if f2 in {0, 1}:
-            return op[f1][f2]
+    if f in {0, 1}:
+        if g in {0, 1}:
+            return op[f][g]
         else:
-            x = f2.top
-            f1x = (f1, f1)
-            f2x = f2.cofactors(x)
+            v = g.top
+            fv0, fv1 = (f, f)
+            gv0, gv1 = g.cofactors(v)
     else:
-        if f2 in {0, 1}:
-            x = f1.top
-            f1x = f1.cofactors(x)
-            f2x = (f2, f2)
+        if g in {0, 1}:
+            v = f.top
+            fv0, fv1 = f.cofactors(v)
+            gv0, gv1 = (g, g)
         else:
-            x = min(f1.top, f2.top)
-            f1x = f1.cofactors(x)
-            f2x = f2.cofactors(x)
-    return ( -x * apply2(op, f1x[0], f2x[0]) +
-              x * apply2(op, f1x[1], f2x[1]) )
+            v = min(f.top, g.top)
+            fv0, fv1 = f.cofactors(v)
+            gv0, gv1 = g.cofactors(v)
+    return ( -v * apply2(op, fv0, gv0) +
+              v * apply2(op, fv1, gv1) )

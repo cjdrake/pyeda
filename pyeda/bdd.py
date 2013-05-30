@@ -249,11 +249,11 @@ class BinaryDecisionDiagram(boolfunc.Function):
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
 
-    def is_neg_unate(self, vs=None):
-        raise NotImplementedError()
+    #def is_neg_unate(self, vs=None):
+    #    raise NotImplementedError()
 
-    def is_pos_unate(self, vs=None):
-        raise NotImplementedError()
+    #def is_pos_unate(self, vs=None):
+    #    raise NotImplementedError()
 
     def smoothing(self, vs=None):
         return functools.reduce(self.__class__.__add__, self.cofactors(vs))

@@ -109,7 +109,7 @@ additional-builtins=
 required-attributes=
 
 # List of builtins function names that should not be used, separated by a comma
-bad-functions=map,filter,apply,input
+bad-functions=filter,apply,input
 
 # Regular expression which should only match correct module names
 module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
@@ -140,7 +140,24 @@ variable-rgx=[a-z_][a-z0-9_]{2,30}$
 inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,j,k,v,vs,f,fs,sl,vf,vfs,bv
+# _ : generic
+# i, j, k : iterator index
+# s, a, b : conventional ITE (if-then-else) variable names s ? a : b
+# p, q : conventional Implies variable names p => q
+# v : Variable instance
+# vs : [v]
+# f, g, h : Function instances
+# cf : Cofactor
+# fs : [f]
+# sl : slice instance
+# vf : VectorFunction instance
+# vfs : [VectorFunction]
+# bv : BitVector instance
+# op : Boolean operator
+# Or, And, Not, Xor, Xnor, Equal, Implies, ITE : Expression factory functions
+# Nor, Nand, OneHot0, OneHot : Expression higher-order factory functions
+# DNF_Or, CNF_And : NormalFormExpression factory functions
+good-names=_,i,j,k,s,a,b,p,q,v,vs,f,g,h,cf,fs,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,DNF_Or,CNF_And
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz

@@ -70,11 +70,11 @@ def parity(num):
     """
     if num < 0:
         raise ValueError("num must be >= 0")
-    p = 0
+    par = 0
     while num:
-        p ^= (num & 1)
+        par ^= (num & 1)
         num >>= 1
-    return p
+    return par
 
 def boolify(arg):
     """Convert arg to an integer in B = {0, 1}.
@@ -107,8 +107,16 @@ def pcify(arg):
         raise ValueError("arg not in {0, 1, X, -}")
 
 def cached_property(func):
-    """Return a cached property calculated by input function."""
+    """Return a cached property calculated by the input function.
+
+    Unlike the 'property' decorator from the standard library, this decorator
+    will cache the return value in order to avoid repeated calculations. This
+    is particularly useful when the property involves some non-trivial
+    computation.
+    """
+    # pylint: disable=W0212
     def get(self):
+        """Return the cached property."""
         try:
             return self._property_cache[func]
         except AttributeError:

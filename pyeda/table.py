@@ -229,10 +229,10 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def outputs():
             for upoint in boolfunc.iter_upoints(inputs):
-                ab = self._urestrict(upoint).pcdata[0]
-                cd = other._urestrict(upoint).pcdata[0]
+                a_b = self._urestrict(upoint).pcdata[0]
+                c_d = other._urestrict(upoint).pcdata[0]
                 # a * c, b + d
-                yield ((ab & cd) & 2) | ((ab | cd) & 1)
+                yield ((a_b & c_d) & 2) | ((a_b | c_d) & 1)
 
         obj = super(TruthTable, self).__new__(TruthTable)
         obj._inputs = inputs
@@ -256,10 +256,10 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def outputs():
             for upoint in boolfunc.iter_upoints(inputs):
-                ab = self._urestrict(upoint).pcdata[0]
-                cd = other._urestrict(upoint).pcdata[0]
+                a_b = self._urestrict(upoint).pcdata[0]
+                c_d = other._urestrict(upoint).pcdata[0]
                 # a + c, b * d
-                yield ((ab | cd) & 2) | ((ab & cd) & 1)
+                yield ((a_b | c_d) & 2) | ((a_b & c_d) & 1)
 
         obj = super(TruthTable, self).__new__(TruthTable)
         obj._inputs = inputs
@@ -275,10 +275,10 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def outputs():
             for upoint in boolfunc.iter_upoints(inputs):
-                ab = self._urestrict(upoint).pcdata[0]
-                cd = other._urestrict(upoint).pcdata[0]
+                a_b = self._urestrict(upoint).pcdata[0]
+                c_d = other._urestrict(upoint).pcdata[0]
                 # a * c + b * d, a * d + b * c
-                a, b, c, d = ab >> 1, ab & 1, cd >> 1, cd & 1
+                a, b, c, d = a_b >> 1, a_b & 1, c_d >> 1, c_d & 1
                 yield (((a & c | b & d) << 1) | (a & d | b & c))
 
         obj = super(TruthTable, self).__new__(TruthTable)
@@ -344,11 +344,11 @@ class TruthTable(boolfunc.Function):
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
 
-    def is_neg_unate(self, vs=None):
-        raise NotImplementedError()
+    #def is_neg_unate(self, vs=None):
+    #    raise NotImplementedError()
 
-    def is_pos_unate(self, vs=None):
-        raise NotImplementedError()
+    #def is_pos_unate(self, vs=None):
+    #    raise NotImplementedError()
 
     def smoothing(self, vs=None):
         return functools.reduce(self.__class__.__add__, self.cofactors(vs))
@@ -411,12 +411,12 @@ class TTVariable(boolfunc.Variable, TruthTable):
         return self._var.indices
 
 
-def _bin_zfill(num, w=None):
+def _bin_zfill(num, width=None):
     """Convert a base-10 number to a binary string.
 
     Parameters
     num: int
-    w: int, optional
+    width: int, optional
         Zero-extend the string to this width.
     Examples
     --------
@@ -427,4 +427,4 @@ def _bin_zfill(num, w=None):
     '00101010'
     """
     s = bin(num)[2:]
-    return s if w is None else s.zfill(w)
+    return s if width is None else s.zfill(width)
