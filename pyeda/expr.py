@@ -700,14 +700,6 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
     def var(self):
         return self._var
 
-    #@property
-    #def minterm_index(self):
-    #    return 1
-
-    #@property
-    #def maxterm_index(self):
-    #    return 0
-
     minterm_index = 1
     maxterm_index = 0
 
@@ -778,14 +770,6 @@ class ExprComplement(ExprLiteral):
     @property
     def exprvar(self):
         return self._exprvar
-
-    #@property
-    #def minterm_index(self):
-    #    return 0
-
-    #@property
-    #def maxterm_index(self):
-    #    return 1
 
     minterm_index = 0
     maxterm_index = 1
