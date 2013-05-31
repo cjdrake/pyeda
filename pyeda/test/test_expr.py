@@ -8,7 +8,6 @@ from pyeda import boolfunc
 from pyeda.alphas import *
 from pyeda.expr import (
     exprify, constify,
-    factor, simplify,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
     EXPRZERO, EXPRONE,
@@ -36,14 +35,6 @@ def test_constify():
     assert constify(EXPRONE) == 1
     assert constify(a) is a
     nose.tools.assert_raises(ValueError, constify, "foo")
-
-def test_simplify():
-    assert simplify(0) == 0
-    assert simplify(1) == 1
-
-def test_factor():
-    assert factor(0) == 0
-    assert factor(1) == 1
 
 def test_nor():
     assert Nor(0, 0) == 1
@@ -476,7 +467,6 @@ def test_implies():
 
     f = Implies(p, 1, simplify=False)
     assert str(f) == "p => 1"
-    assert simplify(f) == 1
 
 def test_ite():
     # Function
@@ -522,7 +512,6 @@ def test_ite():
 
     f = ITE(s, 1, 1, simplify=False)
     assert str(f) == "s ? 1 : 1"
-    assert simplify(f) == 1
 
 def test_absorb():
     assert (a * b + a * b).absorb().equivalent(a * b)

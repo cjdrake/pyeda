@@ -5,9 +5,6 @@ Interface Functions:
     exprvar
     var
 
-    factor
-    simplify
-
     Or, And, Not
     Xor, Xnor,
     Equal, Implies, ITE
@@ -100,28 +97,7 @@ def var(name, indices=None, namespace=None):
     """
     return ExprVariable(name, indices, namespace)
 
-def simplify(arg):
-    """Return a simplified expression.
-
-    Parameters
-    ----------
-    arg : {0, 1} or str or Expression
-    """
-    return exprify(arg).simplify()
-
-def factor(arg, conj=False):
-    """Return a factored expression.
-
-    Parameters
-    ----------
-
-    arg : {0, 1} or str or Expression
-    conj : bool
-        Always choose a conjunctive form when there's a choice
-    """
-    return exprify(arg).factor(conj)
-
-# convenience functions
+# Boolean Expression factory functions
 def Or(*args, **kwargs):
     args = tuple(exprify(arg) for arg in args)
     expr = ExprOr(*args, **kwargs)
@@ -158,11 +134,11 @@ def Implies(p, q, simplify=True):
     expr = ExprImplies(p, q, simplify)
     return constify(expr)
 
-def ITE(s, a, b, simplify=True):
+def ITE(s, d1, d0, simplify=True):
     s = exprify(s)
-    a = exprify(a)
-    b = exprify(b)
-    expr = ExprITE(s, a, b, simplify)
+    d1 = exprify(d1)
+    d0 = exprify(d0)
+    expr = ExprITE(s, d1, d0, simplify)
     return constify(expr)
 
 def Nor(*args):
@@ -271,9 +247,9 @@ class Expression(boolfunc.Function):
         """
         return Implies(other, self)
 
-    def ite(self, a, b):
+    def ite(self, d1, d0):
         """If-then-else operator"""
-        return ITE(self, a, b)
+        return ITE(self, d1, d0)
 
     # From Function
     @cached_property
@@ -953,10 +929,10 @@ class ExprOrAnd(Expression):
               instead.
         """
         if isinstance(self, op):
-            for i, arg in enumerate(self.args):
-                if isinstance(arg, self.get_dual()):
+            for i, argi in enumerate(self.args):
+                if isinstance(argi, self.get_dual()):
                     others = self.args[:i] + self.args[i+1:]
-                    args = [op(a, *others) for a in arg.args]
+                    args = [op(arg, *others) for arg in argi.args]
                     expr = op.get_dual()(*args)
                     return expr.flatten(op)
             return self
@@ -1349,9 +1325,9 @@ class ExprEqual(Expression):
 
     # From Expression
     def invert(self):
-        a = ExprOr(*self.args, simplify=self._simplified)
-        b = ExprAnd(*self.args, simplify=self._simplified).invert()
-        return ExprAnd(a, b, simplify=self._simplified)
+        d1 = ExprOr(*self.args, simplify=self._simplified)
+        d0 = ExprAnd(*self.args, simplify=self._simplified).invert()
+        return ExprAnd(d1, d0, simplify=self._simplified)
 
     def _factor(self, conj=False):
         if conj:
@@ -1437,11 +1413,11 @@ class ExprImplies(Expression):
 class ExprITE(Expression):
     """Boolean if-then-else ternary operator"""
 
-    def __new__(cls, s, a, b, simplify=True):
+    def __new__(cls, s, d1, d0, simplify=True):
         if simplify:
-            self = cls._init1(s, a, b)
+            self = cls._init1(s, d1, d0)
         else:
-            self = cls._init0(s, a, b)
+            self = cls._init0(s, d1, d0)
         return self
 
     def __str__(self):
@@ -1454,65 +1430,65 @@ class ExprITE(Expression):
         return "{} ? {} : {}".format(*parts)
 
     @classmethod
-    def _init0(cls, s, a, b, simplified=False):
+    def _init0(cls, s, d1, d0, simplified=False):
         obj = super(ExprITE, cls).__new__(cls)
-        obj.args = (s, a, b)
+        obj.args = (s, d1, d0)
         obj._simplified = simplified
         return obj
 
     @classmethod
-    def _init1(cls, s, a, b):
+    def _init1(cls, s, d1, d0):
         s = s._simplify()
-        a = a._simplify()
-        b = b._simplify()
+        d1 = d1._simplify()
+        d0 = d0._simplify()
 
-        # 0 ? a : b = b
+        # 0 ? d1 : d0 = d0
         if s is EXPRZERO:
-            return b
-        # 1 ? a : b = a
+            return d0
+        # 1 ? d1 : d0 = d1
         elif s is EXPRONE:
-            return a
-        elif a is EXPRZERO:
+            return d1
+        elif d1 is EXPRZERO:
             # s ? 0 : 0 = 0
-            if b is EXPRZERO:
+            if d0 is EXPRZERO:
                 return EXPRZERO
             # s ? 0 : 1 = s'
-            elif b is EXPRONE:
+            elif d0 is EXPRONE:
                 return ExprNot(s)
-            # s ? 0 : b = s' * b
+            # s ? 0 : d0 = s' * d0
             else:
-                return ExprAnd(ExprNot(s), b)
-        elif a is EXPRONE:
+                return ExprAnd(ExprNot(s), d0)
+        elif d1 is EXPRONE:
             # s ? 1 : 0 = s
-            if b is EXPRZERO:
+            if d0 is EXPRZERO:
                 return s
             # s ? 1 : 1 = 1
-            elif b is EXPRONE:
+            elif d0 is EXPRONE:
                 return EXPRONE
-            # s ? 1 : b = s + b
+            # s ? 1 : d0 = s + d0
             else:
-                return ExprOr(s, b)
-        # s ? a : 0 = s * a
-        elif b is EXPRZERO:
-            return ExprAnd(s, a)
-        # s ? a : 1 = s' + a
-        elif b is EXPRONE:
-            return ExprOr(ExprNot(s), a)
-        # s ? a : a = a
-        elif a == b:
-            return a
+                return ExprOr(s, d0)
+        # s ? d1 : 0 = s * d1
+        elif d0 is EXPRZERO:
+            return ExprAnd(s, d1)
+        # s ? d1 : 1 = s' + d1
+        elif d0 is EXPRONE:
+            return ExprOr(ExprNot(s), d1)
+        # s ? d1 : d1 = d1
+        elif d1 == d0:
+            return d1
 
-        return cls._init0(s, a, b, simplified=True)
+        return cls._init0(s, d1, d0, simplified=True)
 
     # From Expression
     def invert(self):
-        s, a, b = self.args
-        return ExprITE(s, a.invert(), b.invert(), simplify=self._simplified)
+        s, d1, d0 = self.args
+        return ExprITE(s, d1.invert(), d0.invert(), simplify=self._simplified)
 
     def _factor(self, conj=False):
-        s, a, b = self.args
-        return ExprOr(ExprAnd(s._factor(conj), a._factor(conj)),
-                      ExprAnd(s.invert()._factor(conj), b._factor(conj)))
+        s, d1, d0 = self.args
+        return ExprOr(ExprAnd(s._factor(conj), d1._factor(conj)),
+                      ExprAnd(s.invert()._factor(conj), d0._factor(conj)))
 
     @cached_property
     def depth(self):

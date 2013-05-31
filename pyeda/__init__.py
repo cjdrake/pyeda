@@ -22,7 +22,7 @@ from pyeda.common import clog2, boolify, pcify
 
 from pyeda.bdd import bddvar, expr2bdd, bdd2expr
 from pyeda.expr import (
-    exprvar, var, factor, simplify,
+    exprvar, var,
     Nor, Nand, OneHot0, OneHot,
     Not, Or, And, Xor, Xnor, Equal, Implies, ITE
 )
