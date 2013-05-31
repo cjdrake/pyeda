@@ -76,6 +76,12 @@ def truthtable2expr(tt, conj=False):
 
 
 class PCData(object):
+    """
+    Positional cube data.
+
+    This class packs PC data items into a Python stdlib array.
+    The 2^N indices cover a Boolean space of dimension N.
+    """
 
     _NEG = {
         PC_VOID : PC_VOID,
@@ -88,42 +94,43 @@ class PCData(object):
         data = array.array('L')
         width = data.itemsize << 3
 
-        pos = n = 0
+        pos = num = 0
         for item in items:
             if pos == 0:
                 data.append(0)
             data[-1] += (item << pos)
             pos = (pos + 2) % width
-            n += 1
+            num += 1
 
         self.data = data
         self.width = width
-        self._len = n
+        self._len = num
 
     def __len__(self):
         return self._len
 
-    def __getitem__(self, index):
-        q, r = divmod(index, (self.width >> 1))
-        return (self.data[q] >> (r << 1)) & 3
-
     def __iter__(self):
-        n = q = 0
-        while n < self._len:
-            chunk = self.data[q]
-            r = 0
-            while r < self.width and n < self._len:
-                item = (chunk >> r) & 3
+        num = quotient = 0
+        while num < self._len:
+            chunk = self.data[quotient]
+            remainder = 0
+            while remainder < self.width and num < self._len:
+                item = (chunk >> remainder) & 3
                 yield item
-                r += 2
-                n += 1
-            q += 1
+                remainder += 2
+                num += 1
+            quotient += 1
 
     def __neg__(self):
         return PCData(self._NEG[item] for item in self)
 
+    def __getitem__(self, num):
+        quotient, remainder = divmod(num, (self.width >> 1))
+        return (self.data[quotient] >> (remainder << 1)) & 3
+
     @cached_property
     def zero_mask(self):
+        """Return a mask to determine whether an array chunk has any zeros."""
         accum = 0
         for i in range(self.data.itemsize):
             accum += (0xAA << (i << 3))
@@ -131,59 +138,66 @@ class PCData(object):
 
     @cached_property
     def one_mask(self):
+        """Return a mask to determine whether an array chunk has any ones."""
         accum = 0
         for i in range(self.data.itemsize):
             accum += (0x55 << (i << 3))
         return accum
 
     def iter_zeros(self):
-        n = q = 0
-        while n < self._len:
-            chunk = self.data[q]
+        """Iterate through the indices of all zero items."""
+        num = quotient = 0
+        while num < self._len:
+            chunk = self.data[quotient]
             if chunk & self.zero_mask:
-                r = 0
-                while r < self.width and n < self._len:
-                    item = (chunk >> r) & 3
+                remainder = 0
+                while remainder < self.width and num < self._len:
+                    item = (chunk >> remainder) & 3
                     if item & 2:
-                        yield n
-                    r += 2
-                    n += 1
+                        yield num
+                    remainder += 2
+                    num += 1
             else:
-                n += (self.width >> 1)
-            q += 1
+                num += (self.width >> 1)
+            quotient += 1
 
     def find_one(self):
-        n = q = 0
-        while n < self._len:
-            chunk = self.data[q]
+        """
+        Return the first index of an entry that is either one or DC.
+        If no item is found, return None.
+        """
+        num = quotient = 0
+        while num < self._len:
+            chunk = self.data[quotient]
             if chunk & self.one_mask:
-                r = 0
-                while r < self.width and n < self._len:
-                    item = (chunk >> r) & 3
+                remainder = 0
+                while remainder < self.width and num < self._len:
+                    item = (chunk >> remainder) & 3
                     if item & 1:
-                        return n
-                    r += 2
-                    n += 1
+                        return num
+                    remainder += 2
+                    num += 1
             else:
-                n += (self.width >> 1)
-            q += 1
+                num += (self.width >> 1)
+            quotient += 1
         return None
 
     def iter_ones(self):
-        n = q = 0
-        while n < self._len:
-            chunk = self.data[q]
+        """Iterate through all items that are either one or DC."""
+        num = quotient = 0
+        while num < self._len:
+            chunk = self.data[quotient]
             if chunk & self.one_mask:
-                r = 0
-                while r < self.width and n < self._len:
-                    item = (chunk >> r) & 3
+                remainder = 0
+                while remainder < self.width and num < self._len:
+                    item = (chunk >> remainder) & 3
                     if item & 1:
-                        yield n
-                    r += 2
-                    n += 1
+                        yield num
+                    remainder += 2
+                    num += 1
             else:
-                n += (self.width >> 1)
-            q += 1
+                num += (self.width >> 1)
+            quotient += 1
 
 
 class TruthTable(boolfunc.Function):
@@ -206,8 +220,8 @@ class TruthTable(boolfunc.Function):
         parts = ["inputs: "]
         parts.append(" ".join(str(v) for v in reversed(self._inputs)))
         parts.append("\n")
-        for n, item in enumerate(self.pcdata):
-            parts += [_bin_zfill(n, self.degree), " ", _PC2STR[item], "\n"]
+        for num, item in enumerate(self.pcdata):
+            parts += [_bin_zfill(num, self.degree), " ", _PC2STR[item], "\n"]
         return "".join(parts)
 
     def __repr__(self):
@@ -296,12 +310,12 @@ class TruthTable(boolfunc.Function):
         return self._inputs
 
     def iter_zeros(self):
-        for n in self.pcdata.iter_zeros():
-            yield boolfunc.num2point(n, self.inputs)
+        for num in self.pcdata.iter_zeros():
+            yield boolfunc.num2point(num, self.inputs)
 
     def iter_ones(self):
-        for n in self.pcdata.iter_ones():
-            yield boolfunc.num2point(n, self.inputs)
+        for num in self.pcdata.iter_ones():
+            yield boolfunc.num2point(num, self.inputs)
 
     def reduce(self):
         return self
@@ -331,15 +345,15 @@ class TruthTable(boolfunc.Function):
         raise NotImplementedError()
 
     def satisfy_one(self):
-        n = self.pcdata.find_one()
-        if n is None:
+        num = self.pcdata.find_one()
+        if num is None:
             return None
         else:
-            return boolfunc.num2point(n, self.inputs)
+            return boolfunc.num2point(num, self.inputs)
 
     def satisfy_all(self):
-        for n in self.pcdata.iter_ones():
-            yield boolfunc.num2point(n, self.inputs)
+        for num in self.pcdata.iter_ones():
+            yield boolfunc.num2point(num, self.inputs)
 
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
@@ -371,8 +385,8 @@ class TruthTable(boolfunc.Function):
             else:
                 unmapped[v] = i
         vs = sorted(unmapped.keys())
-        for n in range(1 << len(vs)):
-            for v, val in boolfunc.num2point(n, vs).items():
+        for num in range(1 << len(vs)):
+            for v, val in boolfunc.num2point(num, vs).items():
                 inputs[unmapped[v]] = val
             yield sum((val << i) for i, val in enumerate(inputs))
 

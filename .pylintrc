@@ -149,6 +149,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # f, g, h : Function instances
 # cf : Cofactor
 # fs : [f]
+# tt : TruthTable instances
 # sl : slice instance
 # vf : VectorFunction instance
 # vfs : [VectorFunction]
@@ -157,7 +158,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # Or, And, Not, Xor, Xnor, Equal, Implies, ITE : Expression factory functions
 # Nor, Nand, OneHot0, OneHot : Expression higher-order factory functions
 # DNF_Or, CNF_And : NormalFormExpression factory functions
-good-names=_,i,j,k,s,a,b,p,q,v,vs,f,g,h,cf,fs,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,DNF_Or,CNF_And
+good-names=_,i,j,k,s,a,b,p,q,v,vs,f,g,h,cf,fs,tt,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,DNF_Or,CNF_And
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz
