@@ -1358,8 +1358,8 @@ class ExprEqual(Expression):
             args = list()
             for i, argi in enumerate(self.args):
                 for j, argj in enumerate(self.args, start=i):
-                    args.append(ExprOr(argi, argj.invert()._factor(conj)))
-                    args.append(ExprOr(argi.invert()._factor(conj), argj))
+                    args.append(ExprOr(argi._factor(conj), argj.invert()._factor(conj)))
+                    args.append(ExprOr(argi.invert()._factor(conj), argj._factor(conj)))
             return ExprAnd(*args)
         else:
             all_zero = ExprAnd(*[arg.invert()._factor(conj) for arg in self.args])
@@ -1511,7 +1511,8 @@ class ExprITE(Expression):
 
     def _factor(self, conj=False):
         s, a, b = self.args
-        return ExprOr(ExprAnd(s, a), ExprAnd(s.invert()._factor(conj), b))
+        return ExprOr(ExprAnd(s._factor(conj), a._factor(conj)),
+                      ExprAnd(s.invert()._factor(conj), b._factor(conj)))
 
     @cached_property
     def depth(self):
