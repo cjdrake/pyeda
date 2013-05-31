@@ -386,7 +386,7 @@ class Expression(boolfunc.Function):
         return constify(ret)
 
     def _simplify(self):
-        if self._simplified:
+        if self.simplified:
             return self
         else:
             return self._init1(*self.args)
@@ -807,7 +807,7 @@ class ExprOrAnd(Expression):
         obj = super(ExprOrAnd, cls).__new__(cls)
         obj.args = args
         obj.arg_set = frozenset(args)
-        obj._simplified = kwargs.get('simplified', False)
+        obj.simplified = kwargs.get('simplified', False)
         return obj
 
     @classmethod
@@ -882,7 +882,7 @@ class ExprOrAnd(Expression):
 
     def invert(self):
         args = [arg.invert() for arg in self.args]
-        return self.get_dual()(*args, simplify=self._simplified)
+        return self.get_dual()(*args, simplify=self.simplified)
 
     def _factor(self, conj=False):
         args = [arg._factor(conj) for arg in self.args]
@@ -1103,7 +1103,7 @@ class ExprNot(Expression):
     def _init0(cls, arg, simplified=False):
         obj = super(ExprNot, cls).__new__(cls)
         obj.arg = arg
-        obj._simplified = simplified
+        obj.simplified = simplified
         return obj
 
     @classmethod
@@ -1138,7 +1138,7 @@ class ExprNot(Expression):
         return self.arg
 
     def _simplify(self):
-        if self._simplified:
+        if self.simplified:
             return self
         else:
             return self._init1(self.arg)
@@ -1166,7 +1166,7 @@ class ExprExclusive(Expression):
     def _init0(cls, *args, **kwargs):
         obj = super(ExprExclusive, cls).__new__(cls)
         obj.args = args
-        obj._simplified = kwargs.get('simplified', False)
+        obj.simplified = kwargs.get('simplified', False)
         return obj
 
     @classmethod
@@ -1209,7 +1209,7 @@ class ExprExclusive(Expression):
 
     # From Expression
     def invert(self):
-        return self.get_dual()(*self.args, simplify=self._simplified)
+        return self.get_dual()(*self.args, simplify=self.simplified)
 
     def _factor(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
@@ -1288,7 +1288,7 @@ class ExprEqual(Expression):
     def _init0(cls, *args, **kwargs):
         obj = super(ExprEqual, cls).__new__(cls)
         obj.args = args
-        obj._simplified = kwargs.get('simplified', False)
+        obj.simplified = kwargs.get('simplified', False)
         return obj
 
     @classmethod
@@ -1325,9 +1325,9 @@ class ExprEqual(Expression):
 
     # From Expression
     def invert(self):
-        d1 = ExprOr(*self.args, simplify=self._simplified)
-        d0 = ExprAnd(*self.args, simplify=self._simplified).invert()
-        return ExprAnd(d1, d0, simplify=self._simplified)
+        d1 = ExprOr(*self.args, simplify=self.simplified)
+        d0 = ExprAnd(*self.args, simplify=self.simplified).invert()
+        return ExprAnd(d1, d0, simplify=self.simplified)
 
     def _factor(self, conj=False):
         if conj:
@@ -1370,7 +1370,7 @@ class ExprImplies(Expression):
     def _init0(cls, p, q, simplified=False):
         obj = super(ExprImplies, cls).__new__(cls)
         obj.args = (p, q)
-        obj._simplified = simplified
+        obj.simplified = simplified
         return obj
 
     @classmethod
@@ -1399,7 +1399,7 @@ class ExprImplies(Expression):
     # From Expression
     def invert(self):
         p, q = self.args
-        return ExprAnd(p, q.invert(), simplify=self._simplified)
+        return ExprAnd(p, q.invert(), simplify=self.simplified)
 
     def _factor(self, conj=False):
         p, q = self.args
@@ -1433,7 +1433,7 @@ class ExprITE(Expression):
     def _init0(cls, s, d1, d0, simplified=False):
         obj = super(ExprITE, cls).__new__(cls)
         obj.args = (s, d1, d0)
-        obj._simplified = simplified
+        obj.simplified = simplified
         return obj
 
     @classmethod
@@ -1483,7 +1483,7 @@ class ExprITE(Expression):
     # From Expression
     def invert(self):
         s, d1, d0 = self.args
-        return ExprITE(s, d1.invert(), d0.invert(), simplify=self._simplified)
+        return ExprITE(s, d1.invert(), d0.invert(), simplify=self.simplified)
 
     def _factor(self, conj=False):
         s, d1, d0 = self.args
