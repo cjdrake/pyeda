@@ -38,8 +38,10 @@ load-plugins=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=similarities,W0141,W0142
-
+# C0302 = Too many lines in module
+# W0142 = Used * or ** magic
+# W0602 = Using global for ... but no assignment is done
+disable=similarities,C0302,W0142,W0602
 
 [REPORTS]
 
@@ -149,6 +151,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # f, g, h : Function instances
 # cf : Cofactor
 # fs : [f]
+# nf : NormalForm instances
 # tt : TruthTable instances
 # sl : slice instance
 # vf : VectorFunction instance
@@ -157,8 +160,8 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # op : Boolean operator
 # Or, And, Not, Xor, Xnor, Equal, Implies, ITE : Expression factory functions
 # Nor, Nand, OneHot0, OneHot : Expression higher-order factory functions
-# DNF_Or, CNF_And : NormalFormExpression factory functions
-good-names=_,i,j,k,s,d1,d0,p,q,v,vs,f,g,h,cf,fs,tt,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,DNF_Or,CNF_And
+# NF_Not, DNF_Or, CNF_And : NormalForm factory functions
+good-names=_,i,j,k,s,d1,d0,p,q,v,vs,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,NF_Not,DNF_Or,CNF_And
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz

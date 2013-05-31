@@ -12,7 +12,7 @@ Interface Classes:
 
 from pyeda.common import clog2, bit_on
 from pyeda.boolfunc import Slicer, VectorFunction
-from pyeda.expr import var, Not, Or, And, Xor
+from pyeda.expr import exprvar, Not, Or, And, Xor
 
 def bitvec(name, *slices):
     """Return a BitVector with an arbitrary number of slices.
@@ -49,7 +49,8 @@ def _rbitvec(name, slices, indices):
                   for i in range(fst.start, fst.stop) ]
         return Slicer(items, fst.start)
     else:
-        vs = [var(name, indices + (i, )) for i in range(fst.start, fst.stop)]
+        vs = [exprvar(name, indices + (i, ))
+              for i in range(fst.start, fst.stop)]
         return BitVector(vs, fst.start)
 
 def uint2vec(num, length=None):

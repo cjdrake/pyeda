@@ -2,35 +2,49 @@
 Test normal form expression Boolean functions
 """
 
-from pyeda.expr import var, Xor
+from pyeda.alphas import *
+from pyeda.expr import EXPRZERO, EXPRONE
 
 from pyeda.nfexpr import (
-    expr2nfexpr, nfexpr2expr,
+    expr2dnf, expr2cnf, nf2expr,
+    upoint2nfpoint,
     DisjNormalForm, ConjNormalForm
 )
 
 import nose
 
-a, b, c, d, e, p, q, s = map(var, 'abcdepqs')
+def test_misc():
+    nose.tools.assert_raises(TypeError, nf2expr, "foo")
 
-def test_conversion():
-    f = -a * b + a * -b
-    g = (a + b) * (-a + -b)
+def test_expr2dnf():
+    nose.tools.assert_raises(TypeError, expr2dnf, "foo")
+    assert expr2dnf(EXPRZERO).is_zero()
+    nose.tools.assert_raises(ValueError, expr2dnf, EXPRONE)
+    assert nf2expr(expr2dnf(a)) == a
+    assert nf2expr(expr2dnf(-a)) == -a
+    assert nf2expr(expr2dnf(a + -b)).equivalent(a + -b)
+    assert nf2expr(expr2dnf(a * -b)).equivalent(a * -b)
+    assert nf2expr(expr2dnf(a + -b + (c * -d))).equivalent(a + -b + (c * -d))
 
-    nose.tools.assert_raises(TypeError, expr2nfexpr, Xor(a, b))
-    nose.tools.assert_raises(TypeError, nfexpr2expr, "what?")
+def test_expr2cnf():
+    nose.tools.assert_raises(TypeError, expr2cnf, "foo")
+    assert expr2cnf(EXPRONE).is_one()
+    nose.tools.assert_raises(ValueError, expr2cnf, EXPRZERO)
+    assert nf2expr(expr2cnf(a)) == a
+    assert nf2expr(expr2cnf(-a)) == -a
+    assert nf2expr(expr2cnf(a + -b)).equivalent(a + -b)
+    assert nf2expr(expr2cnf(a * -b)).equivalent(a * -b)
+    assert nf2expr(expr2cnf(a * -b * (c + -d))).equivalent(a * -b * (c + -d))
 
-    nfexpr2expr(expr2nfexpr(f)).equivalent(f)
-    nfexpr2expr(expr2nfexpr(g)).equivalent(g)
+def test_upoint2point():
+    upoint = frozenset([a.uniqid, c.uniqid]), frozenset([b.uniqid, d.uniqid])
+    assert upoint2nfpoint(upoint) == {a: 0, b: 1, c: 0, d: 1}
 
 def test_basic():
-    assert DisjNormalForm(set()) == 0
-    assert ConjNormalForm(set()) == 1
-
     f = -a * b + a * -b
     g = (a + b) * (-a + -b)
-    dnf = expr2nfexpr(f)
-    cnf = expr2nfexpr(g)
+    dnf = expr2dnf(f)
+    cnf = expr2cnf(g)
 
     assert str(dnf) == "a' * b + a * b'"
     assert str(cnf) == "(a + b) * (a' + b')"
@@ -44,7 +58,7 @@ def test_basic():
     assert cnf.inputs == [a, b]
 
     assert isinstance(-dnf, ConjNormalForm)
-    assert nfexpr2expr(-dnf).equivalent(-f)
+    assert nf2expr(-dnf).equivalent(-f)
 
     assert isinstance(-cnf, DisjNormalForm)
-    assert nfexpr2expr(-cnf).equivalent(-g)
+    assert nf2expr(-cnf).equivalent(-g)

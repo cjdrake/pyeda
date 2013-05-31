@@ -7,7 +7,7 @@ import sys
 from pyeda import boolfunc
 from pyeda.alphas import *
 from pyeda.expr import (
-    exprify, constify,
+    Expression,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
     EXPRZERO, EXPRONE,
@@ -22,69 +22,70 @@ MINOR = sys.version_info.minor
 X = bitvec('x', 16)
 Y = bitvec('y', 16, 16, 16)
 
-def test_exprify():
-    assert exprify(0) is EXPRZERO
-    assert exprify('0') is EXPRZERO
-    assert exprify(1) is EXPRONE
-    assert exprify('1') is EXPRONE
-    assert exprify(a) is a
-    nose.tools.assert_raises(ValueError, exprify, "foo")
+def test_misc():
+    f = a * b + a * c + b * c
 
-def test_constify():
-    assert constify(EXPRZERO) == 0
-    assert constify(EXPRONE) == 1
-    assert constify(a) is a
-    nose.tools.assert_raises(ValueError, constify, "foo")
+    assert f.smoothing(a).equivalent(b + c)
+    assert f.consensus(a).equivalent(b * c)
+    assert f.derivative(a).equivalent(b * -c + -b * c)
+
+def test_box():
+    assert Expression.box(0) is EXPRZERO
+    assert Expression.box('0') is EXPRZERO
+    assert Expression.box(1) is EXPRONE
+    assert Expression.box('1') is EXPRONE
+    assert Expression.box(a) is a
+    nose.tools.assert_raises(TypeError, Expression.box, "foo")
 
 def test_nor():
-    assert Nor(0, 0) == 1
-    assert Nor(0, 1) == 0
-    assert Nor(1, 0) == 0
-    assert Nor(1, 1) == 0
+    assert Nor(0, 0) is EXPRONE
+    assert Nor(0, 1) is EXPRZERO
+    assert Nor(1, 0) is EXPRZERO
+    assert Nor(1, 1) is EXPRZERO
     assert Nor(a, b).equivalent(-a * -b)
 
 def test_nand():
-    assert Nand(0, 0) == 1
-    assert Nand(0, 1) == 1
-    assert Nand(1, 0) == 1
-    assert Nand(1, 1) == 0
+    assert Nand(0, 0) is EXPRONE
+    assert Nand(0, 1) is EXPRONE
+    assert Nand(1, 0) is EXPRONE
+    assert Nand(1, 1) is EXPRZERO
     assert Nand(a, b).equivalent(-a + -b)
 
 def test_onehot0():
-    assert OneHot0(0, 0, 0) == 1
-    assert OneHot0(0, 0, 1) == 1
-    assert OneHot0(0, 1, 0) == 1
-    assert OneHot0(0, 1, 1) == 0
-    assert OneHot0(1, 0, 0) == 1
-    assert OneHot0(1, 0, 1) == 0
-    assert OneHot0(1, 1, 0) == 0
-    assert OneHot0(1, 1, 1) == 0
+    assert OneHot0(0, 0, 0) is EXPRONE
+    assert OneHot0(0, 0, 1) is EXPRONE
+    assert OneHot0(0, 1, 0) is EXPRONE
+    assert OneHot0(0, 1, 1) is EXPRZERO
+    assert OneHot0(1, 0, 0) is EXPRONE
+    assert OneHot0(1, 0, 1) is EXPRZERO
+    assert OneHot0(1, 1, 0) is EXPRZERO
+    assert OneHot0(1, 1, 1) is EXPRZERO
     assert OneHot0(a, b, c).equivalent((-a + -b) * (-a + -c) * (-b + -c))
 
 def test_onehot():
-    assert OneHot(0, 0, 0) == 0
-    assert OneHot(0, 0, 1) == 1
-    assert OneHot(0, 1, 0) == 1
-    assert OneHot(0, 1, 1) == 0
-    assert OneHot(1, 0, 0) == 1
-    assert OneHot(1, 0, 1) == 0
-    assert OneHot(1, 1, 0) == 0
-    assert OneHot(1, 1, 1) == 0
+    assert OneHot(0, 0, 0) is EXPRZERO
+    assert OneHot(0, 0, 1) is EXPRONE
+    assert OneHot(0, 1, 0) is EXPRONE
+    assert OneHot(0, 1, 1) is EXPRZERO
+    assert OneHot(1, 0, 0) is EXPRONE
+    assert OneHot(1, 0, 1) is EXPRZERO
+    assert OneHot(1, 1, 0) is EXPRZERO
+    assert OneHot(1, 1, 1) is EXPRZERO
     assert OneHot(a, b, c).equivalent((-a + -b) * (-a + -c) * (-b + -c) * (a + b + c))
 
 def test_ops():
     # __sub__, __rsub__
-    assert (a - 0) == 1
+    assert (a - 0) is EXPRONE
     assert (0 - a) == -a
     assert (a - 1) == a
-    assert (1 - a) == 1
+    assert (1 - a) is EXPRONE
     assert (a - b).equivalent(a + -b)
-    # xor, equal, ite
-    assert a.xor(b, c).equivalent(-a * -b * c + -a * b * -c + a * -b * -c + a * b * c)
-    assert a.equal(b, c).equivalent(-a * -b * -c + a * b * c)
+    # xor
+    assert a.xor(b).equivalent(a * -b + -a * b)
+    # ite
     assert a >> 0 == -a
-    assert 0 >> a == 1
-    assert a >> 1 == 1
+    assert 0 >> a is EXPRONE
+    assert a >> 1 is EXPRONE
     assert 1 >> a == a
     assert (a >> b).equivalent(-a + b)
     assert s.ite(a, b).equivalent(s * a + -s * b)
@@ -101,16 +102,16 @@ def test_const():
     assert not EXPRZERO.support
     assert not EXPRONE.support
 
-    assert EXPRZERO.restrict({a: 0, b: 1, c: 0, d: 1}) == 0
-    assert EXPRONE.restrict({a: 0, b: 1, c: 0, d: 1}) == 1
+    assert EXPRZERO.restrict({a: 0, b: 1, c: 0, d: 1}) is EXPRZERO
+    assert EXPRONE.restrict({a: 0, b: 1, c: 0, d: 1}) is EXPRONE
 
-    assert EXPRZERO.compose({a: 0, b: 1, c: 0, d: 1}) == 0
-    assert EXPRONE.compose({a: 0, b: 1, c: 0, d: 1}) == 1
+    assert EXPRZERO.compose({a: 0, b: 1, c: 0, d: 1}) is EXPRZERO
+    assert EXPRONE.compose({a: 0, b: 1, c: 0, d: 1}) is EXPRONE
 
-    assert EXPRZERO.simplify() == 0
-    assert EXPRONE.simplify() == 1
-    assert EXPRZERO.factor() == 0
-    assert EXPRONE.factor() == 1
+    assert EXPRZERO.simplify() is EXPRZERO
+    assert EXPRONE.simplify() is EXPRONE
+    assert EXPRZERO.factor() is EXPRZERO
+    assert EXPRONE.factor() is EXPRONE
 
     assert EXPRZERO.depth == 0
     assert EXPRONE.depth == 0
@@ -119,8 +120,8 @@ def test_var():
     # Function
     assert a.support == {a}
 
-    assert a.restrict({a: 0}) == 0
-    assert a.restrict({a: 1}) == 1
+    assert a.restrict({a: 0}) is EXPRZERO
+    assert a.restrict({a: 1}) is EXPRONE
     assert a.restrict({b: 0}) == a
 
     assert a.compose({a: b}) == b
@@ -134,7 +135,6 @@ def test_var():
     assert a.simplify() == a
     assert a.factor() == a
     assert a.depth == 0
-    assert a.is_dnf()
     assert a.is_cnf()
 
     assert a.minterm_index == 1
@@ -144,8 +144,8 @@ def test_comp():
     # Function
     assert (-a).support == {a}
 
-    assert (-a).restrict({a: 0}) == 1
-    assert (-a).restrict({a: 1}) == 0
+    assert (-a).restrict({a: 0}) is EXPRONE
+    assert (-a).restrict({a: 1}) is EXPRZERO
     assert (-a).restrict({b: 0}) == -a
 
     assert (-a).compose({a: b}) == -b
@@ -155,7 +155,6 @@ def test_comp():
     assert (-a).simplify() == -a
     assert (-a).factor() == -a
     assert (-a).depth == 0
-    assert (-a).is_dnf()
     assert (-a).is_cnf()
 
     assert (-a).minterm_index == 0
@@ -205,39 +204,39 @@ def test_or():
     f = -a * b * c + a * -b * c + a * b * -c
     assert f.restrict({a: 0}).equivalent(b * c)
     assert f.restrict({a: 1}).equivalent(b * -c + -b * c)
-    assert f.restrict({a: 0, b: 0}) == 0
+    assert f.restrict({a: 0, b: 0}) is EXPRZERO
     assert f.restrict({a: 0, b: 1}) == c
     assert f.restrict({a: 1, b: 0}) == c
     assert f.restrict({a: 1, b: 1}) == -c
     assert f.compose({a: d, b: c}).equivalent(-d * c)
 
     # Expression
-    assert Or() == 0
+    assert Or() is EXPRZERO
     assert Or(a) == a
 
-    assert Or(0, 0) == 0
-    assert Or(0, 1) == 1
-    assert Or(1, 0) == 1
-    assert Or(1, 1) == 1
+    assert Or(0, 0) is EXPRZERO
+    assert Or(0, 1) is EXPRONE
+    assert Or(1, 0) is EXPRONE
+    assert Or(1, 1) is EXPRONE
 
-    assert Or(0, 0, 0) == 0
-    assert Or(0, 0, 1) == 1
-    assert Or(0, 1, 0) == 1
-    assert Or(0, 1, 1) == 1
-    assert Or(1, 0, 0) == 1
-    assert Or(1, 0, 1) == 1
-    assert Or(1, 1, 0) == 1
-    assert Or(1, 1, 1) == 1
+    assert Or(0, 0, 0) is EXPRZERO
+    assert Or(0, 0, 1) is EXPRONE
+    assert Or(0, 1, 0) is EXPRONE
+    assert Or(0, 1, 1) is EXPRONE
+    assert Or(1, 0, 0) is EXPRONE
+    assert Or(1, 0, 1) is EXPRONE
+    assert Or(1, 1, 0) is EXPRONE
+    assert Or(1, 1, 1) is EXPRONE
 
     assert 0 + a == a
     assert a + 0 == a
-    assert 1 + a == 1
-    assert a + 1 == 1
+    assert 1 + a is EXPRONE
+    assert a + 1 is EXPRONE
 
     assert (0 + a + b).equivalent(a + b)
     assert (a + b + 0).equivalent(a + b)
-    assert (1 + a + b) == 1
-    assert (a + b + 1) == 1
+    assert (1 + a + b) is EXPRONE
+    assert (a + b + 1) is EXPRONE
 
     assert str(Or(a, 0, simplify=False)) == "0 + a"
 
@@ -258,8 +257,8 @@ def test_or():
     assert (a + a) + (a + a) == a
 
     # inverse
-    assert -a + a == 1
-    assert a + -a == 1
+    assert -a + a is EXPRONE
+    assert a + -a is EXPRONE
 
 def test_and():
     # Function
@@ -271,34 +270,34 @@ def test_and():
     assert f.restrict({a: 0, b: 0}) == -c
     assert f.restrict({a: 0, b: 1}) == c
     assert f.restrict({a: 1, b: 0}) == c
-    assert f.restrict({a: 1, b: 1}) == 1
+    assert f.restrict({a: 1, b: 1}) is EXPRONE
     assert f.compose({a: d, b: c}).equivalent(-d + c)
 
     # Expression
-    assert And() == 1
+    assert And() is EXPRONE
     assert And(a) == a
 
-    assert And(0, 0) == 0
-    assert And(0, 1) == 0
-    assert And(1, 0) == 0
-    assert And(1, 1) == 1
+    assert And(0, 0) is EXPRZERO
+    assert And(0, 1) is EXPRZERO
+    assert And(1, 0) is EXPRZERO
+    assert And(1, 1) is EXPRONE
 
-    assert And(0, 0, 0) == 0
-    assert And(0, 0, 1) == 0
-    assert And(0, 1, 0) == 0
-    assert And(0, 1, 1) == 0
-    assert And(1, 0, 0) == 0
-    assert And(1, 0, 1) == 0
-    assert And(1, 1, 0) == 0
-    assert And(1, 1, 1) == 1
+    assert And(0, 0, 0) is EXPRZERO
+    assert And(0, 0, 1) is EXPRZERO
+    assert And(0, 1, 0) is EXPRZERO
+    assert And(0, 1, 1) is EXPRZERO
+    assert And(1, 0, 0) is EXPRZERO
+    assert And(1, 0, 1) is EXPRZERO
+    assert And(1, 1, 0) is EXPRZERO
+    assert And(1, 1, 1) is EXPRONE
 
-    assert 0 * a == 0
-    assert a * 0 == 0
+    assert 0 * a is EXPRZERO
+    assert a * 0 is EXPRZERO
     assert 1 * a == a
     assert a * 1 == a
 
-    assert (0 * a * b) == 0
-    assert (a * b * 0) == 0
+    assert (0 * a * b) is EXPRZERO
+    assert (a * b * 0) is EXPRZERO
     assert (1 * a * b).equivalent(a * b)
     assert (a * b * 1).equivalent(a * b)
 
@@ -321,16 +320,16 @@ def test_and():
     assert (a * a) + (a * a) == a
 
     # inverse
-    assert -a * a == 0
-    assert a * -a == 0
+    assert -a * a is EXPRZERO
+    assert a * -a is EXPRZERO
 
 def test_not():
     # Function
     assert Not(-a + b).support == {a, b}
 
     # Expression
-    assert Not(0) == 1
-    assert Not(1) == 0
+    assert Not(0) is EXPRONE
+    assert Not(1) is EXPRZERO
     assert Not(a) == -a
     assert Not(-a) == a
 
@@ -338,39 +337,39 @@ def test_not():
     assert -(-(-a)) == -a
     assert -(-(-(-a))) == a
 
-    assert Not(a + -a) == 0
-    assert Not(a * -a) == 1
+    assert Not(a + -a) is EXPRZERO
+    assert Not(a * -a) is EXPRONE
 
 def test_xor():
     # Function
     assert Xor(-a, b).support == {a, b}
 
     # Expression
-    assert Xor() == 0
+    assert Xor() is EXPRZERO
     assert Xor(a) == a
 
-    assert Xor(0, 0) == 0
-    assert Xor(0, 1) == 1
-    assert Xor(1, 0) == 1
-    assert Xor(1, 1) == 0
+    assert Xor(0, 0) is EXPRZERO
+    assert Xor(0, 1) is EXPRONE
+    assert Xor(1, 0) is EXPRONE
+    assert Xor(1, 1) is EXPRZERO
 
-    assert Xor(0, 0, 0) == 0
-    assert Xor(0, 0, 1) == 1
-    assert Xor(0, 1, 0) == 1
-    assert Xor(0, 1, 1) == 0
-    assert Xor(1, 0, 0) == 1
-    assert Xor(1, 0, 1) == 0
-    assert Xor(1, 1, 0) == 0
-    assert Xor(1, 1, 1) == 1
+    assert Xor(0, 0, 0) is EXPRZERO
+    assert Xor(0, 0, 1) is EXPRONE
+    assert Xor(0, 1, 0) is EXPRONE
+    assert Xor(0, 1, 1) is EXPRZERO
+    assert Xor(1, 0, 0) is EXPRONE
+    assert Xor(1, 0, 1) is EXPRZERO
+    assert Xor(1, 1, 0) is EXPRZERO
+    assert Xor(1, 1, 1) is EXPRONE
 
     assert Xor(0, a) == a
     assert Xor(a, 0) == a
     assert Xor(1, a) == -a
     assert Xor(a, 1) == -a
 
-    assert Xor(a, a) == 0
-    assert Xor(a, -a) == 1
-    assert Xor(-a, a) == 1
+    assert Xor(a, a) is EXPRZERO
+    assert Xor(a, -a) is EXPRONE
+    assert Xor(-a, a) is EXPRONE
 
     assert str(Xor(a, 0, simplify=False)) == "Xor(0, a)"
 
@@ -379,31 +378,31 @@ def test_xnor():
     assert Xnor(-a, b).support == {a, b}
 
     # Expression
-    assert Xnor() == 1
+    assert Xnor() is EXPRONE
     assert Xnor(a) == -a
 
-    assert Xnor(0, 0) == 1
-    assert Xnor(0, 1) == 0
-    assert Xnor(1, 0) == 0
-    assert Xnor(1, 1) == 1
+    assert Xnor(0, 0) is EXPRONE
+    assert Xnor(0, 1) is EXPRZERO
+    assert Xnor(1, 0) is EXPRZERO
+    assert Xnor(1, 1) is EXPRONE
 
-    assert Xnor(0, 0, 0) == 1
-    assert Xnor(0, 0, 1) == 0
-    assert Xnor(0, 1, 0) == 0
-    assert Xnor(0, 1, 1) == 1
-    assert Xnor(1, 0, 0) == 0
-    assert Xnor(1, 0, 1) == 1
-    assert Xnor(1, 1, 0) == 1
-    assert Xnor(1, 1, 1) == 0
+    assert Xnor(0, 0, 0) is EXPRONE
+    assert Xnor(0, 0, 1) is EXPRZERO
+    assert Xnor(0, 1, 0) is EXPRZERO
+    assert Xnor(0, 1, 1) is EXPRONE
+    assert Xnor(1, 0, 0) is EXPRZERO
+    assert Xnor(1, 0, 1) is EXPRONE
+    assert Xnor(1, 1, 0) is EXPRONE
+    assert Xnor(1, 1, 1) is EXPRZERO
 
     assert Xnor(0, a) == -a
     assert Xnor(a, 0) == -a
     assert Xnor(1, a) == a
     assert Xnor(a, 1) == a
 
-    assert Xnor(a, a) == 1
-    assert Xnor(a, -a) == 0
-    assert Xnor(-a, a) == 0
+    assert Xnor(a, a) is EXPRONE
+    assert Xnor(a, -a) is EXPRZERO
+    assert Xnor(-a, a) is EXPRZERO
 
     assert str(Xnor(a, 0, simplify=False)) == "Xnor(0, a)"
 
@@ -412,55 +411,55 @@ def test_equal():
     assert Equal(-a, b).support == {a, b}
 
     # Expression
-    assert Equal() == 1
-    assert Equal(a) == 1
+    assert Equal() is EXPRONE
+    assert Equal(a) is EXPRONE
 
-    assert Equal(0, 0) == 1
-    assert Equal(0, 1) == 0
-    assert Equal(1, 0) == 0
-    assert Equal(1, 1) == 1
+    assert Equal(0, 0) is EXPRONE
+    assert Equal(0, 1) is EXPRZERO
+    assert Equal(1, 0) is EXPRZERO
+    assert Equal(1, 1) is EXPRONE
 
-    assert Equal(0, 0, 0) == 1
-    assert Equal(0, 0, 1) == 0
-    assert Equal(0, 1, 0) == 0
-    assert Equal(0, 1, 1) == 0
-    assert Equal(1, 0, 0) == 0
-    assert Equal(1, 0, 1) == 0
-    assert Equal(1, 1, 0) == 0
-    assert Equal(1, 1, 1) == 1
+    assert Equal(0, 0, 0) is EXPRONE
+    assert Equal(0, 0, 1) is EXPRZERO
+    assert Equal(0, 1, 0) is EXPRZERO
+    assert Equal(0, 1, 1) is EXPRZERO
+    assert Equal(1, 0, 0) is EXPRZERO
+    assert Equal(1, 0, 1) is EXPRZERO
+    assert Equal(1, 1, 0) is EXPRZERO
+    assert Equal(1, 1, 1) is EXPRONE
 
     assert Equal(0, a) == -a
     assert Equal(a, 0) == -a
     assert Equal(1, a) == a
     assert Equal(a, 1) == a
 
-    assert Equal(a, a) == 1
-    assert Equal(a, -a) == 0
-    assert Equal(-a, a) == 0
+    assert Equal(a, a) is EXPRONE
+    assert Equal(a, -a) is EXPRZERO
+    assert Equal(-a, a) is EXPRZERO
 
 def test_implies():
     # Function
     assert Implies(-p, q).support == {p, q}
 
     # Expression
-    assert Implies(0, 0) == 1
-    assert Implies(0, 1) == 1
-    assert Implies(1, 0) == 0
-    assert Implies(1, 1) == 1
+    assert Implies(0, 0) is EXPRONE
+    assert Implies(0, 1) is EXPRONE
+    assert Implies(1, 0) is EXPRZERO
+    assert Implies(1, 1) is EXPRONE
 
-    assert Implies(0, p) == 1
+    assert Implies(0, p) is EXPRONE
     assert Implies(1, p) == p
     assert Implies(p, 0) == -p
-    assert Implies(p, 1) == 1
+    assert Implies(p, 1) is EXPRONE
 
-    assert Implies(p, p) == 1
+    assert Implies(p, p) is EXPRONE
     assert Implies(p, -p) == -p
     assert Implies(-p, p) == p
 
     assert str(p >> q) == "p => q"
     assert str((a * b) >> (c + d)) == "(a * b) => (c + d)"
 
-    assert (p >> q).restrict({p: 0}) == 1
+    assert (p >> q).restrict({p: 0}) is EXPRONE
     assert (p >> q).compose({q: a}).equivalent(p >> a)
     assert Not(p >> q).equivalent(p * -q)
     assert ((a * b) >> (c + d)).depth == 2
@@ -473,28 +472,28 @@ def test_ite():
     assert ITE(s, -a, b).support == {s, a, b}
 
     # Expression
-    assert ITE(0, 0, 0) == 0
-    assert ITE(0, 0, 1) == 1
-    assert ITE(0, 1, 0) == 0
-    assert ITE(0, 1, 1) == 1
-    assert ITE(1, 0, 0) == 0
-    assert ITE(1, 0, 1) == 0
-    assert ITE(1, 1, 0) == 1
-    assert ITE(1, 1, 1) == 1
+    assert ITE(0, 0, 0) is EXPRZERO
+    assert ITE(0, 0, 1) is EXPRONE
+    assert ITE(0, 1, 0) is EXPRZERO
+    assert ITE(0, 1, 1) is EXPRONE
+    assert ITE(1, 0, 0) is EXPRZERO
+    assert ITE(1, 0, 1) is EXPRZERO
+    assert ITE(1, 1, 0) is EXPRONE
+    assert ITE(1, 1, 1) is EXPRONE
 
     assert ITE(0, 0, b) == b
-    assert ITE(0, a, 0) == 0
+    assert ITE(0, a, 0) is EXPRZERO
     assert ITE(0, 1, b) == b
-    assert ITE(0, a, 1) == 1
-    assert ITE(1, 0, b) == 0
+    assert ITE(0, a, 1) is EXPRONE
+    assert ITE(1, 0, b) is EXPRZERO
     assert ITE(1, a, 0) == a
-    assert ITE(1, 1, b) == 1
+    assert ITE(1, 1, b) is EXPRONE
     assert ITE(1, a, 1) == a
 
-    assert ITE(s, 0, 0) == 0
+    assert ITE(s, 0, 0) is EXPRZERO
     assert ITE(s, 0, 1) == -s
     assert ITE(s, 1, 0) == s
-    assert ITE(s, 1, 1) == 1
+    assert ITE(s, 1, 1) is EXPRONE
     assert ITE(s, 0, b).equivalent(-s * b)
     assert ITE(s, a, 0).equivalent(s * a)
     assert ITE(s, 1, b).equivalent(s + b)
@@ -506,7 +505,7 @@ def test_ite():
     assert str(ITE(s, a, b)) == "s ? a : b"
     assert str(ITE(s, a * b, c + d)) == "s ? (a * b) : (c + d)"
 
-    assert ITE(s, a, b).restrict({a: 1, b: 1}) == 1
+    assert ITE(s, a, b).restrict({a: 1, b: 1}) is EXPRONE
     assert ITE(s, a, b).compose({a: b, b: a}).equivalent(s * b + -s * a)
     assert ITE(s, a * b, c + d).depth == 3
 
@@ -549,19 +548,26 @@ def test_expand():
     assert len(f.args) == 4 and f.equivalent(a)
 
 def test_satisfy():
+    # Typical cases
     f = a * -b * c * -d
+    assert EXPRZERO.satisfy_one(algorithm='dpll') is None
+    assert EXPRONE.satisfy_one(algorithm='dpll') == {}
     assert f.satisfy_one(algorithm='backtrack') == {a: 1, b: 0, c: 1, d: 0}
     assert f.satisfy_one(algorithm='dpll') == {a: 1, b: 0, c: 1, d: 0}
 
+    # PLE solution
+    f = (a + b + c) * (-a + -b + c)
+    assert f.satisfy_one(algorithm='dpll') == {c: 1}
+
     f = a * b + a * c + b * c
-    nose.tools.assert_raises(TypeError, f.satisfy_one, 'dpll')
+    nose.tools.assert_raises(AssertionError, f.satisfy_one, 'dpll')
     nose.tools.assert_raises(ValueError, f.satisfy_one, 'foo')
 
     points = [p for p in Xor(a, b, c).satisfy_all()]
     assert points == [
-        {a: 1, b: 0, c: 0},
-        {a: 0, b: 1, c: 0},
         {a: 0, b: 0, c: 1},
+        {a: 0, b: 1, c: 0},
+        {a: 1, b: 0, c: 0},
         {a: 1, b: 1, c: 1},
     ]
     assert Xor(a, b, c).satisfy_count() == 4
@@ -595,11 +601,6 @@ def test_depth():
     assert ITE(s, a + b, b).depth == 3
     assert ITE(s, a + b, Xor(a, b)).depth == 4
 
-def test_indices():
-    f = a * b + a * c + b * c
-    assert f.min_indices == {3, 5, 6, 7}
-    assert f.max_indices == {0, 1, 2, 4}
-
 def test_nf():
     f = Xor(a, b, c)
     g = a * b + a * c + b * c
@@ -607,37 +608,16 @@ def test_nf():
     assert str(f.to_dnf()) == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
     assert str(f.to_cnf()) == "(a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)"
 
-    assert str(g.to_cdnf()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
-    assert str(g.to_ccnf()) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
-
-    assert g.min_indices == {3, 5, 6, 7}
-    assert g.max_indices == {0, 1, 2, 4}
+    assert str(g.reduce(conj=False)) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
+    assert str(g.reduce(conj=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
 
 def test_is_nf():
-    assert (a + b + c).is_dnf()
-    assert (a + (b * c) + (c * d)).is_dnf()
-    assert not ((a * b) + (b * (c + d))).is_dnf()
-
     assert (a * b * c).is_cnf()
     assert (a * (b + c) * (c + d)).is_cnf()
     assert not ((a + b) * (b + c * d)).is_cnf()
 
-    assert not Equal(a, b, c).is_dnf()
-    assert not Implies(p, q).is_dnf()
-    assert not ITE(s, a, b).is_dnf()
-    assert not Equal(a, b, c).is_cnf()
-    assert not Implies(p, q).is_cnf()
-    assert not ITE(s, a, b).is_cnf()
-
-def test_dpll():
-    assert a.bcp() == (1, {a: 1})
-    assert a.ple() == (1, {a: 1})
-    assert (-a).bcp() == (1, {a: 0})
-    assert (-a).ple() == (1, {a: 0})
-
-def test_misc():
-    f = a * b + a * c + b * c
-
-    assert f.smoothing(a).equivalent(b + c)
-    assert f.consensus(a).equivalent(b * c)
-    assert f.derivative(a).equivalent(b * -c + -b * c)
+def test_dpllif():
+    assert a.bcp() == (frozenset(), frozenset([a.uniqid]))
+    assert a.ple() == (frozenset(), frozenset([a.uniqid]))
+    assert (-a).bcp() == (frozenset([a.uniqid]), frozenset())
+    assert (-a).ple() == (frozenset([a.uniqid]), frozenset())

@@ -2,9 +2,9 @@
 Sudoku Example
 
 >>> with open("example/top95.txt") as fin:
-...     grids = {i: grid for i, grid in enumerate(fin)}
+...     grids = fin.readlines()
 
->>> display(solve(grids[10]))
+>>> display(solve_expr(grids[10]))
 614|382|579
 953|764|812
 827|591|436
@@ -17,7 +17,7 @@ Sudoku Example
 579|843|261
 431|926|785
 
->>> display(solve(grids[30]))
+>>> display(solve_cnf(grids[30]))
 385|621|497
 179|584|326
 426|739|518
@@ -29,26 +29,13 @@ Sudoku Example
 917|253|684
 243|168|975
 658|947|132
-
->>> display(solve(grids[50]))
-152|738|946
-864|291|375
-973|645|281
----+---+---
-216|357|498
-348|912|567
-597|486|123
----+---+---
-421|863|759
-639|574|812
-785|129|634
 """
 
 from pyeda import *
 
 DIGITS = "123456789"
 
-X = bitvec("x", (1, 10), (1, 10), (1, 10))
+X = bitvec('X', (1, 10), (1, 10), (1, 10))
 
 V = And(*[
         And(*[
@@ -78,14 +65,15 @@ B = And(*[
             for v in range(1, 10) ])
         for br in range(3) for bc in range(3) ])
 
-S = CNF_And(V, R, C, B)
+S_expr = And(V, R, C, B)
+S_cnf = CNF_And(V, R, C, B)
 
 def parse_grid(grid):
     chars = [c for c in grid if c in DIGITS or c in "0."]
     assert len(chars) == 9 ** 2
     I = And(*[ X[i // 9 + 1][i % 9 + 1][int(c)]
                for i, c in enumerate(chars) if c in DIGITS ])
-    return expr2nfexpr(I)
+    return I
 
 def get_val(point, r, c):
     for v in range(1, 10):
@@ -106,7 +94,10 @@ def display(point):
                 chars.append("---+---+---\n")
     print("".join(chars))
 
-def solve(grid):
+def solve_expr(grid):
     I = parse_grid(grid)
-    cnf = I * S
-    return cnf.satisfy_one()
+    return (S_expr * I).satisfy_one(algorithm='dpll')
+
+def solve_cnf(grid):
+    I = parse_grid(grid)
+    return (S_cnf * I).satisfy_one(algorithm='dpll')

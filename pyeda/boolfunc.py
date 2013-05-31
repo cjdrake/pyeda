@@ -23,10 +23,43 @@ Interface Classes:
     VectorFunction
 """
 
+import functools
+
 from pyeda.common import bit_on, boolify
 
 VARIABLES = dict()
 
+
+def var(name, indices=None, namespace=None):
+    """Return a unique Variable instance.
+
+    .. NOTE:: Do NOT call this function directly. It should only be used by
+              concrete Variable implementations, eg ExprVariable.
+    """
+    if indices is None:
+        indices = tuple()
+    elif type(indices) is int:
+        indices = (indices, )
+    if namespace is None:
+        namespace = tuple()
+    elif type(namespace) is str:
+        namespace = (namespace, )
+
+    # Check input types
+    assert type(name) is str
+    assert type(indices) is tuple
+    for idx in indices:
+        assert type(idx) is int
+    assert type(namespace) is tuple
+    for ns_part in namespace:
+        assert type(ns_part) is str
+
+    try:
+        v = VARIABLES[(namespace, name, indices)]
+    except KeyError:
+        v = Variable(namespace, name, indices)
+        VARIABLES[(namespace, name, indices)] = v
+    return v
 
 def num2point(num, vs):
     """Convert a number into a point in an N-dimensional space.
@@ -49,7 +82,7 @@ def num2upoint(num, vs):
     upoint = [set(), set()]
     for i, v in enumerate(vs):
         upoint[bit_on(num, i)].add(v.uniqid)
-    return (frozenset(upoint[0]), frozenset(upoint[1]))
+    return frozenset(upoint[0]), frozenset(upoint[1])
 
 def num2term(num, vs, conj=False):
     """Convert a number into a min/max term.
@@ -141,6 +174,9 @@ def iter_terms(vs, conj=False):
         yield num2term(num, vs, conj)
 
 
+_UNIQIDS = dict()
+_CNT = 1
+
 class Variable(object):
     """
     Abstract base class that defines an interface for a Boolean variable.
@@ -151,45 +187,19 @@ class Variable(object):
     This implementation includes optional indices, nonnegative integers that
     can be used to construct multi-dimensional bit vectors.
     """
-
-    _UNIQIDS = dict()
-    _CNT = 1
-
-    def __new__(cls, name, indices=None, namespace=None):
-        if indices is None:
-            indices = tuple()
-        elif type(indices) is int:
-            indices = (indices, )
-        if namespace is None:
-            namespace = tuple()
-        elif type(namespace) is str:
-            namespace = (namespace, )
-
-        # Check input types
-        assert type(name) is str
-        assert type(indices) is tuple
-        for idx in indices:
-            assert type(idx) is int
-        assert type(namespace) is tuple
-        for ns_part in namespace:
-            assert type(ns_part) is str
-
+    def __init__(self, namespace, name, indices):
+        global _UNIQIDS, _CNT
         try:
-            uniqid = cls._UNIQIDS[(namespace, name, indices)]
+            uniqid = _UNIQIDS[(namespace, name, indices)]
         except KeyError:
-            uniqid = cls._CNT
-            cls._CNT += 1
-            cls._UNIQIDS[(namespace, name, indices)] = uniqid
-        try:
-            self = VARIABLES[uniqid]
-        except KeyError:
-            self = super(Variable, cls).__new__(cls)
-            self.namespace = namespace
-            self.name = name
-            self.indices = indices
-            self.uniqid = uniqid
-            VARIABLES[self.uniqid] = self
-        return self
+            uniqid = _CNT
+            _CNT += 1
+            _UNIQIDS[(namespace, name, indices)] = uniqid
+
+        self.namespace = namespace
+        self.name = name
+        self.indices = indices
+        self.uniqid = uniqid
 
     def __repr__(self):
         return self.__str__()
@@ -220,28 +230,32 @@ class Function(object):
 
     # Operators
     def __neg__(self):
-        """Boolean negation
+        """Boolean negation operator
 
-        +---+----+
-        | f | -f |
-        +---+----+
-        | 0 |  1 |
-        | 1 |  0 |
-        +---+----+
+        +-----------+------------+
+        | :math:`f` | :math:`-f` |
+        +===========+============+
+        |         0 |          1 |
+        +-----------+------------+
+        |         1 |          0 |
+        +-----------+------------+
         """
         raise NotImplementedError()
 
     def __add__(self, other):
-        """Boolean disjunction (addition, OR)
+        """Boolean disjunction (addition, OR) operator
 
-        +---+---+-------+
-        | f | g | f + g |
-        +---+---+-------+
-        | 0 | 0 |   0   |
-        | 0 | 1 |   1   |
-        | 1 | 0 |   1   |
-        | 1 | 1 |   1   |
-        +---+---+-------+
+        +-----------+-----------+---------------+
+        | :math:`f` | :math:`g` | :math:`f + g` |
+        +===========+===========+===============+
+        |         0 |         0 |             0 |
+        +-----------+-----------+---------------+
+        |         0 |         1 |             1 |
+        +-----------+-----------+---------------+
+        |         1 |         0 |             1 |
+        +-----------+-----------+---------------+
+        |         1 |         1 |             1 |
+        +-----------+-----------+---------------+
         """
         raise NotImplementedError()
 
@@ -249,36 +263,56 @@ class Function(object):
         return self.__add__(other)
 
     def __sub__(self, other):
-        """Alias: a - b = a + -b"""
+        """Alias: a - b <=> a + -b"""
         raise NotImplementedError()
 
     def __rsub__(self, other):
         return self.__neg__().__add__(other)
 
     def __mul__(self, other):
-        """Boolean conjunction (multiplication, AND)
+        r"""Boolean conjunction (multiplication, AND) operator
 
-        +---+---+-------+
-        | f | g | f * g |
-        +---+---+-------+
-        | 0 | 0 |   0   |
-        | 0 | 1 |   0   |
-        | 1 | 0 |   0   |
-        | 1 | 1 |   1   |
-        +---+---+-------+
+        +-----------+-----------+-------------------+
+        | :math:`f` | :math:`g` | :math:`f \cdot g` |
+        +===========+===========+===================+
+        |         0 |         0 |                 0 |
+        +-----------+-----------+-------------------+
+        |         0 |         1 |                 0 |
+        +-----------+-----------+-------------------+
+        |         1 |         0 |                 0 |
+        +-----------+-----------+-------------------+
+        |         1 |         1 |                 1 |
+        +-----------+-----------+-------------------+
         """
         raise NotImplementedError()
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
+    def xor(self, other):
+        r"""Boolean exclusive or (XOR) operator
+
+        +-----------+-----------+--------------------+
+        | :math:`f` | :math:`g` | :math:`f \oplus g` |
+        +===========+===========+====================+
+        |         0 |         0 |                  0 |
+        +-----------+-----------+--------------------+
+        |         0 |         1 |                  1 |
+        +-----------+-----------+--------------------+
+        |         1 |         0 |                  1 |
+        +-----------+-----------+--------------------+
+        |         1 |         1 |                  0 |
+        +-----------+-----------+--------------------+
+        """
+        raise NotImplementedError()
+
     @property
     def support(self):
         r"""Return the support set of a function.
 
         Let :math:`f(x_1, x_2, ..., x_n)` be a Boolean function of :math:`N`
-        variables. The set :math:`\{x_1, x_2, ..., x_n\}` is called the
-        *support* of the function.
+        variables. The unordered set :math:`\{x_1, x_2, ..., x_n\}` is called
+        the *support* of the function.
         """
         raise NotImplementedError()
 
@@ -329,18 +363,6 @@ class Function(object):
         for point in iter_points(self.inputs):
             yield (point, self.restrict(point))
 
-    def iter_zeros(self):
-        """Iterate through all points this function maps to element zero."""
-        raise NotImplementedError()
-
-    def iter_ones(self):
-        """Iterate through all points this function maps to element one."""
-        raise NotImplementedError()
-
-    def reduce(self):
-        """Return the function reduced to a canonical form."""
-        raise NotImplementedError()
-
     def restrict(self, point):
         r"""
         Return the Boolean function that results after restricting a subset of
@@ -348,16 +370,10 @@ class Function(object):
 
         :math:`g = f \: | \: x_i = b`
         """
-        upoint = point2upoint(point)
-        return self.urestrict(upoint)
+        return self.urestrict(point2upoint(point))
 
     def urestrict(self, upoint):
-        r"""
-        Return the Boolean function that results after restricting a subset of
-        its input variables to :math:`\{0, 1\}`.
-
-        :math:`g = f \: | \: x_i = b`
-        """
+        """Implementation of restrict that requires an untyped point."""
         raise NotImplementedError()
 
     def vrestrict(self, vpoint):
@@ -390,13 +406,22 @@ class Function(object):
         raise NotImplementedError()
 
     def iter_cofactors(self, vs=None):
-        """Iterate through the cofactors of :math:`N` variables."""
+        """Iterate through the cofactors of N variables.
+
+        The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
+        with respect to variable :math:`x_i` is
+        :math:`f_{x_i} = f(x_1, x_2, ..., 1, ..., x_n)`
+
+        The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
+        with respect to variable :math:`x_i'` is
+        :math:`f_{x_i'} = f(x_1, x_2, ..., 0, ..., x_n)`
+        """
         if vs is None:
             vs = list()
         elif isinstance(vs, Variable):
             vs = [vs]
-        for point in iter_points(vs):
-            yield point, self.restrict(point)
+        for upoint in iter_upoints(vs):
+            yield self.urestrict(upoint)
 
     def cofactors(self, vs=None):
         """Return a tuple of cofactors of N variables.
@@ -409,32 +434,32 @@ class Function(object):
         with respect to variable :math:`x_i'` is
         :math:`f_{x_i'} = f(x_1, x_2, ..., 0, ..., x_n)`
         """
-        return tuple(cf for p, cf in self.iter_cofactors(vs))
+        return tuple(cf for cf in self.iter_cofactors(vs))
 
-    #def is_neg_unate(self, vs=None):
-    #    r"""Return whether a function is negative unate.
+    def is_neg_unate(self, vs=None):
+        r"""Return whether a function is negative unate.
 
-    #    A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
-    #    in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
-    #    """
-    #    raise NotImplementedError()
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
+        in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
+        """
+        raise NotImplementedError()
 
-    #def is_pos_unate(self, vs=None):
-    #    r"""Return whether a function is positive unate.
+    def is_pos_unate(self, vs=None):
+        r"""Return whether a function is positive unate.
 
-    #    A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
-    #    in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
-    #    """
-    #    raise NotImplementedError()
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
+        in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
+        """
+        raise NotImplementedError()
 
-    #def is_binate(self, vs=None):
-    #    """Return whether a function is binate.
+    def is_binate(self, vs=None):
+        """Return whether a function is binate.
 
-    #    A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
-    #    variable :math:`x_i` if it is neither negative nor positive unate in
-    #    :math:`x_i`.
-    #    """
-    #    return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
+        variable :math:`x_i` if it is neither negative nor positive unate in
+        :math:`x_i`.
+        """
+        return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
 
     def smoothing(self, vs=None):
         """Return the smoothing of a function.
@@ -442,7 +467,7 @@ class Function(object):
         The *smoothing* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
         to variable :math:`x_i` is :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`.
         """
-        raise NotImplementedError()
+        return functools.reduce(self.__class__.__add__, self.iter_cofactors(vs))
 
     def consensus(self, vs=None):
         r"""Return the consensus of a function.
@@ -450,7 +475,7 @@ class Function(object):
         The *consensus* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
         to variable :math:`x_i` is :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`.
         """
-        raise NotImplementedError()
+        return functools.reduce(self.__class__.__mul__, self.iter_cofactors(vs))
 
     def derivative(self, vs=None):
         r"""Return the derivative of a function.
@@ -459,7 +484,37 @@ class Function(object):
         to variable :math:`x_i` is
         :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`.
         """
+        return functools.reduce(self.__class__.xor, self.iter_cofactors(vs))
+
+    def is_zero(self):
+        """Return whether this function is zero.
+
+        .. NOTE:: This method will only look for a particular "zero form",
+                  and will **NOT** do a full search for a contradiction.
+        """
         raise NotImplementedError()
+
+    def is_one(self):
+        """Return whether this function is one.
+
+        .. NOTE:: This method will only look for a particular "one form",
+                  and will **NOT** do a full search for a tautology.
+        """
+        raise NotImplementedError()
+
+    @staticmethod
+    def box(arg):
+        """Convert primitive types to a Function."""
+        raise NotImplementedError()
+
+    def unbox(self):
+        """Return integer 0 or 1 if possible, otherwise return the Function."""
+        if self.is_zero():
+            return 0
+        elif self.is_one():
+            return 1
+        else:
+            return self
 
 
 class Slicer(object):
@@ -558,9 +613,10 @@ class VectorFunction(Slicer):
         """Convert vector to an unsigned integer, if possible."""
         num = 0
         for i, f in enumerate(self):
-            if f in {0, 1}:
-                if f:
-                    num += 1 << i
+            if f.is_zero():
+                pass
+            elif f.is_one():
+                num += 1 << i
             else:
                 raise ValueError("cannot convert to uint")
         return num
@@ -568,7 +624,7 @@ class VectorFunction(Slicer):
     def to_int(self):
         """Convert vector to an integer, if possible."""
         num = self.to_uint()
-        if self.items[-1]:
+        if self.items[-1].unbox():
             return num - (1 << self.__len__())
         else:
             return num

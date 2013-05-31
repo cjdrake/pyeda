@@ -2,84 +2,192 @@
 Normal Form Expressions
 
 Interface Functions:
-    expr2nfexpr
-    nfexpr2expr
+    expr2dnf
+    expr2cnf
+    nf2expr
+    upoint2nfpoint
+    NF_Not
+    DNF_Or
+    CNF_And
 
 Interface Classes:
+    NormalForm
     DisjNormalForm
     ConjNormalForm
+
+.. NOTE:: Unlike other Boolean function representations, normal form
+          expressions do not have their own Variable implementation. It uses
+          the ExprVariable implementation wherever required.
 """
 
-from collections import Counter
-
+from pyeda import boolfunc
+from pyeda import sat
 from pyeda.common import cached_property
-from pyeda.boolfunc import Function
 from pyeda.expr import EXPRVARIABLES, EXPRCOMPLEMENTS
-from pyeda.expr import Expression, Or, And
-from pyeda.sat import backtrack, dpll
+from pyeda.expr import (
+    Expression, EXPRZERO, EXPRONE, ExprLiteral, ExprOr, ExprAnd
+)
 
-B = {0, 1}
+def expr2dnf(expr):
+    """Convert an expression into a disjunctive normal form representation."""
+    if not isinstance(expr, Expression):
+        raise TypeError("input is not an Expression: " + str(expr))
 
-def expr2nfexpr(expr):
-    """Convert an expression into a normal form representation."""
-    if expr.is_dnf():
-        cls = DisjNormalForm
+    if expr is EXPRZERO:
+        return DisjNormalForm()
+    elif expr.is_dnf():
+        # a
+        if expr.depth == 0:
+            clauses = {frozenset([expr.uniqid])}
+            return DisjNormalForm(clauses)
+        elif expr.depth == 1:
+            # a + b
+            if isinstance(expr, ExprOr):
+                clauses = {frozenset([lit.uniqid]) for lit in expr.args}
+            # a * b
+            elif isinstance(expr, ExprAnd):
+                clauses = {frozenset([lit.uniqid for lit in expr.args])}
+            return DisjNormalForm(clauses)
+        elif expr.depth == 2:
+            clauses = set()
+            # a + (b * c)
+            if isinstance(expr, ExprOr):
+                for arg in expr.args:
+                    if isinstance(arg, ExprLiteral):
+                        clauses.add(frozenset([arg.uniqid]))
+                    elif isinstance(arg, ExprAnd):
+                        clauses.add(frozenset([lit.uniqid for lit in arg.args]))
+                return DisjNormalForm(clauses)
+
+    raise ValueError("Expression cannot be converted to DNF: " + str(expr))
+
+def expr2cnf(expr):
+    """Convert an expression into a conjunctive normal form representation."""
+    if not isinstance(expr, Expression):
+        raise TypeError("input is not an Expression: " + str(expr))
+
+    if expr is EXPRONE:
+        return ConjNormalForm()
     elif expr.is_cnf():
-        cls = ConjNormalForm
-    else:
-        raise TypeError("input is not an expression in normal form")
+        # a
+        if expr.depth == 0:
+            clauses = {frozenset([expr.uniqid])}
+            return ConjNormalForm(clauses)
+        elif expr.depth == 1:
+            # a + b
+            if isinstance(expr, ExprOr):
+                clauses = {frozenset([lit.uniqid for lit in expr.args])}
+            # a * b
+            elif isinstance(expr, ExprAnd):
+                clauses = {frozenset([lit.uniqid]) for lit in expr.args}
+            return ConjNormalForm(clauses)
+        elif expr.depth == 2:
+            clauses = set()
+            # a * (b + c)
+            if isinstance(expr, ExprAnd):
+                for arg in expr.args:
+                    if isinstance(arg, ExprLiteral):
+                        clauses.add(frozenset([arg.uniqid]))
+                    elif isinstance(arg, ExprOr):
+                        clauses.add(frozenset([lit.uniqid for lit in arg.args]))
+                return ConjNormalForm(clauses)
 
-    clauses = {frozenset(lit.uniqid for lit in clause.args)
-               for clause in expr.args}
-    return cls(clauses)
+    raise ValueError("Expression cannot be converted to CNF: " + str(expr))
 
-def nfexpr2expr(nfexpr):
+def nf2expr(nf):
     """Convert a normal form representation into an expression."""
-    if isinstance(nfexpr, DisjNormalForm):
-        outer, inner = Or, And
-    elif isinstance(nfexpr, ConjNormalForm):
-        outer, inner = And, Or
+    if isinstance(nf, DisjNormalForm):
+        outer, inner = ExprOr, ExprAnd
+    elif isinstance(nf, ConjNormalForm):
+        outer, inner = ExprAnd, ExprOr
     else:
-        raise TypeError("input is not a NormalForm instance")
+        raise TypeError("input is not a NormalForm instance: " + str(nf))
 
     terms = list()
-    for clause in nfexpr.clauses:
+    for clause in nf.clauses:
         term = list()
-        for num in clause:
-            if num < 0:
-                lit = EXPRCOMPLEMENTS[num]
+        for uniqid in clause:
+            if uniqid < 0:
+                lit = EXPRCOMPLEMENTS[uniqid]
             else:
-                lit = EXPRVARIABLES[num]
+                lit = EXPRVARIABLES[uniqid]
             term.append(lit)
         terms.append(term)
 
     return outer(*[inner(*term) for term in terms])
 
+def upoint2nfpoint(upoint):
+    """Convert an untyped point to a NormalForm point."""
+    point = dict()
+    for uniqid in upoint[0]:
+        point[EXPRVARIABLES[uniqid]] = 0
+    for uniqid in upoint[1]:
+        point[EXPRVARIABLES[uniqid]] = 1
+    return point
 
-class NormalForm(Function):
+def NF_Not(arg):
+    """Return an inverted normal form expression."""
+    nf = _nfify(arg)
+    clauses = { frozenset(-uniqid for uniqid in clause)
+                for clause in nf.clauses }
+    return nf.get_dual()(clauses)
+
+def DNF_Or(*args):
+    """Return the disjunction of normal form expressions."""
+    args = tuple(_dnfify(arg) for arg in args)
+
+    clauses = set()
+    for arg in args:
+        clauses.update(arg.clauses)
+    return DisjNormalForm(clauses)
+
+def CNF_And(*args):
+    """Return the conjunction of normal form expression."""
+    args = tuple(_cnfify(arg) for arg in args)
+
+    clauses = set()
+    for arg in args:
+        clauses.update(arg.clauses)
+    return ConjNormalForm(clauses)
+
+
+class NormalForm(boolfunc.Function, sat.DPLLInterface):
     """
     Normal Form Representation
     """
-    def __new__(cls, clauses):
-        if clauses:
-            return super(NormalForm, cls).__new__(cls)
+    def __init__(self, clauses=None):
+        if clauses is None:
+            self.clauses = set()
         else:
-            return cls.IDENTITY
-
-    def __init__(self, clauses):
-        self.clauses = clauses
+            self.clauses = clauses
 
     def __str__(self):
-        return str(nfexpr2expr(self))
+        if not self.clauses:
+            return str(self.IDENTITY)
+        else:
+            return str(nf2expr(self))
 
     def __repr__(self):
         return self.__str__()
 
+    # Operators
+    def __neg__(self):
+        return NF_Not(self)
+
+    def __add__(self, other):
+        return DNF_Or(self, other)
+
+    def __sub__(self, other):
+        return DNF_Or(self, NF_Not(other))
+
+    def __mul__(self, other):
+        return CNF_And(self, other)
+
     # From Function
     @cached_property
     def support(self):
-        return frozenset(EXPRVARIABLES[abs(num)]
-                         for clause in self.clauses for num in clause)
+        return frozenset(EXPRVARIABLES[abs(uniqid)]
+                         for clause in self.clauses for uniqid in clause)
 
     @cached_property
     def inputs(self):
@@ -101,11 +209,24 @@ class NormalForm(Function):
                 if new_clause:
                     new_clauses.add(new_clause)
                 else:
-                    return self.DOMINATOR
-
+                    dual = self.get_dual()
+                    return dual()
         return self.__class__(new_clauses)
 
+    def is_zero(self):
+        return False
+
+    def is_one(self):
+        return False
+
     # Specific to NormalForm
+    def get_dual(self):
+        """Return the dual function.
+
+        The dual or Or is And, and the dual of Or is And.
+        """
+        raise NotImplementedError()
+
     IDENTITY = NotImplemented
     DOMINATOR = NotImplemented
 
@@ -114,19 +235,20 @@ class DisjNormalForm(NormalForm):
     """
     Disjunctive Normal Form
     """
-    def __neg__(self):
-        clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
-        return ConjNormalForm(clauses)
-
-    def __add__(self, other):
-        return DNF_Or(self, other)
-
-    def __mul__(self, other):
-        f = nfexpr2expr(self)
-        g = nfexpr2expr(other)
-        return expr2nfexpr((f * g).to_dnf())
+    def is_zero(self):
+        return not self.clauses
 
     # Specific to NormalForm
+    def get_dual(self):
+        return ConjNormalForm
+
+    # DPLL IF
+    def bcp(self):
+        return None
+
+    def ple(self):
+        return None
+
     IDENTITY = 0
     DOMINATOR = 1
 
@@ -135,89 +257,101 @@ class ConjNormalForm(NormalForm):
     """
     Conjunctive Normal Form
     """
-    def __neg__(self):
-        clauses = {frozenset(-arg for arg in clause) for clause in self.clauses}
-        return DisjNormalForm(clauses)
-
-    def __add__(self, other):
-        f = nfexpr2expr(self)
-        g = nfexpr2expr(other)
-        return expr2nfexpr((f + g).to_cnf())
-
-    def __mul__(self, other):
-        return CNF_And(self, other)
-
     def satisfy_one(self, algorithm='dpll'):
         if algorithm == 'backtrack':
-            return backtrack(self)
+            soln = sat.backtrack(self)
         elif algorithm == 'dpll':
-            return dpll(self)
+            soln = sat.dpll(self)
         else:
-            raise ValueError("invalid algorithm")
+            raise ValueError("invalid algorithm: " + algorithm)
+        if soln is None:
+            return None
+        else:
+            return upoint2nfpoint(soln)
+
+    def is_one(self):
+        return not self.clauses
 
     # DPLL IF
     def bcp(self):
-        """Boolean Constraint Propagation"""
-        return _bcp(self)
+        zeros, ones = set(), set()
+        for clause in self.clauses:
+            if len(clause) == 1:
+                uniqid = list(clause)[0]
+                if uniqid < 0:
+                    zeros.add(-uniqid)
+                else:
+                    ones.add(uniqid)
+        if zeros or ones:
+            upnt = frozenset(zeros), frozenset(ones)
+            bcp_upnt = self.urestrict(upnt).bcp()
+            if bcp_upnt is None:
+                return None
+            else:
+                return (upnt[0] | bcp_upnt[0], upnt[1] | bcp_upnt[1])
+        else:
+            return frozenset(), frozenset()
 
     def ple(self):
-        """Pure Literal Elimination"""
-        cntr = Counter()
+        zeros, ones = set(), set()
         for clause in self.clauses:
-            cntr.update(clause)
-
-        point = dict()
-        while cntr:
-            num, _ = cntr.popitem()
-            if -num in cntr:
-                cntr.pop(-num)
-            else:
-                point[EXPRVARIABLES[abs(num)]] = int(num > 0)
-        if point:
-            return self.restrict(point), point
+            for uniqid in clause:
+                if uniqid < 0:
+                    zeros.add(-uniqid)
+                else:
+                    ones.add(uniqid)
+        zos = zeros & ones
+        if zos:
+            return frozenset(zeros - zos), frozenset(ones - zos)
         else:
-            return self, {}
+            return frozenset(), frozenset()
 
     # Specific to NormalForm
+    def get_dual(self):
+        return DisjNormalForm
+
     IDENTITY = 1
     DOMINATOR = 0
 
 
-def DNF_Or(*args):
-    """Return the disjunction of normal form expressions."""
-    args = (expr2nfexpr(arg) if isinstance(arg, Expression) else arg
-            for arg in args)
-
-    clauses = set()
-    for arg in args:
-        clauses.update(arg.clauses)
-
-    return DisjNormalForm(clauses)
-
-def CNF_And(*args):
-    """Return the conjunction of normal form expression."""
-    args = (expr2nfexpr(arg) if isinstance(arg, Expression) else arg
-            for arg in args)
-
-    clauses = set()
-    for arg in args:
-        clauses.update(arg.clauses)
-
-    return ConjNormalForm(clauses)
-
-def _bcp(cnf):
-    """Boolean Constraint Propagation"""
-    if cnf in B:
-        return cnf, {}
-    else:
-        point = dict()
-        for clause in cnf.clauses:
-            if len(clause) == 1:
-                num = list(clause)[0]
-                point[EXPRVARIABLES[abs(num)]] = int(num > 0)
-        if point:
-            _cnf, _point = _bcp(cnf.restrict(point))
-            point.update(_point)
-            return _cnf, point
+def _nfify(arg):
+    """Convert input argument to normal form expression."""
+    if isinstance(arg, NormalForm):
+        return arg
+    elif arg == 0 or arg == '0':
+        return DisjNormalForm()
+    elif arg == 1 or arg == '1':
+        return ConjNormalForm()
+    elif isinstance(arg, Expression):
+        if arg.is_cnf():
+            return expr2cnf(arg)
+        elif arg.is_dnf():
+            return expr2dnf(arg)
         else:
-            return cnf, point
+            raise ValueError("Expression is not in normal form: " + str(arg))
+    else:
+        raise TypeError("input cannot be converted to NormalForm: " + str(arg))
+
+def _dnfify(arg):
+    """Convert input argument to disjunctive normal form expression."""
+    if arg == 0 or arg == '0':
+        return DisjNormalForm()
+    elif isinstance(arg, DisjNormalForm):
+        return arg
+    elif isinstance(arg, Expression):
+        return expr2dnf(arg)
+    else:
+        fstr = "input cannot be converted to DisjNormalForm: " + str(arg)
+        raise TypeError(fstr)
+
+def _cnfify(arg):
+    """Convert input argument to conjunctive normal form expression."""
+    if arg == 1 or arg == '1':
+        return ConjNormalForm()
+    elif isinstance(arg, ConjNormalForm):
+        return arg
+    elif isinstance(arg, Expression):
+        return expr2cnf(arg)
+    else:
+        fstr = "input cannot be converted to ConjNormalForm: " + str(arg)
+        raise TypeError(fstr)

@@ -4,28 +4,14 @@ Interface Functions:
     clog2
     parity
     boolify
-    pcify
     cached_property
 """
-
-# Positional Cube Notation
-PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
 
 BOOL_DICT = {
     0: 0,
     1: 1,
     '0': 0,
     '1': 1,
-}
-
-PC_DICT = {
-    0: PC_ZERO,
-    1: PC_ONE,
-    '0': PC_ZERO,
-    '1': PC_ONE,
-    'x': PC_DC,
-    'X': PC_DC,
-    '-': PC_DC,
 }
 
 def bit_on(num, bit):
@@ -90,21 +76,6 @@ def boolify(arg):
         return BOOL_DICT[arg]
     except KeyError:
         raise ValueError("arg not in {0, 1}")
-
-def pcify(arg):
-    """Convert arg to a positional cube value.
-
-    >>> [pcify(x) for x in (False, True, 0, 1, '0', '1', 'x', 'X', '-')]
-    [2, 1, 2, 1, 2, 1, 3, 3, 3]
-    >>> pcify(42)
-    Traceback (most recent call last):
-        ...
-    ValueError: arg not in {0, 1, X, -}
-    """
-    try:
-        return PC_DICT[arg]
-    except KeyError:
-        raise ValueError("arg not in {0, 1, X, -}")
 
 def cached_property(func):
     """Return a cached property calculated by the input function.

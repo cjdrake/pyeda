@@ -382,11 +382,13 @@ Boolean Function Interface
 --------------------------
 
 .. autoclass:: pyeda.boolfunc.Function
-   :members: support, inputs, top, degree, cardinality,
-             iter_domain, iter_image, iter_relation, iter_ones, iter_zeros,
-             reduce, restrict, urestrict, vrestrict, compose,
+   :members: __neg__, __add__, __mul__, xor,
+             support, inputs, top, degree, cardinality,
+             iter_domain, iter_image, iter_relation,
+             restrict, urestrict, vrestrict, compose,
              satisfy_one, satisfy_all, satisfy_count,
              iter_cofactors, cofactors,
-             is_neg_unate, is_pos_unate, is_binate,
-             smoothing, consensus, derivative
+             smoothing, consensus, derivative,
+             is_zero, is_one,
+             box, unbox
    :member-order: bysource

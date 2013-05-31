@@ -8,6 +8,9 @@ Interface Functions:
     gray2bin
 """
 
+# Disable "invalid variable name"
+# pylint: disable=C0103
+
 from pyeda.common import clog2
 from pyeda.expr import Xor
 from pyeda.vexpr import BitVector
