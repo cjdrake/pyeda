@@ -9,7 +9,7 @@ from pyeda.bdd import (
 )
 from pyeda.expr import EXPRZERO, EXPRONE, Xor
 
-aa, bb, cc, dd = map(bddvar, 'abcd')
+aa, bb, cc, dd, ee = map(bddvar, 'abcde')
 
 def test_misc():
     f = a * b + a * c + b * c
@@ -104,6 +104,11 @@ def test_restrict():
     assert ff.restrict({aa: 1, bb: 0, cc: 1}) is BDDONE
     assert ff.restrict({aa: 1, bb: 1, cc: 0}) is BDDONE
     assert ff.restrict({aa: 1, bb: 1, cc: 1}) is BDDONE
+
+def test_compose():
+    f = a * b + a * c + b * c
+    ff = expr2bdd(a * b + a * c + b * c)
+    assert ff.compose({aa: bb, cc: dd*ee}).equivalent(expr2bdd(f.compose({a: b, c: d*e})))
 
 def test_negate():
     f = a * b + a * c + b * c

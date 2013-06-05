@@ -122,6 +122,9 @@ class BinaryDecisionDiagram(boolfunc.Function):
     def __init__(self, node):
         self.node = node
 
+    def __str__(self):
+        return "BDD({0.root}, {0.low}, {0.high})".format(self.node)
+
     def __repr__(self):
         return str(self)
 
@@ -168,7 +171,11 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return _bdd(urestrict(self.node, upoint))
 
     def compose(self, mapping):
-        raise NotImplementedError()
+        node = self.node
+        for v, g in mapping.items():
+            fv0, fv1 = _bdd(node).cofactors(v)
+            node = ite(g.node, fv1.node, fv0.node)
+        return _bdd(node)
 
     def satisfy_one(self):
         path = find_path(self.node, BDDNODEONE)
