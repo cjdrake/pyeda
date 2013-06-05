@@ -76,11 +76,10 @@ def truthtable(inputs, outputs):
 
 def _truthtable(inputs, pcdata):
     """Return a truth table."""
-    if len(inputs) == 0:
+    if len(inputs) == 0 and pcdata[0] in {PC_ZERO, PC_ONE}:
         return {
-            PC_ZERO: TTZERO,
-            PC_ONE: TTONE,
-            PC_DC: TTDC
+            PC_ZERO : TTZERO,
+            PC_ONE  : TTONE
         }[pcdata[0]]
     elif len(inputs) == 1 and pcdata[0] == PC_ZERO and pcdata[1] == PC_ONE:
         return inputs[0]
@@ -379,14 +378,7 @@ class TruthTable(boolfunc.Function):
 
 class TTConstant(TruthTable):
     """Truth table constant"""
-
-    def __init__(self):
-        super(TTConstant, self).__init__([], PCData([self.PCVAL]))
-
-    def __str__(self):
-        return _PC2STR[self.PCVAL]
-
-    PCVAL = NotImplemented
+    pass
 
 
 class _TTZero(TTConstant):
@@ -395,7 +387,18 @@ class _TTZero(TTConstant):
 
     .. NOTE:: Never use this class. Use TTZERO instead.
     """
-    PCVAL = PC_ZERO
+    def __init__(self):
+        super(_TTZero, self).__init__([], PCData([PC_ZERO]))
+
+    def __bool__(self):
+        return False
+
+    def __int__(self):
+        return 0
+
+    def __str__(self):
+        return '0'
+
 
 class _TTOne(TTConstant):
     """
@@ -403,19 +406,21 @@ class _TTOne(TTConstant):
 
     .. NOTE:: Never use this class. Use TTONE instead.
     """
-    PCVAL = PC_ONE
+    def __init__(self):
+        super(_TTOne, self).__init__([], PCData([PC_ONE]))
 
-class _TTDontCare(TTConstant):
-    """
-    Truth table "don't care".
+    def __bool__(self):
+        return True
 
-    .. NOTE:: Never use this class. Use TTDC instead.
-    """
-    PCVAL = PC_DC
+    def __int__(self):
+        return 1
+
+    def __str__(self):
+        return '1'
+
 
 TTZERO = _TTZero()
 TTONE = _TTOne()
-TTDC = _TTDontCare()
 
 
 class TTVariable(boolfunc.Variable, TruthTable):

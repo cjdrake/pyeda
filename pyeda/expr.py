@@ -484,15 +484,6 @@ class ExprConstant(Expression, sat.DPLLInterface):
     def __init__(self):
         super(ExprConstant, self).__init__(None)
 
-    def __bool__(self):
-        return bool(self.VAL)
-
-    def __int__(self):
-        return self.VAL
-
-    def __str__(self):
-        return str(self.VAL)
-
     # From Function
     @cached_property
     def support(self):
@@ -522,9 +513,6 @@ class ExprConstant(Expression, sat.DPLLInterface):
     def flatten(self, op):
         return self
 
-    # Specific to ExprConstant
-    VAL = NotImplemented
-
 
 class _ExprZero(ExprConstant):
     """
@@ -532,6 +520,15 @@ class _ExprZero(ExprConstant):
 
     .. NOTE:: Never use this class. Use EXPRZERO instead.
     """
+    def __bool__(self):
+        return False
+
+    def __int__(self):
+        return 0
+
+    def __str__(self):
+        return '0'
+
     def __lt__(self, other):
         if isinstance(other, Expression):
             return True
@@ -550,9 +547,6 @@ class _ExprZero(ExprConstant):
     def ple(self):
         return None
 
-    # Specific to ExprConstant
-    VAL = 0
-
 
 class _ExprOne(ExprConstant):
     """
@@ -560,6 +554,15 @@ class _ExprOne(ExprConstant):
 
     NOTE: Never use this class. Use EXPRONE instead.
     """
+    def __bool__(self):
+        return True
+
+    def __int__(self):
+        return 1
+
+    def __str__(self):
+        return '1'
+
     def __lt__(self, other):
         if other is EXPRZERO:
             return False
@@ -579,9 +582,6 @@ class _ExprOne(ExprConstant):
 
     def ple(self):
         return frozenset(), frozenset()
-
-    # Specific to ExprConstant
-    VAL = 1
 
 
 EXPRZERO = _ExprZero()
@@ -1113,7 +1113,7 @@ class ExprExclusive(Expression):
             arg = temps.pop()
             arg = arg.simplify()
             if isinstance(arg, ExprConstant):
-                par ^= arg.VAL
+                par ^= int(arg)
             # associative
             elif isinstance(arg, self.__class__):
                 temps.extend(arg.args)
