@@ -700,7 +700,7 @@ class ExprComplement(ExprLiteral):
 
     def compose(self, mapping):
         try:
-            return ExprNot(mapping[self.exprvar])
+            return ExprNot(mapping[self.exprvar]).simplify()
         except KeyError:
             return self
 
@@ -1196,7 +1196,7 @@ class ExprXnor(ExprExclusive):
             return EXPRONE
         # Xnor(x) = x'
         elif len(args) == 1:
-            return ExprNot(args[0])
+            return ExprNot(args[0]).simplify()
         else:
             return super(ExprXnor, cls).__new__(cls)
 
@@ -1323,7 +1323,7 @@ class ExprImplies(Expression):
             return q
         # p => 0 = p'
         elif q is EXPRZERO:
-            return ExprNot(p)
+            return ExprNot(p).simplify()
         # p -> p = 1
         elif p == q:
             return EXPRONE
@@ -1386,7 +1386,7 @@ class ExprITE(Expression):
                 return EXPRZERO
             # s ? 0 : 1 = s'
             elif d0 is EXPRONE:
-                return ExprNot(s)
+                return ExprNot(s).simplify()
             # s ? 0 : d0 = s' * d0
             else:
                 return ExprAnd(ExprNot(s), d0).simplify()
