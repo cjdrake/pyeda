@@ -20,6 +20,7 @@ Interface Classes:
           the ExprVariable implementation wherever required.
 """
 
+# pylint: disable=W0223
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.common import cached_property

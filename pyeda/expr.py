@@ -511,6 +511,7 @@ class ExprConstant(Expression, sat.DPLLInterface):
 
     # FactoredExpression
     def flatten(self, op):
+        """Return flattened expression."""
         return self
 
 
@@ -613,6 +614,7 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     # FactoredExpression
     def flatten(self, op):
+        """Return factored expression."""
         return self
 
 
