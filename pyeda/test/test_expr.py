@@ -102,6 +102,9 @@ def test_const():
     assert not EXPRZERO.support
     assert not EXPRONE.support
 
+    assert EXPRZERO.top is None
+    assert EXPRONE.top is None
+
     assert EXPRZERO.restrict({a: 0, b: 1, c: 0, d: 1}) is EXPRZERO
     assert EXPRONE.restrict({a: 0, b: 1, c: 0, d: 1}) is EXPRONE
 

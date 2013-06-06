@@ -323,7 +323,10 @@ class Function(object):
     @property
     def top(self):
         """Return the first variable in the ordered support set."""
-        return self.inputs[0]
+        if self.inputs:
+            return self.inputs[0]
+        else:
+            return None
 
     @property
     def degree(self):
