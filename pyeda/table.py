@@ -249,10 +249,10 @@ class TruthTable(boolfunc.Function):
         def items():
             """Iterate through OR'ed items."""
             for upoint in boolfunc.iter_upoints(inputs):
-                a_b = self.urestrict(upoint).pcdata[0]
-                c_d = other.urestrict(upoint).pcdata[0]
+                ab = self.urestrict(upoint).pcdata[0]
+                cd = other.urestrict(upoint).pcdata[0]
                 # a * c, b + d
-                yield ((a_b & c_d) & 2) | ((a_b | c_d) & 1)
+                yield ((ab & cd) & 2) | ((ab | cd) & 1)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
@@ -266,10 +266,10 @@ class TruthTable(boolfunc.Function):
         def items():
             """Iterate through AND'ed items."""
             for upoint in boolfunc.iter_upoints(inputs):
-                a_b = self.urestrict(upoint).pcdata[0]
-                c_d = other.urestrict(upoint).pcdata[0]
+                ab = self.urestrict(upoint).pcdata[0]
+                cd = other.urestrict(upoint).pcdata[0]
                 # a + c, b * d
-                yield ((a_b | c_d) & 2) | ((a_b & c_d) & 1)
+                yield ((ab | cd) & 2) | ((ab & cd) & 1)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
@@ -280,10 +280,10 @@ class TruthTable(boolfunc.Function):
             """Iterate through XOR'ed items."""
             # pylint: disable=C0103
             for upoint in boolfunc.iter_upoints(inputs):
-                a_b = self.urestrict(upoint).pcdata[0]
-                c_d = other.urestrict(upoint).pcdata[0]
+                ab = self.urestrict(upoint).pcdata[0]
+                cd = other.urestrict(upoint).pcdata[0]
                 # a * c + b * d, a * d + b * c
-                a, b, c, d = a_b >> 1, a_b & 1, c_d >> 1, c_d & 1
+                a, b, c, d = ab >> 1, ab & 1, cd >> 1, cd & 1
                 yield ((a & c | b & d) << 1) | (a & d | b & c)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)

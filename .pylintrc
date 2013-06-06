@@ -144,6 +144,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # Good variable names which should always be accepted, separated by a comma
 # _ : generic
 # i, j, k : iterator index
+# ab, cd : short-hand for positional cube variables
 # s, d1, d0 : conventional ITE (if-then-else) variable names s ? d1 : d0
 # p, q : conventional Implies variable names p => q
 # v : Variable instance
@@ -161,7 +162,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # Or, And, Not, Xor, Xnor, Equal, Implies, ITE : Expression factory functions
 # Nor, Nand, OneHot0, OneHot : Expression higher-order factory functions
 # NF_Not, DNF_Or, CNF_And : NormalForm factory functions
-good-names=_,i,j,k,s,d1,d0,p,q,v,vs,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,NF_Not,DNF_Or,CNF_And
+good-names=_,i,j,k,ab,cd,s,d1,d0,p,q,v,vs,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,NF_Not,DNF_Or,CNF_And
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz
