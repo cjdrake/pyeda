@@ -326,11 +326,6 @@ class Function(object):
         return self.inputs[0]
 
     @property
-    def bottom(self):
-        """Return the last variable in the ordered support set."""
-        return self.inputs[-1]
-
-    @property
     def degree(self):
         r"""Return the degree of a function.
 
