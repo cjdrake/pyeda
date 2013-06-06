@@ -331,10 +331,26 @@ class TruthTable(boolfunc.Function):
         return sum(1 for _ in self.satisfy_all())
 
     def is_neg_unate(self, vs=None):
-        raise NotImplementedError()
+        # Test whether table entries are not increasing
+        ab = PC_ONE
+        for cf in self.iter_cofactors(vs):
+            for cd in cf.pcdata:
+                # ab >= cd
+                if not (ab & 1) | (cd >> 1):
+                    return False
+                ab = cd
+        return True
 
     def is_pos_unate(self, vs=None):
-        raise NotImplementedError()
+        # Test whether table entries are not decreasing
+        ab = PC_ZERO
+        for cf in self.iter_cofactors(vs):
+            for cd in cf.pcdata:
+                # ab <= cd
+                if not (ab >> 1) | (cd & 1):
+                    return False
+                ab = cd
+        return True
 
     def is_zero(self):
         return not self._inputs and self.pcdata[0] == PC_ZERO

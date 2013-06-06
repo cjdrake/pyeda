@@ -614,6 +614,10 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         """Return factored expression."""
         return self
 
+    def absorb(self):
+        """Return literal after absorption."""
+        return self
+
 
 class ExprVariable(boolfunc.Variable, ExprLiteral):
     """Expression variable"""
