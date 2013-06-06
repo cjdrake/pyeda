@@ -308,8 +308,10 @@ class Function(object):
         r"""Return the support set of a function.
 
         Let :math:`f(x_1, x_2, ..., x_n)` be a Boolean function of :math:`N`
-        variables. The unordered set :math:`\{x_1, x_2, ..., x_n\}` is called
-        the *support* of the function.
+        variables.
+
+        The unordered set :math:`\{x_1, x_2, ..., x_n\}` is called the *support*
+        of the function.
         """
         raise NotImplementedError()
 
