@@ -23,14 +23,12 @@ BDDVARIABLES = dict()
 
 BDDNode = collections.namedtuple('BDDNode', ['root', 'low', 'high'])
 
-BDDNODEZERO = BDDNode(-2, None, None)
-BDDNODEONE = BDDNode(-1, None, None)
-
-BDDNODES = {
-    (-2, None, None): BDDNODEZERO,
-    (-1, None, None): BDDNODEONE,
-}
+BDDNODES = dict()
 BDDS = dict()
+
+BDDNODEZERO = BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
+BDDNODEONE = BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
+
 
 def bddvar(name, indices=None, namespace=None):
     """Return a BDD variable.
