@@ -1,9 +1,6 @@
 """
 Boolean Logic Expressions
 
-Globals:
-    EXPRVARIABLES
-
 Interface Functions:
     exprvar
     exprcomp

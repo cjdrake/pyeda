@@ -1,9 +1,6 @@
 """
 Binary Decision Diagrams
 
-Globals:
-    BDDVARIABLES
-
 Interface Functions:
     bddvar
     expr2bdd
@@ -19,7 +16,7 @@ import collections
 
 from pyeda import boolfunc
 from pyeda.common import cached_property
-from pyeda.expr import EXPRVARIABLES, Or, And, EXPRZERO, EXPRONE
+from pyeda.expr import exprvar, Or, And, EXPRZERO, EXPRONE
 
 # existing BDDVariable references
 BDDVARIABLES = dict()
@@ -91,10 +88,11 @@ def bdd2expr(bdd, conj=False):
         else:
             outer, inner = (Or, And)
             paths = iter_all_paths(bdd.node, BDDNODEONE)
-        points = [{EXPRVARIABLES[v.uniqid]: val
-                   for v, val in path2point(path).items()}
-                   for path in paths]
-        terms = [boolfunc.point2term(point, conj) for point in points]
+        terms = list()
+        for path in paths:
+            expr_point = {exprvar(v.name, v.indices, v.namespace): val
+                          for v, val in path2point(path).items()}
+            terms.append(boolfunc.point2term(expr_point, conj))
         return outer(*[inner(*term) for term in terms])
 
 def path2point(path):

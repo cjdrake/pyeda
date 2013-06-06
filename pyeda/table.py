@@ -1,9 +1,6 @@
 """
 Boolean Tables
 
-Globals:
-    TTVARIABLES
-
 Interface Functions:
     ttvar
     truthtable
@@ -21,7 +18,7 @@ import array
 from pyeda import boolfunc
 from pyeda import PC_VOID, PC_ONE, PC_ZERO, PC_DC
 from pyeda.common import cached_property
-from pyeda.expr import EXPRVARIABLES, Or, And
+from pyeda.expr import exprvar, Or, And
 
 # existing TTVariable references
 TTVARIABLES = dict()
@@ -99,7 +96,7 @@ def truthtable2expr(tt, conj=False):
     else:
         outer, inner = (Or, And)
         nums = tt.pcdata.iter_ones()
-    inputs = [EXPRVARIABLES[v.uniqid] for v in tt.inputs]
+    inputs = [exprvar(v.name, v.indices, v.namespace) for v in tt.inputs]
     terms = [boolfunc.num2term(num, inputs, conj) for num in nums]
     return outer(*[inner(*term) for term in terms])
 

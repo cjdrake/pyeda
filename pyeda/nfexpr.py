@@ -24,7 +24,7 @@ Interface Classes:
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.common import cached_property
-from pyeda.expr import EXPRVARIABLES, EXPRCOMPLEMENTS
+from pyeda.expr import EXPRVARIABLES
 from pyeda.expr import (
     Expression, EXPRZERO, EXPRONE, ExprLiteral, ExprOr, ExprAnd
 )
@@ -109,7 +109,7 @@ def nf2expr(nf):
         term = list()
         for uniqid in clause:
             if uniqid < 0:
-                lit = EXPRCOMPLEMENTS[uniqid]
+                lit = -EXPRVARIABLES[-uniqid]
             else:
                 lit = EXPRVARIABLES[uniqid]
             term.append(lit)

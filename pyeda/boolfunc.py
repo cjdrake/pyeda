@@ -1,9 +1,6 @@
 """
 Boolean Functions
 
-Globals:
-    VARIABLES
-
 Interface Functions:
     num2point
     num2upoint
