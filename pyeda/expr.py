@@ -403,10 +403,7 @@ class Expression(boolfunc.Function):
 
     def expand(self, vs=None, conj=False):
         """Return the Shannon expansion with respect to a list of variables."""
-        if vs is None:
-            vs = list()
-        elif isinstance(vs, ExprVariable):
-            vs = [vs]
+        vs = self._expect_vars(vs)
         if vs:
             outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
             terms = [inner(self, *term)

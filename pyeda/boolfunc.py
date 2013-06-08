@@ -20,6 +20,7 @@ Interface Classes:
     VectorFunction
 """
 
+import collections
 import functools
 
 from pyeda.common import bit_on, boolify
@@ -413,10 +414,7 @@ class Function(object):
         with respect to variable :math:`x_i'` is
         :math:`f_{x_i'} = f(x_1, x_2, ..., 0, ..., x_n)`
         """
-        if vs is None:
-            vs = list()
-        elif isinstance(vs, Variable):
-            vs = [vs]
+        vs = self._expect_vars(vs)
         for upoint in iter_upoints(vs):
             yield self.urestrict(upoint)
 
@@ -512,6 +510,17 @@ class Function(object):
             return 1
         else:
             return self
+
+    def _expect_vars(self, vs=None):
+        if vs is None:
+            return list()
+        elif isinstance(vs, Variable):
+            return [vs]
+        else:
+            assert isinstance(vs, collections.Iterable)
+            for v in vs:
+                assert isinstance(v, Variable)
+            return vs
 
 
 class Slicer(object):
