@@ -591,6 +591,13 @@ EXPRONE = _ExprOne()
 class ExprLiteral(Expression, sat.DPLLInterface):
     """An instance of a variable or of its complement"""
 
+    def __init__(self):
+        super(ExprLiteral, self).__init__(None)
+
+    @cached_property
+    def arg_set(self):
+        return frozenset([self])
+
     # From Expression
     def invert(self):
         raise NotImplementedError()
@@ -627,8 +634,7 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
     def __init__(self, bvar):
         boolfunc.Variable.__init__(self, bvar.namespace, bvar.name,
                                    bvar.indices)
-        ExprLiteral.__init__(self, None)
-        self.arg_set = {self, }
+        ExprLiteral.__init__(self)
 
     # From Function
     @cached_property
@@ -679,11 +685,9 @@ class ExprComplement(ExprLiteral):
     """Expression complement"""
 
     def __init__(self, exprvar):
-        self.uniqid = -exprvar.uniqid
-
-        ExprLiteral.__init__(self, None)
-        self.arg_set = {self, }
+        ExprLiteral.__init__(self)
         self.exprvar = exprvar
+        self.uniqid = -exprvar.uniqid
 
     def __str__(self):
         return str(self.exprvar) + "'"
@@ -750,8 +754,11 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
 
     def __init__(self, *args, **kwargs):
         super(ExprOrAnd, self).__init__(args)
-        self.arg_set = frozenset(args)
         self.simplified = kwargs.get('simplified', False)
+
+    @cached_property
+    def arg_set(self):
+        return frozenset(self.args)
 
     # From Function
     def urestrict(self, upoint):
