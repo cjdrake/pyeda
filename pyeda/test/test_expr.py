@@ -29,6 +29,37 @@ def test_misc():
     assert f.consensus(a).equivalent(b * c)
     assert f.derivative(a).equivalent(b * -c + -b * c)
 
+def test_unate():
+    # c' * (a' + b')
+    f = -c * (-a + -b)
+    assert f.is_neg_unate([a, b, c])
+    assert f.is_neg_unate([a, b])
+    assert f.is_neg_unate([a, c])
+    assert f.is_neg_unate([b, c])
+    assert f.is_neg_unate(a)
+    assert f.is_neg_unate(b)
+    assert f.is_neg_unate(c)
+    assert f.is_neg_unate()
+
+    f = c * (a + b)
+    assert f.is_pos_unate([a, b, c])
+    assert f.is_pos_unate([a, b])
+    assert f.is_pos_unate([a, c])
+    assert f.is_pos_unate([b, c])
+    assert f.is_pos_unate(a)
+    assert f.is_pos_unate(b)
+    assert f.is_pos_unate(c)
+    assert f.is_pos_unate()
+
+    f = Xor(a, b, c)
+    assert f.is_binate([a, b, c])
+    assert f.is_binate([a, b])
+    assert f.is_binate([a, c])
+    assert f.is_binate([b, c])
+    assert f.is_binate(a)
+    assert f.is_binate(b)
+    assert f.is_binate(c)
+
 def test_box():
     assert Expression.box(0) is EXPRZERO
     assert Expression.box('0') is EXPRZERO
@@ -528,10 +559,10 @@ def test_absorb():
     assert ((a + -b) * (a + -b + c)).absorb().equivalent(a + -b)
     assert ((a + -b + c) * (a + -b)).absorb().equivalent(a + -b)
 
-def test_reduce():
-    f = a * b + a * c + b * c
-    assert str(f.reduce()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
-    assert str(f.reduce(conj=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
+#def test_reduce():
+#    f = a * b + a * c + b * c
+#    assert str(f.reduce()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
+#    assert str(f.reduce(conj=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
 
 def test_expand():
     assert a.expand() == a
@@ -604,15 +635,15 @@ def test_depth():
     assert ITE(s, a + b, b).depth == 3
     assert ITE(s, a + b, Xor(a, b)).depth == 4
 
-def test_nf():
-    f = Xor(a, b, c)
-    g = a * b + a * c + b * c
-
-    assert str(f.to_dnf()) == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
-    assert str(f.to_cnf()) == "(a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)"
-
-    assert str(g.reduce(conj=False)) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
-    assert str(g.reduce(conj=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
+#def test_nf():
+#    f = Xor(a, b, c)
+#    g = a * b + a * c + b * c
+#
+#    assert str(f.to_dnf()) == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
+#    assert str(f.to_cnf()) == "(a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)"
+#
+#    assert str(g.reduce(conj=False)) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
+#    assert str(g.reduce(conj=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
 
 def test_is_nf():
     assert (a * b * c).is_cnf()

@@ -512,6 +512,7 @@ class Function(object):
             return self
 
     def _expect_vars(self, vs=None):
+        """Verify the input type and return an iterable of Variables."""
         if vs is None:
             return list()
         elif isinstance(vs, Variable):

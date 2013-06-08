@@ -308,10 +308,38 @@ class Expression(boolfunc.Function):
         return sum(1 for _ in self.satisfy_all())
 
     def is_neg_unate(self, vs=None):
-        raise NotImplementedError()
+        vs = self._expect_vars(vs)
+        basis = self.support - set(vs)
+        maxcov = set(range(1 << len(basis)))
+        for cf in self.iter_cofactors(vs):
+            if cf is EXPRZERO:
+                idxs = set()
+            elif cf is EXPRONE:
+                idxs = set(range(1 << len(basis)))
+            else:
+                cdnf = cf.expand(basis - cf.support).to_cdnf()
+                idxs = {term.minterm_index for term in cdnf.arg_set}
+            if not idxs <= maxcov:
+                return False
+            maxcov = idxs
+        return True
 
     def is_pos_unate(self, vs=None):
-        raise NotImplementedError()
+        vs = self._expect_vars(vs)
+        basis = self.support - set(vs)
+        mincov = set()
+        for cf in self.iter_cofactors(vs):
+            if cf is EXPRZERO:
+                idxs = set()
+            elif cf is EXPRONE:
+                idxs = set(range(1 << len(basis)))
+            else:
+                cdnf = cf.expand(basis - cf.support).to_cdnf()
+                idxs = {term.minterm_index for term in cdnf.arg_set}
+            if not idxs >= mincov:
+                return False
+            mincov = idxs
+        return True
 
     def smoothing(self, vs=None):
         return Or(*self.cofactors(vs))
@@ -346,32 +374,6 @@ class Expression(boolfunc.Function):
 
     def __repr__(self):
         return self.__str__()
-
-    def reduce(self, conj=False):
-        """Reduce this expression to a canonical form."""
-        # FIXME: this can be expensive for deep expressions.
-        if conj:
-            nf = self.to_cnf()
-        else:
-            nf = self.to_dnf()
-
-        temps = set(nf.args)
-        terms = list()
-        indices = set()
-        while temps:
-            term = temps.pop()
-            vs = list(self.support - term.support)
-            eterms = term.expand(vs, conj).args if vs else (term, )
-            for eterm in eterms:
-                index = eterm.term_index
-                if index not in indices:
-                    terms.append(eterm)
-                    indices.add(index)
-
-        if conj:
-            return ExprAnd(*terms)
-        else:
-            return ExprOr(*terms)
 
     def invert(self):
         """Return an inverted expression."""
@@ -414,9 +416,11 @@ class Expression(boolfunc.Function):
 
     def to_dnf(self):
         """Return the expression in disjunctive normal form."""
-        f = self.factor()
-        f = f.flatten(ExprAnd)
-        return f
+        return self.factor().flatten(ExprAnd)
+
+    def to_cdnf(self):
+        """Return the expression in canonical disjunctive normal form."""
+        return self.to_dnf().reduce()
 
     def is_dnf(self):
         """Return whether this expression is in disjunctive normal form."""
@@ -424,9 +428,11 @@ class Expression(boolfunc.Function):
 
     def to_cnf(self):
         """Return the expression in conjunctive normal form."""
-        f = self.factor()
-        f = f.flatten(ExprOr)
-        return f
+        return self.factor().flatten(ExprOr)
+
+    def to_ccnf(self):
+        """Return the expression in canonical conjunctive normal form."""
+        return self.to_cnf().reduce()
 
     def is_cnf(self):
         """Return whether this expression is in conjunctive normal form."""
@@ -593,6 +599,7 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     @cached_property
     def arg_set(self):
+        """Return the argument set for a normal form term."""
         return frozenset([self])
 
     # From Expression
@@ -622,6 +629,9 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     def absorb(self):
         """Degenerate form of a flattened expression."""
+        return self
+
+    def reduce(self):
         return self
 
 
@@ -755,6 +765,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
 
     @cached_property
     def arg_set(self):
+        """Return the argument set for a normal form term."""
         return frozenset(self.args)
 
     # From Function
@@ -881,7 +892,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
             The operator you want to flatten. For example, if you want to
             produce an ExprOr expression, flatten all the nested ExprAnds.
 
-        .. NOTE:: This function assumes the expression is already factored.
+        .. NOTE:: This method assumes the expression is already factored.
                   Do NOT call this method directly -- use the 'to_dnf' or
                   'to_cnf' methods instead.
         """
@@ -910,7 +921,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
         x + (x * y) = x
         x * (x + y) = x
 
-        .. NOTE:: This function assumes the expression is already factored and
+        .. NOTE:: This method assumes the expression is already factored and
                   flattened. Do NOT call this method directly -- use the
                   'to_dnf' or 'to_cnf' methods instead.
         """
@@ -959,18 +970,39 @@ class ExprOr(ExprOrAnd):
         return upnt
 
     # Specific to ExprOrAnd
+    IDENTITY = EXPRZERO
+    DOMINATOR = EXPRONE
+
     @staticmethod
     def get_dual():
         return ExprAnd
-
-    IDENTITY = EXPRZERO
-    DOMINATOR = EXPRONE
 
     @property
     def term_index(self):
         return self.maxterm_index
 
     # Specific to ExprOr
+    def reduce(self):
+        """Reduce this expression to a canonical form.
+
+        .. NOTE:: This method assumes the expression is already in normal form.
+                  Do NOT call this method directly. Use 'to_cdnf' instead.
+        """
+        temps = set(self.args)
+        terms = list()
+        indices = set()
+        while temps:
+            term = temps.pop()
+            vs = list(self.support - term.support)
+            eterms = term.expand(vs, conj=False).args if vs else (term, )
+            for eterm in eterms:
+                index = eterm.term_index
+                if index not in indices:
+                    terms.append(eterm)
+                    indices.add(index)
+
+        return self.__class__(*terms, simplified=True)
+
     @cached_property
     def maxterm_index(self):
         """Return this maxterm's unique index."""
@@ -1042,6 +1074,27 @@ class ExprAnd(ExprOrAnd):
         return self.minterm_index
 
     # Specific to ExprAnd
+    def reduce(self):
+        """Reduce this expression to a canonical form.
+
+        .. NOTE:: This method assumes the expression is already in normal form.
+                  Do NOT call this method directly. Use 'to_ccnf' instead.
+        """
+        temps = set(self.args)
+        terms = list()
+        indices = set()
+        while temps:
+            term = temps.pop()
+            vs = list(self.support - term.support)
+            eterms = term.expand(vs, conj=True).args if vs else (term, )
+            for eterm in eterms:
+                index = eterm.term_index
+                if index not in indices:
+                    terms.append(eterm)
+                    indices.add(index)
+
+        return self.__class__(*terms, simplified=True)
+
     @cached_property
     def minterm_index(self):
         """Return this minterm's unique index."""
