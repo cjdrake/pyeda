@@ -332,24 +332,24 @@ class TruthTable(boolfunc.Function):
 
     def is_neg_unate(self, vs=None):
         # Test whether table entries are monotonically decreasing
-        ab = PC_ONE
-        for cf in self.iter_cofactors(vs):
-            for cd in cf.pcdata:
-                # ab >= cd
-                if not (ab & 1) | (cd >> 1):
+        cfs = self.cofactors(vs)
+        tests = [PC_ONE] * (self.cardinality // len(cfs))
+        for cf in cfs:
+            for i, item in enumerate(cf.pcdata):
+                if not (tests[i] & 1) | (item >> 1):
                     return False
-                ab = cd
+                tests[i] = item
         return True
 
     def is_pos_unate(self, vs=None):
         # Test whether table entries are monotonically increasing
-        ab = PC_ZERO
-        for cf in self.iter_cofactors(vs):
-            for cd in cf.pcdata:
-                # ab <= cd
-                if not (ab >> 1) | (cd & 1):
+        cfs = self.cofactors(vs)
+        tests = [PC_ZERO] * (self.cardinality // len(cfs))
+        for cf in cfs:
+            for i, item in enumerate(cf.pcdata):
+                if not (tests[i] >> 1) | (item & 1):
                     return False
-                ab = cd
+                tests[i] = item
         return True
 
     def is_zero(self):

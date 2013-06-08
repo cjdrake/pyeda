@@ -30,18 +30,26 @@ XOR_STR = \
 1111 0
 """
 
-def test_misc():
+def test_unate():
     # c' * (a' + b')
     f = truthtable([a, b, c], "11100000")
     assert f.is_neg_unate([a, b, c])
+    assert f.is_neg_unate([a, b])
+    assert f.is_neg_unate([a, c])
     assert f.is_neg_unate([b, c])
+    assert f.is_neg_unate(a)
+    assert f.is_neg_unate(b)
     assert f.is_neg_unate(c)
     assert f.is_neg_unate()
 
     # c * (a + b)
     f = truthtable([a, b, c], "00000111")
     assert f.is_pos_unate([a, b, c])
+    assert f.is_pos_unate([a, b])
+    assert f.is_pos_unate([a, c])
     assert f.is_pos_unate([b, c])
+    assert f.is_pos_unate(a)
+    assert f.is_pos_unate(b)
     assert f.is_pos_unate(c)
     assert f.is_pos_unate()
 
@@ -49,9 +57,11 @@ def test_misc():
     f = truthtable([a, b, c], "01101001")
     assert f.is_binate([a, b, c])
     assert f.is_binate([a, b])
+    assert f.is_binate([a, c])
     assert f.is_binate([b, c])
+    assert f.is_binate(a)
+    assert f.is_binate(b)
     assert f.is_binate(c)
-    assert f.is_binate()
 
 def test_ttvar():
     assert aa.name == 'a'
