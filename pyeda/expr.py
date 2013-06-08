@@ -419,7 +419,6 @@ class Expression(boolfunc.Function):
         """Return the expression in disjunctive normal form."""
         f = self.factor()
         f = f.flatten(ExprAnd)
-        f = f.absorb()
         return f
 
     def is_dnf(self):
@@ -430,7 +429,6 @@ class Expression(boolfunc.Function):
         """Return the expression in conjunctive normal form."""
         f = self.factor()
         f = f.flatten(ExprOr)
-        f = f.absorb()
         return f
 
     def is_cnf(self):
@@ -508,7 +506,11 @@ class ExprConstant(Expression, sat.DPLLInterface):
 
     # FactoredExpression
     def flatten(self, op):
-        """Return flattened expression."""
+        """Degenerate form of a flattened expression."""
+        return self
+
+    def absorb(self):
+        """Degenerate form of a flattened expression."""
         return self
 
 
@@ -516,7 +518,7 @@ class _ExprZero(ExprConstant):
     """
     Expression zero
 
-    .. NOTE:: Never use this class. Use EXPRZERO instead.
+    .. NOTE:: Never use this class. Use EXPRZERO singleton instead.
     """
     def __bool__(self):
         return False
@@ -550,7 +552,7 @@ class _ExprOne(ExprConstant):
     """
     Expression one
 
-    NOTE: Never use this class. Use EXPRONE instead.
+    .. NOTE:: Never use this class. Use EXPRONE singleton instead.
     """
     def __bool__(self):
         return True
@@ -611,11 +613,11 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     # FactoredExpression
     def flatten(self, op):
-        """Return factored expression."""
+        """Degenerate form of a flattened expression."""
         return self
 
     def absorb(self):
-        """Return literal after absorption."""
+        """Degenerate form of a flattened expression."""
         return self
 
 
@@ -868,9 +870,16 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
         x + (y * z) = (x + y) * (x + z)
         x * (y + z) = (x * y) + (x * z)
 
-        NOTE: This function assumes the expression is already factored. Do NOT
-              call this method directly -- use the 'to_dnf' or 'to_cnf' methods
-              instead.
+        Parameters
+        ----------
+
+        op : ExprOr or ExprAnd
+            The operator you want to flatten. For example, if you want to
+            produce an ExprOr expression, flatten all the nested ExprAnds.
+
+        .. NOTE:: This function assumes the expression is already factored.
+                  Do NOT call this method directly -- use the 'to_dnf' or
+                  'to_cnf' methods instead.
         """
         if isinstance(self, op):
             for i, argi in enumerate(self.args):
@@ -878,7 +887,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
                     others = self.args[:i] + self.args[i+1:]
                     args = [op(arg, *others) for arg in argi.args]
                     expr = op.get_dual()(*args).simplify()
-                    return expr.flatten(op)
+                    return expr.flatten(op).absorb()
             return self
         else:
             nested, others = list(), list()
@@ -887,7 +896,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
                     nested.append(arg)
                 else:
                     others.append(arg)
-            args = [arg.flatten(op) for arg in nested] + others
+            args = [arg.flatten(op).absorb() for arg in nested] + others
             return op.get_dual()(*args).simplify()
 
     # FlattenedExpression
@@ -897,9 +906,9 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
         x + (x * y) = x
         x * (x + y) = x
 
-        NOTE: This function assumes the expression is already factored and
-        flattened. Do NOT call this method directly -- use the 'to_dnf' or
-        'to_cnf' methods instead.
+        .. NOTE:: This function assumes the expression is already factored and
+                  flattened. Do NOT call this method directly -- use the
+                  'to_dnf' or 'to_cnf' methods instead.
         """
         temps, args = list(self.args), list()
 
