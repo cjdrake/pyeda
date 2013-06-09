@@ -229,6 +229,7 @@ class NormalForm(boolfunc.Function, sat.DPLLInterface):
         raise NotImplementedError()
 
     def reduce(self):
+        """Reduce this expression to a canonical form."""
         support = frozenset(abs(uniqid) for clause in self.clauses
                             for uniqid in clause)
         new_clauses = set()

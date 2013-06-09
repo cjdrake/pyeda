@@ -310,35 +310,27 @@ class Expression(boolfunc.Function):
     def is_neg_unate(self, vs=None):
         vs = self._expect_vars(vs)
         basis = self.support - set(vs)
-        maxcov = set(range(1 << len(basis)))
+        cov = EXPRONE.expand(basis).mincov
         for cf in self.iter_cofactors(vs):
-            if cf is EXPRZERO:
-                idxs = set()
-            elif cf is EXPRONE:
-                idxs = set(range(1 << len(basis)))
-            else:
-                cdnf = cf.expand(basis - cf.support).to_cdnf()
-                idxs = cdnf.min_indices
-            if not idxs <= maxcov:
+            cf = cf.expand(basis - cf.support)
+            if not cf.is_dnf():
+                cf = cf.to_dnf()
+            if not cf.mincov <= cov:
                 return False
-            maxcov = idxs
+            cov = cf.mincov
         return True
 
     def is_pos_unate(self, vs=None):
         vs = self._expect_vars(vs)
         basis = self.support - set(vs)
-        mincov = set()
+        cov = EXPRZERO.mincov
         for cf in self.iter_cofactors(vs):
-            if cf is EXPRZERO:
-                idxs = set()
-            elif cf is EXPRONE:
-                idxs = set(range(1 << len(basis)))
-            else:
-                cdnf = cf.expand(basis - cf.support).to_cdnf()
-                idxs = cdnf.min_indices
-            if not idxs >= mincov:
+            cf = cf.expand(basis - cf.support)
+            if not cf.is_dnf():
+                cf = cf.to_dnf()
+            if not cf.mincov >= cov:
                 return False
-            mincov = idxs
+            cov = cf.mincov
         return True
 
     def smoothing(self, vs=None):
@@ -408,9 +400,13 @@ class Expression(boolfunc.Function):
         vs = self._expect_vars(vs)
         if vs:
             outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
-            terms = [inner(self, *term)
+            terms = [inner(self, *term).simplify()
                      for term in boolfunc.iter_terms(vs, conj)]
-            return outer(*terms).simplify()
+            if conj:
+                terms = [term for term in terms if term is not EXPRONE]
+            else:
+                terms = [term for term in terms if term is not EXPRZERO]
+            return outer(*terms, simplified=True)
         else:
             return self
 
@@ -516,6 +512,10 @@ class ExprConstant(Expression, sat.DPLLInterface):
         """Degenerate form of a flattened expression."""
         return self
 
+    def reduce(self):
+        """Degenerate form of a reduced expression."""
+        return self
+
 
 class _ExprZero(ExprConstant):
     """
@@ -532,16 +532,26 @@ class _ExprZero(ExprConstant):
     def __str__(self):
         return '0'
 
+    # From Function
+    def is_zero(self):
+        return True
+
+    # From Expression
     def __lt__(self, other):
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
-    def is_zero(self):
-        return True
-
     def invert(self):
         return EXPRONE
+
+    def is_dnf(self):
+        return True
+
+    @cached_property
+    def mincov(self):
+        """Return the minterm cover."""
+        return set()
 
     # DPLL IF
     def bcp(self):
@@ -566,6 +576,11 @@ class _ExprOne(ExprConstant):
     def __str__(self):
         return '1'
 
+    # From Function
+    def is_one(self):
+        return True
+
+    # From Expression
     def __lt__(self, other):
         if other is EXPRZERO:
             return False
@@ -573,11 +588,16 @@ class _ExprOne(ExprConstant):
             return True
         return id(self) < id(other)
 
-    def is_one(self):
-        return True
-
     def invert(self):
         return EXPRZERO
+
+    def is_cnf(self):
+        return True
+
+    @cached_property
+    def mincov(self):
+        """Return the minterm cover."""
+        return {0}
 
     # DPLL IF
     def bcp(self):
@@ -636,7 +656,8 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         return self
 
     @cached_property
-    def min_indices(self):
+    def mincov(self):
+        """Return the minterm cover."""
         return {self.minterm_index}
 
     minterm_index = NotImplemented
@@ -973,6 +994,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
         return self.__class__(*terms, simplified=True)
 
     def _term_expand(self, term, vs):
+        """Return a term expanded by a list of variables."""
         raise NotImplementedError()
 
 
@@ -1024,7 +1046,8 @@ class ExprOr(ExprOrAnd):
         return index
 
     @cached_property
-    def min_indices(self):
+    def mincov(self):
+        """Return the minterm cover."""
         return {term.minterm_index for term in self.args}
 
     def _term_expand(self, term, vs):
@@ -1102,7 +1125,8 @@ class ExprAnd(ExprOrAnd):
         return index
 
     @cached_property
-    def min_indices(self):
+    def mincov(self):
+        """Return the minterm cover."""
         return {self.minterm_index}
 
     def _term_expand(self, term, vs):
