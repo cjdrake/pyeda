@@ -960,10 +960,9 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
         if self.depth == 1:
             return self
 
-        temps, terms = set(self.args), list()
+        terms = list()
         indices = set()
-        while temps:
-            term = temps.pop()
+        for term in self.args:
             vs = list(self.support - term.support)
             eterms = self._term_expand(term, vs) if vs else (term, )
             for eterm in eterms:
