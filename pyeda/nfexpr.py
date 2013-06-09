@@ -23,7 +23,7 @@ Interface Classes:
 # pylint: disable=W0223
 from pyeda import boolfunc
 from pyeda import sat
-from pyeda.common import cached_property
+from pyeda.common import bit_on, cached_property
 from pyeda.expr import EXPRVARIABLES
 from pyeda.expr import (
     Expression, EXPRZERO, EXPRONE, ExprLiteral, ExprOr, ExprAnd
@@ -227,6 +227,21 @@ class NormalForm(boolfunc.Function, sat.DPLLInterface):
         The dual or Or is And, and the dual of Or is And.
         """
         raise NotImplementedError()
+
+    def reduce(self):
+        support = frozenset(abs(uniqid) for clause in self.clauses
+                            for uniqid in clause)
+        new_clauses = set()
+        for clause in self.clauses:
+            vs = list(support - {abs(uniqid) for uniqid in clause})
+            if vs:
+                for num in range(1 << len(vs)):
+                    new_part = {v if bit_on(num, i) else -v
+                                for i, v in enumerate(vs)}
+                    new_clauses.add(clause | new_part)
+            else:
+                new_clauses.add(clause)
+        return self.__class__(new_clauses)
 
     IDENTITY = NotImplemented
     DOMINATOR = NotImplemented
