@@ -318,7 +318,7 @@ class Expression(boolfunc.Function):
                 idxs = set(range(1 << len(basis)))
             else:
                 cdnf = cf.expand(basis - cf.support).to_cdnf()
-                idxs = {term.minterm_index for term in cdnf.arg_set}
+                idxs = cdnf.min_indices
             if not idxs <= maxcov:
                 return False
             maxcov = idxs
@@ -335,7 +335,7 @@ class Expression(boolfunc.Function):
                 idxs = set(range(1 << len(basis)))
             else:
                 cdnf = cf.expand(basis - cf.support).to_cdnf()
-                idxs = {term.minterm_index for term in cdnf.arg_set}
+                idxs = cdnf.min_indices
             if not idxs >= mincov:
                 return False
             mincov = idxs
@@ -632,7 +632,14 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         return self
 
     def reduce(self):
+        """Degenerate form of a reduced expression."""
         return self
+
+    @cached_property
+    def min_indices(self):
+        return {self.minterm_index}
+
+    minterm_index = NotImplemented
 
 
 class ExprVariable(boolfunc.Variable, ExprLiteral):
@@ -944,6 +951,31 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
 
         return self.__class__(*args, simplified=True)
 
+    def reduce(self):
+        """Reduce this expression to a canonical form.
+
+        .. NOTE:: This method assumes the expression is already in normal form.
+                  Do NOT call this method directly. Use 'to_cdnf' instead.
+        """
+        if self.depth == 1:
+            return self
+
+        temps, terms = set(self.args), list()
+        indices = set()
+        while temps:
+            term = temps.pop()
+            vs = list(self.support - term.support)
+            eterms = self._term_expand(term, vs) if vs else (term, )
+            for eterm in eterms:
+                if eterm.term_index not in indices:
+                    terms.append(eterm)
+                    indices.add(eterm.term_index)
+
+        return self.__class__(*terms, simplified=True)
+
+    def _term_expand(self, term, vs):
+        raise NotImplementedError()
+
 
 class ExprOr(ExprOrAnd):
     """Expression OR operator"""
@@ -982,27 +1014,6 @@ class ExprOr(ExprOrAnd):
         return self.maxterm_index
 
     # Specific to ExprOr
-    def reduce(self):
-        """Reduce this expression to a canonical form.
-
-        .. NOTE:: This method assumes the expression is already in normal form.
-                  Do NOT call this method directly. Use 'to_cdnf' instead.
-        """
-        temps = set(self.args)
-        terms = list()
-        indices = set()
-        while temps:
-            term = temps.pop()
-            vs = list(self.support - term.support)
-            eterms = term.expand(vs, conj=False).args if vs else (term, )
-            for eterm in eterms:
-                index = eterm.term_index
-                if index not in indices:
-                    terms.append(eterm)
-                    indices.add(index)
-
-        return self.__class__(*terms, simplified=True)
-
     @cached_property
     def maxterm_index(self):
         """Return this maxterm's unique index."""
@@ -1012,6 +1023,13 @@ class ExprOr(ExprOrAnd):
             if -v in self.args:
                 index |= 1 << (num - i)
         return index
+
+    @cached_property
+    def min_indices(self):
+        return {term.minterm_index for term in self.args}
+
+    def _term_expand(self, term, vs):
+        return term.expand(vs, conj=False).args
 
 
 class ExprAnd(ExprOrAnd):
@@ -1074,27 +1092,6 @@ class ExprAnd(ExprOrAnd):
         return self.minterm_index
 
     # Specific to ExprAnd
-    def reduce(self):
-        """Reduce this expression to a canonical form.
-
-        .. NOTE:: This method assumes the expression is already in normal form.
-                  Do NOT call this method directly. Use 'to_ccnf' instead.
-        """
-        temps = set(self.args)
-        terms = list()
-        indices = set()
-        while temps:
-            term = temps.pop()
-            vs = list(self.support - term.support)
-            eterms = term.expand(vs, conj=True).args if vs else (term, )
-            for eterm in eterms:
-                index = eterm.term_index
-                if index not in indices:
-                    terms.append(eterm)
-                    indices.add(index)
-
-        return self.__class__(*terms, simplified=True)
-
     @cached_property
     def minterm_index(self):
         """Return this minterm's unique index."""
@@ -1104,6 +1101,13 @@ class ExprAnd(ExprOrAnd):
             if v in self.args:
                 index |= 1 << (num - i)
         return index
+
+    @cached_property
+    def min_indices(self):
+        return {self.minterm_index}
+
+    def _term_expand(self, term, vs):
+        return term.expand(vs, conj=True).args
 
 
 class ExprNot(Expression):

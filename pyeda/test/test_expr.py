@@ -559,11 +559,6 @@ def test_absorb():
     assert ((a + -b) * (a + -b + c)).absorb().equivalent(a + -b)
     assert ((a + -b + c) * (a + -b)).absorb().equivalent(a + -b)
 
-#def test_reduce():
-#    f = a * b + a * c + b * c
-#    assert str(f.reduce()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
-#    assert str(f.reduce(conj=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
-
 def test_expand():
     assert a.expand() == a
 
@@ -635,15 +630,15 @@ def test_depth():
     assert ITE(s, a + b, b).depth == 3
     assert ITE(s, a + b, Xor(a, b)).depth == 4
 
-#def test_nf():
-#    f = Xor(a, b, c)
-#    g = a * b + a * c + b * c
-#
-#    assert str(f.to_dnf()) == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
-#    assert str(f.to_cnf()) == "(a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)"
-#
-#    assert str(g.reduce(conj=False)) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
-#    assert str(g.reduce(conj=True)) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
+def test_nf():
+    f = Xor(a, b, c)
+    g = a * b + a * c + b * c
+
+    assert str(f.to_dnf()) == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
+    assert str(f.to_cnf()) == "(a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)"
+
+    assert str(g.to_cdnf()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
+    assert str(g.to_ccnf()) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
 
 def test_is_nf():
     assert (a * b * c).is_cnf()
