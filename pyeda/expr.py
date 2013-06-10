@@ -310,27 +310,27 @@ class Expression(boolfunc.Function):
     def is_neg_unate(self, vs=None):
         vs = self._expect_vars(vs)
         basis = self.support - set(vs)
-        cov = EXPRONE.expand(basis).mincov
+        cov = EXPRONE.expand(basis).mincover
         for cf in self.iter_cofactors(vs):
             cf = cf.expand(basis - cf.support)
             if not cf.is_dnf():
                 cf = cf.to_dnf()
-            if not cf.mincov <= cov:
+            if not cf.mincover <= cov:
                 return False
-            cov = cf.mincov
+            cov = cf.mincover
         return True
 
     def is_pos_unate(self, vs=None):
         vs = self._expect_vars(vs)
         basis = self.support - set(vs)
-        cov = EXPRZERO.mincov
+        cov = EXPRZERO.mincover
         for cf in self.iter_cofactors(vs):
             cf = cf.expand(basis - cf.support)
             if not cf.is_dnf():
                 cf = cf.to_dnf()
-            if not cf.mincov >= cov:
+            if not cf.mincover >= cov:
                 return False
-            cov = cf.mincov
+            cov = cf.mincover
         return True
 
     def smoothing(self, vs=None):
@@ -550,7 +550,7 @@ class _ExprZero(ExprConstant):
         return True
 
     @cached_property
-    def mincov(self):
+    def mincover(self):
         """Return the minterm cover."""
         return set()
 
@@ -596,7 +596,7 @@ class _ExprOne(ExprConstant):
         return True
 
     @cached_property
-    def mincov(self):
+    def mincover(self):
         """Return the minterm cover."""
         return {0}
 
@@ -657,7 +657,7 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         return self
 
     @cached_property
-    def mincov(self):
+    def mincover(self):
         """Return the minterm cover."""
         return {self.minterm_index}
 
@@ -1062,7 +1062,7 @@ class ExprOr(ExprOrAnd):
         return index
 
     @cached_property
-    def mincov(self):
+    def mincover(self):
         """Return the minterm cover."""
         return {term.minterm_index for term in self.args}
 
@@ -1156,7 +1156,7 @@ class ExprAnd(ExprOrAnd):
         return index
 
     @cached_property
-    def mincov(self):
+    def mincover(self):
         """Return the minterm cover."""
         return {self.minterm_index}
 
