@@ -406,7 +406,8 @@ class Expression(boolfunc.Function):
                 terms = [term for term in terms if term is not EXPRONE]
             else:
                 terms = [term for term in terms if term is not EXPRZERO]
-            return outer(*terms, simplified=True)
+            # simplified=False allows expressions like a * -a
+            return outer(*terms, simplified=False)
         else:
             return self
 
@@ -1006,10 +1007,25 @@ class ExprOr(ExprOrAnd):
 
     # From Expression
     def is_dnf(self):
-        return self.simplified and self.depth <= 2
+        # a + b
+        if self.depth == 1:
+            return all(isinstance(arg, ExprLiteral) for arg in self.args)
+        # a + b * c
+        elif self.depth == 2:
+            return all(
+                       isinstance(arg, ExprLiteral) or
+                       isinstance(arg, ExprAnd) and arg.is_cnf()
+                       for arg in self.args
+                   )
+        else:
+            return False
 
     def is_cnf(self):
-        return self.simplified and self.depth == 1
+        # a * b
+        if self.depth == 1:
+            return all(isinstance(arg, ExprLiteral) for arg in self.args)
+        else:
+            return False
 
     # DPLL IF
     def bcp(self):
@@ -1069,10 +1085,25 @@ class ExprAnd(ExprOrAnd):
 
     # From Expression
     def is_dnf(self):
-        return self.simplified and self.depth == 1
+        # a * b
+        if self.depth == 1:
+            return all(isinstance(arg, ExprLiteral) for arg in self.args)
+        else:
+            return False
 
     def is_cnf(self):
-        return self.simplified and self.depth <= 2
+        # a * b
+        if self.depth == 1:
+            return all(isinstance(arg, ExprLiteral) for arg in self.args)
+        # a * (b + c)
+        elif self.depth == 2:
+            return all(
+                       isinstance(arg, ExprLiteral) or
+                       isinstance(arg, ExprOr) and arg.is_dnf()
+                       for arg in self.args
+                   )
+        else:
+            return False
 
     # DPLL IF
     def bcp(self):
