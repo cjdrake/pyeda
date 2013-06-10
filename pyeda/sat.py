@@ -76,16 +76,11 @@ def dpll(cnf):
 
         # 2. Pure literal elimination
         ple_upnt = bcp_cnf.ple()
-        if ple_upnt is None:
-            # PLE found a contradiction (FIXME: not sure this is possible)
-            return None
-        else:
-            bcp_ple_cnf = bcp_cnf.urestrict(ple_upnt)
-            bcp_ple_upnt = (bcp_upnt[0] | ple_upnt[0],
-                            bcp_upnt[1] | ple_upnt[1])
-            if bcp_ple_cnf.is_one():
-                # PLE found a solution
-                return bcp_ple_upnt
+        bcp_ple_cnf = bcp_cnf.urestrict(ple_upnt)
+        bcp_ple_upnt = (bcp_upnt[0] | ple_upnt[0], bcp_upnt[1] | ple_upnt[1])
+        if bcp_ple_cnf.is_one():
+            # PLE found a solution
+            return bcp_ple_upnt
 
         # 3. Variable selection heuristic
         v = bcp_ple_cnf.top

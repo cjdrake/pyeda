@@ -1127,10 +1127,7 @@ class ExprAnd(ExprOrAnd):
             ple_upnt = clause.ple()
             upnt = (upnt[0] | ple_upnt[0], upnt[1] | ple_upnt[1])
         zos = upnt[0] & upnt[1]
-        if zos:
-            return (upnt[0] - zos, upnt[1] - zos)
-        else:
-            return frozenset(), frozenset()
+        return (upnt[0] - zos, upnt[1] - zos)
 
     # From ExprOrAnd
     IDENTITY = EXPRONE
