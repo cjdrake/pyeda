@@ -314,7 +314,26 @@ class TruthTable(boolfunc.Function):
             return self
 
     def compose(self, mapping):
-        raise NotImplementedError()
+        func = self
+        for gvar, gfunc in mapping.items():
+            if gvar not in func.support:
+                continue
+            unmapped = self.support - {gvar}
+            inputs = sorted(unmapped | gfunc.support)
+            def items():
+                for point in boolfunc.iter_points(inputs):
+                    gpnt = {v: val for v, val in point.items()
+                            if v not in unmapped}
+                    gval = gfunc.restrict(gpnt)
+                    # mapped function must be completely specified
+                    assert isinstance(gval, TTConstant)
+                    fpnt = {v: val for v, val in point.items()
+                            if v in unmapped}
+                    fpnt[gvar] = int(gval)
+                    yield func.restrict(fpnt).pcdata[0]
+            pcdata = PCData(items())
+            func = _truthtable(inputs, pcdata)
+        return func
 
     def satisfy_one(self):
         num = self.pcdata.find_one()
