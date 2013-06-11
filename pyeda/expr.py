@@ -1126,8 +1126,7 @@ class ExprAnd(ExprOrAnd):
         for clause in self.args:
             ple_upnt = clause.ple()
             upnt = (upnt[0] | ple_upnt[0], upnt[1] | ple_upnt[1])
-        zos = upnt[0] & upnt[1]
-        return (upnt[0] - zos, upnt[1] - zos)
+        return upnt[0] - upnt[1], upnt[1] - upnt[0]
 
     # From ExprOrAnd
     IDENTITY = EXPRONE
