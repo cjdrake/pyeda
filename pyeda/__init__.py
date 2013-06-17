@@ -14,9 +14,6 @@ from pyeda.boolfunc import (
     num2point, num2upoint, num2term, point2upoint, point2term,
     iter_points, iter_upoints, iter_terms
 )
-
-from pyeda.common import clog2, boolify
-
 from pyeda.bdd import (
     bddvar, expr2bdd, bdd2expr, upoint2bddpoint,
     BinaryDecisionDiagram, BDDConstant, BDDVariable
@@ -41,5 +38,6 @@ from pyeda.table import (
     ttvar, truthtable, expr2truthtable, truthtable2expr,
     TruthTable, TTConstant, TTVariable
 )
+from pyeda.util import clog2, boolify
 
 from pyeda.dimacs import load_cnf, dump_cnf, load_sat, dump_sat

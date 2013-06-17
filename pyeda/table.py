@@ -17,8 +17,8 @@ import array
 
 from pyeda import boolfunc
 from pyeda import PC_VOID, PC_ONE, PC_ZERO, PC_DC
-from pyeda.common import cached_property
 from pyeda.expr import exprvar, Or, And
+from pyeda.util import cached_property
 
 # existing TTVariable references
 TTVARIABLES = dict()

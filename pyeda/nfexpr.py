@@ -23,11 +23,11 @@ Interface Classes:
 # pylint: disable=W0223
 from pyeda import boolfunc
 from pyeda import sat
-from pyeda.common import bit_on, cached_property
 from pyeda.expr import EXPRVARIABLES
 from pyeda.expr import (
     Expression, EXPRZERO, EXPRONE, ExprLiteral, ExprOr, ExprAnd
 )
+from pyeda.util import bit_on, cached_property
 
 def expr2dnf(expr):
     """Convert an expression into a disjunctive normal form representation."""

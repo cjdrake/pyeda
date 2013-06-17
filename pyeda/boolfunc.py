@@ -23,7 +23,7 @@ Interface Classes:
 import collections
 import functools
 
-from pyeda.common import bit_on, boolify
+from pyeda.util import bit_on, boolify
 
 VARIABLES = dict()
 

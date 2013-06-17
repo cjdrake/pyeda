@@ -10,9 +10,9 @@ Interface Classes:
     BitVector
 """
 
-from pyeda.common import clog2, bit_on
 from pyeda.boolfunc import Slicer, VectorFunction
 from pyeda.expr import exprvar, Not, Or, And, Xor
+from pyeda.util import clog2, bit_on
 
 def bitvec(name, *slices):
     """Return a BitVector with an arbitrary number of slices.

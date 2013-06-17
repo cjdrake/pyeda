@@ -15,8 +15,8 @@ Interface Classes:
 import collections
 
 from pyeda import boolfunc
-from pyeda.common import cached_property
 from pyeda.expr import exprvar, Or, And, EXPRZERO, EXPRONE
+from pyeda.util import cached_property
 
 # existing BDDVariable references
 BDDVARIABLES = dict()

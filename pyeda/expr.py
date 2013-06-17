@@ -38,7 +38,7 @@ Interface Classes:
 
 from pyeda import boolfunc
 from pyeda import sat
-from pyeda.common import bit_on, parity, cached_property
+from pyeda.util import bit_on, parity, cached_property
 
 EXPRVARIABLES = dict()
 EXPRCOMPLEMENTS = dict()

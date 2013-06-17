@@ -11,9 +11,9 @@ Interface Functions:
 # Disable "invalid variable name"
 # pylint: disable=C0103
 
-from pyeda.common import clog2
 from pyeda.expr import Xor
 from pyeda.vexpr import BitVector
+from pyeda.util import clog2
 
 def ripple_carry_add(A, B, cin=0):
     """Return symbolic logic for an N-bit ripple carry adder."""
