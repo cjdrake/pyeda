@@ -274,17 +274,12 @@ class ConjNormalForm(NormalForm):
     """
     Conjunctive Normal Form
     """
-    def satisfy_one(self, algorithm='dpll'):
-        if algorithm == 'backtrack':
-            soln = sat.backtrack(self)
-        elif algorithm == 'dpll':
-            soln = sat.dpll(self)
-        else:
-            raise ValueError("invalid algorithm: " + algorithm)
-        if soln is None:
+    def satisfy_one(self):
+        solution = sat.dpll(self)
+        if solution is None:
             return None
         else:
-            return upoint2nfpoint(soln)
+            return upoint2nfpoint(solution)
 
     def is_one(self):
         return not self.clauses

@@ -32,27 +32,28 @@ class DPLLInterface(object):
         raise NotImplementedError()
 
 
-def backtrack(expr):
+def backtrack(bf):
     """
     If this function is satisfiable, return a satisfying input upoint.
     Otherwise, return None.
     """
-    if expr.is_zero():
-        return None
-    elif expr.is_one():
-        return frozenset(), frozenset()
+    if bf.is_zero():
+        ret = None
+    elif bf.is_one():
+        ret = frozenset(), frozenset()
     else:
-        v = expr.top
-        #v = random.choice(expr.inputs)
-
+        v = bf.top
+        #v = random.choice(bf.inputs)
         upnt0 = frozenset([v.uniqid]), frozenset()
         upnt1 = frozenset(), frozenset([v.uniqid])
         for upnt in [upnt0, upnt1]:
-            bt_upnt = backtrack(expr.urestrict(upnt))
+            bt_upnt = backtrack(bf.urestrict(upnt))
             if bt_upnt is not None:
-                return (upnt[0] | bt_upnt[0], upnt[1] | bt_upnt[1])
-
-        return None
+                ret = (upnt[0] | bt_upnt[0], upnt[1] | bt_upnt[1])
+                break
+        else:
+            ret = None
+    return ret
 
 def dpll(cnf):
     """

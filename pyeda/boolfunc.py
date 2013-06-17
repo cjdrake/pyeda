@@ -511,7 +511,8 @@ class Function(object):
         else:
             return self
 
-    def _expect_vars(self, vs=None):
+    @staticmethod
+    def _expect_vars(vs=None):
         """Verify the input type and return an iterable of Variables."""
         if vs is None:
             return list()

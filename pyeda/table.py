@@ -321,6 +321,7 @@ class TruthTable(boolfunc.Function):
             unmapped = self.support - {gvar}
             inputs = sorted(unmapped | gfunc.support)
             def items():
+                """Iterate through composed outputs."""
                 for point in boolfunc.iter_points(inputs):
                     gpnt = {v: val for v, val in point.items()
                             if v not in unmapped}
@@ -412,7 +413,17 @@ class TruthTable(boolfunc.Function):
 
 class TTConstant(TruthTable):
     """Truth table constant"""
-    pass
+
+    VAL = NotImplemented
+
+    def __bool__(self):
+        return bool(self.VAL)
+
+    def __int__(self):
+        return self.VAL
+
+    def __str__(self):
+        return str(self.VAL)
 
 
 class _TTZero(TTConstant):
@@ -421,17 +432,11 @@ class _TTZero(TTConstant):
 
     .. NOTE:: Never use this class. Use TTZERO instead.
     """
+
+    VAL = 0
+
     def __init__(self):
         super(_TTZero, self).__init__([], PCData([PC_ZERO]))
-
-    def __bool__(self):
-        return False
-
-    def __int__(self):
-        return 0
-
-    def __str__(self):
-        return '0'
 
 
 class _TTOne(TTConstant):
@@ -440,17 +445,11 @@ class _TTOne(TTConstant):
 
     .. NOTE:: Never use this class. Use TTONE instead.
     """
+
+    VAL = 1
+
     def __init__(self):
         super(_TTOne, self).__init__([], PCData([PC_ONE]))
-
-    def __bool__(self):
-        return True
-
-    def __int__(self):
-        return 1
-
-    def __str__(self):
-        return '1'
 
 
 TTZERO = _TTZero()

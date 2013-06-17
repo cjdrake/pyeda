@@ -41,7 +41,9 @@ load-plugins=
 # C0302 = Too many lines in module
 # W0142 = Used * or ** magic
 # W0602 = Using global for ... but no assignment is done
-disable=similarities,C0302,W0142,W0602
+# R0903 = Too few public methods
+# R0904 = Too many public methods
+disable=similarities,C0302,W0142,W0602,R0903,R0904
 
 [REPORTS]
 
@@ -149,6 +151,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # p, q : conventional Implies variable names p => q
 # v : Variable instance
 # vs : [v]
+# bf : Boolean function
 # f, g, h : Function instances
 # cf : Cofactor
 # fs : [f]
@@ -162,7 +165,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # Or, And, Not, Xor, Xnor, Equal, Implies, ITE : Expression factory functions
 # Nor, Nand, OneHot0, OneHot : Expression higher-order factory functions
 # NF_Not, DNF_Or, CNF_And : NormalForm factory functions
-good-names=_,i,j,k,ab,cd,s,d1,d0,p,q,v,vs,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,NF_Not,DNF_Or,CNF_And
+good-names=_,i,j,k,ab,cd,s,d1,d0,p,q,v,vs,bf,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,NF_Not,DNF_Or,CNF_And
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz

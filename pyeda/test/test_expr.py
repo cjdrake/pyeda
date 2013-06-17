@@ -12,6 +12,7 @@ from pyeda.expr import (
     Nor, Nand, OneHot0, OneHot,
     EXPRZERO, EXPRONE,
 )
+from pyeda.sat import backtrack, dpll
 from pyeda.vexpr import bitvec
 
 import nose
@@ -579,18 +580,14 @@ def test_expand():
 def test_satisfy():
     # Typical cases
     f = a * -b * c * -d
-    assert EXPRZERO.satisfy_one(algorithm='dpll') is None
-    assert EXPRONE.satisfy_one(algorithm='dpll') == {}
-    assert f.satisfy_one(algorithm='backtrack') == {a: 1, b: 0, c: 1, d: 0}
-    assert f.satisfy_one(algorithm='dpll') == {a: 1, b: 0, c: 1, d: 0}
+    assert EXPRZERO.satisfy_one() is None
+    assert EXPRONE.satisfy_one() == {}
+    assert f.satisfy_one() == {a: 1, b: 0, c: 1, d: 0}
+    assert f.satisfy_one() == {a: 1, b: 0, c: 1, d: 0}
 
     # PLE solution
     f = (a + b + c) * (-a + -b + c)
-    assert f.satisfy_one(algorithm='dpll') == {c: 1}
-
-    f = a * b + a * c + b * c
-    nose.tools.assert_raises(AssertionError, f.satisfy_one, 'dpll')
-    nose.tools.assert_raises(ValueError, f.satisfy_one, 'foo')
+    assert f.satisfy_one() == {c: 1}
 
     points = [p for p in Xor(a, b, c).satisfy_all()]
     assert points == [

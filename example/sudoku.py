@@ -32,6 +32,7 @@ Sudoku Example
 """
 
 from pyeda import *
+from pyeda.sat import dpll
 
 DIGITS = "123456789"
 
@@ -96,8 +97,8 @@ def display(point):
 
 def solve_expr(grid):
     I = parse_grid(grid)
-    return (S_expr * I).satisfy_one(algorithm='dpll')
+    return (S_expr * I).satisfy_one()
 
 def solve_cnf(grid):
     I = parse_grid(grid)
-    return (S_cnf * I).satisfy_one(algorithm='dpll')
+    return (S_cnf * I).satisfy_one()

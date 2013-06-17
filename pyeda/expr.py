@@ -287,18 +287,15 @@ class Expression(boolfunc.Function):
         idx_arg = self._get_compositions(mapping)
         return self._subs(idx_arg) if idx_arg else self
 
-    def satisfy_one(self, algorithm='backtrack'):
-        if algorithm == 'backtrack':
-            soln = sat.backtrack(self)
-        elif algorithm == 'dpll':
-            assert self is EXPRZERO or self is EXPRONE or self.is_cnf()
-            soln = sat.dpll(self)
+    def satisfy_one(self):
+        if self.is_cnf():
+            solution = sat.dpll(self)
         else:
-            raise ValueError("invalid algorithm: " + algorithm)
-        if soln is None:
+            solution = sat.backtrack(self)
+        if solution is None:
             return None
         else:
-            return upoint2exprpoint(soln)
+            return upoint2exprpoint(solution)
 
     def satisfy_all(self):
         for upoint in _iter_ones(self):
@@ -435,16 +432,12 @@ class Expression(boolfunc.Function):
         """Return whether this expression is in conjunctive normal form."""
         return False
 
-    def equivalent(self, other, algorithm='backtrack'):
+    def equivalent(self, other):
         """Return whether this expression is equivalent to another."""
         other = self.box(other)
-        f = ExprAnd(ExprOr(ExprNot(self), ExprNot(other)), ExprOr(self, other))
-        if algorithm == 'backtrack':
-            return f.satisfy_one(algorithm='backtrack') is None
-        elif algorithm == 'dpll':
-            return f.to_cnf().satisfy_one(algorithm='dpll') is None
-        else:
-            raise ValueError("invalid algorithm: " + algorithm)
+        #f = ExprAnd(ExprOr(ExprNot(self), ExprNot(other)), ExprOr(self, other))
+        f = Xor(self, other)
+        return f.satisfy_one() is None
 
     # Helper methods
     def _get_restrictions(self, upoint):
@@ -476,8 +469,19 @@ class Expression(boolfunc.Function):
 class ExprConstant(Expression, sat.DPLLInterface):
     """Expression constant"""
 
+    VAL = NotImplemented
+
     def __init__(self):
         super(ExprConstant, self).__init__(None)
+
+    def __bool__(self):
+        return bool(self.VAL)
+
+    def __int__(self):
+        return self.VAL
+
+    def __str__(self):
+        return str(self.VAL)
 
     # From Function
     @cached_property
@@ -524,14 +528,8 @@ class _ExprZero(ExprConstant):
 
     .. NOTE:: Never use this class. Use EXPRZERO singleton instead.
     """
-    def __bool__(self):
-        return False
 
-    def __int__(self):
-        return 0
-
-    def __str__(self):
-        return '0'
+    VAL = 0
 
     # From Function
     def is_zero(self):
@@ -568,14 +566,8 @@ class _ExprOne(ExprConstant):
 
     .. NOTE:: Never use this class. Use EXPRONE singleton instead.
     """
-    def __bool__(self):
-        return True
 
-    def __int__(self):
-        return 1
-
-    def __str__(self):
-        return '1'
+    VAL = 1
 
     # From Function
     def is_one(self):
