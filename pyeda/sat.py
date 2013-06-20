@@ -6,10 +6,11 @@ Interface classes:
 
 Interface functions:
     backtrack
+    iter_backtrack
     dpll
 """
 
-#import random
+import random
 
 
 class DPLLInterface(object):
@@ -54,6 +55,24 @@ def backtrack(bf):
         else:
             ret = None
     return ret
+
+def iter_backtrack(bf, rand=False):
+    """Iterate through all satisfying points using backtrack algorithm."""
+    if bf.is_one():
+        yield frozenset(), frozenset()
+    elif not bf.is_zero():
+        if rand:
+            v = random.choice(bf.inputs) if rand else bf.top
+        else:
+            v = bf.top
+        upnt0 = frozenset([v.uniqid]), frozenset()
+        upnt1 = frozenset(), frozenset([v.uniqid])
+        upoints = [upnt0, upnt1]
+        if rand:
+            random.shuffle(upoints)
+        for upnt in upoints:
+            for bt_upnt in iter_backtrack(bf.urestrict(upnt), rand):
+                yield (upnt[0] | bt_upnt[0], upnt[1] | bt_upnt[1])
 
 def dpll(cnf):
     """

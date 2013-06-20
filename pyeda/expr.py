@@ -36,8 +36,6 @@ Interface Classes:
 # Disable "redefining name from outer scope"
 # pylint: disable=W0621
 
-import random
-
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.util import bit_on, parity, cached_property
@@ -300,7 +298,7 @@ class Expression(boolfunc.Function):
             return upoint2exprpoint(solution)
 
     def satisfy_all(self):
-        for upoint in _iter_ones(self):
+        for upoint in sat.iter_backtrack(self):
             yield upoint2exprpoint(upoint)
 
     def satisfy_count(self):
@@ -1537,19 +1535,3 @@ class ExprITE(Expression):
     @cached_property
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
-
-
-def _iter_ones(expr, rand=False):
-    """Iterate through all upoints that map to element one."""
-    if expr is EXPRONE:
-        yield frozenset(), frozenset()
-    elif expr is not EXPRZERO:
-        v = expr.top
-        upnt0 = frozenset([v.uniqid]), frozenset()
-        upnt1 = frozenset(), frozenset([v.uniqid])
-        upoints = [upnt0, upnt1]
-        if rand:
-            random.shuffle(upoints)
-        for upnt in upoints:
-            for one_upnt in _iter_ones(expr.urestrict(upnt), rand):
-                yield (upnt[0] | one_upnt[0], upnt[1] | one_upnt[1])
