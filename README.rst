@@ -247,6 +247,14 @@ Create and test functions for arithmetic::
     >>> S.vrestrict({A: "1110", B: "1000"}).to_uint()
     8
 
+Other Function Representations
+------------------------------
+
+Consult the `documentation <http://pyeda.rtfd.org>`_ for information on
+normal form expressions, truth tables, and binary decision diagrams.
+Each function representation has different trade-offs,
+so always use the right one for the job.
+
 Contact the Author
 ------------------
 
