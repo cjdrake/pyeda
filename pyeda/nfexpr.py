@@ -239,7 +239,7 @@ class NormalForm(boolfunc.Function, sat.DPLLInterface):
         temps = list(self.clauses)
         new_clauses = set()
 
-        # Drop all terms that are a subset of other terms
+        # Drop all terms that are a superset of other terms
         while temps:
             fst, rst, temps = temps[0], temps[1:], list()
             drop_fst = False

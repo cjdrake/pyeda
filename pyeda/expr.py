@@ -948,7 +948,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
         """
         temps, args = list(self.args), list()
 
-        # Drop all terms that are a subset of other terms
+        # Drop all terms that are a superset of other terms
         while temps:
             fst, rst, temps = temps[0], temps[1:], list()
             drop_fst = False
