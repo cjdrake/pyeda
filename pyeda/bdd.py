@@ -13,6 +13,7 @@ Interface Classes:
 """
 
 import collections
+import random
 
 from pyeda import boolfunc
 from pyeda.expr import exprvar, Or, And, EXPRZERO, EXPRONE
@@ -336,18 +337,19 @@ def find_path(start, end, path=tuple()):
             ret = find_path(start.high, end, path)
         return ret
 
-def iter_all_paths(start, end, path=tuple()):
+def iter_all_paths(start, end, rand=False, path=tuple()):
     """Iterate through all paths from start to end."""
     path = path + (start, )
     if start is end:
         yield path
     else:
-        if start.low is not None:
-            for _path in iter_all_paths(start.low, end, path):
-                yield _path
-        if start.high is not None:
-            for _path in iter_all_paths(start.high, end, path):
-                yield _path
+        nodes = [start.low, start.high]
+        if rand:
+            random.shuffle(nodes)
+        for node in nodes:
+            if node is not None:
+                for _path in iter_all_paths(node, end, rand, path):
+                    yield _path
 
 def dfs(node, visited):
     """Iterate through a depth-first traveral starting at node."""

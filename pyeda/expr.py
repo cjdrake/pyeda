@@ -36,6 +36,8 @@ Interface Classes:
 # Disable "redefining name from outer scope"
 # pylint: disable=W0621
 
+import random
+
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.util import bit_on, parity, cached_property
@@ -1537,19 +1539,7 @@ class ExprITE(Expression):
         return max(arg.depth + 2 for arg in self.args)
 
 
-def _iter_zeros(expr):
-    """Iterate through all upoints that map to element zero."""
-    if expr is EXPRZERO:
-        yield frozenset(), frozenset()
-    elif expr is not EXPRONE:
-        v = expr.top
-        upnt0 = frozenset([v.uniqid]), frozenset()
-        upnt1 = frozenset(), frozenset([v.uniqid])
-        for upnt in [upnt0, upnt1]:
-            for zero_upnt in _iter_zeros(expr.urestrict(upnt)):
-                yield (upnt[0] | zero_upnt[0], upnt[1] | zero_upnt[1])
-
-def _iter_ones(expr):
+def _iter_ones(expr, rand=False):
     """Iterate through all upoints that map to element one."""
     if expr is EXPRONE:
         yield frozenset(), frozenset()
@@ -1557,6 +1547,9 @@ def _iter_ones(expr):
         v = expr.top
         upnt0 = frozenset([v.uniqid]), frozenset()
         upnt1 = frozenset(), frozenset([v.uniqid])
-        for upnt in [upnt0, upnt1]:
-            for one_upnt in _iter_ones(expr.urestrict(upnt)):
+        upoints = [upnt0, upnt1]
+        if rand:
+            random.shuffle(upoints)
+        for upnt in upoints:
+            for one_upnt in _iter_ones(expr.urestrict(upnt), rand):
                 yield (upnt[0] | one_upnt[0], upnt[1] | one_upnt[1])

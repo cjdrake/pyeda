@@ -20,7 +20,11 @@ Interface Classes:
           the ExprVariable implementation wherever required.
 """
 
+# Disable "method is abstract but not overridden"
 # pylint: disable=W0223
+
+import random
+
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.expr import EXPRVARIABLES
@@ -307,6 +311,10 @@ class ConjNormalForm(NormalForm):
         else:
             return upoint2nfpoint(solution)
 
+    def satisfy_all(self):
+        for upoint in _iter_ones(self):
+            yield upoint2nfpoint(upoint)
+
     def is_one(self):
         return not self.clauses
 
@@ -389,3 +397,18 @@ def _cnfify(arg):
     else:
         fstr = "input cannot be converted to ConjNormalForm: " + str(arg)
         raise TypeError(fstr)
+
+def _iter_ones(nfexpr, rand=False):
+    """Iterate through all upoints that map to element one."""
+    if nfexpr.is_one():
+        yield frozenset(), frozenset()
+    elif not nfexpr.is_zero():
+        v = nfexpr.top
+        upnt0 = frozenset([v.uniqid]), frozenset()
+        upnt1 = frozenset(), frozenset([v.uniqid])
+        upoints = [upnt0, upnt1]
+        if rand:
+            random.shuffle(upoints)
+        for upnt in upoints:
+            for one_upnt in _iter_ones(nfexpr.urestrict(upnt), rand):
+                yield (upnt[0] | one_upnt[0], upnt[1] | one_upnt[1])

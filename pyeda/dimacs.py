@@ -11,11 +11,9 @@ Interface Functions:
     dump_sat
 """
 
-# standard library
 import collections
 import re
 
-# pyeda
 from pyeda.expr import (
     Expression,
     ExprLiteral, ExprOr, ExprAnd, ExprNot, ExprXor, ExprEqual
