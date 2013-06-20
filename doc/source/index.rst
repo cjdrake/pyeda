@@ -12,12 +12,21 @@ Fork PyEDA: https://github.com/cjdrake/pyeda
 
 Features:
 
-* Symbolic Boolean algebra logic expressions
-* Conjunctive normal form logic expression representation
-* DPLL SAT solver
+* Symbolic Boolean algebra with a selection of function representations:
+
+  * Logic expressions
+  * Fast, disjunctive/conjunctive normal form logic expressions
+  * Reduced, ordered binary decision diagrams (ROBDDs)
+  * Truth tables, with three output states (0, 1, "don't care")
+
+* SAT solvers:
+
+  * Backtracking
+  * DPLL
+
 * Formal equivalence
 * Multi-dimensional bit vectors
-* DIMACS CNF/SAT parser
+* DIMACS CNF/SAT parsers
 
 Contents:
 
