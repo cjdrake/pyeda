@@ -228,6 +228,32 @@ class NormalForm(boolfunc.Function, sat.DPLLInterface):
         """
         raise NotImplementedError()
 
+    def absorb(self):
+        """Return the OR/AND expression after absorption.
+
+        x * (x * y) = x
+        x * (x + y) = x
+        """
+        temps = list(self.clauses)
+        new_clauses = set()
+
+        # Drop all terms that are a subset of other terms
+        while temps:
+            fst, rst, temps = temps[0], temps[1:], list()
+            drop_fst = False
+            for term in rst:
+                drop_term = False
+                if fst <= term:
+                    drop_term = True
+                elif fst > term:
+                    drop_fst = True
+                if not drop_term:
+                    temps.append(term)
+            if not drop_fst:
+                new_clauses.add(fst)
+
+        return self.__class__(new_clauses)
+
     def reduce(self):
         """Reduce this expression to a canonical form."""
         support = frozenset(abs(uniqid) for clause in self.clauses
