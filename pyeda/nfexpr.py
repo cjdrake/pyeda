@@ -312,11 +312,7 @@ class ConjNormalForm(NormalForm):
                     zeros.add(-uniqid)
                 else:
                     ones.add(uniqid)
-        zos = zeros & ones
-        if zos:
-            return frozenset(zeros - zos), frozenset(ones - zos)
-        else:
-            return frozenset(), frozenset()
+        return frozenset(zeros - ones), frozenset(ones - zeros)
 
     # Specific to NormalForm
     def get_dual(self):
