@@ -72,7 +72,7 @@ Construct Boolean functions using overloaded Python operators:
     >>> f4 = -a * -b * -c + a * b * c
     >>> f5 = a * b + -a * c
 
-Construct Boolean functions using standard operators::
+Construct Boolean functions using standard function syntax::
 
     >>> f10 = Or(And(Not(a), b), And(c, Not(d)))
     >>> f11 = Implies(a, b)
@@ -116,7 +116,8 @@ Factor complex expressions into only OR/AND and literals::
     >>> f15.factor()
     a * b + a' * c
 
-Restrict and compose functions into other functions::
+Restrict a function's input variables to fixed values,
+and perform function composition::
 
     >>> f0.restrict({a: 0, c: 1})
     b + d'
@@ -167,7 +168,7 @@ Investigate Boolean identities::
     a * b * c
 
     # Distributive laws
-    >>> (a + b * c).to_cnf()
+    >>> (a + (b * c)).to_cnf()
     (a + b) * (a + c)
     >>> (a * (b + c)).to_dnf()
     a * b + a * c
@@ -217,7 +218,7 @@ Convert between disjunctive and conjunctive normal forms::
 Getting Started With Multi-Dimensional Bit Vectors
 --------------------------------------------------
 
-Create some eight-bit vectors::
+Create some four-bit vectors, and use slice operators::
 
     >>> A = bitvec('A', 4)
     >>> B = bitvec('B', 4)
@@ -228,7 +229,8 @@ Create some eight-bit vectors::
     >>> A[-3:-1]
     [A[1], A[2]]
 
-Perform bitwise operations::
+Perform bitwise operations using Python overloaded operators:
+``~`` (NOT), ``|`` (OR), ``&`` (AND), ``^`` (XOR)::
 
     >>> ~A
     [A[0]', A[1]', A[2]', A[3]']
@@ -239,11 +241,20 @@ Perform bitwise operations::
     >>> A ^ B
     [Xor(A[0], B[0]), Xor(A[1], B[1]), Xor(A[2], B[2]), Xor(A[3], B[3])]
 
-Create and test functions for arithmetic::
+Reduce bit vectors using unary OR, AND, XOR::
+
+    >>> A.uor()
+    A[0] + A[1] + A[2] + A[3]
+    >>> A.uand()
+    A[0] * A[1] * A[2] * A[3]
+    >>> A.uxor()
+    Xor(A[0], A[1], A[2], A[3])
+
+Create and test functions that implement non-trivial logic such as arithmetic::
 
     >>> from pyeda.arithmetic import *
     >>> S, C = ripple_carry_add(A, B)
-    # Note "1110" is LSB first. This says 7 + 1 = 8.
+    # Note "1110" is LSB first. This says: "7 + 1 = 8".
     >>> S.vrestrict({A: "1110", B: "1000"}).to_uint()
     8
 
@@ -255,7 +266,43 @@ normal form expressions, truth tables, and binary decision diagrams.
 Each function representation has different trade-offs,
 so always use the right one for the job.
 
-Contact the Author
-------------------
+Execute Unit Test Suite
+-----------------------
+
+If you have `Nose <http://nose.readthedocs.org/en/latest>`_ installed,
+run the unit test suite with the following command::
+
+    $ make test
+
+If you have `Coverage <https://pypi.python.org/pypi/coverage>`_ installed,
+generate a coverage report (including HTML) with the following command::
+
+    $ make cover
+
+Perform Static Lint Checks
+--------------------------
+
+If you have `Pylint <http://www.logilab.org/857>`_ installed,
+perform static lint checks with the following command::
+
+    $ make lint
+
+Build the Documentation
+-----------------------
+
+If you have `Sphinx <http://sphinx-doc.org>`_ installed,
+build the HTML documentation with the following command::
+
+    $ make html
+
+Python Versions Supported
+-------------------------
+
+PyEDA is primarily developed using Python 3.2,
+but compromises have been made to maintain backwards compatibility with 2.7.
+We do not guarantee this will always be the case.
+
+Contact the Authors
+-------------------
 
 * Chris Drake (cjdrake AT gmail DOT com), http://cjdrake.blogspot.com
