@@ -432,6 +432,17 @@ class Expression(boolfunc.Function):
         """Return whether this expression is in conjunctive normal form."""
         return False
 
+    def tseitin(self, auxvarname='aux'):
+        """Convert the expression to Tseitin's encoding."""
+        if self.is_cnf():
+            return self
+
+        auxvars = list()
+        _, cons = self.factor()._tseitin(auxvarname, auxvars)
+        fst = cons[-1][1]
+        rst = [Equal(f, expr).to_cnf() for f, expr in cons[:-1]]
+        return And(fst, *rst)
+
     def equivalent(self, other):
         """Return whether this expression is equivalent to another."""
         other = self.box(other)
@@ -636,6 +647,9 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         return True
 
     # FactoredExpression
+    def _tseitin(self, auxvarname, auxvars):
+        return self, list()
+
     def flatten(self, op):
         """Degenerate form of a flattened expression."""
         return self
@@ -985,6 +999,21 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
                     indices.add(eterm.term_index)
 
         return self.__class__(*terms, simplified=True)
+
+    def _tseitin(self, auxvarname, auxvars):
+        fs = list()
+        cons = list()
+        for arg in self.args:
+            f, _cons = arg._tseitin(auxvarname, auxvars)
+            fs.append(f)
+            cons.extend(_cons)
+
+        auxvaridx = len(auxvars)
+        auxvar = exprvar(auxvarname, auxvaridx)
+        auxvars.append(auxvar)
+
+        cons.append((auxvar, self.__class__(*fs)))
+        return auxvar, cons
 
     def _term_expand(self, term, vs):
         """Return a term expanded by a list of variables."""
