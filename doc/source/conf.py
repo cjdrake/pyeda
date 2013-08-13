@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # Python EDA documentation build configuration file, created by
 # sphinx-quickstart on Thu Aug 23 11:04:39 2012.

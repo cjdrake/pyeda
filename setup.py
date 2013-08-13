@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# Filename: setup.py
 
 from setuptools import setup, Extension
 
