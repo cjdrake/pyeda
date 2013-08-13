@@ -6,5 +6,7 @@ dist/
 
 *.py[co]
 
+pyeda.egg-info
+
 .coverage
 cover

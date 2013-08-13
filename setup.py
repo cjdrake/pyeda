@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
+from setuptools import setup, Extension
 
 import pyeda
 
@@ -60,4 +60,5 @@ setup(
     download_url=DOWNLOAD_URL,
     classifiers=CLASSIFIERS,
     packages=PACKAGES,
+    test_suite='nose.collector',
 )
