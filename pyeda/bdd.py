@@ -89,10 +89,10 @@ def bdd2expr(bdd, conj=False):
     else:
         if conj:
             outer, inner = (And, Or)
-            paths = iter_all_paths(bdd.node, BDDNODEZERO)
+            paths = _iter_all_paths(bdd.node, BDDNODEZERO)
         else:
             outer, inner = (Or, And)
-            paths = iter_all_paths(bdd.node, BDDNODEONE)
+            paths = _iter_all_paths(bdd.node, BDDNODEONE)
         terms = list()
         for path in paths:
             expr_point = {exprvar(v.name, v.indices, v.namespace): val
@@ -133,27 +133,27 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     # Operators
     def __neg__(self):
-        return _bdd(neg(self.node))
+        return _bdd(_neg(self.node))
 
     def __add__(self, other):
         other_node = self.box(other).node
         # x + y <=> ITE(x, 1, y)
-        return _bdd(ite(self.node, BDDNODEONE, other_node))
+        return _bdd(_ite(self.node, BDDNODEONE, other_node))
 
     def __sub__(self, other):
         other_node = self.box(other).node
         # x - y <=> ITE(x, 1, y')
-        return _bdd(ite(self.node, BDDNODEONE, neg(other_node)))
+        return _bdd(_ite(self.node, BDDNODEONE, _neg(other_node)))
 
     def __mul__(self, other):
         other_node = self.box(other).node
         # x * y <=> ITE(x, y, 0)
-        return _bdd(ite(self.node, other_node, BDDNODEZERO))
+        return _bdd(_ite(self.node, other_node, BDDNODEZERO))
 
     def xor(self, other):
         other_node = self.box(other).node
         # x (xor) y <=> ITE(x, y', y)
-        return _bdd(ite(self.node, neg(other_node), other_node))
+        return _bdd(_ite(self.node, _neg(other_node), other_node))
 
     # From Function
     @cached_property
@@ -171,24 +171,24 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return tuple(reversed(_inputs))
 
     def urestrict(self, upoint):
-        return _bdd(urestrict(self.node, upoint))
+        return _bdd(_urestrict(self.node, upoint))
 
     def compose(self, mapping):
         node = self.node
         for v, g in mapping.items():
             fv0, fv1 = _bdd(node).cofactors(v)
-            node = ite(g.node, fv1.node, fv0.node)
+            node = _ite(g.node, fv1.node, fv0.node)
         return _bdd(node)
 
     def satisfy_one(self):
-        path = find_path(self.node, BDDNODEONE)
+        path = _find_path(self.node, BDDNODEONE)
         if path is None:
             return None
         else:
             return path2point(path)
 
     def satisfy_all(self):
-        for path in iter_all_paths(self.node, BDDNODEONE):
+        for path in _iter_all_paths(self.node, BDDNODEONE):
             yield path2point(path)
 
     def satisfy_count(self):
@@ -222,7 +222,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
     def traverse(self):
         """Iterate through all nodes in this BDD in DFS order."""
         visited = set()
-        for node in dfs(self.node, visited):
+        for node in _dfs(self.node, visited):
             visited.add(node)
             yield node
 
@@ -279,23 +279,23 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
         BinaryDecisionDiagram.__init__(self, node)
 
 
-def neg(node):
+def _neg(node):
     """Return the node that is the inverse of the input node."""
     if node is BDDNODEZERO:
         return BDDNODEONE
     elif node is BDDNODEONE:
         return BDDNODEZERO
     else:
-        return _bdd_node(node.root, neg(node.low), neg(node.high))
+        return _bdd_node(node.root, _neg(node.low), _neg(node.high))
 
-def ite(f, g, h):
+def _ite(f, g, h):
     """Return node that results from recursively applying ITE(f, g, h)."""
     # ITE(f, 1, 0) = f
     if g is BDDNODEONE and h is BDDNODEZERO:
         return f
     # ITE(f, 0, 1) = -f
     elif g is BDDNODEZERO and h is BDDNODEONE:
-        return neg(f)
+        return _neg(f)
     # ITE(1, g, h) = g
     elif f is BDDNODEONE:
         return g
@@ -310,24 +310,24 @@ def ite(f, g, h):
         root = min(node.root for node in (f, g, h) if node.root > 0)
         upoint0 = frozenset([root]), frozenset()
         upoint1 = frozenset(), frozenset([root])
-        fv0, gv0, hv0 = [urestrict(node, upoint0) for node in (f, g, h)]
-        fv1, gv1, hv1 = [urestrict(node, upoint1) for node in (f, g, h)]
-        return _bdd_node(root, ite(fv0, gv0, hv0), ite(fv1, gv1, hv1))
+        fv0, gv0, hv0 = [_urestrict(node, upoint0) for node in (f, g, h)]
+        fv1, gv1, hv1 = [_urestrict(node, upoint1) for node in (f, g, h)]
+        return _bdd_node(root, _ite(fv0, gv0, hv0), _ite(fv1, gv1, hv1))
 
-def urestrict(node, upoint):
+def _urestrict(node, upoint):
     """Return node that results from untyped point restriction."""
     if node is BDDNODEZERO or node is BDDNODEONE:
         return node
     elif node.root in upoint[0]:
-        return urestrict(node.low, upoint)
+        return _urestrict(node.low, upoint)
     elif node.root in upoint[1]:
-        return urestrict(node.high, upoint)
+        return _urestrict(node.high, upoint)
     else:
-        low = urestrict(node.low, upoint)
-        high = urestrict(node.high, upoint)
+        low = _urestrict(node.low, upoint)
+        high = _urestrict(node.high, upoint)
         return _bdd_node(node.root, low, high)
 
-def find_path(start, end, path=tuple()):
+def _find_path(start, end, path=tuple()):
     """Return the path from start to end.
 
     If no path exists, return None.
@@ -338,12 +338,12 @@ def find_path(start, end, path=tuple()):
     else:
         ret = None
         if start.low is not None:
-            ret = find_path(start.low, end, path)
+            ret = _find_path(start.low, end, path)
         if ret is None and start.high is not None:
-            ret = find_path(start.high, end, path)
+            ret = _find_path(start.high, end, path)
         return ret
 
-def iter_all_paths(start, end, rand=False, path=tuple()):
+def _iter_all_paths(start, end, rand=False, path=tuple()):
     """Iterate through all paths from start to end."""
     path = path + (start, )
     if start is end:
@@ -354,17 +354,17 @@ def iter_all_paths(start, end, rand=False, path=tuple()):
             random.shuffle(nodes)
         for node in nodes:
             if node is not None:
-                for _path in iter_all_paths(node, end, rand, path):
+                for _path in _iter_all_paths(node, end, rand, path):
                     yield _path
 
-def dfs(node, visited):
+def _dfs(node, visited):
     """Iterate through a depth-first traveral starting at node."""
     low, high = node.low, node.high
     if low not in visited and low is not None:
-        for _node in dfs(low, visited):
+        for _node in _dfs(low, visited):
             yield _node
     if high not in visited and high is not None:
-        for _node in dfs(high, visited):
+        for _node in _dfs(high, visited):
             yield _node
     if node not in visited:
         yield node
