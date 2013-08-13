@@ -12,8 +12,8 @@ Interface Classes:
     BDDVariable
 """
 
-import collections
 import random
+import weakref
 
 from pyeda import boolfunc
 from pyeda.expr import exprvar, Or, And, EXPRZERO, EXPRONE
@@ -22,10 +22,16 @@ from pyeda.util import cached_property
 # existing BDDVariable references
 BDDVARIABLES = dict()
 
-BDDNode = collections.namedtuple('BDDNode', ['root', 'low', 'high'])
 
-BDDNODES = dict()
-BDDS = dict()
+class BDDNode(object):
+    def __init__(self, root, low, high):
+        self.root = root
+        self.low = low
+        self.high = high
+
+
+BDDNODES = weakref.WeakValueDictionary()
+BDDS = weakref.WeakValueDictionary()
 
 BDDNODEZERO = BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
 BDDNODEONE = BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
