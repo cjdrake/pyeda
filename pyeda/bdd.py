@@ -22,16 +22,17 @@ from pyeda.util import cached_property
 # existing BDDVariable references
 BDDVARIABLES = dict()
 
+BDDNODES = weakref.WeakValueDictionary()
+BDDS = weakref.WeakValueDictionary()
+_RESTRICT_CACHE = weakref.WeakValueDictionary()
+
 
 class BDDNode(object):
+    """Binary Decision Diagram Node"""
     def __init__(self, root, low, high):
         self.root = root
         self.low = low
         self.high = high
-
-
-BDDNODES = weakref.WeakValueDictionary()
-BDDS = weakref.WeakValueDictionary()
 
 BDDNODEZERO = BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
 BDDNODEONE = BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
@@ -318,14 +319,21 @@ def _urestrict(node, upoint):
     """Return node that results from untyped point restriction."""
     if node is BDDNODEZERO or node is BDDNODEONE:
         return node
-    elif node.root in upoint[0]:
-        return _urestrict(node.low, upoint)
-    elif node.root in upoint[1]:
-        return _urestrict(node.high, upoint)
-    else:
-        low = _urestrict(node.low, upoint)
-        high = _urestrict(node.high, upoint)
-        return _bdd_node(node.root, low, high)
+
+    key = (node, upoint)
+    try:
+        ret = _RESTRICT_CACHE[key]
+    except KeyError:
+        if node.root in upoint[0]:
+            ret = _urestrict(node.low, upoint)
+        elif node.root in upoint[1]:
+            ret = _urestrict(node.high, upoint)
+        else:
+            low = _urestrict(node.low, upoint)
+            high = _urestrict(node.high, upoint)
+            ret = _bdd_node(node.root, low, high)
+        _RESTRICT_CACHE[key] = ret
+    return ret
 
 def _find_path(start, end, path=tuple()):
     """Return the path from start to end.
