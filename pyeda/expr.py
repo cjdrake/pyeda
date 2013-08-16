@@ -141,7 +141,7 @@ def Xnor(*args, **kwargs):
     simplify = kwargs.get('simplify', True)
     factor = kwargs.get('factor', False)
     conj = kwargs.get('conj', False)
-    expr = ExprXnor(*args, **kwargs)
+    expr = ExprXnor(*args)
     if factor:
         expr = expr.factor(conj)
     elif simplify:
@@ -155,7 +155,7 @@ def Equal(*args, **kwargs):
     simplify = kwargs.get('simplify', True)
     factor = kwargs.get('factor', False)
     conj = kwargs.get('conj', False)
-    expr = ExprEqual(*args, **kwargs)
+    expr = ExprEqual(*args)
     if factor:
         expr = expr.factor(conj)
     elif simplify:
