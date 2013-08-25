@@ -201,12 +201,9 @@ def Not(arg, simplify=True, factor=False, conj=False):
         expr = expr.simplify()
     return expr
 
-def Or(*args, **kwargs):
+def Or(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean OR expression."""
     args = tuple(Expression.box(arg) for arg in args)
-    simplify = kwargs.get('simplify', True)
-    factor = kwargs.get('factor', False)
-    conj = kwargs.get('conj', False)
     expr = ExprOr(*args)
     if factor:
         expr = expr.factor(conj)
@@ -214,12 +211,9 @@ def Or(*args, **kwargs):
         expr = expr.simplify()
     return expr
 
-def And(*args, **kwargs):
+def And(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean AND expression."""
     args = tuple(Expression.box(arg) for arg in args)
-    simplify = kwargs.get('simplify', True)
-    factor = kwargs.get('factor', False)
-    conj = kwargs.get('conj', False)
     expr = ExprAnd(*args)
     if factor:
         expr = expr.factor(conj)
@@ -227,12 +221,9 @@ def And(*args, **kwargs):
         expr = expr.simplify()
     return expr
 
-def Xor(*args, **kwargs):
+def Xor(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean XOR expression."""
     args = tuple(Expression.box(arg) for arg in args)
-    simplify = kwargs.get('simplify', True)
-    factor = kwargs.get('factor', False)
-    conj = kwargs.get('conj', False)
     expr = ExprXor(*args)
     if factor:
         expr = expr.factor(conj)
@@ -240,12 +231,9 @@ def Xor(*args, **kwargs):
         expr = expr.simplify()
     return expr
 
-def Xnor(*args, **kwargs):
+def Xnor(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean XNOR expression."""
     args = tuple(Expression.box(arg) for arg in args)
-    simplify = kwargs.get('simplify', True)
-    factor = kwargs.get('factor', False)
-    conj = kwargs.get('conj', False)
     expr = ExprXnor(*args)
     if factor:
         expr = expr.factor(conj)
@@ -254,12 +242,9 @@ def Xnor(*args, **kwargs):
     return expr
 
 # higher order functions
-def Equal(*args, **kwargs):
+def Equal(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean EQUAL expression."""
     args = tuple(Expression.box(arg) for arg in args)
-    simplify = kwargs.get('simplify', True)
-    factor = kwargs.get('factor', False)
-    conj = kwargs.get('conj', False)
     expr = ExprEqual(*args)
     if factor:
         expr = expr.factor(conj)
@@ -267,12 +252,9 @@ def Equal(*args, **kwargs):
         expr = expr.simplify()
     return expr
 
-def Unequal(*args, **kwargs):
+def Unequal(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean UNEQUAL expression."""
     args = tuple(Expression.box(arg) for arg in args)
-    simplify = kwargs.get('simplify', True)
-    factor = kwargs.get('factor', False)
-    conj = kwargs.get('conj', False)
     expr = ExprUnequal(*args)
     if factor:
         expr = expr.factor(conj)
@@ -303,30 +285,36 @@ def ITE(s, d1, d0, simplify=True, factor=False, conj=False):
         expr = expr.simplify()
     return expr
 
-def Nor(*args, **kwargs):
-    """Alias for Not Or"""
-    return Not(Or(*args, **kwargs), **kwargs)
+def Nor(*args, simplify=True, factor=False, conj=False):
+    """Alias for Not(Or(...))"""
+    return Not(Or(*args, simplify=simplify, factor=factor, conj=conj),
+               simplify=simplify, factor=factor, conj=conj)
 
-def Nand(*args, **kwargs):
-    """Alias for Not And"""
-    return Not(And(*args, **kwargs), **kwargs)
+def Nand(*args, simplify=True, factor=False, conj=False):
+    """Alias for Not(And(...))"""
+    return Not(And(*args, simplify=simplify, factor=factor, conj=conj),
+               simplify=simplify, factor=factor, conj=conj)
 
-def OneHot0(*args, **kwargs):
+def OneHot0(*args, simplify=True, factor=False, conj=False):
     """
     Return an expression that means:
         At most one input variable is true.
     """
     terms = list()
     for arg1, arg2 in itertools.combinations(args, 2):
-        terms.append(Or(Not(arg1, **kwargs), Not(arg2, **kwargs), **kwargs))
-    return And(*terms, **kwargs)
+        terms.append(Or(Not(arg1, simplify=simplify, factor=factor, conj=conj),
+                        Not(arg2, simplify=simplify, factor=factor, conj=conj),
+                        simplify=simplify, factor=factor, conj=conj))
+    return And(*terms, simplify=simplify, factor=factor, conj=conj)
 
-def OneHot(*args, **kwargs):
+def OneHot(*args, simplify=True, factor=False, conj=False):
     """
     Return an expression that means:
         Exactly one input variable is true.
     """
-    return And(Or(*args, **kwargs), OneHot0(*args, **kwargs), **kwargs)
+    return And(Or(*args, simplify=simplify, factor=factor, conj=conj),
+               OneHot0(*args, simplify=simplify, factor=factor, conj=conj),
+               simplify=simplify, factor=factor, conj=conj)
 
 
 class Expression(boolfunc.Function):
