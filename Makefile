@@ -1,10 +1,12 @@
 # Filename: Makefile
 
-NOSETESTS := nosetests
 PIP := pip
 PYLINT := pylint
+PYTHON := python
 
-PIP_INSTALL_FLAGS := -r requirements.txt --use-mirrors
+PIP_INSTALL_FLAGS := -r requirements.txt
+
+default: test
 
 .PHONY: init
 init:
@@ -20,8 +22,8 @@ lint:
 
 .PHONY: test
 test:
-	@$(NOSETESTS) --with-doctest
+	@$(PYTHON) setup.py nosetests --with-doctest
 
 .PHONY: cover
 cover:
-	@$(NOSETESTS) --with-doctest --with-coverage --cover-html
+	@$(PYTHON) setup.py nosetests --with-doctest --with-coverage --cover-html
