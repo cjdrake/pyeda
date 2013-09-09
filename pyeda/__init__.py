@@ -40,4 +40,4 @@ from pyeda.table import (
 )
 from pyeda.util import clog2, boolify
 
-from pyeda.dimacs import load_cnf, dump_cnf, load_sat, dump_sat
+from pyeda.parsing.dimacs import load_cnf, dump_cnf, load_sat, dump_sat
