@@ -364,6 +364,10 @@ class Expression(boolfunc.Function):
     def __repr__(self):
         return self.__str__()
 
+    def args_str(self, sep):
+        """Return arguments as a string, joined by a separator."""
+        return sep.join(str(arg) for arg in sorted(self.args))
+
     def invert(self):
         """Return an inverted expression."""
         raise NotImplementedError()
@@ -1019,7 +1023,7 @@ class ExprOr(ExprOrAnd):
     """Expression OR operator"""
 
     def __str__(self):
-        return " + ".join(str(arg) for arg in sorted(self.args))
+        return self.args_str(" + ")
 
     # From Expression
     def is_dnf(self):
@@ -1313,8 +1317,7 @@ class ExprXor(ExprExclusive):
             return super(ExprXor, cls).__new__(cls)
 
     def __str__(self):
-        args_str = ", ".join(str(arg) for arg in sorted(self.args))
-        return "Xor(" + args_str + ")"
+        return "Xor(" + self.args_str(", ") + ")"
 
     PARITY = 1
 
@@ -1337,8 +1340,7 @@ class ExprXnor(ExprExclusive):
             return super(ExprXnor, cls).__new__(cls)
 
     def __str__(self):
-        args_str = ", ".join(str(arg) for arg in sorted(self.args))
-        return "Xnor(" + args_str + ")"
+        return "Xnor(" + self.args_str(", ") + ")"
 
     PARITY = 0
 
@@ -1362,8 +1364,7 @@ class ExprEqual(Expression):
         self.simplified = kwargs.get('simplified', False)
 
     def __str__(self):
-        args_str = ", ".join(str(arg) for arg in sorted(self.args))
-        return "Equal(" + args_str + ")"
+        return "Equal(" + self.args_str(", ") + ")"
 
     # From Expression
     def invert(self):
