@@ -940,13 +940,8 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
                     return expr.flatten(op).absorb()
             return self
         else:
-            nested, others = list(), list()
-            for arg in self.args:
-                if arg.depth > 1:
-                    nested.append(arg)
-                else:
-                    others.append(arg)
-            args = [arg.flatten(op).absorb() for arg in nested] + others
+            args = [arg.flatten(op).absorb() if arg.depth > 1 else arg
+                    for arg in self.args]
             return op.get_dual()(*args).simplify()
 
     # FlattenedExpression
