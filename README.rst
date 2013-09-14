@@ -1,5 +1,5 @@
-Python Electronic Design Automation Repository
-==============================================
+Python Electronic Design Automation
+===================================
 
 PyEDA is a Python library for electronic design automation.
 
@@ -41,11 +41,13 @@ visit PyEDA's page at the
 Installation
 ------------
 
-Latest released version using distutils::
+Latest released version using
+`setuptools <http://pythonhosted.org/setuptools>`_::
 
     $ easy_install pyeda
 
-Latest release version using virtualenv::
+Latest release version using
+`pip <http://www.pip-installer.org/en/latest>`_::
 
     $ pip install pyeda
 
@@ -56,8 +58,8 @@ Installation from the repository::
 Getting Started With Logic Expressions
 --------------------------------------
 
-Invoke your favorite Python terminal, and import standard symbols from
-``pyeda``::
+Invoke your favorite Python terminal,
+and import standard symbols from ``pyeda``::
 
     >>> from pyeda import *
 
