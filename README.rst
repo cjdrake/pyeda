@@ -5,6 +5,9 @@ PyEDA is a Python library for electronic design automation.
 
 `Read the docs! <http://pyeda.rtfd.org>`_
 
+.. image:: https://travis-ci.org/cjdrake/pyeda.png?branch=master
+   :target: https://travis-ci.org/cjdrake/pyeda
+
 Features
 --------
 
