@@ -1095,9 +1095,8 @@ class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
 
     def __str__(self):
-        args = sorted(self.args)
         parts = list()
-        for arg in args:
+        for arg in sorted(self.args):
             if isinstance(arg, ExprOr):
                 parts.append('(' + str(arg) + ')')
             else:
