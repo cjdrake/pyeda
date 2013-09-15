@@ -1104,8 +1104,8 @@ class ExprOr(ExprOrAnd):
             cnt = collections.Counter(v for clause in self.args
                                         for v in clause.support)
             v = cnt.most_common(1)[0][0]
-            fv0, fv1 = self.cofactors(x)
-            f = (x + fv0.complete_sum()) * (-x + fv1.complete_sum())
+            fv0, fv1 = self.cofactors(v)
+            f = (v + fv0.complete_sum()) * (-v + fv1.complete_sum())
             return f.flatten(ExprAnd)
 
 
@@ -1203,9 +1203,9 @@ class ExprAnd(ExprOrAnd):
         else:
             cnt = collections.Counter(v for clause in self.args
                                         for v in clause.support)
-            x = cnt.most_common(1)[0][0]
-            fv0, fv1 = self.cofactors(x)
-            f = (-x * fv0.complete_sum()) + (x * fv1.complete_sum())
+            v = cnt.most_common(1)[0][0]
+            fv0, fv1 = self.cofactors(v)
+            f = (-v * fv0.complete_sum()) + (v * fv1.complete_sum())
             return f.flatten(ExprOr)
 
 
