@@ -36,6 +36,8 @@ Interface Classes:
 # Disable "redefining name from outer scope"
 # pylint: disable=W0621
 
+import collections
+
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.util import bit_on, parity, cached_property
@@ -536,6 +538,9 @@ class ExprConstant(Expression, sat.DPLLInterface):
         """Degenerate form of a reduced expression."""
         return self
 
+    def complete_sum(self):
+        return self
+
 
 class _ExprZero(ExprConstant):
     """
@@ -664,6 +669,9 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     def reduce(self):
         """Degenerate form of a reduced expression."""
+        return self
+
+    def complete_sum(self):
         return self
 
     @cached_property
@@ -1089,6 +1097,17 @@ class ExprOr(ExprOrAnd):
     def _term_expand(self, term, vs):
         return term.expand(vs, conj=False).args
 
+    def complete_sum(self):
+        if self.depth == 1:
+            return self
+        else:
+            cnt = collections.Counter(v for clause in self.args
+                                        for v in clause.support)
+            x = cnt.most_common(1)[0][0]
+            fx0, fx1 = self.cofactors(x)
+            f = (x + fx0.complete_sum()) * (-x + fx1.complete_sum())
+            return f.flatten(ExprAnd)
+
 
 class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
@@ -1177,6 +1196,17 @@ class ExprAnd(ExprOrAnd):
 
     def _term_expand(self, term, vs):
         return term.expand(vs, conj=True).args
+
+    def complete_sum(self):
+        if self.depth == 1:
+            return self
+        else:
+            cnt = collections.Counter(v for clause in self.args
+                                        for v in clause.support)
+            x = cnt.most_common(1)[0][0]
+            fx0, fx1 = self.cofactors(x)
+            f = (-x * fx0.complete_sum()) + (x * fx1.complete_sum())
+            return f.flatten(ExprOr)
 
 
 class ExprNot(Expression):
