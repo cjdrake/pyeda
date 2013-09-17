@@ -1,12 +1,25 @@
 # Filename: .gitignore
 
-MANIFEST
-build/
-dist/
+*.py[cod]
 
-*.py[co]
+# C extensions
+*.so
 
-pyeda.egg-info
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
 
+# Unit test / coverage reports
 .coverage
 cover
