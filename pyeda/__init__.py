@@ -22,9 +22,6 @@ from pyeda.expr import (
     exprvar, exprcomp, upoint2exprpoint,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
-    ExprConstant, ExprLiteral, ExprVariable, ExprComplement,
-    ExprOrAnd, ExprOr, ExprAnd, ExprNot,
-    ExprExclusive, ExprXor, ExprXnor, ExprEqual, ExprImplies, ExprITE
 )
 from pyeda.vexpr import (
     bitvec, uint2vec, int2vec, BitVector
