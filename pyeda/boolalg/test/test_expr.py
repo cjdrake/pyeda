@@ -4,16 +4,17 @@ Test expression Boolean functions
 
 import sys
 
-from pyeda import boolfunc
-from pyeda.expr import (
+from pyeda.boolalg import boolfunc
+from pyeda.boolalg.expr import (
     exprvar,
     Expression,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
     EXPRZERO, EXPRONE,
 )
+from pyeda.boolalg.vexpr import bitvec
+
 from pyeda.sat import backtrack, dpll
-from pyeda.vexpr import bitvec
 
 import nose
 

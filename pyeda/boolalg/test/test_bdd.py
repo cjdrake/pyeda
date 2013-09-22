@@ -2,11 +2,11 @@
 Test binary decision diagrams
 """
 
-from pyeda.bdd import (
+from pyeda.boolalg.bdd import (
     bddvar, bdd, expr2bdd, bdd2expr,
     BDDNODEZERO, BDDNODEONE, BDDZERO, BDDONE
 )
-from pyeda.expr import exprvar, EXPRZERO, EXPRONE, Xor
+from pyeda.boolalg.expr import exprvar, EXPRZERO, EXPRONE, Xor
 
 a, b, c, d, e = map(exprvar, 'abcde')
 aa, bb, cc, dd, ee = map(bddvar, 'abcde')

@@ -23,10 +23,10 @@ Interface Classes:
 # Disable "method is abstract but not overridden"
 # pylint: disable=W0223
 
-from pyeda import boolfunc
+from pyeda.boolalg import boolfunc
 from pyeda import sat
-from pyeda.expr import EXPRVARIABLES
-from pyeda.expr import (
+from pyeda.boolalg.expr import EXPRVARIABLES
+from pyeda.boolalg.expr import (
     Expression, EXPRZERO, EXPRONE, ExprLiteral, ExprOr, ExprAnd
 )
 from pyeda.util import bit_on, cached_property

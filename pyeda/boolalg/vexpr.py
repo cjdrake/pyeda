@@ -10,8 +10,8 @@ Interface Classes:
     BitVector
 """
 
-from pyeda.boolfunc import Slicer, VectorFunction
-from pyeda.expr import exprvar, Not, Or, And, Xor
+from pyeda.boolalg.boolfunc import Slicer, VectorFunction
+from pyeda.boolalg.expr import exprvar, Not, Or, And, Xor
 from pyeda.util import clog2, bit_on
 
 def bitvec(name, *slices):

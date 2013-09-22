@@ -2,9 +2,9 @@
 Test normal form expression Boolean functions
 """
 
-from pyeda.expr import exprvar, EXPRZERO, EXPRONE
+from pyeda.boolalg.expr import exprvar, EXPRZERO, EXPRONE
 
-from pyeda.nfexpr import (
+from pyeda.boolalg.nfexpr import (
     expr2dnf, expr2cnf, nf2expr,
     upoint2nfpoint,
     DisjNormalForm, ConjNormalForm

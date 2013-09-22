@@ -2,14 +2,14 @@
 Test Boolean functions
 """
 
-from pyeda.boolfunc import (
+from pyeda.boolalg.boolfunc import (
     num2point,
     num2upoint,
     num2term,
     point2upoint,
     point2term,
 )
-from pyeda.expr import exprvar
+from pyeda.boolalg.expr import exprvar
 
 a, b, c, d = map(exprvar, 'abcd')
 

@@ -43,7 +43,7 @@ Interface Classes:
 import collections
 
 import pyeda.parsing.boolexpr
-from pyeda import boolfunc
+from pyeda.boolalg import boolfunc
 from pyeda import sat
 from pyeda.util import bit_on, parity, cached_property
 

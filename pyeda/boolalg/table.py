@@ -15,8 +15,8 @@ Interface Classes:
 
 import array
 
-from pyeda import boolfunc
-from pyeda.expr import exprvar, Or, And
+from pyeda.boolalg import boolfunc
+from pyeda.boolalg.expr import exprvar, Or, And
 from pyeda.util import cached_property
 
 # Positional Cube Notation

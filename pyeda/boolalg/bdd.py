@@ -21,8 +21,8 @@ Interface Classes:
 import random
 import weakref
 
-from pyeda import boolfunc
-from pyeda.expr import exprvar, Or, And, EXPRZERO, EXPRONE
+from pyeda.boolalg import boolfunc
+from pyeda.boolalg.expr import exprvar, Or, And, EXPRZERO, EXPRONE
 from pyeda.util import cached_property
 
 # existing BDDVariable references
