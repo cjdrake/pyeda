@@ -1,5 +1,5 @@
 """
-Digital Arithmetic Module
+Logic functions for addition
 
 Interface Functions:
     ripple_carry_add

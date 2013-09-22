@@ -1,11 +1,11 @@
 """
-Test logic functions for digital arithmetic
+Test logic functions for addition
 """
 
 import random
 
-from pyeda.logic.arithmetic import ripple_carry_add as rca
-from pyeda.logic.arithmetic import kogge_stone_add as ksa
+from pyeda.logic.addition import ripple_carry_add as rca
+from pyeda.logic.addition import kogge_stone_add as ksa
 from pyeda.boolalg.vexpr import bitvec, uint2vec, int2vec
 
 NVECS = 100

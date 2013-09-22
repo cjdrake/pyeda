@@ -258,7 +258,7 @@ Reduce bit vectors using unary OR, AND, XOR::
 
 Create and test functions that implement non-trivial logic such as arithmetic::
 
-    >>> from pyeda.arithmetic import *
+    >>> from pyeda.logic.addition import *
     >>> S, C = ripple_carry_add(A, B)
     # Note "1110" is LSB first. This says: "7 + 1 = 8".
     >>> S.vrestrict({A: "1110", B: "1000"}).to_uint()
