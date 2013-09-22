@@ -304,9 +304,8 @@ build the HTML documentation with the following command::
 Python Versions Supported
 -------------------------
 
-PyEDA is primarily developed using Python 3.2,
-but compromises have been made to maintain backwards compatibility with 2.7.
-We do not guarantee this will always be the case.
+PyEDA is developed using Python 3.2+.
+It is **NOT** compatible with Python 2.7.
 
 Contact the Authors
 -------------------
