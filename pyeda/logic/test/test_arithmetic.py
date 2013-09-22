@@ -6,7 +6,6 @@ import random
 
 from pyeda.logic.arithmetic import ripple_carry_add as rca
 from pyeda.logic.arithmetic import kogge_stone_add as ksa
-from pyeda.logic.arithmetic import bin2gray, gray2bin
 from pyeda.boolalg.vexpr import bitvec, uint2vec, int2vec
 
 NVECS = 100
@@ -70,16 +69,3 @@ def test_signed_add():
         # -65 + -64, overflow
         R = C.vrestrict({A: int2vec(-65, 8), B: int2vec(-64, 8)})
         assert R[7] != R[6]
-
-def test_bin2gray():
-    B = bitvec('B', 4)
-    G = bin2gray(B)
-    gnums = [G.vrestrict({B: uint2vec(i, 4)}).to_uint() for i in range(16)]
-    assert gnums == [0, 1, 3, 2, 6, 7, 5, 4, 12, 13, 15, 14, 10, 11, 9, 8]
-
-def test_gray2bin():
-    G = bitvec('G', 4)
-    B = gray2bin(G)
-    gnums = [0, 1, 3, 2, 6, 7, 5, 4, 12, 13, 15, 14, 10, 11, 9, 8]
-    bnums = [B.vrestrict({G: uint2vec(i, 4)}).to_uint() for i in gnums]
-    assert bnums == list(range(16))

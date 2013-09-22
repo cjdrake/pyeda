@@ -4,8 +4,6 @@ Digital Arithmetic Module
 Interface Functions:
     ripple_carry_add
     kogge_stone_add
-    bin2gray
-    gray2bin
 """
 
 # Disable "invalid variable name"
@@ -40,14 +38,3 @@ def kogge_stone_add(A, B, cin=0):
     # sum logic
     s = [Xor(A[i], B[i], (cin if i == 0 else g[i-1])) for i in range(stop)]
     return BitVector(s), BitVector(g)
-
-def bin2gray(B):
-    """Convert a binary-coded vector into a gray-coded vector."""
-    items = [Xor(B[i], B[i+1]) for i in range(B.start, B.stop-1)]
-    items.append(B[B.stop-1])
-    return BitVector(items, B.start)
-
-def gray2bin(G):
-    """Convert a gray-coded vector into a binary-coded vector."""
-    items = [G[i:].uxor() for i, _ in enumerate(G, G.start)]
-    return BitVector(items, G.start)
