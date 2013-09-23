@@ -50,8 +50,16 @@ class RegexLexer(object):
         self.offset = None
         self.states = None
         self.tokens = None
+        self.gtoks = None
 
         self._compile_rules()
+
+    def __iter__(self):
+        self.gtoks = self._iter_tokens()
+        return self
+
+    def __next__(self):
+        return next(self.gtoks)
 
     def _compile_rules(self):
         """Compile the rules into the internal lexer state."""
@@ -75,7 +83,7 @@ class RegexLexer(object):
             reobj = re.compile('|'.join("(" + p + ")" for p in patterns))
             self._rules[state] = (reobj, actions, nextstates)
 
-    def iter_tokens(self):
+    def _iter_tokens(self):
         """Iterate through all tokens in the input string."""
         self.pos = 0
         self.lineno = 1

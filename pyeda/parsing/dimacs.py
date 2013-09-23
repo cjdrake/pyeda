@@ -92,9 +92,9 @@ class CNFLexer(RegexLexer):
     }
 
 
-def expect_token(gtoks, types):
+def expect_token(lex, types):
     """Return the next token, or raise an exception."""
-    tok = next(gtoks)
+    tok = next(lex)
     if any(isinstance(tok, t) for t in types):
         return tok
     else:
@@ -105,15 +105,15 @@ def load_cnf(s, varname='x'):
     Parse an input string in DIMACS CNF format,
     and return an expression.
     """
-    gtoks = CNFLexer(s).iter_tokens()
+    lex = iter(CNFLexer(s))
 
-    expect_token(gtoks, {KW_p})
-    expect_token(gtoks, {KW_cnf})
-    nvariables = expect_token(gtoks, {IntegerToken}).value
-    nclauses = expect_token(gtoks, {IntegerToken}).value
+    expect_token(lex, {KW_p})
+    expect_token(lex, {KW_cnf})
+    nvariables = expect_token(lex, {IntegerToken}).value
+    nclauses = expect_token(lex, {IntegerToken}).value
 
     X = bitvec(varname, (1, nvariables + 1))
-    formula = _cnf_formula(gtoks, X)
+    formula = _cnf_formula(lex, X)
 
     if len(formula) < nclauses:
         fstr = "formula has fewer than {} clauses"
@@ -124,23 +124,23 @@ def load_cnf(s, varname='x'):
 
     return And(*[Or(*clause) for clause in formula])
 
-def _cnf_formula(gtoks, X):
+def _cnf_formula(lex, X):
     formula = list()
     while True:
         try:
-            tok = expect_token(gtoks, {OP_not, IntegerToken})
+            tok = expect_token(lex, {OP_not, IntegerToken})
         except StopIteration:
             break
-        formula.append(_cnf_clause(gtoks, tok, X))
+        formula.append(_cnf_clause(lex, tok, X))
 
     return formula
 
-def _cnf_clause(gtoks, tok, X):
+def _cnf_clause(lex, tok, X):
     clause = list()
     while not (isinstance(tok, IntegerToken) and tok.value == 0):
         if isinstance(tok, OP_not):
             neg = True
-            tok = expect_token(gtoks, {IntegerToken})
+            tok = expect_token(lex, {IntegerToken})
             idx = tok.value
         else:
             neg = False
@@ -150,7 +150,7 @@ def _cnf_clause(gtoks, tok, X):
             raise DIMACSError(fstr.format(idx, len(X)))
         clause.append(-X[idx] if neg else X[idx])
         try:
-            tok = expect_token(gtoks, {OP_not, IntegerToken})
+            tok = expect_token(lex, {OP_not, IntegerToken})
         except StopIteration:
             raise DIMACSError("incomplete clause")
 
@@ -294,21 +294,21 @@ def load_sat(s, varname='x'):
     Parse an input string in DIMACS SAT format,
     and return an expression.
     """
-    gtoks = SATLexer(s).iter_tokens()
+    lex = iter(SATLexer(s))
 
-    expect_token(gtoks, {KW_p})
-    fmt = expect_token(gtoks, {KW_sat, KW_satx, KW_sate, KW_satex}).value
-    nvariables = expect_token(gtoks, {IntegerToken}).value
+    expect_token(lex, {KW_p})
+    fmt = expect_token(lex, {KW_sat, KW_satx, KW_sate, KW_satex}).value
+    nvariables = expect_token(lex, {IntegerToken}).value
 
     X = bitvec(varname, (1, nvariables + 1))
     try:
         types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
-        tok = expect_token(gtoks, types)
-        return _sat_formula(gtoks, tok, fmt, X)
+        tok = expect_token(lex, types)
+        return _sat_formula(lex, tok, fmt, X)
     except StopIteration:
         raise DIMACSError("incomplete formula")
 
-def _sat_formula(gtoks, tok, fmt, X):
+def _sat_formula(lex, tok, fmt, X):
     if isinstance(tok, IntegerToken):
         idx = tok.value
         if not 0 < idx <= len(X):
@@ -316,7 +316,7 @@ def _sat_formula(gtoks, tok, fmt, X):
             raise DIMACSError(fstr.format(idx, len(X)))
         return X[idx]
     elif isinstance(tok, OP_not):
-        tok = expect_token(gtoks, {IntegerToken, LPAREN})
+        tok = expect_token(lex, {IntegerToken, LPAREN})
         if isinstance(tok, IntegerToken):
             idx = tok.value
             if not 0 < idx <= len(X):
@@ -324,27 +324,27 @@ def _sat_formula(gtoks, tok, fmt, X):
                 raise DIMACSError(fstr.format(idx, len(X)))
             return -X[idx]
         else:
-            return Not(_one_formula(gtoks, fmt, X))
+            return Not(_one_formula(lex, fmt, X))
     elif isinstance(tok, LPAREN):
-        return _one_formula(gtoks, fmt, X)
+        return _one_formula(lex, fmt, X)
     # OR/AND/XOR/EQUAL
     else:
         op = _OPS[type(tok)]
-        tok = expect_token(gtoks, {LPAREN})
-        return op(*_zom_formulas(gtoks, fmt, X))
+        tok = expect_token(lex, {LPAREN})
+        return op(*_zom_formulas(lex, fmt, X))
 
-def _one_formula(gtoks, fmt, X):
-    f = _sat_formula(gtoks, next(gtoks), fmt, X)
-    expect_token(gtoks, {RPAREN})
+def _one_formula(lex, fmt, X):
+    f = _sat_formula(lex, next(lex), fmt, X)
+    expect_token(lex, {RPAREN})
     return f
 
-def _zom_formulas(gtoks, fmt, X):
+def _zom_formulas(lex, fmt, X):
     fs = []
     types = {IntegerToken, LPAREN, RPAREN} | _SAT_TOKS[fmt]
-    tok = expect_token(gtoks, types)
+    tok = expect_token(lex, types)
     while not isinstance(tok, RPAREN):
-        fs.append(_sat_formula(gtoks, tok, fmt, X))
-        tok = expect_token(gtoks, types)
+        fs.append(_sat_formula(lex, tok, fmt, X))
+        tok = expect_token(lex, types)
     return fs
 
 def dump_sat(expr):
