@@ -10,6 +10,7 @@ Interface Classes:
     RegexLexer
 """
 
+import collections
 import re
 
 class LexError(Exception):
@@ -48,14 +49,25 @@ class RegexLexer(object):
         self.pos = None
         self.lineno = None
         self.offset = None
-        self.states = None
-        self.tokens = None
+
+        self.states = list()
+        self.tokens = collections.deque()
+
         self.gtoks = None
 
         self._compile_rules()
 
     def __iter__(self):
+        self.pos = 0
+        self.lineno = 1
+        self.offset = 1
+
+        self.states.clear()
+        self.states.append('root')
+        self.tokens.clear()
+
         self.gtoks = self._iter_tokens()
+
         return self
 
     def __next__(self):
@@ -85,13 +97,6 @@ class RegexLexer(object):
 
     def _iter_tokens(self):
         """Iterate through all tokens in the input string."""
-        self.pos = 0
-        self.lineno = 1
-        self.offset = 1
-
-        self.states = ['root']
-        self.tokens = []
-
         reobj, actions, nextstates = self._rules[self.states[-1]]
         mobj = reobj.match(self.string, self.pos)
         while mobj is not None:
@@ -102,10 +107,10 @@ class RegexLexer(object):
 
             # Take action
             action(self, text)
+            while self.tokens:
+                yield self.pop_token()
             if nextstate and nextstate != self.states[-1]:
                 self.states[-1] = nextstate
-            while self.tokens:
-                yield self.tokens.pop()
 
             # Update position variables
             self.pos = mobj.end()
@@ -126,7 +131,30 @@ class RegexLexer(object):
             raise LexRunError(msg, self.lineno, self.offset, text)
 
     def push_token(self, tok):
-        """Push a token onto the internal token stack."""
+        """Push a token into the token queue.
+
+                 +--+--+--+--+
+        token => |  |  |  |  |
+                 +--+--+--+--+
+        """
+        self.tokens.appendleft(tok)
+
+    def pop_token(self):
+        """Pop a token from the token queue.
+
+        +--+--+--+--+
+        |  |  |  |  | => token
+        +--+--+--+--+
+        """
+        return self.tokens.pop()
+
+    def unpop_token(self, tok):
+        """Return a popped token to top of the token queue.
+
+        +--+--+--+--+
+        |  |  |  |  | <= token
+        +--+--+--+--+
+        """
         self.tokens.append(tok)
 
 
