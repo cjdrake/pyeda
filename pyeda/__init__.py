@@ -41,3 +41,4 @@ from pyeda.table import (
 from pyeda.parsing.dimacs import (
     load_cnf, dump_cnf, load_sat, dump_sat,
 )
+from pyeda.parsing.boolexpr import str2expr

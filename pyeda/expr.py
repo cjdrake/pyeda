@@ -352,6 +352,9 @@ class Expression(boolfunc.Function):
             return EXPRZERO
         elif arg == 1 or arg == '1':
             return EXPRONE
+        elif type(arg) is str:
+            from pyeda.parsing.boolexpr import str2expr
+            return str2expr(arg)
         else:
             fstr = "argument cannot be converted to Expression: " + str(arg)
             raise TypeError(fstr)
