@@ -131,12 +131,14 @@ def _cnf_formula(lex, X):
             tok = expect_token(lex, {OP_not, IntegerToken})
         except StopIteration:
             break
-        formula.append(_cnf_clause(lex, tok, X))
+        lex.unpop_token(tok)
+        formula.append(_cnf_clause(lex, X))
 
     return formula
 
-def _cnf_clause(lex, tok, X):
+def _cnf_clause(lex, X):
     clause = list()
+    tok = expect_token(lex, {OP_not, IntegerToken})
     while not (isinstance(tok, IntegerToken) and tok.value == 0):
         if isinstance(tok, OP_not):
             neg = True
@@ -304,11 +306,14 @@ def load_sat(s, varname='x'):
     try:
         types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
         tok = expect_token(lex, types)
-        return _sat_formula(lex, tok, fmt, X)
+        lex.unpop_token(tok)
+        return _sat_formula(lex, fmt, X)
     except StopIteration:
         raise DIMACSError("incomplete formula")
 
-def _sat_formula(lex, tok, fmt, X):
+def _sat_formula(lex, fmt, X):
+    types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
+    tok = expect_token(lex, types)
     if isinstance(tok, IntegerToken):
         idx = tok.value
         if not 0 < idx <= len(X):
@@ -334,7 +339,7 @@ def _sat_formula(lex, tok, fmt, X):
         return op(*_zom_formulas(lex, fmt, X))
 
 def _one_formula(lex, fmt, X):
-    f = _sat_formula(lex, next(lex), fmt, X)
+    f = _sat_formula(lex, fmt, X)
     expect_token(lex, {RPAREN})
     return f
 
@@ -343,7 +348,8 @@ def _zom_formulas(lex, fmt, X):
     types = {IntegerToken, LPAREN, RPAREN} | _SAT_TOKS[fmt]
     tok = expect_token(lex, types)
     while not isinstance(tok, RPAREN):
-        fs.append(_sat_formula(lex, tok, fmt, X))
+        lex.unpop_token(tok)
+        fs.append(_sat_formula(lex, fmt, X))
         tok = expect_token(lex, types)
     return fs
 
