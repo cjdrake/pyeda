@@ -38,7 +38,7 @@ BDDNODEZERO = BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
 BDDNODEONE = BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
 
 
-def bddvar(name, indices=None, namespace=None):
+def bddvar(name, indices=None):
     """Return a BDD variable.
 
     Parameters
@@ -48,11 +48,8 @@ def bddvar(name, indices=None, namespace=None):
     indices : int or tuple[int], optional
         One or more integer suffixes for variables that are part of a
         multi-dimensional bit-vector, eg x[1], x[1][2][3]
-    namespace : str or tuple[str], optional
-        A container for a set of variables. Since a Variable instance is global,
-        a namespace can be used for local scoping.
     """
-    bvar = boolfunc.var(name, indices, namespace)
+    bvar = boolfunc.var(name, indices)
     try:
         var = BDDVARIABLES[bvar.uniqid]
     except KeyError:
@@ -74,7 +71,7 @@ def _expr2node(expr):
         top = expr.top
 
         # Register this variable
-        _ = bddvar(top.name, top.indices, top.namespace)
+        _ = bddvar(top.names, top.indices)
 
         root = top.uniqid
         low = _expr2node(expr.restrict({top: 0}))
@@ -96,7 +93,7 @@ def bdd2expr(bdd, conj=False):
             paths = _iter_all_paths(bdd.node, BDDNODEONE)
         terms = list()
         for path in paths:
-            expr_point = {exprvar(v.name, v.indices, v.namespace): val
+            expr_point = {exprvar(v.names, v.indices): val
                           for v, val in path2point(path).items()}
             terms.append(boolfunc.point2term(expr_point, conj))
         return outer(*[inner(*term) for term in terms])
@@ -274,8 +271,7 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
     """Binary decision diagram variable"""
 
     def __init__(self, bvar):
-        boolfunc.Variable.__init__(self, bvar.namespace, bvar.name,
-                                   bvar.indices)
+        boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         node = _bdd_node(bvar.uniqid, BDDNODEZERO, BDDNODEONE)
         BinaryDecisionDiagram.__init__(self, node)
 

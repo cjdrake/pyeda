@@ -30,7 +30,7 @@ _PC2STR = {
     PC_DC   : '-'
 }
 
-def ttvar(name, indices=None, namespace=None):
+def ttvar(name, indices=None):
     """Return a TruthTable variable.
 
     Parameters
@@ -40,11 +40,8 @@ def ttvar(name, indices=None, namespace=None):
     indices : int or tuple[int], optional
         One or more integer suffixes for variables that are part of a
         multi-dimensional bit-vector, eg x[1], x[1][2][3]
-    namespace : str or tuple[str], optional
-        A container for a set of variables. Since a Variable instance is global,
-        a namespace can be used for local scoping.
     """
-    bvar = boolfunc.var(name, indices, namespace)
+    bvar = boolfunc.var(name, indices)
     try:
         var = TTVARIABLES[bvar.uniqid]
     except KeyError:
@@ -66,7 +63,7 @@ def truthtable(inputs, outputs):
                 yield PC_DC
             else:
                 raise ValueError("invalid output: " + str(output))
-    inputs = [ttvar(v.name, v.indices, v.namespace) for v in inputs]
+    inputs = [ttvar(v.names, v.indices) for v in inputs]
     pcdata = PCData(items())
     assert len(pcdata) == (1 << len(inputs))
     return _truthtable(inputs, pcdata)
@@ -85,7 +82,7 @@ def _truthtable(inputs, pcdata):
 
 def expr2truthtable(expr):
     """Convert an expression into a truth table."""
-    inputs = [ttvar(v.name, v.indices, v.namespace) for v in expr.inputs]
+    inputs = [ttvar(v.names, v.indices) for v in expr.inputs]
     return truthtable(inputs, expr.iter_image())
 
 def truthtable2expr(tt, conj=False):
@@ -96,7 +93,7 @@ def truthtable2expr(tt, conj=False):
     else:
         outer, inner = (Or, And)
         nums = tt.pcdata.iter_ones()
-    inputs = [exprvar(v.name, v.indices, v.namespace) for v in tt.inputs]
+    inputs = [exprvar(v.names, v.indices) for v in tt.inputs]
     terms = [boolfunc.num2term(num, inputs, conj) for num in nums]
     return outer(*[inner(*term) for term in terms])
 
@@ -460,8 +457,7 @@ class TTVariable(boolfunc.Variable, TruthTable):
     """Truth table variable"""
 
     def __init__(self, bvar):
-        boolfunc.Variable.__init__(self, bvar.namespace, bvar.name,
-                                   bvar.indices)
+        boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         pcdata = PCData((PC_ZERO, PC_ONE))
         TruthTable.__init__(self, [self], pcdata)
 

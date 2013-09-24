@@ -46,7 +46,7 @@ EXPRVARIABLES = dict()
 EXPRCOMPLEMENTS = dict()
 
 
-def exprvar(name, indices=None, namespace=None):
+def exprvar(name, indices=None):
     """Return an Expression Variable.
 
     Parameters
@@ -57,11 +57,8 @@ def exprvar(name, indices=None, namespace=None):
     indices : int or tuple[int], optional
         One or more integer suffixes for variables that are part of a
         multi-dimensional bit-vector, eg x[1], x[1][2][3]
-    namespace : str or tuple[str], optional
-        A container for a set of variables. Since a Variable instance is global,
-        a namespace can be used for local scoping.
     """
-    bvar = boolfunc.var(name, indices, namespace)
+    bvar = boolfunc.var(name, indices)
     try:
         var = EXPRVARIABLES[bvar.uniqid]
     except KeyError:
@@ -686,8 +683,7 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
     """Expression variable"""
 
     def __init__(self, bvar):
-        boolfunc.Variable.__init__(self, bvar.namespace, bvar.name,
-                                   bvar.indices)
+        boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         ExprLiteral.__init__(self)
 
     # From Function
@@ -770,8 +766,8 @@ class ExprComplement(ExprLiteral):
         if isinstance(other, ExprConstant):
             return False
         if isinstance(other, ExprVariable):
-            return ( self.exprvar.name < other.name or
-                     self.exprvar.name == other.name and
+            return ( self.exprvar.names < other.names or
+                     self.exprvar.names == other.names and
                      self.exprvar.indices <= other.indices )
         if isinstance(other, ExprComplement):
             return boolfunc.Variable.__lt__(self.exprvar, other.exprvar)

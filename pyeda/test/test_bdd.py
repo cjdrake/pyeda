@@ -21,8 +21,8 @@ def test_misc():
 
 def test_bddvar():
     assert aa.name == 'a'
+    assert aa.names == ('a', )
     assert aa.indices == tuple()
-    assert aa.namespace == tuple()
 
 def test_expr2bdd():
     assert expr2bdd(a) == aa

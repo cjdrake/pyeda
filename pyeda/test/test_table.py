@@ -65,8 +65,8 @@ def test_unate():
 
 def test_ttvar():
     assert aa.name == 'a'
+    assert aa.names == ('a', )
     assert aa.indices == tuple()
-    assert aa.namespace == tuple()
 
 def test_table():
     assert truthtable([], [0]).is_zero()

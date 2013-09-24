@@ -28,35 +28,31 @@ from pyeda.util import bit_on, boolify
 VARIABLES = dict()
 
 
-def var(name, indices=None, namespace=None):
+def var(name, indices=None):
     """Return a unique Variable instance.
 
     .. NOTE:: Do NOT call this function directly. It should only be used by
               concrete Variable implementations, eg ExprVariable.
     """
+    names = (name, ) if type(name) is str else name
     if indices is None:
         indices = tuple()
     elif type(indices) is int:
         indices = (indices, )
-    if namespace is None:
-        namespace = tuple()
-    elif type(namespace) is str:
-        namespace = (namespace, )
 
     # Check input types
-    assert type(name) is str
+    assert type(names) is tuple and len(names) > 0
+    for name in names:
+        assert type(name) is str
     assert type(indices) is tuple
     for idx in indices:
         assert type(idx) is int
-    assert type(namespace) is tuple
-    for ns_part in namespace:
-        assert type(ns_part) is str
 
     try:
-        v = VARIABLES[(namespace, name, indices)]
+        v = VARIABLES[(names, indices)]
     except KeyError:
-        v = Variable(namespace, name, indices)
-        VARIABLES[(namespace, name, indices)] = v
+        v = Variable(names, indices)
+        VARIABLES[(names, indices)] = v
     return v
 
 def num2point(num, vs):
@@ -185,17 +181,16 @@ class Variable(object):
     This implementation includes optional indices, nonnegative integers that
     can be used to construct multi-dimensional bit vectors.
     """
-    def __init__(self, namespace, name, indices):
+    def __init__(self, names, indices):
         global _UNIQIDS, _CNT
         try:
-            uniqid = _UNIQIDS[(namespace, name, indices)]
+            uniqid = _UNIQIDS[(names, indices)]
         except KeyError:
             uniqid = _CNT
             _CNT += 1
-            _UNIQIDS[(namespace, name, indices)] = uniqid
+            _UNIQIDS[(names, indices)] = uniqid
 
-        self.namespace = namespace
-        self.name = name
+        self.names = names
         self.indices = indices
         self.uniqid = uniqid
 
@@ -207,17 +202,19 @@ class Variable(object):
         return self.qualname + suffix
 
     def __lt__(self, other):
-        if self.name == other.name:
+        if self.names == other.names:
             return self.indices < other.indices
         else:
-            return self.name < other.name
+            return self.names < other.names
+
+    @property
+    def name(self):
+        return self.names[0]
 
     @property
     def qualname(self):
         """Return the fully qualified name."""
-        names = [n for n in reversed(self.namespace)]
-        names.append(self.name)
-        return ".".join(names)
+        return ".".join(reversed(self.names))
 
 
 class Function(object):
