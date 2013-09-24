@@ -28,25 +28,30 @@ from pyeda.util import bit_on, boolify
 VARIABLES = dict()
 
 
-def var(name, indices=None):
+def var(name, index=None):
     """Return a unique Variable instance.
 
     .. NOTE:: Do NOT call this function directly. It should only be used by
               concrete Variable implementations, eg ExprVariable.
     """
-    names = (name, ) if type(name) is str else name
-    if indices is None:
+    if type(name) is str:
+        names = (name, )
+    else:
+        names = name
+    if index is None:
         indices = tuple()
-    elif type(indices) is int:
-        indices = (indices, )
+    elif type(index) is int:
+        indices = (index, )
+    else:
+        indices = index
 
     # Check input types
     assert type(names) is tuple and len(names) > 0
     for name in names:
         assert type(name) is str
     assert type(indices) is tuple
-    for idx in indices:
-        assert type(idx) is int
+    for index in indices:
+        assert type(index) is int
 
     try:
         v = VARIABLES[(names, indices)]

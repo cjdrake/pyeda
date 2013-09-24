@@ -38,18 +38,18 @@ BDDNODEZERO = BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
 BDDNODEONE = BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
 
 
-def bddvar(name, indices=None):
+def bddvar(name, index=None):
     """Return a BDD variable.
 
     Parameters
     ----------
     name : str
         The variable's identifier string.
-    indices : int or tuple[int], optional
+    index : int or tuple[int], optional
         One or more integer suffixes for variables that are part of a
         multi-dimensional bit-vector, eg x[1], x[1][2][3]
     """
-    bvar = boolfunc.var(name, indices)
+    bvar = boolfunc.var(name, index)
     try:
         var = BDDVARIABLES[bvar.uniqid]
     except KeyError:

@@ -30,18 +30,18 @@ _PC2STR = {
     PC_DC   : '-'
 }
 
-def ttvar(name, indices=None):
+def ttvar(name, index=None):
     """Return a TruthTable variable.
 
     Parameters
     ----------
     name : str
         The variable's identifier string.
-    indices : int or tuple[int], optional
+    index : int or tuple[int], optional
         One or more integer suffixes for variables that are part of a
         multi-dimensional bit-vector, eg x[1], x[1][2][3]
     """
-    bvar = boolfunc.var(name, indices)
+    bvar = boolfunc.var(name, index)
     try:
         var = TTVARIABLES[bvar.uniqid]
     except KeyError:

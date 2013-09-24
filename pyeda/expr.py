@@ -46,7 +46,7 @@ EXPRVARIABLES = dict()
 EXPRCOMPLEMENTS = dict()
 
 
-def exprvar(name, indices=None):
+def exprvar(name, index=None):
     """Return an Expression Variable.
 
     Parameters
@@ -54,11 +54,11 @@ def exprvar(name, indices=None):
 
     name : str
         The variable's identifier string.
-    indices : int or tuple[int], optional
+    index : int or tuple[int], optional
         One or more integer suffixes for variables that are part of a
         multi-dimensional bit-vector, eg x[1], x[1][2][3]
     """
-    bvar = boolfunc.var(name, indices)
+    bvar = boolfunc.var(name, index)
     try:
         var = EXPRVARIABLES[bvar.uniqid]
     except KeyError:
