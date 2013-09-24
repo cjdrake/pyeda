@@ -1,8 +1,15 @@
 """
-Dimacs
+DIMACS
 
 For more information on the input formats,
-see "Satisfiability Suggested Format".
+see "Satisfiability Suggested Format",
+published May 1993 by the Rutgers Center for Discrete Mathematics (DIMACS).
+
+Also, see the proceedings of the International SAT Competition
+(http://www.satcompetition.org) for information and CNF examples.
+
+Exceptions:
+    DIMACSError
 
 Interface Functions:
     load_cnf
