@@ -69,11 +69,6 @@ class RegexLexer(object):
 
         return self
 
-    # For Python 2.7
-    def next(self):
-        return next(self.gtoks)
-
-    # For Python 3.2+
     def __next__(self):
         return next(self.gtoks)
 
