@@ -62,8 +62,7 @@ class RegexLexer(object):
         self.lineno = 1
         self.offset = 1
 
-        self.states.clear()
-        self.states.append('root')
+        self.states = ['root']
         self.tokens.clear()
 
         self.gtoks = self._iter_tokens()
