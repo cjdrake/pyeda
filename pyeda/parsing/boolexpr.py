@@ -91,7 +91,7 @@ class BoolExprLexer(RegexLexer):
 def expect_token(lex, types):
     """Return the next token, or raise an exception."""
     tok = next(lex)
-    if any(isinstance(tok, t) for t in types):
+    if any(type(tok) is t for t in types):
         return tok
     else:
         raise BoolExprParseError("unexpected token: " + str(tok))
@@ -116,7 +116,7 @@ def _expr_prime(lex):
     except StopIteration:
         return 0
     # '+' T E'
-    if isinstance(tok, OP_or):
+    if type(tok) is OP_or:
         return _term(lex) + _expr_prime(lex)
     # null
     else:
@@ -132,7 +132,7 @@ def _term_prime(lex):
     except StopIteration:
         return 1
     # '*' F T'
-    if isinstance(tok, OP_and):
+    if type(tok) is OP_and:
         return _factor(lex) * _term_prime(lex)
     # null
     else:
@@ -142,10 +142,10 @@ def _term_prime(lex):
 def _factor(lex):
     tok = expect_token(lex, {OP_not, LPAREN, NameToken})
     # '-' F
-    if isinstance(tok, OP_not):
+    if type(tok) is OP_not:
         return -(_factor(lex))
     # '(' EXPR ')'
-    elif isinstance(tok, LPAREN):
+    elif type(tok) is LPAREN:
         expr = _expr(lex)
         expect_token(lex, {RPAREN})
         return expr

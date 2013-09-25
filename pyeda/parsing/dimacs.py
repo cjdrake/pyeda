@@ -102,7 +102,7 @@ class CNFLexer(RegexLexer):
 def expect_token(lex, types):
     """Return the next token, or raise an exception."""
     tok = next(lex)
-    if any(isinstance(tok, t) for t in types):
+    if any(type(tok) is t for t in types):
         return tok
     else:
         raise DIMACSError("unexpected token: " + str(tok))
@@ -146,8 +146,8 @@ def _cnf_formula(lex, X):
 def _cnf_clause(lex, X):
     clause = list()
     tok = expect_token(lex, {OP_not, IntegerToken})
-    while not (isinstance(tok, IntegerToken) and tok.value == 0):
-        if isinstance(tok, OP_not):
+    while not (type(tok) is IntegerToken and tok.value == 0):
+        if type(tok) is OP_not:
             neg = True
             tok = expect_token(lex, {IntegerToken})
             idx = tok.value
@@ -321,16 +321,16 @@ def load_sat(s, varname='x'):
 def _sat_formula(lex, fmt, X):
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
     tok = expect_token(lex, types)
-    if isinstance(tok, IntegerToken):
+    if type(tok) is IntegerToken:
         idx = tok.value
         if not 0 < idx <= len(X):
             fstr = "formula literal {} outside valid range: (0, {}]"
             raise DIMACSError(fstr.format(idx, len(X)))
         return X[idx]
-    elif isinstance(tok, OP_not):
+    elif type(tok) is OP_not:
         op = _OPS[OP_not]
         tok = expect_token(lex, {IntegerToken, LPAREN})
-        if isinstance(tok, IntegerToken):
+        if type(tok) is IntegerToken:
             idx = tok.value
             if not 0 < idx <= len(X):
                 fstr = "formula literal {} outside valid range: (0, {}]"
@@ -338,7 +338,7 @@ def _sat_formula(lex, fmt, X):
             return op(X[idx])
         else:
             return op(_one_formula(lex, fmt, X))
-    elif isinstance(tok, LPAREN):
+    elif type(tok) is LPAREN:
         return _one_formula(lex, fmt, X)
     # OR/AND/XOR/EQUAL
     else:
@@ -355,7 +355,7 @@ def _zom_formulas(lex, fmt, X):
     fs = []
     types = {IntegerToken, LPAREN, RPAREN} | _SAT_TOKS[fmt]
     tok = expect_token(lex, types)
-    while not isinstance(tok, RPAREN):
+    while type(tok) is not RPAREN:
         lex.unpop_token(tok)
         fs.append(_sat_formula(lex, fmt, X))
         tok = expect_token(lex, types)
