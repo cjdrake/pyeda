@@ -39,6 +39,7 @@ Interface Classes:
 
 import collections
 
+import pyeda.parsing.boolexpr
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.util import bit_on, parity, cached_property
@@ -80,16 +81,31 @@ def expr(arg):
     """Return an Expression."""
     if isinstance(arg, Expression):
         return arg
-    elif arg == 0 or arg == '0':
-        return EXPRZERO
-    elif arg == 1 or arg == '1':
-        return EXPRONE
+    elif arg in {0, 1}:
+        return CONSTANTS[arg]
     elif type(arg) is str:
-        from pyeda.parsing.boolexpr import str2expr
-        return str2expr(arg)
+        ast = pyeda.parsing.boolexpr.parse(arg)
+        return ast2expr(ast)
     else:
         fstr = "argument cannot be converted to Expression: " + str(arg)
         raise TypeError(fstr)
+
+def ast2expr(ast):
+    expr = _ast2expr(ast)
+    return expr
+
+def _ast2expr(ast):
+    """Convert an abstract syntax tree to an Expression."""
+    if ast[0] == 'const':
+        return CONSTANTS[ast[1]]
+    elif ast[0] == 'var':
+        return exprvar(ast[1], ast[2])
+    elif ast[0] == 'not':
+        return Not(ast2expr(ast[1]))
+    else:
+        args = [ast2expr(arg) for arg in ast[1:]]
+        op = {'or': Or, 'and': And}[ast[0]]
+        return op(*args)
 
 def upoint2exprpoint(upoint):
     """Convert an untyped point to an Expression point."""
@@ -627,6 +643,8 @@ class _ExprOne(ExprConstant):
 
 EXPRZERO = _ExprZero()
 EXPRONE = _ExprOne()
+
+CONSTANTS = {0: EXPRZERO, 1: EXPRONE}
 
 
 class ExprLiteral(Expression, sat.DPLLInterface):

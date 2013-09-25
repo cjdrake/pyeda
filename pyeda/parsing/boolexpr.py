@@ -5,14 +5,13 @@ Exceptions:
     BoolExprParseError
 
 Interface Functions:
-    str2expr
+    parse
 """
 
 from pyeda.parsing.lex import RegexLexer, action
 from pyeda.parsing.token import (
-    NameToken, OperatorToken, PunctuationToken,
+    NameToken, IntegerToken, OperatorToken, PunctuationToken,
 )
-from pyeda.expr import exprvar
 
 class BoolExprParseError(Exception):
     def __init__(self, msg):
@@ -45,11 +44,16 @@ class BoolExprLexer(RegexLexer):
     def name(self, text):
         return text
 
+    @action(IntegerToken)
+    def num(self, text):
+        return int(text)
+
     RULES = {
         'root': [
             (r"\s+", ignore),
 
             (r"[a-zA-Z][a-zA-Z_]*(?:\.[a-zA-Z][a-zA-Z_]*)*(?:\[\d+\])*", name),
+            (r"\b[01]\b", num),
 
             (r"\+", operator),
             (r"\-", operator),
@@ -87,8 +91,27 @@ class BoolExprLexer(RegexLexer):
 # F := '-' F
 #    | '(' EXPR ')'
 #    | VAR
+#    | '0'
+#    | '1'
 
-def expect_token(lex, types):
+def parse(s):
+    """
+    Parse an input string in DIMACS SAT format,
+    and return an expression abstract syntax tree.
+    """
+    lex = iter(BoolExprLexer(s))
+    try:
+        expr = _expr(lex)
+    except StopIteration:
+        raise BoolExprParseError("incomplete expression")
+    try:
+        tok = next(lex)
+    except StopIteration:
+        return expr
+    else:
+        raise BoolExprParseError("unexpected token: " + str(tok))
+
+def _expect_token(lex, types):
     """Return the next token, or raise an exception."""
     tok = next(lex)
     if any(type(tok) is t for t in types):
@@ -96,72 +119,87 @@ def expect_token(lex, types):
     else:
         raise BoolExprParseError("unexpected token: " + str(tok))
 
-def str2expr(s):
-    """
-    Parse an input string in DIMACS SAT format,
-    and return an expression.
-    """
-    lex = iter(BoolExprLexer(s))
-    return _expr(lex)
-
 def _expr(lex):
-    try:
-        return _term(lex) + _expr_prime(lex)
-    except StopIteration:
-        raise BoolExprParseError("incomplete expression")
+    term = _term(lex)
+    expr_prime = _expr_prime(lex)
+    if expr_prime is None:
+        return term
+    else:
+        return ('or', term, expr_prime)
 
 def _expr_prime(lex):
     try:
         tok = next(lex)
     except StopIteration:
-        return 0
+        return None
     # '+' T E'
-    if type(tok) is OP_or:
-        return _term(lex) + _expr_prime(lex)
+    toktype = type(tok)
+    if toktype is OP_or:
+        term = _term(lex)
+        expr_prime = _expr_prime(lex)
+        if expr_prime is None:
+            return term
+        else:
+            return ('or', term, expr_prime)
     # null
     else:
         lex.unpop_token(tok)
-        return 0
+        return None
 
 def _term(lex):
-    return _factor(lex) * _term_prime(lex)
+    factor = _factor(lex)
+    term_prime = _term_prime(lex)
+    if term_prime is None:
+        return factor
+    else:
+        return ('and', factor, term_prime)
 
 def _term_prime(lex):
     try:
         tok = next(lex)
     except StopIteration:
-        return 1
+        return None
     # '*' F T'
-    if type(tok) is OP_and:
-        return _factor(lex) * _term_prime(lex)
+    toktype = type(tok)
+    if toktype is OP_and:
+        factor = _factor(lex)
+        term_prime = _term_prime(lex)
+        if term_prime is None:
+            return factor
+        else:
+            return ('and', factor, term_prime)
     # null
     else:
         lex.unpop_token(tok)
-        return 1
+        return None
 
 def _factor(lex):
-    tok = expect_token(lex, {OP_not, LPAREN, NameToken})
+    tok = _expect_token(lex, {OP_not, LPAREN, NameToken, IntegerToken})
     # '-' F
-    if type(tok) is OP_not:
-        return -(_factor(lex))
+    toktype = type(tok)
+    if toktype is OP_not:
+        return ('not', _factor(lex))
     # '(' EXPR ')'
-    elif type(tok) is LPAREN:
+    elif toktype is LPAREN:
         expr = _expr(lex)
-        expect_token(lex, {RPAREN})
+        _expect_token(lex, {RPAREN})
         return expr
     # VAR
-    else:
+    elif toktype is NameToken:
         lex.unpop_token(tok)
         return _variable(lex)
+    # 0 | 1
+    else:
+        return ('const', tok.value)
 
 def _variable(lex):
-    tok = expect_token(lex, {NameToken})
+    tok = _expect_token(lex, {NameToken})
     try:
         idx = tok.value.index('[')
         name, tail = tok.value[:idx], tok.value[idx:]
         indices = tuple(int(s[:-1]) for s in tail.split('[')[1:])
     except ValueError:
         name = tok.value
-        indices = None
+        indices = tuple()
     names = tuple(reversed(name.split('.')))
-    return exprvar(names, indices)
+    return ('var', names, indices)

@@ -17,7 +17,7 @@ from pyeda.boolfunc import (
     iter_points, iter_upoints, iter_terms,
 )
 from pyeda.expr import (
-    exprvar, exprcomp, expr, upoint2exprpoint,
+    exprvar, exprcomp, expr, ast2expr, upoint2exprpoint,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
 )
@@ -41,4 +41,3 @@ from pyeda.bdd import (
 from pyeda.parsing.dimacs import (
     load_cnf, dump_cnf, load_sat, dump_sat,
 )
-from pyeda.parsing.boolexpr import str2expr
