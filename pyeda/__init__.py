@@ -34,7 +34,7 @@ from pyeda.table import (
     TruthTable, TTConstant, TTVariable,
 )
 from pyeda.bdd import (
-    bddvar, expr2bdd, bdd2expr, upoint2bddpoint,
+    bddvar, bddnode, bdd, expr2bdd, bdd2expr, upoint2bddpoint,
     BinaryDecisionDiagram, BDDConstant, BDDVariable,
 )
 

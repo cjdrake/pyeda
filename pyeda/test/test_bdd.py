@@ -4,8 +4,8 @@ Test binary decision diagrams
 
 from pyeda.alphas import *
 from pyeda.bdd import (
-    bddvar, expr2bdd, bdd2expr,
-    _bdd, BDDNODEZERO, BDDNODEONE, BDDZERO, BDDONE
+    bddvar, bdd, expr2bdd, bdd2expr,
+    BDDNODEZERO, BDDNODEONE, BDDZERO, BDDONE
 )
 from pyeda.expr import EXPRZERO, EXPRONE, Xor
 
@@ -50,8 +50,8 @@ def test_expr2bdd():
 
 def test_bdd2expr():
     f = a * b + a * c + b * c
-    zero = _bdd(BDDNODEZERO)
-    one = _bdd(BDDNODEONE)
+    zero = bdd(BDDNODEZERO)
+    one = bdd(BDDNODEONE)
     assert bdd2expr(zero) is EXPRZERO
     assert bdd2expr(one) is EXPRONE
     assert bdd2expr(expr2bdd(f)).equivalent(f)
