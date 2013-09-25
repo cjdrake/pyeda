@@ -4,6 +4,7 @@ Boolean Logic Expressions
 Interface Functions:
     exprvar
     exprcomp
+    expr
     upoint2exprpoint
 
     Or, And, Not
@@ -74,6 +75,21 @@ def exprcomp(exprvar):
         comp = ExprComplement(exprvar)
         EXPRCOMPLEMENTS[uniqid] = comp
     return comp
+
+def expr(arg):
+    """Return an Expression."""
+    if isinstance(arg, Expression):
+        return arg
+    elif arg == 0 or arg == '0':
+        return EXPRZERO
+    elif arg == 1 or arg == '1':
+        return EXPRONE
+    elif type(arg) is str:
+        from pyeda.parsing.boolexpr import str2expr
+        return str2expr(arg)
+    else:
+        fstr = "argument cannot be converted to Expression: " + str(arg)
+        raise TypeError(fstr)
 
 def upoint2exprpoint(upoint):
     """Convert an untyped point to an Expression point."""
@@ -346,18 +362,7 @@ class Expression(boolfunc.Function):
 
     @staticmethod
     def box(arg):
-        if isinstance(arg, Expression):
-            return arg
-        elif arg == 0 or arg == '0':
-            return EXPRZERO
-        elif arg == 1 or arg == '1':
-            return EXPRONE
-        elif type(arg) is str:
-            from pyeda.parsing.boolexpr import str2expr
-            return str2expr(arg)
-        else:
-            fstr = "argument cannot be converted to Expression: " + str(arg)
-            raise TypeError(fstr)
+        return expr(arg)
 
     # Specific to Expression
     def __lt__(self, other):

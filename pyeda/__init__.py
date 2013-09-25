@@ -17,7 +17,7 @@ from pyeda.boolfunc import (
     iter_points, iter_upoints, iter_terms,
 )
 from pyeda.expr import (
-    exprvar, exprcomp, upoint2exprpoint,
+    exprvar, exprcomp, expr, upoint2exprpoint,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
 )
