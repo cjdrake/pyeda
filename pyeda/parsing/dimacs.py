@@ -328,15 +328,16 @@ def _sat_formula(lex, fmt, X):
             raise DIMACSError(fstr.format(idx, len(X)))
         return X[idx]
     elif isinstance(tok, OP_not):
+        op = _OPS[OP_not]
         tok = expect_token(lex, {IntegerToken, LPAREN})
         if isinstance(tok, IntegerToken):
             idx = tok.value
             if not 0 < idx <= len(X):
                 fstr = "formula literal {} outside valid range: (0, {}]"
                 raise DIMACSError(fstr.format(idx, len(X)))
-            return -X[idx]
+            return op(X[idx])
         else:
-            return Not(_one_formula(lex, fmt, X))
+            return op(_one_formula(lex, fmt, X))
     elif isinstance(tok, LPAREN):
         return _one_formula(lex, fmt, X)
     # OR/AND/XOR/EQUAL

@@ -12,7 +12,7 @@ from pyeda.parsing.lex import RegexLexer, action
 from pyeda.parsing.token import (
     NameToken, OperatorToken, PunctuationToken,
 )
-from pyeda.expr import exprvar, Not
+from pyeda.expr import exprvar
 
 class BoolExprParseError(Exception):
     def __init__(self, msg):
@@ -143,7 +143,7 @@ def _factor(lex):
     tok = expect_token(lex, {OP_not, LPAREN, NameToken})
     # '-' F
     if isinstance(tok, OP_not):
-        return Not(_factor(lex))
+        return -(_factor(lex))
     # '(' EXPR ')'
     elif isinstance(tok, LPAREN):
         expr = _expr(lex)
