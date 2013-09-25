@@ -16,10 +16,6 @@ from pyeda.boolfunc import (
     num2point, num2upoint, num2term, point2upoint, point2term,
     iter_points, iter_upoints, iter_terms,
 )
-from pyeda.bdd import (
-    bddvar, expr2bdd, bdd2expr, upoint2bddpoint,
-    BinaryDecisionDiagram, BDDConstant, BDDVariable,
-)
 from pyeda.expr import (
     exprvar, exprcomp, upoint2exprpoint,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
@@ -36,6 +32,10 @@ from pyeda.nfexpr import (
 from pyeda.table import (
     ttvar, truthtable, expr2truthtable, truthtable2expr,
     TruthTable, TTConstant, TTVariable,
+)
+from pyeda.bdd import (
+    bddvar, expr2bdd, bdd2expr, upoint2bddpoint,
+    BinaryDecisionDiagram, BDDConstant, BDDVariable,
 )
 
 from pyeda.parsing.dimacs import (
