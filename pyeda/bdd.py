@@ -5,6 +5,7 @@ Interface Functions:
     bddvar
     bddnode
     bdd
+    expr2bddnode
     expr2bdd
     bdd2expr
 
@@ -82,11 +83,7 @@ def bdd(node):
         _bdd = BDDS[node] = BinaryDecisionDiagram(node)
     return _bdd
 
-def expr2bdd(expr):
-    """Convert an expression into a binary decision diagram."""
-    return bdd(_expr2node(expr))
-
-def _expr2node(expr):
+def expr2bddnode(expr):
     """Convert an expression into a BDD node."""
     if expr is EXPRZERO:
         return BDDNODEZERO
@@ -99,9 +96,13 @@ def _expr2node(expr):
         _ = bddvar(top.names, top.indices)
 
         root = top.uniqid
-        low = _expr2node(expr.restrict({top: 0}))
-        high = _expr2node(expr.restrict({top: 1}))
+        low = expr2bddnode(expr.restrict({top: 0}))
+        high = expr2bddnode(expr.restrict({top: 1}))
         return bddnode(root, low, high)
+
+def expr2bdd(expr):
+    """Convert an expression into a binary decision diagram."""
+    return bdd(expr2bddnode(expr))
 
 def bdd2expr(bdd, conj=False):
     """Convert a binary decision diagram into an expression."""
