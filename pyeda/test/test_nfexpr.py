@@ -2,8 +2,7 @@
 Test normal form expression Boolean functions
 """
 
-from pyeda.alphas import *
-from pyeda.expr import EXPRZERO, EXPRONE
+from pyeda.expr import exprvar, EXPRZERO, EXPRONE
 
 from pyeda.nfexpr import (
     expr2dnf, expr2cnf, nf2expr,
@@ -12,6 +11,8 @@ from pyeda.nfexpr import (
 )
 
 import nose
+
+a, b, c, d = map(exprvar, 'abcd')
 
 def test_misc():
     nose.tools.assert_raises(TypeError, nf2expr, "foo")

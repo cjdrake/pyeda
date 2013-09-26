@@ -2,13 +2,13 @@
 Test binary decision diagrams
 """
 
-from pyeda.alphas import *
 from pyeda.bdd import (
     bddvar, bdd, expr2bdd, bdd2expr,
     BDDNODEZERO, BDDNODEONE, BDDZERO, BDDONE
 )
-from pyeda.expr import EXPRZERO, EXPRONE, Xor
+from pyeda.expr import exprvar, EXPRZERO, EXPRONE, Xor
 
+a, b, c, d, e = map(exprvar, 'abcde')
 aa, bb, cc, dd, ee = map(bddvar, 'abcde')
 
 def test_misc():
@@ -61,7 +61,7 @@ def test_traverse():
     ff = expr2bdd(a * b + a * c + b * c)
     path = [node.root for node in ff.traverse()]
     # 0, 1, c, b(0, c), b(c, 1), a
-    assert path == [-2, -1, 3, 2, 2, 1]
+    assert path == [-2, -1, c.uniqid, b.uniqid, b.uniqid, a.uniqid]
 
 def test_equivalent():
     ff = expr2bdd(a * -b + -a * b)

@@ -5,8 +5,8 @@ Test expression Boolean functions
 import sys
 
 from pyeda import boolfunc
-from pyeda.alphas import *
 from pyeda.expr import (
+    exprvar,
     Expression,
     Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
@@ -16,6 +16,8 @@ from pyeda.sat import backtrack, dpll
 from pyeda.vexpr import bitvec
 
 import nose
+
+a, b, c, d, e, p, q, s = map(exprvar, 'abcdepqs')
 
 MAJOR = sys.version_info.major
 MINOR = sys.version_info.minor

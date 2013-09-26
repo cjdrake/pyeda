@@ -31,7 +31,9 @@ Sudoku Example
 658|947|132
 """
 
-from pyeda import *
+from pyeda.expr import And, OneHot
+from pyeda.nfexpr import CNF_And
+from pyeda.vexpr import bitvec
 from pyeda.sat import dpll
 
 DIGITS = "123456789"

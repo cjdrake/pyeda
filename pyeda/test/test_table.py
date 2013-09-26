@@ -2,12 +2,12 @@
 Test table Boolean functions
 """
 
-from pyeda.alphas import *
 from pyeda.table import (
     ttvar, truthtable, expr2truthtable, truthtable2expr
 )
-from pyeda.expr import Xor
+from pyeda.expr import exprvar, Xor
 
+a, b, c, d, e = map(exprvar, 'abcde')
 aa, bb, cc, dd, ee = map(ttvar, 'abcde')
 
 XOR_STR = \

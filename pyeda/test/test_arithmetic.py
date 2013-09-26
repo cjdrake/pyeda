@@ -4,10 +4,10 @@ Test logic functions for digital arithmetic
 
 import random
 
-from pyeda import bitvec, uint2vec, int2vec
 from pyeda.arithmetic import ripple_carry_add as rca
 from pyeda.arithmetic import kogge_stone_add as ksa
 from pyeda.arithmetic import bin2gray, gray2bin
+from pyeda.vexpr import bitvec, uint2vec, int2vec
 
 NVECS = 100
 
