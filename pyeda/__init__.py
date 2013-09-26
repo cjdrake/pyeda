@@ -4,8 +4,6 @@ Python EDA Package
 
 __version__ = "0.13.0"
 
-# Positional Cube Notation
-PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
 
 import pyeda.alphas
 import pyeda.arithmetic

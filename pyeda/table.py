@@ -16,9 +16,11 @@ Interface Classes:
 import array
 
 from pyeda import boolfunc
-from pyeda import PC_VOID, PC_ONE, PC_ZERO, PC_DC
 from pyeda.expr import exprvar, Or, And
 from pyeda.util import cached_property
+
+# Positional Cube Notation
+PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
 
 # existing TTVariable references
 TTVARIABLES = dict()
