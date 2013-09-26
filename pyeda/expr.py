@@ -101,9 +101,9 @@ def _ast2expr(ast):
     elif ast[0] == 'var':
         return exprvar(ast[1], ast[2])
     elif ast[0] == 'not':
-        return Not(ast2expr(ast[1]))
+        return Not(_ast2expr(ast[1]))
     else:
-        args = [ast2expr(arg) for arg in ast[1:]]
+        args = [_ast2expr(arg) for arg in ast[1:]]
         op = {'or': Or, 'and': And}[ast[0]]
         return op(*args)
 
