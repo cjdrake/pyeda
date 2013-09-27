@@ -5,6 +5,9 @@ Interface Functions:
     exprvar
     exprcomp
     expr
+    ast2expr
+    expr2dimacscnf
+    expr2dimacssat
     upoint2exprpoint
 
     Or, And, Not
@@ -43,6 +46,7 @@ import pyeda.parsing.boolexpr
 from pyeda import boolfunc
 from pyeda import sat
 from pyeda.util import bit_on, parity, cached_property
+
 
 EXPRVARIABLES = dict()
 EXPRCOMPLEMENTS = dict()
@@ -91,21 +95,84 @@ def expr(arg):
         raise TypeError(fstr)
 
 def ast2expr(ast):
-    expr = _ast2expr(ast)
-    return expr
-
-def _ast2expr(ast):
     """Convert an abstract syntax tree to an Expression."""
     if ast[0] == 'const':
         return CONSTANTS[ast[1]]
     elif ast[0] == 'var':
         return exprvar(ast[1], ast[2])
-    elif ast[0] == 'not':
-        return Not(_ast2expr(ast[1]))
     else:
-        args = [_ast2expr(arg) for arg in ast[1:]]
-        op = {'or': Or, 'and': And}[ast[0]]
-        return op(*args)
+        args = tuple(ast2expr(arg) for arg in ast[1:])
+        return ASTOPS[ast[0]](*args)
+
+def expr2dimacscnf(expr):
+    """Convert an expression into an equivalent DIMACS CNF string."""
+    if not isinstance(expr, Expression):
+        raise ValueError("input is not an expression")
+    if not expr.is_cnf():
+        raise ValueError("input is not a CNF")
+
+    nums, nvariables = _exprnvars(expr)
+    clauses = _expr2clauses(expr, nums)
+    formula = " ".join(" ".join(term for term in clause) for clause in clauses)
+    return "p cnf {} {}\n{}".format(nvariables, len(clauses), formula)
+
+def expr2dimacssat(expr):
+    """Convert an expression into an equivalent DIMACS SAT string."""
+    if not isinstance(expr, Expression):
+        raise ValueError("input is not an expression")
+    if not expr.simplified:
+        raise ValueError("input expression is not simplified")
+
+    nums, nvariables = _exprnvars(expr)
+    formula = _expr2sat(expr, nums)
+    if 'xor' in formula:
+        if '=' in formula:
+            fmt = 'satex'
+        else:
+            fmt = 'satx'
+    elif '=' in formula:
+        fmt = 'sate'
+    else:
+        fmt = 'sat'
+    return "p {} {}\n{}".format(fmt, nvariables, formula)
+
+def _exprnvars(expr):
+    nums = {v.uniqid: None for v in expr.support}
+    num = 1
+    for uniqid in sorted(nums.keys()):
+        nums[uniqid] = num
+        nums[-uniqid] = -num
+        num += 1
+    return nums, num - 1
+
+def _expr2clauses(expr, nums):
+    if expr is EXPRONE:
+        return []
+    elif isinstance(expr, ExprLiteral):
+        return [[str(nums[expr.uniqid]), '0']]
+    elif isinstance(expr, ExprOr) and expr.depth == 1:
+        return [[str(nums[lit.uniqid]) for lit in expr.args] + ['0']]
+    elif isinstance(expr, ExprAnd) and expr.depth == 1:
+        return [[str(nums[lit.uniqid]), '0'] for lit in expr.args]
+    else:
+        return [[str(nums[lit.uniqid]) for lit in term.arg_set] + ['0']
+                for term in expr.args]
+
+def _expr2sat(expr, nums):
+    if isinstance(expr, ExprLiteral):
+        return str(nums[expr.uniqid])
+    elif isinstance(expr, ExprOr):
+        return "+(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
+    elif isinstance(expr, ExprAnd):
+        return "*(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
+    elif isinstance(expr, ExprNot):
+        return "-(" + _expr2sat(expr.args[0], nums) + ")"
+    elif isinstance(expr, ExprXor):
+        return "xor(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
+    elif isinstance(expr, ExprEqual):
+        return "=(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
+    else:
+        raise ValueError("invalid expression")
 
 def upoint2exprpoint(upoint):
     """Convert an untyped point to an Expression point."""
@@ -473,7 +540,6 @@ class Expression(boolfunc.Function):
     def equivalent(self, other):
         """Return whether this expression is equivalent to another."""
         other = self.box(other)
-        #f = ExprAnd(ExprOr(ExprNot(self), ExprNot(other)), ExprOr(self, other))
         f = Xor(self, other)
         return f.satisfy_one() is None
 
@@ -644,14 +710,13 @@ class _ExprOne(ExprConstant):
 EXPRZERO = _ExprZero()
 EXPRONE = _ExprOne()
 
-CONSTANTS = {0: EXPRZERO, 1: EXPRONE}
-
 
 class ExprLiteral(Expression, sat.DPLLInterface):
     """An instance of a variable or of its complement"""
 
     def __init__(self):
         super(ExprLiteral, self).__init__(None)
+        self.simplified = True
 
     @cached_property
     def arg_set(self):
@@ -850,7 +915,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
                     args[i] = arg
             return self.__class__(*args).simplify()
         else:
-            return self
+            return self.simplify()
 
     # From Expression
     def __lt__(self, other):
@@ -1052,6 +1117,8 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
 class ExprOr(ExprOrAnd):
     """Expression OR operator"""
 
+    ASTOP = 'or'
+
     def __str__(self):
         return self.args_str(" + ")
 
@@ -1133,6 +1200,8 @@ class ExprOr(ExprOrAnd):
 
 class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
+
+    ASTOP = 'and'
 
     def __str__(self):
         parts = list()
@@ -1234,6 +1303,8 @@ class ExprAnd(ExprOrAnd):
 class ExprNot(Expression):
     """Expression NOT operator"""
 
+    ASTOP = 'not'
+
     def __new__(cls, arg, simplified=False):
         if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
             return arg.invert()
@@ -1321,9 +1392,7 @@ class ExprExclusive(Expression):
             else:
                 args.add(arg)
 
-        xcls = { ExprXor.PARITY  : ExprXor,
-                 ExprXnor.PARITY : ExprXnor }[par]
-        return xcls(*args, simplified=True)
+        return EXCLOPS[par](*args, simplified=True)
 
     def factor(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
@@ -1358,6 +1427,8 @@ class ExprExclusive(Expression):
 class ExprXor(ExprExclusive):
     """Expression Exclusive OR (XOR) operator"""
 
+    ASTOP = 'xor'
+
     def __new__(cls, *args, **kwargs):
         # Xor() = 0
         if len(args) == 0:
@@ -1381,6 +1452,8 @@ class ExprXor(ExprExclusive):
 class ExprXnor(ExprExclusive):
     """Expression Exclusive NOR (XNOR) operator"""
 
+    ASTOP = 'xnor'
+
     def __new__(cls, *args, **kwargs):
         # Xnor() = 1
         if len(args) == 0:
@@ -1403,6 +1476,8 @@ class ExprXnor(ExprExclusive):
 
 class ExprEqual(Expression):
     """Expression EQUAL operator"""
+
+    ASTOP = 'equal'
 
     def __new__(cls, *args, **kwargs):
         # Equal(x) = Equal() = 1
@@ -1481,6 +1556,8 @@ class ExprEqual(Expression):
 class ExprImplies(Expression):
     """Expression implication operator"""
 
+    ASTOP = 'ite'
+
     def __init__(self, p, q, simplified=False):
         args = (p, q)
         super(ExprImplies, self).__init__(args)
@@ -1536,6 +1613,8 @@ class ExprImplies(Expression):
 
 class ExprITE(Expression):
     """Expression if-then-else ternary operator"""
+
+    ASTOP = 'ite'
 
     def __init__(self, s, d1, d0, simplified=False):
         args = (s, d1, d0)
@@ -1611,3 +1690,26 @@ class ExprITE(Expression):
     @cached_property
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
+
+
+# Convenience dictionaries
+CONSTANTS = {
+    _ExprZero.VAL : EXPRZERO,
+    _ExprOne.VAL  : EXPRONE
+}
+
+ASTOPS = {
+    ExprNot.ASTOP     : ExprNot,
+    ExprOr.ASTOP      : ExprOr,
+    ExprAnd.ASTOP     : ExprAnd,
+    ExprXor.ASTOP     : ExprXor,
+    ExprXnor.ASTOP    : ExprXnor,
+    ExprEqual.ASTOP   : ExprEqual,
+    ExprImplies.ASTOP : ExprImplies,
+    ExprITE.ASTOP     : ExprITE,
+}
+
+EXCLOPS = {
+    ExprXor.PARITY  : ExprXor,
+    ExprXnor.PARITY : ExprXnor
+}

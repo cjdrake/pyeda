@@ -36,6 +36,4 @@ from pyeda.bdd import (
     BinaryDecisionDiagram, BDDConstant, BDDVariable,
 )
 
-from pyeda.parsing.dimacs import (
-    load_cnf, dump_cnf, load_sat, dump_sat,
-)
+from pyeda.parsing.dimacs import parse_cnf, parse_sat

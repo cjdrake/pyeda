@@ -12,22 +12,14 @@ Exceptions:
     DIMACSError
 
 Interface Functions:
-    load_cnf
-    dump_cnf
-    load_sat
-    dump_sat
+    parse_cnf
+    parse_sat
 """
 
 from pyeda.parsing.lex import RegexLexer, action
 from pyeda.parsing.token import (
     KeywordToken, IntegerToken, OperatorToken, PunctuationToken,
 )
-
-from pyeda.expr import (
-    Not, Or, And, Xor, Equal,
-    Expression, ExprLiteral, ExprOr, ExprAnd, ExprNot, ExprXor, ExprEqual
-)
-from pyeda.vexpr import bitvec
 
 class DIMACSError(Exception):
     def __init__(self, msg):
@@ -42,11 +34,16 @@ class KW_sate(KeywordToken): pass
 class KW_satex(KeywordToken): pass
 
 # Operators
-class OP_not(OperatorToken): pass
-class OP_or(OperatorToken): pass
-class OP_and(OperatorToken): pass
-class OP_xor(OperatorToken): pass
-class OP_equal(OperatorToken): pass
+class OP_not(OperatorToken):
+    ASTOP = 'not'
+class OP_or(OperatorToken):
+    ASTOP = 'or'
+class OP_and(OperatorToken):
+    ASTOP = 'and'
+class OP_xor(OperatorToken):
+    ASTOP = 'xor'
+class OP_equal(OperatorToken):
+    ASTOP = 'equal'
 
 # Punctuation
 class LPAREN(PunctuationToken): pass
@@ -99,7 +96,7 @@ class CNFLexer(RegexLexer):
     }
 
 
-def expect_token(lex, types):
+def _expect_token(lex, types):
     """Return the next token, or raise an exception."""
     tok = next(lex)
     if any(type(tok) is t for t in types):
@@ -107,89 +104,63 @@ def expect_token(lex, types):
     else:
         raise DIMACSError("unexpected token: " + str(tok))
 
-def load_cnf(s, varname='x'):
+def parse_cnf(s, varname='x'):
     """
     Parse an input string in DIMACS CNF format,
     and return an expression.
     """
     lex = iter(CNFLexer(s))
 
-    expect_token(lex, {KW_p})
-    expect_token(lex, {KW_cnf})
-    nvariables = expect_token(lex, {IntegerToken}).value
-    nclauses = expect_token(lex, {IntegerToken}).value
+    _expect_token(lex, {KW_p})
+    _expect_token(lex, {KW_cnf})
+    nvariables = _expect_token(lex, {IntegerToken}).value
+    nclauses = _expect_token(lex, {IntegerToken}).value
 
-    X = bitvec(varname, (1, nvariables + 1))
-    formula = _cnf_formula(lex, X)
+    return _cnf_formula(lex, varname, nvariables, nclauses)
 
-    if len(formula) < nclauses:
-        fstr = "formula has fewer than {} clauses"
-        raise DIMACSError(fstr.format(nclauses))
-    elif len(formula) > nclauses:
-        fstr = "formula has more than {} clauses"
-        raise DIMACSError(fstr.format(nclauses))
-
-    return And(*[Or(*clause) for clause in formula])
-
-def _cnf_formula(lex, X):
-    formula = list()
+def _cnf_formula(lex, varname, nvariables, nclauses):
+    clauses = list()
     while True:
         try:
-            tok = expect_token(lex, {OP_not, IntegerToken})
+            tok = _expect_token(lex, {OP_not, IntegerToken})
         except StopIteration:
             break
         lex.unpop_token(tok)
-        formula.append(_cnf_clause(lex, X))
+        clauses.append(_cnf_clause(lex, varname, nvariables))
 
-    return formula
+    if len(clauses) < nclauses:
+        fstr = "formula has fewer than {} clauses"
+        raise DIMACSError(fstr.format(nclauses))
+    elif len(clauses) > nclauses:
+        fstr = "formula has more than {} clauses"
+        raise DIMACSError(fstr.format(nclauses))
 
-def _cnf_clause(lex, X):
+    return ('and', ) + tuple(clauses)
+
+def _cnf_clause(lex, varname, nvariables):
     clause = list()
-    tok = expect_token(lex, {OP_not, IntegerToken})
+    tok = _expect_token(lex, {OP_not, IntegerToken})
     while not (type(tok) is IntegerToken and tok.value == 0):
         if type(tok) is OP_not:
             neg = True
-            tok = expect_token(lex, {IntegerToken})
-            idx = tok.value
+            tok = _expect_token(lex, {IntegerToken})
+            index = tok.value
         else:
             neg = False
-            idx = tok.value
-        if idx > len(X):
+            index = tok.value
+        if index > nvariables:
             fstr = "formula literal {} is greater than {}"
-            raise DIMACSError(fstr.format(idx, len(X)))
-        clause.append(-X[idx] if neg else X[idx])
+            raise DIMACSError(fstr.format(index, nvariables))
+        if neg:
+            clause.append((OP_not.ASTOP, ('var', (varname, ), (index, ))))
+        else:
+            clause.append(('var', (varname, ), (index, )))
         try:
-            tok = expect_token(lex, {OP_not, IntegerToken})
+            tok = _expect_token(lex, {OP_not, IntegerToken})
         except StopIteration:
             raise DIMACSError("incomplete clause")
 
-    return clause
-
-def dump_cnf(expr):
-    """Convert an expression into an equivalent DIMACS CNF string."""
-    if not isinstance(expr, Expression):
-        raise ValueError("input is not an expression")
-    if not expr.is_cnf():
-        raise ValueError("expression is not a CNF")
-
-    nums = {v.uniqid: None for v in expr.support}
-    num = 1
-    for uniqid in sorted(nums.keys()):
-        nums[uniqid] = num
-        nums[-uniqid] = -num
-        num += 1
-
-    nvariables = num - 1
-    nclauses = len(expr.args)
-
-    formula = list()
-    for clause in expr.args:
-        for arg in clause.arg_set:
-            formula.extend([str(nums[arg.uniqid]), " "])
-        formula.extend(['0', '\n'])
-    formula = "".join(formula)
-
-    return "p cnf {} {}\n{}".format(nvariables, nclauses, formula)
+    return ('or', ) + tuple(clause)
 
 
 class SATLexer(RegexLexer):
@@ -290,115 +261,62 @@ _SAT_TOKS = {
     'satex': {OP_not, OP_or, OP_and, OP_xor, OP_equal},
 }
 
-_OPS = {
-    OP_not: Not,
-    OP_or: Or,
-    OP_and: And,
-    OP_xor: Xor,
-    OP_equal: Equal,
-}
-
-def load_sat(s, varname='x'):
+def parse_sat(s, varname='x'):
     """
     Parse an input string in DIMACS SAT format,
     and return an expression.
     """
     lex = iter(SATLexer(s))
 
-    expect_token(lex, {KW_p})
-    fmt = expect_token(lex, {KW_sat, KW_satx, KW_sate, KW_satex}).value
-    nvariables = expect_token(lex, {IntegerToken}).value
+    _expect_token(lex, {KW_p})
+    fmt = _expect_token(lex, {KW_sat, KW_satx, KW_sate, KW_satex}).value
+    nvariables = _expect_token(lex, {IntegerToken}).value
 
-    X = bitvec(varname, (1, nvariables + 1))
     try:
         types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
-        tok = expect_token(lex, types)
+        tok = _expect_token(lex, types)
         lex.unpop_token(tok)
-        return _sat_formula(lex, fmt, X)
+        return _sat_formula(lex, fmt, varname, nvariables)
     except StopIteration:
         raise DIMACSError("incomplete formula")
 
-def _sat_formula(lex, fmt, X):
+def _sat_formula(lex, fmt, varname, nvariables):
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
-    tok = expect_token(lex, types)
+    tok = _expect_token(lex, types)
     if type(tok) is IntegerToken:
-        idx = tok.value
-        if not 0 < idx <= len(X):
+        index = tok.value
+        if not 0 < index <= nvariables:
             fstr = "formula literal {} outside valid range: (0, {}]"
-            raise DIMACSError(fstr.format(idx, len(X)))
-        return X[idx]
+            raise DIMACSError(fstr.format(index, nvariables))
+        return ('var', (varname, ), (index, ))
     elif type(tok) is OP_not:
-        op = _OPS[OP_not]
-        tok = expect_token(lex, {IntegerToken, LPAREN})
+        tok = _expect_token(lex, {IntegerToken, LPAREN})
         if type(tok) is IntegerToken:
-            idx = tok.value
-            if not 0 < idx <= len(X):
+            index = tok.value
+            if not 0 < index <= nvariables:
                 fstr = "formula literal {} outside valid range: (0, {}]"
-                raise DIMACSError(fstr.format(idx, len(X)))
-            return op(X[idx])
+                raise DIMACSError(fstr.format(index, nvariables))
+            return (OP_not.ASTOP, ('var', (varname, ), (index, )))
         else:
-            return op(_one_formula(lex, fmt, X))
+            return (OP_not.ASTOP, _one_formula(lex, fmt, varname, nvariables))
     elif type(tok) is LPAREN:
-        return _one_formula(lex, fmt, X)
+        return _one_formula(lex, fmt, varname, nvariables)
     # OR/AND/XOR/EQUAL
     else:
-        op = _OPS[type(tok)]
-        tok = expect_token(lex, {LPAREN})
-        return op(*_zom_formulas(lex, fmt, X))
+        _expect_token(lex, {LPAREN})
+        return (tok.ASTOP, ) + _zom_formulas(lex, fmt, varname, nvariables)
 
-def _one_formula(lex, fmt, X):
-    f = _sat_formula(lex, fmt, X)
-    expect_token(lex, {RPAREN})
+def _one_formula(lex, fmt, varname, nvariables):
+    f = _sat_formula(lex, fmt, varname, nvariables)
+    _expect_token(lex, {RPAREN})
     return f
 
-def _zom_formulas(lex, fmt, X):
-    fs = []
+def _zom_formulas(lex, fmt, varname, nvariables):
+    fs = list()
     types = {IntegerToken, LPAREN, RPAREN} | _SAT_TOKS[fmt]
-    tok = expect_token(lex, types)
+    tok = _expect_token(lex, types)
     while type(tok) is not RPAREN:
         lex.unpop_token(tok)
-        fs.append(_sat_formula(lex, fmt, X))
-        tok = expect_token(lex, types)
-    return fs
-
-def dump_sat(expr):
-    """Convert an expression into an equivalent DIMACS SAT string."""
-    if not isinstance(expr, Expression):
-        raise ValueError("input is not an expression")
-
-    nums = {v.uniqid: None for v in expr.support}
-    num = 1
-    for uniqid in sorted(nums.keys()):
-        nums[uniqid] = num
-        nums[-uniqid] = -num
-        num += 1
-
-    nvariables = num - 1
-
-    formula = _expr2sat(expr, nums)
-    if 'xor' in formula:
-        if '=' in formula:
-            fmt = 'satex'
-        else:
-            fmt = 'satx'
-    elif '=' in formula:
-        fmt = 'sate'
-    else:
-        fmt = 'sat'
-    return "p {} {}\n{}".format(fmt, nvariables, formula)
-
-def _expr2sat(expr, nums):
-    if isinstance(expr, ExprLiteral):
-        return str(nums[expr.uniqid])
-    elif isinstance(expr, ExprOr):
-        return "+(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
-    elif isinstance(expr, ExprAnd):
-        return "*(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
-    elif isinstance(expr, ExprNot):
-        return "-(" + _expr2sat(expr.args[0], nums) + ")"
-    elif isinstance(expr, ExprXor):
-        return "xor(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
-    elif isinstance(expr, ExprEqual):
-        return "=(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
-    else:
-        raise ValueError("invalid expression")
+        fs.append(_sat_formula(lex, fmt, varname, nvariables))
+        tok = _expect_token(lex, types)
+    return tuple(fs)
