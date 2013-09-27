@@ -1,5 +1,5 @@
 """
-Normal Form Expressions
+Boolean Normal Form Expressions
 
 Interface Functions:
     expr2dnf

@@ -35,9 +35,9 @@ def bitvec(name, *slices):
                 sls.append(slice(sl[1], sl[0]))
         else:
             raise ValueError("invalid argument")
-    return _rbitvec(name, sls, tuple())
+    return _bitvec(name, sls, tuple())
 
-def _rbitvec(name, slices, indices):
+def _bitvec(name, slices, indices):
     """Return a BitVector with an arbitrary number of slices.
 
     NOTE: This is a recursive helper function for 'bitvec'.
@@ -45,8 +45,8 @@ def _rbitvec(name, slices, indices):
     """
     fst, rst = slices[0], slices[1:]
     if rst:
-        items = [ _rbitvec(name, rst, indices + (i, ))
-                  for i in range(fst.start, fst.stop) ]
+        items = [_bitvec(name, rst, indices + (i, ))
+                 for i in range(fst.start, fst.stop)]
         return Slicer(items, fst.start)
     else:
         vs = [exprvar(name, indices + (i, ))

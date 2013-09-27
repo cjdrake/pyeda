@@ -1,10 +1,10 @@
 """
 Boolean Satisfiability
 
-Interface classes:
+Interface Classes:
     DPLLInterface
 
-Interface functions:
+Interface Functions:
     backtrack
     iter_backtrack
     dpll

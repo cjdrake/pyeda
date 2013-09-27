@@ -1,4 +1,6 @@
 """
+Utility Functions
+
 Interface Functions:
     bit_on
     clog2
