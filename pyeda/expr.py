@@ -952,6 +952,12 @@ class ExprOrAnd(_ArgContainer, sat.DPLLInterface):
         super(ExprOrAnd, self).__init__(frozenset(args))
         self.simplified = kwargs.get('simplified', False)
 
+    def __eq__(self, other):
+        return isinstance(other, ExprOrAnd) and self.args == other.args
+
+    def __hash__(self):
+        return hash(self.args)
+
     @cached_property
     def arg_set(self):
         """Return the argument set for a normal form term."""
