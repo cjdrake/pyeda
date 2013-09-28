@@ -26,6 +26,7 @@ Features
 * Formal equivalence
 * Multi-dimensional bit vectors
 * DIMACS CNF/SAT parsers
+* Logic expression parser
 
 Download
 --------
@@ -59,9 +60,9 @@ Getting Started With Logic Expressions
 --------------------------------------
 
 Invoke your favorite Python terminal,
-and import standard symbols from ``pyeda``::
+and invoke an interactive ``pyeda`` session::
 
-    >>> from pyeda import *
+    >>> from pyeda.inter import *
 
 Create some Boolean expression variables::
 

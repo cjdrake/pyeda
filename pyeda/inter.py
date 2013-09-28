@@ -6,6 +6,9 @@ To prepare a terminal for interactive use:
     >>> from pyeda.inter import *
 """
 
+# Disable "unused import"
+# pylint: disable=W0611
+
 from pyeda.util import clog2, parity, boolify
 
 from pyeda.boolfunc import (

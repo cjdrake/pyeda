@@ -2,8 +2,9 @@
 Alphabetic Variables
 """
 
-# Disable "invalid variable name"
+# Disable "invalid variable name", "line too long"
 # pylint: disable=C0103
+# pylint: disable=C0301
 
 from pyeda.expr import exprvar
 

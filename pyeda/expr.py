@@ -137,6 +137,7 @@ def expr2dimacssat(expr):
     return "p {} {}\n{}".format(fmt, nvariables, formula)
 
 def _exprnvars(expr):
+    """Return a remapping of Variable uniqids."""
     nums = {v.uniqid: None for v in expr.support}
     num = 1
     for uniqid in sorted(nums.keys()):
@@ -146,6 +147,7 @@ def _exprnvars(expr):
     return nums, num - 1
 
 def _expr2clauses(expr, nums):
+    """Convert an expression to a list of DIMACS CNF clauses."""
     if expr is EXPRONE:
         return []
     elif isinstance(expr, ExprLiteral):
@@ -159,6 +161,7 @@ def _expr2clauses(expr, nums):
                 for term in expr.args]
 
 def _expr2sat(expr, nums):
+    """Convert an expression to a DIMACS SAT string."""
     if isinstance(expr, ExprLiteral):
         return str(nums[expr.uniqid])
     elif isinstance(expr, ExprOr):
@@ -168,7 +171,8 @@ def _expr2sat(expr, nums):
     elif isinstance(expr, ExprNot):
         return "-(" + _expr2sat(expr.args[0], nums) + ")"
     elif isinstance(expr, ExprXor):
-        return "xor(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
+        return ("xor(" + " ".join(_expr2sat(arg, nums)
+                                  for arg in expr.args) + ")")
     elif isinstance(expr, ExprEqual):
         return "=(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
     else:
