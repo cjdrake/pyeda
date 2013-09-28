@@ -43,6 +43,7 @@ def test_sat_errors():
     nose.tools.assert_raises(DIMACSError, parse_sat, "p sat 2\n-(3)")
 
 def test_parse_sat():
+    assert parse_sat("p sat 1\n(-1)") == ('not', ('var', ('x', ), (1, )))
     assert parse_sat("p sat 2\n-(+(*(-1 2) *(1 -2)))") == ('not', ('or', ('and', ('not', ('var', ('x', ), (1, ))), ('var', ('x', ), (2, ))), ('and', ('var', ('x', ), (1, )), ('not', ('var', ('x', ), (2, ))))))
     assert parse_sat("p satx 2\nxor(-1 2)") == ('xor', ('not', ('var', ('x', ), (1, ))), ('var', ('x', ), (2, )))
     assert parse_sat("p sate 2\n=(-1 2)") == ('equal', ('not', ('var', ('x', ), (1, ))), ('var', ('x', ), (2, )))
