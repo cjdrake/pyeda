@@ -970,7 +970,6 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
             else:
                 args.add(arg)
 
-        args = tuple(args)
         return self.__class__(*args, simplified=True)
 
     def factor(self, conj=False):
@@ -1515,11 +1514,9 @@ class ExprEqual(Expression):
                 return EXPRZERO
             # Equal(0, x0, x1, ...) = Nor(x0, x1, ...)
             else:
-                args = tuple(args)
                 return ExprNot(ExprOr(*args)).simplify()
         # Equal(1, x0, x1, ...)
         if EXPRONE in args:
-            args = tuple(args)
             return ExprAnd(*args).simplify()
 
         # no constants; all simplified
@@ -1533,7 +1530,6 @@ class ExprEqual(Expression):
             elif arg not in args:
                 args.add(arg)
 
-        args = tuple(args)
         return self.__class__(*args, simplified=True)
 
     def factor(self, conj=False):
