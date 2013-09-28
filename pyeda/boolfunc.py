@@ -23,7 +23,7 @@ Interface Classes:
 import collections
 import functools
 
-from pyeda.util import bit_on, boolify
+from pyeda.util import bit_on, boolify, cached_property
 
 VARIABLES = dict()
 
@@ -317,6 +317,10 @@ class Function(object):
         of the function.
         """
         raise NotImplementedError()
+
+    @cached_property
+    def usupport(self):
+        return frozenset(v.uniqid for v in self.support)
 
     @property
     def inputs(self):

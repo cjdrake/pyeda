@@ -25,10 +25,10 @@ Interface Classes:
         ExprLiteral
             ExprVariable
             ExprComplement
+        ExprNot
         ExprOrAnd
             ExprOr
             ExprAnd
-        ExprNot
         ExprExclusive
             ExprXor
             ExprXnor
@@ -320,9 +320,6 @@ def OneHot(*args, **kwargs):
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
 
-    def __init__(self, args):
-        self.args = args
-
     # Operators
     def __neg__(self):
         return Not(self)
@@ -373,21 +370,8 @@ class Expression(boolfunc.Function):
 
     # From Function
     @cached_property
-    def support(self):
-        return frozenset.union(*[arg.support for arg in self.args])
-
-    @cached_property
     def inputs(self):
         return tuple(sorted(self.support))
-
-    def urestrict(self, upoint):
-        idx_arg = self._get_restrictions(upoint)
-        return self._subs(idx_arg) if idx_arg else self
-
-    def compose(self, mapping):
-        """Implementation of compose always returns an Expression."""
-        idx_arg = self._get_compositions(mapping)
-        return self._subs(idx_arg) if idx_arg else self
 
     def satisfy_one(self):
         if self.is_cnf():
@@ -457,10 +441,6 @@ class Expression(boolfunc.Function):
 
     def __repr__(self):
         return self.__str__()
-
-    def args_str(self, sep):
-        """Return arguments as a string, joined by a separator."""
-        return sep.join(str(arg) for arg in sorted(self.args))
 
     def invert(self):
         """Return an inverted expression."""
@@ -547,40 +527,11 @@ class Expression(boolfunc.Function):
         f = Xor(self, other)
         return f.satisfy_one() is None
 
-    # Helper methods
-    def _get_restrictions(self, upoint):
-        """Apply upoint restrictions and return a {index: expr} dict."""
-        restrictions = dict()
-        for i, arg in enumerate(self.args):
-            new_arg = arg.urestrict(upoint)
-            if id(new_arg) != id(arg):
-                restrictions[i] = new_arg
-        return restrictions
-
-    def _get_compositions(self, mapping):
-        """Apply mapping compositions and return a {index: expr} dict."""
-        compositions = dict()
-        for i, arg in enumerate(self.args):
-            new_arg = arg.compose(mapping)
-            if id(new_arg) != id(arg):
-                compositions[i] = new_arg
-        return compositions
-
-    def _subs(self, idx_arg):
-        """Substitute arguments, and return a simplified expression."""
-        args = list(self.args)
-        for i, arg in idx_arg.items():
-            args[i] = arg
-        return self.__class__(*args).simplify()
-
 
 class ExprConstant(Expression, sat.DPLLInterface):
     """Expression constant"""
 
     VAL = NotImplemented
-
-    def __init__(self):
-        super(ExprConstant, self).__init__(None)
 
     def __bool__(self):
         return bool(self.VAL)
@@ -719,7 +670,6 @@ class ExprLiteral(Expression, sat.DPLLInterface):
     """An instance of a variable or of its complement"""
 
     def __init__(self):
-        super(ExprLiteral, self).__init__(None)
         self.simplified = True
 
     @cached_property
@@ -884,7 +834,108 @@ class ExprComplement(ExprLiteral):
     maxterm_index = 1
 
 
-class ExprOrAnd(Expression, sat.DPLLInterface):
+class ExprNot(Expression):
+    """Expression NOT operator"""
+
+    ASTOP = 'not'
+
+    def __new__(cls, arg, simplified=False):
+        if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
+            return arg.invert()
+        else:
+            return super(ExprNot, cls).__new__(cls)
+
+    def __init__(self, arg, simplified=False):
+        self.arg = arg
+        self.simplified = simplified
+
+    def __str__(self):
+        return "Not(" + str(self.arg) + ")"
+
+    # From Function
+    @property
+    def support(self):
+        return self.arg.support
+
+    def urestrict(self, upoint):
+        new_arg = self.arg.urestrict(upoint)
+        if id(new_arg) != id(self.arg):
+            return self.__class__(new_arg).simplify()
+        else:
+            return self
+
+    def compose(self, mapping):
+        new_arg = self.arg.compose(mapping)
+        if id(new_arg) != id(self.arg):
+            return self.__class__(new_arg).simplify()
+        else:
+            return self
+
+    # From Expression
+    def invert(self):
+        return self.arg
+
+    def simplify(self):
+        if self.simplified:
+            return self
+
+        arg = self.arg.simplify()
+        return self.__class__(arg, simplified=True)
+
+    def factor(self, conj=False):
+        return self.arg.invert().factor(conj)
+
+    @cached_property
+    def depth(self):
+        return self.arg.depth
+
+
+class _ArgContainer(Expression):
+    """Common methods for expressions that are argument containers."""
+
+    def __init__(self, args):
+        self.args = args
+
+    # From Function
+    @cached_property
+    def support(self):
+        return frozenset.union(*[arg.support for arg in self.args])
+
+    # From Expression
+    def invert(self):
+        raise NotImplementedError()
+
+    def simplify(self):
+        raise NotImplementedError()
+
+    def factor(self, conj=False):
+        raise NotImplementedError()
+
+    @property
+    def depth(self):
+        raise NotImplementedError()
+
+    # Specific to _ArgContainer
+    def args_str(self, sep):
+        """Return arguments as a string, joined by a separator."""
+        return sep.join(str(arg) for arg in sorted(self.args))
+
+    def urestrict(self, upoint):
+        if self.usupport & (upoint[0] | upoint[1]):
+            args = [arg.urestrict(upoint) for arg in self.args]
+            return self.__class__(*args).simplify()
+        else:
+            return self.simplify()
+
+    def compose(self, mapping):
+        if self.support & set(mapping.keys()):
+            args = [arg.compose(mapping) for arg in self.args]
+            return self.__class__(*args).simplify()
+        else:
+            return self.simplify()
+
+
+class ExprOrAnd(_ArgContainer, sat.DPLLInterface):
     """Base class for Expression OR/AND expressions"""
 
     def __new__(cls, *args, **kwargs):
@@ -898,25 +949,22 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
             return super(ExprOrAnd, cls).__new__(cls)
 
     def __init__(self, *args, **kwargs):
-        super(ExprOrAnd, self).__init__(args)
+        super(ExprOrAnd, self).__init__(frozenset(args))
         self.simplified = kwargs.get('simplified', False)
 
     @cached_property
     def arg_set(self):
         """Return the argument set for a normal form term."""
-        return frozenset(self.args)
+        return self.args
 
     # From Function
     def urestrict(self, upoint):
-        idx_arg = self._get_restrictions(upoint)
-        if idx_arg:
-            args = list(self.args)
-            for i, arg in idx_arg.items():
-                # speed hack
-                if arg == self.DOMINATOR:
-                    return self.DOMINATOR
-                else:
-                    args[i] = arg
+        if self.usupport & (upoint[0] | upoint[1]):
+            # speed hack
+            if self.DOMINATOR in self.args:
+                return self.DOMINATOR
+            else:
+                args = {arg.urestrict(upoint) for arg in self.args}
             return self.__class__(*args).simplify()
         else:
             return self.simplify()
@@ -946,14 +994,14 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
         return id(self) < id(other)
 
     def invert(self):
-        args = [arg.invert() for arg in self.args]
+        args = {arg.invert() for arg in self.args}
         return self.get_dual()(*args, simplified=self.simplified)
 
     def simplify(self):
         if self.simplified:
             return self
 
-        temps, args = list(self.args), set()
+        temps, args = set(self.args), set()
         while temps:
             arg = temps.pop()
             arg = arg.simplify()
@@ -963,7 +1011,7 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
                 pass
             # associative
             elif isinstance(arg, self.__class__):
-                temps.extend(arg.args)
+                temps.update(arg.args)
             # complement
             elif isinstance(arg, ExprLiteral) and -arg in args:
                 return self.DOMINATOR
@@ -1034,10 +1082,10 @@ class ExprOrAnd(Expression, sat.DPLLInterface):
                   'to_cnf' methods instead.
         """
         if isinstance(self, op):
-            for i, argi in enumerate(self.args):
-                if isinstance(argi, self.get_dual()):
-                    others = self.args[:i] + self.args[i+1:]
-                    args = [op(arg, *others) for arg in argi.args]
+            for arg in self.args:
+                if isinstance(arg, self.get_dual()):
+                    others = self.args - {arg}
+                    args = [op(arg, *others) for arg in arg.args]
                     expr = op.get_dual()(*args).simplify()
                     return expr.flatten(op).absorb()
             return self
@@ -1303,64 +1351,7 @@ class ExprAnd(ExprOrAnd):
             return f.flatten(ExprOr)
 
 
-class ExprNot(Expression):
-    """Expression NOT operator"""
-
-    ASTOP = 'not'
-
-    def __new__(cls, arg, simplified=False):
-        if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
-            return arg.invert()
-        else:
-            return super(ExprNot, cls).__new__(cls)
-
-    def __init__(self, arg, simplified=False):
-        args = (arg, )
-        super(ExprNot, self).__init__(args)
-        self.simplified = simplified
-
-    def __str__(self):
-        return "Not(" + str(self.args[0]) + ")"
-
-    # From Function
-    @property
-    def support(self):
-        return self.args[0].support
-
-    def urestrict(self, upoint):
-        new_arg = self.args[0].urestrict(upoint)
-        if id(new_arg) != id(self.args[0]):
-            return self.__class__(new_arg).simplify()
-        else:
-            return self
-
-    def compose(self, mapping):
-        new_arg = self.args[0].compose(mapping)
-        if id(new_arg) != id(self.args[0]):
-            return self.__class__(new_arg).simplify()
-        else:
-            return self
-
-    # From Expression
-    def invert(self):
-        return self.args[0]
-
-    def simplify(self):
-        if self.simplified:
-            return self
-
-        arg = self.args[0].simplify()
-        return self.__class__(arg, simplified=True)
-
-    def factor(self, conj=False):
-        return self.args[0].invert().factor(conj)
-
-    @cached_property
-    def depth(self):
-        return self.args[0].depth
-
-
-class ExprExclusive(Expression):
+class ExprExclusive(_ArgContainer):
     """Expression exclusive (XOR, XNOR) operator"""
 
     def __init__(self, *args, **kwargs):
@@ -1477,7 +1468,7 @@ class ExprXnor(ExprExclusive):
         return Xor
 
 
-class ExprEqual(Expression):
+class ExprEqual(_ArgContainer):
     """Expression EQUAL operator"""
 
     ASTOP = 'equal'
@@ -1553,7 +1544,7 @@ class ExprEqual(Expression):
         return max(arg.depth + 2 for arg in self.args)
 
 
-class ExprImplies(Expression):
+class ExprImplies(_ArgContainer):
     """Expression implication operator"""
 
     ASTOP = 'ite'
@@ -1611,7 +1602,7 @@ class ExprImplies(Expression):
         return max(arg.depth + 1 for arg in self.args)
 
 
-class ExprITE(Expression):
+class ExprITE(_ArgContainer):
     """Expression if-then-else ternary operator"""
 
     ASTOP = 'ite'
