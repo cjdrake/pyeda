@@ -901,6 +901,20 @@ class _ArgumentContainer(Expression):
     def support(self):
         return frozenset.union(*[arg.support for arg in self.args])
 
+    def urestrict(self, upoint):
+        if self.usupport & (upoint[0] | upoint[1]):
+            args = [arg.urestrict(upoint) for arg in self.args]
+            return self.__class__(*args).simplify()
+        else:
+            return self.simplify()
+
+    def compose(self, mapping):
+        if self.support & set(mapping.keys()):
+            args = [arg.compose(mapping) for arg in self.args]
+            return self.__class__(*args).simplify()
+        else:
+            return self.simplify()
+
     # From Expression
     def invert(self):
         raise NotImplementedError()
@@ -919,20 +933,6 @@ class _ArgumentContainer(Expression):
     def args_str(self, sep):
         """Return arguments as a string, joined by a separator."""
         return sep.join(str(arg) for arg in sorted(self.args))
-
-    def urestrict(self, upoint):
-        if self.usupport & (upoint[0] | upoint[1]):
-            args = [arg.urestrict(upoint) for arg in self.args]
-            return self.__class__(*args).simplify()
-        else:
-            return self.simplify()
-
-    def compose(self, mapping):
-        if self.support & set(mapping.keys()):
-            args = [arg.compose(mapping) for arg in self.args]
-            return self.__class__(*args).simplify()
-        else:
-            return self.simplify()
 
 
 class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
