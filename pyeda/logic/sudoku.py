@@ -53,15 +53,15 @@ class SudokuSolver(object):
                    for i, c in enumerate(chars) if c in DIGITS ])
         return I
 
-    def _soln2str(self, soln):
+    def _soln2str(self, soln, fancy=False):
         """Convert a Sudoku solution point to a string."""
         chars = list()
         for r in range(1, 10):
             for c in range(1, 10):
-                if c in (4, 7):
+                if fancy and c in (4, 7):
                     chars.append("|")
                 chars.append(self._get_val(soln, r, c))
-            if r != 9:
+            if fancy and r != 9:
                 chars.append("\n")
                 if r in (3, 6):
                     chars.append("---+---+---\n")
