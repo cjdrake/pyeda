@@ -450,6 +450,10 @@ class Expression(boolfunc.Function):
         """Return a simplified expression."""
         raise NotImplementedError()
 
+    @property
+    def simplified(self):
+        return self._simplified
+
     def factor(self, conj=False):
         """Return a factored expression.
 
@@ -670,7 +674,7 @@ class ExprLiteral(Expression, sat.DPLLInterface):
     """An instance of a variable or of its complement"""
 
     def __init__(self):
-        self.simplified = True
+        self._simplified = True
 
     @cached_property
     def arg_set(self):
@@ -847,7 +851,7 @@ class ExprNot(Expression):
 
     def __init__(self, arg, simplified=False):
         self.arg = arg
-        self.simplified = simplified
+        self._simplified = simplified
 
     def __str__(self):
         return "Not(" + str(self.arg) + ")"
@@ -876,7 +880,7 @@ class ExprNot(Expression):
         return self.arg
 
     def simplify(self):
-        if self.simplified:
+        if self._simplified:
             return self
 
         arg = self.arg.simplify()
@@ -950,7 +954,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
 
     def __init__(self, *args, **kwargs):
         super(ExprOrAnd, self).__init__(frozenset(args))
-        self.simplified = kwargs.get('simplified', False)
+        self._simplified = kwargs.get('simplified', False)
 
     def __eq__(self, other):
         return isinstance(other, ExprOrAnd) and self.args == other.args
@@ -1001,10 +1005,10 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
 
     def invert(self):
         args = {arg.invert() for arg in self.args}
-        return self.get_dual()(*args, simplified=self.simplified)
+        return self.get_dual()(*args, simplified=self._simplified)
 
     def simplify(self):
-        if self.simplified:
+        if self._simplified:
             return self
 
         temps, args = set(self.args), set()
@@ -1362,14 +1366,14 @@ class ExprExclusive(_ArgumentContainer):
 
     def __init__(self, *args, **kwargs):
         super(ExprExclusive, self).__init__(args)
-        self.simplified = kwargs.get('simplified', False)
+        self._simplified = kwargs.get('simplified', False)
 
     # From Expression
     def invert(self):
-        return self.get_dual()(*self.args, simplified=self.simplified)
+        return self.get_dual()(*self.args, simplified=self._simplified)
 
     def simplify(self):
-        if self.simplified:
+        if self._simplified:
             return self
 
         par = self.PARITY
@@ -1488,19 +1492,19 @@ class ExprEqual(_ArgumentContainer):
 
     def __init__(self, *args, **kwargs):
         super(ExprEqual, self).__init__(args)
-        self.simplified = kwargs.get('simplified', False)
+        self._simplified = kwargs.get('simplified', False)
 
     def __str__(self):
         return "Equal(" + self.args_str(", ") + ")"
 
     # From Expression
     def invert(self):
-        exist_one = ExprOr(*self.args, simplified=self.simplified)
-        exist_zero = ExprAnd(*self.args, simplified=self.simplified).invert()
-        return ExprAnd(exist_one, exist_zero, simplified=self.simplified)
+        exist_one = ExprOr(*self.args, simplified=self._simplified)
+        exist_zero = ExprAnd(*self.args, simplified=self._simplified).invert()
+        return ExprAnd(exist_one, exist_zero, simplified=self._simplified)
 
     def simplify(self):
-        if self.simplified:
+        if self._simplified:
             return self
 
         args = {arg.simplify() for arg in self.args}
@@ -1558,7 +1562,7 @@ class ExprImplies(_ArgumentContainer):
     def __init__(self, p, q, simplified=False):
         args = (p, q)
         super(ExprImplies, self).__init__(args)
-        self.simplified = simplified
+        self._simplified = simplified
 
     def __str__(self):
         parts = list()
@@ -1572,7 +1576,7 @@ class ExprImplies(_ArgumentContainer):
     # From Expression
     def invert(self):
         args = (self.args[0], self.args[1].invert())
-        return ExprAnd(*args, simplified=self.simplified)
+        return ExprAnd(*args, simplified=self._simplified)
 
     def simplify(self):
         p = self.args[0].simplify()
@@ -1616,7 +1620,7 @@ class ExprITE(_ArgumentContainer):
     def __init__(self, s, d1, d0, simplified=False):
         args = (s, d1, d0)
         super(ExprITE, self).__init__(args)
-        self.simplified = simplified
+        self._simplified = simplified
 
     def __str__(self):
         parts = list()
@@ -1632,7 +1636,7 @@ class ExprITE(_ArgumentContainer):
         s = self.args[0]
         d1 = self.args[1].invert()
         d0 = self.args[2].invert()
-        return ExprITE(s, d1, d0, simplified=self.simplified)
+        return ExprITE(s, d1, d0, simplified=self._simplified)
 
     def simplify(self):
         s = self.args[0].simplify()
