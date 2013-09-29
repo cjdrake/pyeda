@@ -890,7 +890,7 @@ class ExprNot(Expression):
         return self.arg.depth
 
 
-class _ArgContainer(Expression):
+class _ArgumentContainer(Expression):
     """Common methods for expressions that are argument containers."""
 
     def __init__(self, args):
@@ -915,7 +915,7 @@ class _ArgContainer(Expression):
     def depth(self):
         raise NotImplementedError()
 
-    # Specific to _ArgContainer
+    # Specific to _ArgumentContainer
     def args_str(self, sep):
         """Return arguments as a string, joined by a separator."""
         return sep.join(str(arg) for arg in sorted(self.args))
@@ -935,7 +935,7 @@ class _ArgContainer(Expression):
             return self.simplify()
 
 
-class ExprOrAnd(_ArgContainer, sat.DPLLInterface):
+class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
     """Base class for Expression OR/AND expressions"""
 
     def __new__(cls, *args, **kwargs):
@@ -1357,7 +1357,7 @@ class ExprAnd(ExprOrAnd):
             return f.flatten(ExprOr)
 
 
-class ExprExclusive(_ArgContainer):
+class ExprExclusive(_ArgumentContainer):
     """Expression exclusive (XOR, XNOR) operator"""
 
     def __init__(self, *args, **kwargs):
@@ -1474,7 +1474,7 @@ class ExprXnor(ExprExclusive):
         return Xor
 
 
-class ExprEqual(_ArgContainer):
+class ExprEqual(_ArgumentContainer):
     """Expression EQUAL operator"""
 
     ASTOP = 'equal'
@@ -1550,7 +1550,7 @@ class ExprEqual(_ArgContainer):
         return max(arg.depth + 2 for arg in self.args)
 
 
-class ExprImplies(_ArgContainer):
+class ExprImplies(_ArgumentContainer):
     """Expression implication operator"""
 
     ASTOP = 'ite'
@@ -1608,7 +1608,7 @@ class ExprImplies(_ArgContainer):
         return max(arg.depth + 1 for arg in self.args)
 
 
-class ExprITE(_ArgContainer):
+class ExprITE(_ArgumentContainer):
     """Expression if-then-else ternary operator"""
 
     ASTOP = 'ite'
