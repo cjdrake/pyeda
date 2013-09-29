@@ -47,11 +47,9 @@ def var(name, index=None):
 
     # Check input types
     assert type(names) is tuple and len(names) > 0
-    for name in names:
-        assert type(name) is str
+    assert all(type(name) is str for name in names)
     assert type(indices) is tuple
-    for index in indices:
-        assert type(index) is int
+    assert all(type(index) is int for index in indices)
 
     try:
         v = VARIABLES[(names, indices)]
