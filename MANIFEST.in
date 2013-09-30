@@ -6,6 +6,8 @@ include requirements.txt
 include doc/Makefile
 include doc/source/*
 
+include extension/picosat/*
+
 include pyeda/logic/test/top95.txt
 include pyeda/logic/test/top95_solns.txt
 

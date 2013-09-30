@@ -1,14 +1,24 @@
 # Filename: setup.py
 
-from setuptools import setup, Extension
+import os
 
 import pyeda
 
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
+
 NAME = 'pyeda'
+
 VERSION = pyeda.__version__
+
 AUTHOR = "Chris Drake"
+
 AUTHOR_EMAIL = "cjdrake AT gmail DOT com"
+
 DESCRIPTION = "Python Electronic Design Automation"
+
 KEYWORDS = [
     "Boolean algebra",
     "Boolean satisfiability",
@@ -32,7 +42,9 @@ with open('LICENSE') as fin:
     LICENSE = fin.read()
 
 URL = "https://github.com/cjdrake/pyeda"
+
 DOWNLOAD_URL = "https://pypi.python.org/packages/source/p/pyeda"
+
 CLASSIFIERS = [
     "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
@@ -44,15 +56,38 @@ CLASSIFIERS = [
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 
-PACKAGES = [
+PYEDA_PKGS = [
     'pyeda',
-    'pyeda.test',
     'pyeda.boolalg',
-    'pyeda.boolalg.test',
     'pyeda.logic',
-    'pyeda.logic.test',
     'pyeda.parsing',
+]
+
+TEST_PKGS = [
+    'pyeda.test',
+    'pyeda.boolalg.test',
+    'pyeda.logic.test',
     'pyeda.parsing.test',
+]
+
+PACKAGES = PYEDA_PKGS + TEST_PKGS
+
+# PicoSAT extension
+PICOSAT = dict(
+    define_macros = [
+        ('NDEBUG', None),
+    ],
+    include_dirs = [
+        os.path.join('extension', 'picosat'),
+    ],
+    sources = [
+        os.path.join('extension', 'picosat', 'picosat.c'),
+        os.path.join('pyeda', 'boolalg', '_picosat.c'),
+    ],
+)
+
+EXT_MODULES = [
+    Extension('pyeda.boolalg._picosat', **PICOSAT),
 ]
 
 setup(
@@ -68,5 +103,7 @@ setup(
     download_url=DOWNLOAD_URL,
     classifiers=CLASSIFIERS,
     packages=PACKAGES,
+    ext_modules=EXT_MODULES,
+
     test_suite='nose.collector',
 )

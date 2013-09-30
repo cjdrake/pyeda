@@ -17,10 +17,6 @@ with open(top95_txt) as fin:
 with open(top95_solns_txt) as fin:
     SOLNS = [line.strip() for line in fin]
 
-def test_sudoku_2():
-    n = 2
-    assert SOLVER.display_solve(GRIDS[n]) == SOLNS[n]
-
-#def test_sudoku_rand():
-#    n = random.randint(0, len(GRIDS)-1)
-#    assert SOLVER.display_solve(GRIDS[n]) == SOLNS[n]
+#def test_sudoku():
+#    for i, grid in enumerate(GRIDS):
+#        assert SOLVER.display_solve(grid) == SOLNS[i]

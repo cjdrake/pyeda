@@ -1834,6 +1834,10 @@ class DimacsCNF(object):
         return "\n".join(" ".join(str(lit) for lit in clause) + " 0"
                          for clause in self.clauses)
 
+    def soln2point(self, soln):
+        return { self.idx2var[i]: int(val > 0)
+                 for i, val in enumerate(soln, start=1) }
+
 
 def _tseitin(expr, auxvarname, auxvars=None):
     """
