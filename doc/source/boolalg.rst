@@ -381,9 +381,9 @@ Boolean space to an element in :math:`\{0, 1\}`.
 Boolean Function Interface
 --------------------------
 
-.. autoclass:: pyeda.boolfunc.Function
+.. autoclass:: pyeda.boolalg.boolfunc.Function
    :members: __neg__, __add__, __mul__, xor,
-             support, inputs, top, degree, cardinality,
+             support, usupport, inputs, top, degree, cardinality,
              iter_domain, iter_image, iter_relation,
              restrict, urestrict, vrestrict, compose,
              satisfy_one, satisfy_all, satisfy_count,
