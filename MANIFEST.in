@@ -5,7 +5,6 @@ include requirements.txt
 
 include doc/Makefile
 include doc/source/*
-include doc/source/images/*
 
 include pyeda/logic/test/top95.txt
 include pyeda/logic/test/top95_solns.txt
