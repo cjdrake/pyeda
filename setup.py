@@ -45,7 +45,16 @@ CLASSIFIERS = [
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 
-PACKAGES = ['pyeda']
+PACKAGES = [
+    'pyeda',
+    'pyeda.test',
+    'pyeda.boolalg',
+    'pyeda.boolalg.test',
+    'pyeda.logic',
+    'pyeda.logic.test',
+    'pyeda.parsing',
+    'pyeda.parsing.test',
+]
 
 setup(
     name=NAME,
