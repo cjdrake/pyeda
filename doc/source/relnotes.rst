@@ -4,6 +4,81 @@
   Release Notes
 *****************
 
+Version 0.15 (Coming Soon)
+==========================
+
+* Drop support for Python 2.7. Will only support Python 3.2+ going forward.
+* Integrate `PicoSAT <http://fmv.jku.at/picosat/>`_, a compact SAT solver written in C.
+
+Version 0.14
+============
+
+This release reorganizes the PyEDA source code around quite a bit,
+and introduces some awesome new parsing utilities.
+
+Probably the most important new feature is the addition of the
+``pyeda.boolalg.expr.expr`` function.
+This function takes ``int`` or ``str`` as an input.
+If the input is a ``str`` instance, the function *parses the input string*,
+and returns an ``Expression`` instance.
+This makes it easy to form symbolic expression without even having to declare
+variables ahead of time::
+
+   >>> from pyeda.boolalg.expr import expr
+   >>> f = expr("-a * b + -b * c")
+   >>> g = expr("(-x[0] + x[1]) * (-x[1] + x[2])")
+
+The return value of ``expr`` function is **not** simplified by default.
+This allows you to represent arbitrary expressions, for example::
+
+   >>> h = expr("a * 0")
+   >>> h
+   0 * a
+   >>> h.simplify()
+   0
+
+* Reorganized source code:
+
+  * Moved all Boolean algebra (functions, vector functions) into a new package,
+    ``pyeda.boolalg``.
+  * Split ``arithmetic`` into ``addition`` and ``gray_code`` modules.
+  * Moved all logic functions (addition, gray code) into a new package,
+    ``pyeda.logic``.
+  * Created new Sudoku module under ``pyeda.logic``.
+
+* Awesome new regex-based lexical analysis class, ``pyeda.parsing.RegexLexer``.
+* Reorganized the DIMACS parsing code:
+
+  * Refactored parsing code to use ``RegexLexer``.
+  * Parsing functions now return an abstract syntax tree,
+    to be used by ``pyeda.boolalg.ast2expr`` function.
+  * Changed ``dimacs.load_cnf`` to ``pyeda.parsing.dimacs.parse_cnf``.
+  * Changed ``dimacs.load_sat`` to ``pyeda.parsing.dimacs.parse_sat``.
+  * Changed ``dimacs.dump_cnf`` to ``pyeda.boolalg.expr2dimacscnf``.
+  * Changed ``dimacs.dump_sat`` to ``pyeda.boolalg.expr2dimacssat``.
+
+* Changed constructors for ``Variable`` factories.
+  Unified ``namespace`` as just a part of the ``name``.
+* Changed interactive usage. Originally was ``from pyeda import *``.
+  Now use ``from pyeda.inter import *``.
+* Some more miscellaneous refactoring on logic expressions:
+
+  * Fixed weirdness with ``Expression.simplified`` implementation.
+  * Added new private class ``_ArgumentContainer``,
+    which is now the parent of ``ExprOrAnd``, ``ExprExclusive``, ``ExprEqual``,
+    ``ExprImplies``, ``ExprITE``.
+  * Changed ``ExprOrAnd`` argument container to a ``frozenset``,
+    which has several nice properties for simplification of AND/OR expressions.
+
+* Got rid of ``pyeda.alphas`` module.
+* Preliminary support for logic expression ``complete_sum`` method,
+  for generating the set of prime implicants.
+* Use a "computed table" cache in BDD ``restrict`` method.
+* Use weak references to help with BDD garbage collection.
+* Replace distutils with setuptools.
+* Preliminary support for Tseitin encoding of logic expressions.
+* Rename ``pyeda.common`` to ``pyeda.util``.
+
 Version 0.13
 ============
 
