@@ -320,6 +320,9 @@ def OneHot(*args, **kwargs):
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
 
+    def __init__(self):
+        self._simplified = False
+
     # Operators
     def __neg__(self):
         return Not(self)
@@ -485,8 +488,7 @@ class Expression(boolfunc.Function):
                 terms = [term for term in terms if term is not EXPRONE]
             else:
                 terms = [term for term in terms if term is not EXPRZERO]
-            # simplified=False allows expressions like a * -a
-            return outer(*terms, simplified=False)
+            return outer(*terms)
         else:
             return self
 
@@ -536,6 +538,10 @@ class ExprConstant(Expression, sat.DPLLInterface):
     """Expression constant"""
 
     VAL = NotImplemented
+
+    def __init__(self):
+        super(ExprConstant, self).__init__()
+        self._simplified = True
 
     def __bool__(self):
         return bool(self.VAL)
@@ -674,6 +680,7 @@ class ExprLiteral(Expression, sat.DPLLInterface):
     """An instance of a variable or of its complement"""
 
     def __init__(self):
+        super(ExprLiteral, self).__init__()
         self._simplified = True
 
     @cached_property
@@ -784,7 +791,7 @@ class ExprComplement(ExprLiteral):
     """Expression complement"""
 
     def __init__(self, exprvar):
-        ExprLiteral.__init__(self)
+        super(ExprComplement, self).__init__()
         self.exprvar = exprvar
         self.uniqid = -exprvar.uniqid
 
@@ -843,15 +850,15 @@ class ExprNot(Expression):
 
     ASTOP = 'not'
 
-    def __new__(cls, arg, simplified=False):
+    def __new__(cls, arg):
         if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
             return arg.invert()
         else:
             return super(ExprNot, cls).__new__(cls)
 
-    def __init__(self, arg, simplified=False):
+    def __init__(self, arg):
+        super(ExprNot, self).__init__()
         self.arg = arg
-        self._simplified = simplified
 
     def __str__(self):
         return "Not(" + str(self.arg) + ")"
@@ -884,7 +891,9 @@ class ExprNot(Expression):
             return self
 
         arg = self.arg.simplify()
-        return self.__class__(arg, simplified=True)
+        obj = self.__class__(arg)
+        obj._simplified = True
+        return obj
 
     def factor(self, conj=False):
         return self.arg.invert().factor(conj)
@@ -898,6 +907,7 @@ class _ArgumentContainer(Expression):
     """Common methods for expressions that are argument containers."""
 
     def __init__(self, args):
+        super(_ArgumentContainer, self).__init__()
         self.args = args
 
     # From Function
@@ -942,7 +952,7 @@ class _ArgumentContainer(Expression):
 class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
     """Base class for Expression OR/AND expressions"""
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args):
         # Or() = 0; And() = 1
         if len(args) == 0:
             return cls.IDENTITY
@@ -952,9 +962,8 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         else:
             return super(ExprOrAnd, cls).__new__(cls)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         super(ExprOrAnd, self).__init__(frozenset(args))
-        self._simplified = kwargs.get('simplified', False)
 
     def __eq__(self, other):
         return isinstance(other, ExprOrAnd) and self.args == other.args
@@ -1004,8 +1013,10 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         return id(self) < id(other)
 
     def invert(self):
-        args = {arg.invert() for arg in self.args}
-        return self.get_dual()(*args, simplified=self._simplified)
+        args = tuple(arg.invert() for arg in self.args)
+        obj = self.get_dual()(*args)
+        obj._simplified = self._simplified
+        return obj
 
     def simplify(self):
         if self._simplified:
@@ -1028,7 +1039,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
             else:
                 args.add(arg)
 
-        return self.__class__(*args, simplified=True)
+        obj = self.__class__(*args)
+        obj._simplified = True
+        return obj
 
     def factor(self, conj=False):
         args = [arg.factor(conj) for arg in self.args]
@@ -1132,7 +1145,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
             if not drop_fst:
                 args.append(fst)
 
-        return self.__class__(*args, simplified=True)
+        obj = self.__class__(*args)
+        obj._simplified = True
+        return obj
 
     def reduce(self):
         """Reduce this expression to a canonical form.
@@ -1153,7 +1168,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                     terms.append(eterm)
                     indices.add(eterm.term_index)
 
-        return self.__class__(*terms, simplified=True)
+        obj = self.__class__(*terms)
+        obj._simplified = True
+        return obj
 
     def _tseitin(self, auxvarname, auxvars):
         fs = list()
@@ -1364,13 +1381,14 @@ class ExprAnd(ExprOrAnd):
 class ExprExclusive(_ArgumentContainer):
     """Expression exclusive (XOR, XNOR) operator"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         super(ExprExclusive, self).__init__(args)
-        self._simplified = kwargs.get('simplified', False)
 
     # From Expression
     def invert(self):
-        return self.get_dual()(*self.args, simplified=self._simplified)
+        obj = self.get_dual()(*self.args)
+        obj._simplified = self._simplified
+        return obj
 
     def simplify(self):
         if self._simplified:
@@ -1396,7 +1414,9 @@ class ExprExclusive(_ArgumentContainer):
             else:
                 args.add(arg)
 
-        return EXCLOPS[par](*args, simplified=True)
+        obj = EXCLOPS[par](*args)
+        obj._simplified = True
+        return obj
 
     def factor(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
@@ -1433,7 +1453,7 @@ class ExprXor(ExprExclusive):
 
     ASTOP = 'xor'
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args):
         # Xor() = 0
         if len(args) == 0:
             return EXPRZERO
@@ -1458,7 +1478,7 @@ class ExprXnor(ExprExclusive):
 
     ASTOP = 'xnor'
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args):
         # Xnor() = 1
         if len(args) == 0:
             return EXPRONE
@@ -1483,25 +1503,24 @@ class ExprEqual(_ArgumentContainer):
 
     ASTOP = 'equal'
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args):
         # Equal(x) = Equal() = 1
         if len(args) <= 1:
             return EXPRONE
         else:
             return super(ExprEqual, cls).__new__(cls)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         super(ExprEqual, self).__init__(args)
-        self._simplified = kwargs.get('simplified', False)
 
     def __str__(self):
         return "Equal(" + self.args_str(", ") + ")"
 
     # From Expression
     def invert(self):
-        exist_one = ExprOr(*self.args, simplified=self._simplified)
-        exist_zero = ExprAnd(*self.args, simplified=self._simplified).invert()
-        return ExprAnd(exist_one, exist_zero, simplified=self._simplified)
+        exist_one = ExprOr(*self.args)
+        exist_zero = ExprAnd(*self.args).invert()
+        return ExprAnd(exist_one, exist_zero).simplify()
 
     def simplify(self):
         if self._simplified:
@@ -1531,7 +1550,9 @@ class ExprEqual(_ArgumentContainer):
             elif arg not in args:
                 args.add(arg)
 
-        return self.__class__(*args, simplified=True)
+        obj = self.__class__(*args)
+        obj._simplified = True
+        return obj
 
     def factor(self, conj=False):
         if conj:
@@ -1559,10 +1580,9 @@ class ExprImplies(_ArgumentContainer):
 
     ASTOP = 'ite'
 
-    def __init__(self, p, q, simplified=False):
+    def __init__(self, p, q):
         args = (p, q)
         super(ExprImplies, self).__init__(args)
-        self._simplified = simplified
 
     def __str__(self):
         parts = list()
@@ -1576,7 +1596,7 @@ class ExprImplies(_ArgumentContainer):
     # From Expression
     def invert(self):
         args = (self.args[0], self.args[1].invert())
-        return ExprAnd(*args, simplified=self._simplified)
+        return ExprAnd(*args).simplify()
 
     def simplify(self):
         p = self.args[0].simplify()
@@ -1598,7 +1618,9 @@ class ExprImplies(_ArgumentContainer):
         elif isinstance(p, ExprLiteral) and -p == q:
             return q
 
-        return self.__class__(p, q, simplified=True)
+        obj = self.__class__(p, q)
+        obj._simplified = True
+        return obj
 
     def factor(self, conj=False):
         p, q = self.args
@@ -1617,10 +1639,9 @@ class ExprITE(_ArgumentContainer):
 
     ASTOP = 'ite'
 
-    def __init__(self, s, d1, d0, simplified=False):
+    def __init__(self, s, d1, d0):
         args = (s, d1, d0)
         super(ExprITE, self).__init__(args)
-        self._simplified = simplified
 
     def __str__(self):
         parts = list()
@@ -1636,7 +1657,7 @@ class ExprITE(_ArgumentContainer):
         s = self.args[0]
         d1 = self.args[1].invert()
         d0 = self.args[2].invert()
-        return ExprITE(s, d1, d0, simplified=self._simplified)
+        return ExprITE(s, d1, d0).simplify()
 
     def simplify(self):
         s = self.args[0].simplify()
@@ -1679,7 +1700,9 @@ class ExprITE(_ArgumentContainer):
         elif d1 == d0:
             return d1
 
-        return self.__class__(s, d1, d0, simplified=True)
+        obj = self.__class__(s, d1, d0)
+        obj._simplified = True
+        return obj
 
     def factor(self, conj=False):
         s, d1, d0 = self.args
