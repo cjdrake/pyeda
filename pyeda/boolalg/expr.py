@@ -1470,7 +1470,7 @@ class ExprXor(ExprExclusive):
 
     @staticmethod
     def get_dual():
-        return Xnor
+        return ExprXnor
 
 
 class ExprXnor(ExprExclusive):
@@ -1495,7 +1495,7 @@ class ExprXnor(ExprExclusive):
 
     @staticmethod
     def get_dual():
-        return Xor
+        return ExprXor
 
 
 class ExprEqual(_ArgumentContainer):
