@@ -966,7 +966,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         super(ExprOrAnd, self).__init__(frozenset(args))
 
     def __eq__(self, other):
-        return isinstance(other, ExprOrAnd) and self.args == other.args
+        return isinstance(other, self.__class__) and self.args == other.args
 
     def __hash__(self):
         return hash(self.args)
