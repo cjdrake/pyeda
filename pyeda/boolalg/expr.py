@@ -1511,7 +1511,13 @@ class ExprEqual(_ArgumentContainer):
             return super(ExprEqual, cls).__new__(cls)
 
     def __init__(self, *args):
-        super(ExprEqual, self).__init__(args)
+        super(ExprEqual, self).__init__(frozenset(args))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.args == other.args
+
+    def __hash__(self):
+        return hash(self.args)
 
     def __str__(self):
         return "Equal(" + self.args_str(", ") + ")"
