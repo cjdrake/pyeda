@@ -1535,19 +1535,18 @@ class ExprEqual(_ArgumentContainer):
             # Equal(0, x0, x1, ...) = Nor(x0, x1, ...)
             else:
                 return ExprNot(ExprOr(*args)).simplify()
-        # Equal(1, x0, x1, ...)
+        # Equal(1, x0, x1, ...) = And(x0, x1, ...)
         if EXPRONE in args:
             return ExprAnd(*args).simplify()
 
         # no constants; all simplified
-        temps, args = list(args), set()
+        temps, args = args, set()
         while temps:
             arg = temps.pop()
             # Equal(x, -x) = 0
             if isinstance(arg, ExprLiteral) and -arg in args:
                 return EXPRZERO
-            # Equal(x, x, ...) = Equal(x, ...)
-            elif arg not in args:
+            else:
                 args.add(arg)
 
         obj = self.__class__(*args)
