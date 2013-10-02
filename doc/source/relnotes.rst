@@ -79,6 +79,36 @@ This allows you to represent arbitrary expressions, for example::
 * Preliminary support for Tseitin encoding of logic expressions.
 * Rename ``pyeda.common`` to ``pyeda.util``.
 
+Release 0.14.1
+--------------
+
+Fixed `Issue #41 <https://github.com/cjdrake/pyeda/issues/41>`_.
+Basically, the package metadata in the ``0.14.0`` release was incomplete,
+so the source distribution only contained a few modules. Whoops.
+
+Release 0.14.2
+--------------
+
+Fixed `Issue #42 <https://github.com/cjdrake/pyeda/issues/42>`_.
+
+There was a bug in the implementation of ``OrAnd``,
+due to the new usage of a `frozenset` to represent the argument container.
+
+With ``0.14.1``, you could get this::
+
+   >>> And('a', 'b', 'c') == Or('a', 'b', 'c')
+   True
+
+Now::
+
+   >>> And('a', 'b', 'c') == Or('a', 'b', 'c')
+   False
+
+The ``==`` operator is only used by PyEDA for hashing,
+and is not overloaded by ``Expression``.
+Therefore, this could potentially cause some serious issues with ``Or``/``And``
+expressions that prune arguments incorrectly.
+
 Version 0.13
 ============
 
