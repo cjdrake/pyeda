@@ -1540,9 +1540,11 @@ class ExprEqual(_ArgumentContainer):
                 return EXPRZERO
             # Equal(0, x0, x1, ...) = Nor(x0, x1, ...)
             else:
+                args.remove(EXPRZERO)
                 return ExprNot(ExprOr(*args)).simplify()
         # Equal(1, x0, x1, ...) = And(x0, x1, ...)
         if EXPRONE in args:
+            args.remove(EXPRONE)
             return ExprAnd(*args).simplify()
 
         # no constants; all simplified
