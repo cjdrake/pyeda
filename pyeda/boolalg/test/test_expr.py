@@ -8,7 +8,7 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import (
     exprvar,
     Expression,
-    Not, Or, And, Xor, Xnor, Equal, Implies, ITE,
+    Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
     EXPRZERO, EXPRONE,
 )
@@ -474,6 +474,43 @@ def test_equal():
     assert Equal(a, a) is EXPRONE
     assert Equal(a, -a) is EXPRZERO
     assert Equal(-a, a) is EXPRZERO
+
+    assert Equal(a, b, c).factor(conj=False).equivalent(-a * -b * -c + a * b * c)
+    assert Equal(a, b, c).factor(conj=True).equivalent(-a * -b * -c + a * b * c)
+
+def test_unequal():
+    # Function
+    assert Unequal(-a, b).support == {a, b}
+
+    # Expression
+    assert Unequal() is EXPRZERO
+    assert Unequal(a) is EXPRZERO
+
+    assert Unequal(0, 0) is EXPRZERO
+    assert Unequal(0, 1) is EXPRONE
+    assert Unequal(1, 0) is EXPRONE
+    assert Unequal(1, 1) is EXPRZERO
+
+    assert Unequal(0, 0, 0) is EXPRZERO
+    assert Unequal(0, 0, 1) is EXPRONE
+    assert Unequal(0, 1, 0) is EXPRONE
+    assert Unequal(0, 1, 1) is EXPRONE
+    assert Unequal(1, 0, 0) is EXPRONE
+    assert Unequal(1, 0, 1) is EXPRONE
+    assert Unequal(1, 1, 0) is EXPRONE
+    assert Unequal(1, 1, 1) is EXPRZERO
+
+    assert Unequal(0, a) == a
+    assert Unequal(a, 0) == a
+    assert Unequal(1, a) == -a
+    assert Unequal(a, 1) == -a
+
+    assert Unequal(a, a) is EXPRZERO
+    assert Unequal(a, -a) is EXPRONE
+    assert Unequal(-a, a) is EXPRONE
+
+    assert Unequal(a, b, c).factor(conj=False).equivalent((-a + -b + -c) * (a + b + c))
+    assert Unequal(a, b, c).factor(conj=True).equivalent((-a + -b + -c) * (a + b + c))
 
 def test_implies():
     # Function

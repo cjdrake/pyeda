@@ -32,7 +32,9 @@ Interface Classes:
         ExprExclusive
             ExprXor
             ExprXnor
-        ExprEqual
+        ExprEqualBase
+            ExprEqual
+            ExprUnequal
         ExprImplies
         ExprITE
 """
@@ -259,6 +261,19 @@ def Equal(*args, **kwargs):
     factor = kwargs.get('factor', False)
     conj = kwargs.get('conj', False)
     expr = ExprEqual(*args)
+    if factor:
+        expr = expr.factor(conj)
+    elif simplify:
+        expr = expr.simplify()
+    return expr
+
+def Unequal(*args, **kwargs):
+    """Factory function for Boolean UNEQUAL expression."""
+    args = tuple(Expression.box(arg) for arg in args)
+    simplify = kwargs.get('simplify', True)
+    factor = kwargs.get('factor', False)
+    conj = kwargs.get('conj', False)
+    expr = ExprUnequal(*args)
     if factor:
         expr = expr.factor(conj)
     elif simplify:
@@ -1495,7 +1510,30 @@ class ExprXnor(ExprExclusive):
         return ExprXor
 
 
-class ExprEqual(_ArgumentContainer):
+class ExprEqualBase(_ArgumentContainer):
+    """Expression equality (EQUAL, UNEQUAL) operators"""
+
+    def __init__(self, *args):
+        super(ExprEqualBase, self).__init__(frozenset(args))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.args == other.args
+
+    def __hash__(self):
+        return hash(self.args)
+
+    # From Expression
+    def invert(self):
+        obj = self.get_dual()(*self.args)
+        obj._simplified = self._simplified
+        return obj
+
+    @cached_property
+    def depth(self):
+        return max(arg.depth + 2 for arg in self.args)
+
+
+class ExprEqual(ExprEqualBase):
     """Expression EQUAL operator"""
 
     ASTOP = 'equal'
@@ -1507,24 +1545,10 @@ class ExprEqual(_ArgumentContainer):
         else:
             return super(ExprEqual, cls).__new__(cls)
 
-    def __init__(self, *args):
-        super(ExprEqual, self).__init__(frozenset(args))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.args == other.args
-
-    def __hash__(self):
-        return hash(self.args)
-
     def __str__(self):
         return "Equal(" + self.args_str(", ") + ")"
 
     # From Expression
-    def invert(self):
-        exist_one = ExprOr(*self.args)
-        exist_zero = ExprAnd(*self.args).invert()
-        return ExprAnd(exist_one, exist_zero).simplify()
-
     def simplify(self):
         if self._simplified:
             return self
@@ -1561,22 +1585,84 @@ class ExprEqual(_ArgumentContainer):
     def factor(self, conj=False):
         if conj:
             args = list()
-            for i, argi in enumerate(self.args):
-                for _, argj in enumerate(self.args, start=i):
-                    args.append(ExprOr(argi.factor(conj),
-                                       argj.invert().factor(conj)))
-                    args.append(ExprOr(argi.invert().factor(conj),
-                                       argj.factor(conj)))
+            for x, y in itertools.combinations(self.args, 2):
+                args.append(ExprOr(x.invert().factor(), y.factor()))
+                args.append(ExprOr(x.factor(), y.invert().factor()))
             return ExprAnd(*args).simplify()
         else:
-            all_zero = ExprAnd(*[arg.invert().factor(conj)
-                                 for arg in self.args])
-            all_one = ExprAnd(*[arg.factor(conj) for arg in self.args])
-            return ExprOr(all_zero, all_one).simplify()
+            all0 = ExprAnd(*[arg.invert().factor(conj) for arg in self.args])
+            all1 = ExprAnd(*[arg.factor(conj) for arg in self.args])
+            return ExprOr(all0, all1).simplify()
 
-    @cached_property
-    def depth(self):
-        return max(arg.depth + 2 for arg in self.args)
+    @staticmethod
+    def get_dual():
+        return ExprUnequal
+
+
+class ExprUnequal(ExprEqualBase):
+    """Expression UNEQUAL operator"""
+
+    ASTOP = 'unequal'
+
+    def __new__(cls, *args):
+        # Unequal(x) = Unequal() = 0
+        if len(args) <= 1:
+            return EXPRZERO
+        else:
+            return super(ExprUnequal, cls).__new__(cls)
+
+    def __str__(self):
+        return "Unequal(" + self.args_str(", ") + ")"
+
+    # From Expression
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        args = {arg.simplify() for arg in self.args}
+
+        if EXPRZERO in args:
+            # Unequal(0, 1, ...) = 1
+            if EXPRONE in args:
+                return EXPRONE
+            # Unequal(0, x0, x1, ...) = Or(x0, x1, ...)
+            else:
+                args.remove(EXPRZERO)
+                return ExprOr(*args).simplify()
+        # Unequal(1, x0, x1, ...) = Nand(x0, x1, ...)
+        if EXPRONE in args:
+            args.remove(EXPRONE)
+            return Not(ExprAnd(*args)).simplify()
+
+        # no constants; all simplified
+        temps, args = args, set()
+        while temps:
+            arg = temps.pop()
+            # Unequal(x, -x) = 1
+            if isinstance(arg, ExprLiteral) and -arg in args:
+                return EXPRONE
+            else:
+                args.add(arg)
+
+        obj = self.__class__(*args)
+        obj._simplified = True
+        return obj
+
+    def factor(self, conj=False):
+        if conj:
+            any0 = ExprOr(*[arg.invert().factor(conj) for arg in self.args])
+            any1 = ExprOr(*[arg.factor(conj) for arg in self.args])
+            return ExprAnd(any0, any1).simplify()
+        else:
+            args = list()
+            for x, y in itertools.combinations(self.args, 2):
+                args.append(ExprAnd(x.invert().factor(), y.factor()))
+                args.append(ExprAnd(x.factor(), y.invert().factor()))
+            return ExprOr(*args).simplify()
+
+    @staticmethod
+    def get_dual():
+        return ExprEqual
 
 
 class ExprImplies(_ArgumentContainer):
