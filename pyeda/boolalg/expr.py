@@ -10,7 +10,7 @@ Interface Functions:
     expr2dimacssat
     upoint2exprpoint
 
-    Or, And, Not
+    Not, Or, And,
     Xor, Xnor,
     Equal, Implies, ITE
 
@@ -189,6 +189,16 @@ def upoint2exprpoint(upoint):
     return point
 
 # basic functions
+def Not(arg, simplify=True, factor=False, conj=False):
+    """Factory function for Boolean NOT expression."""
+    arg = Expression.box(arg)
+    expr = ExprNot(arg)
+    if factor:
+        expr = expr.factor(conj)
+    elif simplify:
+        expr = expr.simplify()
+    return expr
+
 def Or(*args, **kwargs):
     """Factory function for Boolean OR expression."""
     args = tuple(Expression.box(arg) for arg in args)
@@ -209,16 +219,6 @@ def And(*args, **kwargs):
     factor = kwargs.get('factor', False)
     conj = kwargs.get('conj', False)
     expr = ExprAnd(*args)
-    if factor:
-        expr = expr.factor(conj)
-    elif simplify:
-        expr = expr.simplify()
-    return expr
-
-def Not(arg, simplify=True, factor=False, conj=False):
-    """Factory function for Boolean NOT expression."""
-    arg = Expression.box(arg)
-    expr = ExprNot(arg)
     if factor:
         expr = expr.factor(conj)
     elif simplify:

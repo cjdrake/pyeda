@@ -8,7 +8,7 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import (
     exprvar,
     Expression,
-    Or, And, Not, Xor, Xnor, Equal, Implies, ITE,
+    Not, Or, And, Xor, Xnor, Equal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot,
     EXPRZERO, EXPRONE,
 )
@@ -235,6 +235,23 @@ def test_order():
 
     assert X[0] < X[1] < X[10]
 
+def test_not():
+    # Function
+    assert Not(-a + b).support == {a, b}
+
+    # Expression
+    assert Not(0) is EXPRONE
+    assert Not(1) is EXPRZERO
+    assert Not(a) == -a
+    assert Not(-a) == a
+
+    assert -(-a) == a
+    assert -(-(-a)) == -a
+    assert -(-(-(-a))) == a
+
+    assert Not(a + -a) is EXPRZERO
+    assert Not(a * -a) is EXPRONE
+
 def test_or():
     # Function
     assert (-a + b).support == {a, b}
@@ -360,23 +377,6 @@ def test_and():
     # inverse
     assert -a * a is EXPRZERO
     assert a * -a is EXPRZERO
-
-def test_not():
-    # Function
-    assert Not(-a + b).support == {a, b}
-
-    # Expression
-    assert Not(0) is EXPRONE
-    assert Not(1) is EXPRZERO
-    assert Not(a) == -a
-    assert Not(-a) == a
-
-    assert -(-a) == a
-    assert -(-(-a)) == -a
-    assert -(-(-(-a))) == a
-
-    assert Not(a + -a) is EXPRZERO
-    assert Not(a * -a) is EXPRONE
 
 def test_xor():
     # Function
