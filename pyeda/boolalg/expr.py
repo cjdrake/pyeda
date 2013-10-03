@@ -41,6 +41,7 @@ Interface Classes:
 # pylint: disable=W0621
 
 import collections
+import itertools
 
 import pyeda.parsing.boolexpr
 from pyeda.boolalg import boolfunc
@@ -300,13 +301,9 @@ def OneHot0(*args, **kwargs):
     Return an expression that means:
         At most one input variable is true.
     """
-    nargs = len(args)
     terms = list()
-    for i in range(nargs-1):
-        for j in range(i+1, nargs):
-            not_both = Or(Not(args[i], **kwargs),
-                          Not(args[j], **kwargs), **kwargs)
-            terms.append(not_both)
+    for x, y in itertools.combinations(args, 2):
+        terms.append(Or(Not(x, **kwargs), Not(y, **kwargs), **kwargs))
     return And(*terms, **kwargs)
 
 def OneHot(*args, **kwargs):
