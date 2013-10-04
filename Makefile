@@ -2,7 +2,7 @@
 
 PIP := pip
 PYLINT := pylint
-PYTHON := python
+PYTHON := python3
 
 PIP_INSTALL_FLAGS := -r requirements.txt
 
