@@ -84,15 +84,19 @@ def exprcomp(exprvar):
         EXPRCOMPLEMENTS[uniqid] = comp
     return comp
 
-def expr(arg):
+def expr(arg, simplify=True, factor=False):
     """Return an Expression."""
     if isinstance(arg, Expression):
         return arg
     elif arg in {0, 1}:
         return CONSTANTS[arg]
     elif type(arg) is str:
-        ast = pyeda.parsing.boolexpr.parse(arg)
-        return ast2expr(ast)
+        ex = ast2expr(pyeda.parsing.boolexpr.parse(arg))
+        if factor:
+            ex = ex.factor()
+        elif simplify:
+            ex = ex.simplify()
+        return ex
     else:
         fstr = "argument cannot be converted to Expression: " + str(arg)
         raise TypeError(fstr)
@@ -436,7 +440,15 @@ class Expression(boolfunc.Function):
 
     @staticmethod
     def box(arg):
-        return expr(arg)
+        if isinstance(arg, Expression):
+            return arg
+        elif arg in {0, 1}:
+            return CONSTANTS[arg]
+        elif type(arg) is str:
+            return ast2expr(pyeda.parsing.boolexpr.parse(arg))
+        else:
+            fstr = "argument cannot be converted to Expression: " + str(arg)
+            raise TypeError(fstr)
 
     # Specific to Expression
     def __lt__(self, other):
