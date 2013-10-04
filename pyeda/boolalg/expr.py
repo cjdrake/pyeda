@@ -538,8 +538,7 @@ class Expression(boolfunc.Function):
         if self.is_cnf():
             return self
 
-        auxvars = list()
-        _, cons = self.factor()._tseitin(auxvarname, auxvars)
+        _, cons = _tseitin(self.factor(), auxvarname)
         fst = cons[-1][1]
         rst = [Equal(f, expr).to_cnf() for f, expr in cons[:-1]]
         return And(fst, *rst)
@@ -726,9 +725,6 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         return True
 
     # FactoredExpression
-    def _tseitin(self, auxvarname, auxvars):
-        return self, list()
-
     def flatten(self, op):
         """Degenerate form of a flattened expression."""
         return self
@@ -1188,21 +1184,6 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         obj = self.__class__(*terms)
         obj._simplified = True
         return obj
-
-    def _tseitin(self, auxvarname, auxvars):
-        fs = list()
-        cons = list()
-        for arg in self.args:
-            f, _cons = arg._tseitin(auxvarname, auxvars)
-            fs.append(f)
-            cons.extend(_cons)
-
-        auxvaridx = len(auxvars)
-        auxvar = exprvar(auxvarname, auxvaridx)
-        auxvars.append(auxvar)
-
-        cons.append((auxvar, self.__class__(*fs)))
-        return auxvar, cons
 
     def _term_expand(self, term, vs):
         """Return a term expanded by a list of variables."""
@@ -1813,6 +1794,31 @@ class ExprITE(_ArgumentContainer):
     @cached_property
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
+
+
+def _tseitin(expr, auxvarname, auxvars=None):
+    """
+    Convert a factored expression to a literal, and a list of constraints.
+    """
+    if isinstance(expr, ExprLiteral):
+        return expr, list()
+    else:
+        if auxvars is None:
+            auxvars = list()
+
+        fs = list()
+        cons = list()
+        for arg in expr.args:
+            f, subcons = _tseitin(arg, auxvarname, auxvars)
+            fs.append(f)
+            cons.extend(subcons)
+
+        auxvarindex = len(auxvars)
+        auxvar = exprvar(auxvarname, auxvarindex)
+        auxvars.append(auxvar)
+
+        cons.append((auxvar, expr.__class__(*fs)))
+        return auxvar, cons
 
 
 # Convenience dictionaries
