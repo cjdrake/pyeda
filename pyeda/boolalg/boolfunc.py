@@ -212,6 +212,7 @@ class Variable(object):
 
     @property
     def name(self):
+        """Return the variable name."""
         return self.names[0]
 
     @property
