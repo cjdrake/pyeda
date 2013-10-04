@@ -317,8 +317,8 @@ def OneHot0(*args, **kwargs):
         At most one input variable is true.
     """
     terms = list()
-    for x, y in itertools.combinations(args, 2):
-        terms.append(Or(Not(x, **kwargs), Not(y, **kwargs), **kwargs))
+    for arg1, arg2 in itertools.combinations(args, 2):
+        terms.append(Or(Not(arg1, **kwargs), Not(arg2, **kwargs), **kwargs))
     return And(*terms, **kwargs)
 
 def OneHot(*args, **kwargs):
@@ -467,6 +467,11 @@ class Expression(boolfunc.Function):
 
     @property
     def simplified(self):
+        """Return whether the expression is in simplified form.
+
+        A simplified expression contains no constant values (0, 1),
+        or sub-expression that can be easily converted to constant values.
+        """
         return self._simplified
 
     def factor(self, conj=False):
@@ -1532,6 +1537,10 @@ class ExprEqualBase(_ArgumentContainer):
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
 
+    @staticmethod
+    def get_dual():
+        raise NotImplementedError()
+
 
 class ExprEqual(ExprEqualBase):
     """Expression EQUAL operator"""
@@ -1585,9 +1594,9 @@ class ExprEqual(ExprEqualBase):
     def factor(self, conj=False):
         if conj:
             args = list()
-            for x, y in itertools.combinations(self.args, 2):
-                args.append(ExprOr(x.invert().factor(), y.factor()))
-                args.append(ExprOr(x.factor(), y.invert().factor()))
+            for arg1, arg2 in itertools.combinations(self.args, 2):
+                args.append(ExprOr(arg1.invert().factor(), arg2.factor()))
+                args.append(ExprOr(arg1.factor(), arg2.invert().factor()))
             return ExprAnd(*args).simplify()
         else:
             all0 = ExprAnd(*[arg.invert().factor(conj) for arg in self.args])
@@ -1655,9 +1664,9 @@ class ExprUnequal(ExprEqualBase):
             return ExprAnd(any0, any1).simplify()
         else:
             args = list()
-            for x, y in itertools.combinations(self.args, 2):
-                args.append(ExprAnd(x.invert().factor(), y.factor()))
-                args.append(ExprAnd(x.factor(), y.invert().factor()))
+            for arg1, arg2 in itertools.combinations(self.args, 2):
+                args.append(ExprAnd(arg1.invert().factor(), arg2.factor()))
+                args.append(ExprAnd(arg1.factor(), arg2.invert().factor()))
             return ExprOr(*args).simplify()
 
     @staticmethod

@@ -163,10 +163,10 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # vfs : [VectorFunction]
 # bv : BitVector instance
 # op : Boolean operator
-# Or, And, Not, Xor, Xnor, Equal, Implies, ITE : Expression factory functions
+# Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE : Expression factory functions
 # Nor, Nand, OneHot0, OneHot : Expression higher-order factory functions
 # NF_Not, DNF_Or, CNF_And : NormalForm factory functions
-good-names=_,i,j,k,ab,cd,s,d1,d0,p,q,v,vs,bf,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Or,And,Not,Xor,Xnor,Equal,Implies,ITE,Nor,Nand,OneHot0,OneHot,NF_Not,DNF_Or,CNF_And
+good-names=_,i,j,k,ab,cd,s,d1,d0,p,q,v,vs,bf,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Not,Or,And,Xor,Xnor,Equal,Unequal,Implies,ITE,Nor,Nand,OneHot0,OneHot,NF_Not,DNF_Or,CNF_And
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz

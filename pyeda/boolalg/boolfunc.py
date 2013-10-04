@@ -318,6 +318,7 @@ class Function(object):
 
     @cached_property
     def usupport(self):
+        """Return the untyped support set of a function."""
         return frozenset(v.uniqid for v in self.support)
 
     @property

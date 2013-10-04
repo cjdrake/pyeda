@@ -30,7 +30,8 @@ from pyeda.boolalg.expr import (
     Nor, Nand, OneHot0, OneHot,
     Expression, ExprConstant, ExprLiteral, ExprVariable, ExprComplement,
     ExprNot, ExprOrAnd, ExprOr, ExprAnd,
-    ExprExclusive, ExprXor, ExprXnor, ExprEqual, ExprUnequal, ExprImplies, ExprITE,
+    ExprExclusive, ExprXor, ExprXnor, ExprEqual, ExprUnequal,
+    ExprImplies, ExprITE,
 )
 
 from pyeda.boolalg.table import (
