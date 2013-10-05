@@ -113,12 +113,12 @@ def parse_cnf(s, varname='x'):
 
     _expect_token(lex, {KW_p})
     _expect_token(lex, {KW_cnf})
-    nvariables = _expect_token(lex, {IntegerToken}).value
+    nvars = _expect_token(lex, {IntegerToken}).value
     nclauses = _expect_token(lex, {IntegerToken}).value
 
-    return _cnf_formula(lex, varname, nvariables, nclauses)
+    return _cnf_formula(lex, varname, nvars, nclauses)
 
-def _cnf_formula(lex, varname, nvariables, nclauses):
+def _cnf_formula(lex, varname, nvars, nclauses):
     clauses = list()
     while True:
         try:
@@ -126,7 +126,7 @@ def _cnf_formula(lex, varname, nvariables, nclauses):
         except StopIteration:
             break
         lex.unpop_token(tok)
-        clauses.append(_cnf_clause(lex, varname, nvariables))
+        clauses.append(_cnf_clause(lex, varname, nvars))
 
     if len(clauses) < nclauses:
         fstr = "formula has fewer than {} clauses"
@@ -137,7 +137,7 @@ def _cnf_formula(lex, varname, nvariables, nclauses):
 
     return ('and', ) + tuple(clauses)
 
-def _cnf_clause(lex, varname, nvariables):
+def _cnf_clause(lex, varname, nvars):
     clause = list()
     tok = _expect_token(lex, {OP_not, IntegerToken})
     while not (type(tok) is IntegerToken and tok.value == 0):
@@ -148,9 +148,9 @@ def _cnf_clause(lex, varname, nvariables):
         else:
             neg = False
             index = tok.value
-        if index > nvariables:
+        if index > nvars:
             fstr = "formula literal {} is greater than {}"
-            raise DIMACSError(fstr.format(index, nvariables))
+            raise DIMACSError(fstr.format(index, nvars))
         if neg:
             clause.append((OP_not.ASTOP, ('var', (varname, ), (index, ))))
         else:
@@ -270,53 +270,53 @@ def parse_sat(s, varname='x'):
 
     _expect_token(lex, {KW_p})
     fmt = _expect_token(lex, {KW_sat, KW_satx, KW_sate, KW_satex}).value
-    nvariables = _expect_token(lex, {IntegerToken}).value
+    nvars = _expect_token(lex, {IntegerToken}).value
 
     try:
         types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
         tok = _expect_token(lex, types)
         lex.unpop_token(tok)
-        return _sat_formula(lex, fmt, varname, nvariables)
+        return _sat_formula(lex, fmt, varname, nvars)
     except StopIteration:
         raise DIMACSError("incomplete formula")
 
-def _sat_formula(lex, fmt, varname, nvariables):
+def _sat_formula(lex, fmt, varname, nvars):
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
     tok = _expect_token(lex, types)
     if type(tok) is IntegerToken:
         index = tok.value
-        if not 0 < index <= nvariables:
+        if not 0 < index <= nvars:
             fstr = "formula literal {} outside valid range: (0, {}]"
-            raise DIMACSError(fstr.format(index, nvariables))
+            raise DIMACSError(fstr.format(index, nvars))
         return ('var', (varname, ), (index, ))
     elif type(tok) is OP_not:
         tok = _expect_token(lex, {IntegerToken, LPAREN})
         if type(tok) is IntegerToken:
             index = tok.value
-            if not 0 < index <= nvariables:
+            if not 0 < index <= nvars:
                 fstr = "formula literal {} outside valid range: (0, {}]"
-                raise DIMACSError(fstr.format(index, nvariables))
+                raise DIMACSError(fstr.format(index, nvars))
             return (OP_not.ASTOP, ('var', (varname, ), (index, )))
         else:
-            return (OP_not.ASTOP, _one_formula(lex, fmt, varname, nvariables))
+            return (OP_not.ASTOP, _one_formula(lex, fmt, varname, nvars))
     elif type(tok) is LPAREN:
-        return _one_formula(lex, fmt, varname, nvariables)
+        return _one_formula(lex, fmt, varname, nvars)
     # OR/AND/XOR/EQUAL
     else:
         _expect_token(lex, {LPAREN})
-        return (tok.ASTOP, ) + _zom_formulas(lex, fmt, varname, nvariables)
+        return (tok.ASTOP, ) + _zom_formulas(lex, fmt, varname, nvars)
 
-def _one_formula(lex, fmt, varname, nvariables):
-    f = _sat_formula(lex, fmt, varname, nvariables)
+def _one_formula(lex, fmt, varname, nvars):
+    f = _sat_formula(lex, fmt, varname, nvars)
     _expect_token(lex, {RPAREN})
     return f
 
-def _zom_formulas(lex, fmt, varname, nvariables):
+def _zom_formulas(lex, fmt, varname, nvars):
     fs = list()
     types = {IntegerToken, LPAREN, RPAREN} | _SAT_TOKS[fmt]
     tok = _expect_token(lex, types)
     while type(tok) is not RPAREN:
         lex.unpop_token(tok)
-        fs.append(_sat_formula(lex, fmt, varname, nvariables))
+        fs.append(_sat_formula(lex, fmt, varname, nvars))
         tok = _expect_token(lex, types)
     return tuple(fs)
