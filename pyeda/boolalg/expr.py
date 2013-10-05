@@ -48,8 +48,7 @@ import collections
 import itertools
 
 import pyeda.parsing.boolexpr
-from pyeda.boolalg import boolfunc
-from pyeda import sat
+from pyeda.boolalg import boolfunc, sat
 from pyeda.util import bit_on, parity, cached_property
 
 
