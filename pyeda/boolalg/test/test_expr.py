@@ -625,7 +625,7 @@ def test_satisfy():
 
     # PLE solution
     f = (a + b + c) * (-a + -b + c)
-    assert f.satisfy_one() == {c: 1}
+    assert f.satisfy_one() == {a: 0, b: 0, c: 1}
 
     points = [p for p in Xor(a, b, c).satisfy_all()]
     assert points == [

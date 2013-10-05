@@ -48,7 +48,7 @@ import collections
 import itertools
 
 import pyeda.parsing.boolexpr
-from pyeda.boolalg import boolfunc, sat
+from pyeda.boolalg import boolfunc, picosat, sat
 from pyeda.util import bit_on, parity, cached_property
 
 
@@ -354,13 +354,16 @@ class Expression(boolfunc.Function):
 
     def satisfy_one(self):
         if self.is_cnf():
-            solution = sat.dpll(self)
+            if picosat.PICOSAT_IMPORTED:
+                return picosat.solve(DimacsCNF(self))
+            else:
+                upoint = sat.dpll(self)
         else:
-            solution = sat.backtrack(self)
-        if solution is None:
+            upoint = sat.backtrack(self)
+        if upoint is None:
             return None
         else:
-            return upoint2exprpoint(solution)
+            return upoint2exprpoint(upoint)
 
     def satisfy_all(self):
         for upoint in sat.iter_backtrack(self):
