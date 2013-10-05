@@ -14,8 +14,6 @@ from pyeda.boolalg.expr import (
 )
 from pyeda.boolalg.vexpr import bitvec
 
-from pyeda.sat import backtrack, dpll
-
 import nose
 
 a, b, c, d, e, p, q, s = map(exprvar, 'abcdepqs')
