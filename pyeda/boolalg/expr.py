@@ -37,6 +37,8 @@ Interface Classes:
             ExprUnequal
         ExprImplies
         ExprITE
+
+    DimacsCNF
 """
 
 # Disable "redefining name from outer scope"
@@ -111,18 +113,6 @@ def ast2expr(ast):
         args = tuple(ast2expr(arg) for arg in ast[1:])
         return ASTOPS[ast[0]](*args)
 
-def expr2dimacscnf(expr):
-    """Convert an expression into an equivalent DIMACS CNF string."""
-    if not isinstance(expr, Expression):
-        raise TypeError("input is not an Expression")
-    if not expr.is_cnf():
-        raise ValueError("input is not a CNF")
-
-    nums, nvariables = _exprnvars(expr)
-    clauses = _expr2clauses(expr, nums)
-    formula = " ".join(" ".join(term for term in clause) for clause in clauses)
-    return "p cnf {} {}\n{}".format(nvariables, len(clauses), formula)
-
 def expr2dimacssat(expr):
     """Convert an expression into an equivalent DIMACS SAT string."""
     if not isinstance(expr, Expression):
@@ -130,8 +120,14 @@ def expr2dimacssat(expr):
     if not expr.simplified:
         raise ValueError("input expression is not simplified")
 
-    nums, nvariables = _exprnvars(expr)
-    formula = _expr2sat(expr, nums)
+    lit2idx = dict()
+    idx2var = dict()
+    for i, v in enumerate(expr.inputs, start=1):
+        lit2idx[v] = i
+        lit2idx[-v] = -i
+        idx2var[i] = v
+
+    formula = _expr2sat(expr, lit2idx)
     if 'xor' in formula:
         if '=' in formula:
             fmt = 'satex'
@@ -141,47 +137,22 @@ def expr2dimacssat(expr):
         fmt = 'sate'
     else:
         fmt = 'sat'
-    return "p {} {}\n{}".format(fmt, nvariables, formula)
+    return "p {} {}\n{}".format(fmt, len(idx2var), formula)
 
-def _exprnvars(expr):
-    """Return a remapping of Variable uniqids."""
-    nums = {v.uniqid: None for v in expr.support}
-    num = 1
-    for uniqid in sorted(nums.keys()):
-        nums[uniqid] = num
-        nums[-uniqid] = -num
-        num += 1
-    return nums, num - 1
-
-def _expr2clauses(expr, nums):
-    """Convert an expression to a list of DIMACS CNF clauses."""
-    if expr is EXPRONE:
-        return []
-    elif isinstance(expr, ExprLiteral):
-        return [[str(nums[expr.uniqid]), '0']]
-    elif isinstance(expr, ExprOr) and expr.depth == 1:
-        return [[str(nums[lit.uniqid]) for lit in expr.args] + ['0']]
-    elif isinstance(expr, ExprAnd) and expr.depth == 1:
-        return [[str(nums[lit.uniqid]), '0'] for lit in expr.args]
-    else:
-        return [[str(nums[lit.uniqid]) for lit in term.arg_set] + ['0']
-                for term in expr.args]
-
-def _expr2sat(expr, nums):
+def _expr2sat(expr, lit2idx):
     """Convert an expression to a DIMACS SAT string."""
     if isinstance(expr, ExprLiteral):
-        return str(nums[expr.uniqid])
+        return str(lit2idx[expr])
     elif isinstance(expr, ExprOr):
-        return "+(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
+        return "+(" + " ".join(_expr2sat(arg, lit2idx) for arg in expr.args) + ")"
     elif isinstance(expr, ExprAnd):
-        return "*(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
+        return "*(" + " ".join(_expr2sat(arg, lit2idx) for arg in expr.args) + ")"
     elif isinstance(expr, ExprNot):
-        return "-(" + _expr2sat(expr.arg, nums) + ")"
+        return "-(" + _expr2sat(expr.arg, lit2idx) + ")"
     elif isinstance(expr, ExprXor):
-        return ("xor(" + " ".join(_expr2sat(arg, nums)
-                                  for arg in expr.args) + ")")
+        return ("xor(" + " ".join(_expr2sat(arg, lit2idx) for arg in expr.args) + ")")
     elif isinstance(expr, ExprEqual):
-        return "=(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
+        return "=(" + " ".join(_expr2sat(arg, lit2idx) for arg in expr.args) + ")"
     else:
         raise ValueError("invalid expression")
 
@@ -1818,6 +1789,51 @@ class ExprITE(_ArgumentContainer):
     @cached_property
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
+
+
+class DimacsCNF(object):
+    """Wrapper class for a DIMACS CNF representation"""
+
+    def __init__(self, expr):
+        if not isinstance(expr, Expression):
+            raise TypeError("input is not an Expression")
+        if not expr.is_cnf():
+            raise ValueError("input is not a CNF")
+
+        lit2idx = dict()
+        self.idx2var = dict()
+        for i, v in enumerate(expr.inputs, start=1):
+            lit2idx[v] = i
+            lit2idx[-v] = -i
+            self.idx2var[i] = v
+
+        if expr is EXPRONE:
+            self.clauses = tuple()
+        elif isinstance(expr, ExprLiteral):
+            self.clauses = ((lit2idx[expr], ), )
+        elif isinstance(expr, ExprOr) and expr.depth == 1:
+            self.clauses = (tuple(lit2idx[lit] for lit in expr.args), )
+        elif isinstance(expr, ExprAnd) and expr.depth == 1:
+            self.clauses = tuple((lit2idx[lit], ) for lit in expr.args)
+        else:
+            self.clauses = tuple(tuple(lit2idx[lit] for lit in arg.arg_set)
+                                 for arg in expr.args)
+
+    def __str__(self):
+        return "p cnf {0.nvars} {0.nclauses}\n{0._formula}".format(self)
+
+    @property
+    def nvars(self):
+        return len(self.idx2var)
+
+    @property
+    def nclauses(self):
+        return len(self.clauses)
+
+    @property
+    def _formula(self):
+        return "\n".join(" ".join(str(lit) for lit in clause) + " 0"
+                         for clause in self.clauses)
 
 
 def _tseitin(expr, auxvarname, auxvars=None):
