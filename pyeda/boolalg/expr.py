@@ -176,7 +176,7 @@ def _expr2sat(expr, nums):
     elif isinstance(expr, ExprAnd):
         return "*(" + " ".join(_expr2sat(arg, nums) for arg in expr.args) + ")"
     elif isinstance(expr, ExprNot):
-        return "-(" + _expr2sat(expr.args[0], nums) + ")"
+        return "-(" + _expr2sat(expr.arg, nums) + ")"
     elif isinstance(expr, ExprXor):
         return ("xor(" + " ".join(_expr2sat(arg, nums)
                                   for arg in expr.args) + ")")
