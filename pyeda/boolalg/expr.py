@@ -494,6 +494,10 @@ class Expression(boolfunc.Function):
         """Return the number of levels in the expression tree."""
         raise NotImplementedError()
 
+    def to_ast(self):
+        """Return the expression converted to an abstract syntax tree."""
+        raise NotImplementedError()
+
     def expand(self, vs=None, conj=False):
         """Return the Shannon expansion with respect to a list of variables."""
         vs = self._expect_vars(vs)
@@ -553,20 +557,21 @@ class Expression(boolfunc.Function):
 class ExprConstant(Expression, sat.DPLLInterface):
     """Expression constant"""
 
-    VAL = NotImplemented
+    ASTOP = 'const'
+    VALUE = NotImplemented
 
     def __init__(self):
         super(ExprConstant, self).__init__()
         self._simplified = True
 
     def __bool__(self):
-        return bool(self.VAL)
+        return bool(self.VALUE)
 
     def __int__(self):
-        return self.VAL
+        return self.VALUE
 
     def __str__(self):
-        return str(self.VAL)
+        return str(self.VALUE)
 
     # From Function
     @cached_property
@@ -593,6 +598,9 @@ class ExprConstant(Expression, sat.DPLLInterface):
     def depth(self):
         return 0
 
+    def to_ast(self):
+        return (self.ASTOP, self.VALUE)
+
     # FactoredExpression
     def flatten(self, op):
         """Degenerate form of a flattened expression."""
@@ -617,7 +625,7 @@ class _ExprZero(ExprConstant):
     .. NOTE:: Never use this class. Use EXPRZERO singleton instead.
     """
 
-    VAL = 0
+    VALUE = 0
 
     # From Function
     def is_zero(self):
@@ -655,7 +663,7 @@ class _ExprOne(ExprConstant):
     .. NOTE:: Never use this class. Use EXPRONE singleton instead.
     """
 
-    VAL = 1
+    VALUE = 1
 
     # From Function
     def is_one(self):
@@ -751,6 +759,8 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 class ExprVariable(boolfunc.Variable, ExprLiteral):
     """Expression variable"""
 
+    ASTOP = 'var'
+
     def __init__(self, bvar):
         boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         ExprLiteral.__init__(self)
@@ -788,6 +798,9 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
 
     def invert(self):
         return exprcomp(self)
+
+    def to_ast(self):
+        return (self.ASTOP, self.names, self.indices)
 
     # DPLL IF
     def bcp(self):
@@ -846,6 +859,9 @@ class ExprComplement(ExprLiteral):
 
     def invert(self):
         return self.exprvar
+
+    def to_ast(self):
+        return (ExprNot.ASTOP, self.exprvar.to_ast())
 
     # DPLL IF
     def bcp(self):
@@ -915,6 +931,9 @@ class ExprNot(Expression):
     def depth(self):
         return self.arg.depth
 
+    def to_ast(self):
+        return (self.ASTOP, self.arg.to_ast())
+
 
 class _ArgumentContainer(Expression):
     """Common methods for expressions that are argument containers."""
@@ -955,6 +974,9 @@ class _ArgumentContainer(Expression):
     @property
     def depth(self):
         raise NotImplementedError()
+
+    def to_ast(self):
+        return (self.ASTOP, ) + tuple(arg.to_ast() for arg in self.args)
 
     # Specific to _ArgumentContainer
     def args_str(self, sep):
@@ -1823,8 +1845,8 @@ def _tseitin(expr, auxvarname, auxvars=None):
 
 # Convenience dictionaries
 CONSTANTS = {
-    _ExprZero.VAL : EXPRZERO,
-    _ExprOne.VAL  : EXPRONE
+    _ExprZero.VALUE : EXPRZERO,
+    _ExprOne.VALUE  : EXPRONE
 }
 
 ASTOPS = {
