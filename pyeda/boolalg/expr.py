@@ -324,6 +324,8 @@ def OneHot(*args, simplify=True, factor=False, conj=False):
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
 
+    ASTOP = NotImplemented
+
     def __init__(self):
         self._simplified = False
 
