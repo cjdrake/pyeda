@@ -114,7 +114,7 @@ def ast2expr(ast):
 def expr2dimacscnf(expr):
     """Convert an expression into an equivalent DIMACS CNF string."""
     if not isinstance(expr, Expression):
-        raise TypeError("input is not an expression")
+        raise TypeError("input is not an Expression")
     if not expr.is_cnf():
         raise ValueError("input is not a CNF")
 
@@ -126,7 +126,7 @@ def expr2dimacscnf(expr):
 def expr2dimacssat(expr):
     """Convert an expression into an equivalent DIMACS SAT string."""
     if not isinstance(expr, Expression):
-        raise TypeError("input is not an expression")
+        raise TypeError("input is not an Expression")
     if not expr.simplified:
         raise ValueError("input expression is not simplified")
 
@@ -470,7 +470,7 @@ class Expression(boolfunc.Function):
         """Return whether the expression is in simplified form.
 
         A simplified expression contains no constant values (0, 1),
-        or sub-expression that can be easily converted to constant values.
+        or sub-expressions that can be easily converted to constant values.
         """
         return self._simplified
 
