@@ -366,8 +366,12 @@ class Expression(boolfunc.Function):
             return upoint2exprpoint(upoint)
 
     def satisfy_all(self):
-        for upoint in sat.iter_backtrack(self):
-            yield upoint2exprpoint(upoint)
+        if self.is_cnf() and picosat.PICOSAT_IMPORTED:
+            for point in picosat.iter_solve(DimacsCNF(self)):
+                yield point
+        else:
+            for upoint in sat.iter_backtrack(self):
+                yield upoint2exprpoint(upoint)
 
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())

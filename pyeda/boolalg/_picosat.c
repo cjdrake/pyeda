@@ -1,6 +1,13 @@
 // Filename: _picosat.c
 //
-// Python Interface Functions:
+// Constants
+//     PICOSAT_VERSION
+//     PICOSAT_COPYRIGHT
+//
+// Exceptions:
+//     PicosatError
+//
+// Interface Functions:
 //     solve
 //     iter_solve
 
@@ -10,13 +17,11 @@
 
 static PyObject *PicosatError;
 
-PyObject * version(void) {
-    return PyUnicode_FromString("957");
-}
+PyDoc_STRVAR(picosaterr_docstring, "PicoSAT Error");
 
-PyObject * copyright(void) {
-    return PyUnicode_FromString(picosat_copyright());
-}
+//==============================================================================
+// Pass these to picosat_minit to use Python as PicoSAT's memory manager.
+//==============================================================================
 
 inline static void *
 py_malloc(void *pmgr, size_t nbytes) {
@@ -62,12 +67,15 @@ add_clauses(PicoSAT *picosat, PyObject *clauses) {
         }
         while ((pylit = PyIter_Next(pylits)) != 0) {
             if (!PyLong_Check(pylit)) {
-                PyErr_SetString(PyExc_TypeError, "expected integer clause literal");
+                PyErr_SetString(PyExc_TypeError,
+                                "expected integer clause literal");
                 goto ADD_LITS_DECREF_PYLITS;
             }
             lit = PyLong_AsLong(pylit);
             if (lit == 0 || abs(lit) > nvars) {
-                PyErr_Format(PyExc_ValueError, "expected clause literal in range (0, %d], got: %d", nvars, lit);
+                PyErr_Format(PyExc_ValueError,
+                             "expected clause literal in range (0, %d], got: %d",
+                             nvars, lit);
                 goto ADD_LITS_DECREF_PYLITS;
             }
 
@@ -120,20 +128,18 @@ ADD_LITS_RETURN:
 //==============================================================================
 
 static PyObject *
-get_solution(PicoSAT * picosat) {
+get_soln(PicoSAT * picosat) {
 
     int i;
     int nvars = picosat_variables(picosat);
     PyObject *pytuple, *pyitem;
-    int lit;
 
     pytuple = PyTuple_New(nvars);
     if (pytuple == NULL) {
         return NULL;
     }
     for (i = 1; i <= nvars; i++) {
-        lit = picosat_deref(picosat, i);
-        pyitem = PyLong_FromLong(lit);
+        pyitem = PyLong_FromLong((long) picosat_deref(picosat, i));
         if (pyitem == NULL) {
             Py_DECREF(pytuple);
             return NULL;
@@ -148,13 +154,37 @@ get_solution(PicoSAT * picosat) {
 }
 
 //==============================================================================
+// Add the inverse of the current solution to the clauses.
+//
+// NOTE: Copied from PicoSAT "app.c".
+//==============================================================================
+
+static int
+blocksoln(PicoSAT *picosat, signed char *soln)
+{
+    int i;
+    int nvars;
+
+    nvars = picosat_variables(picosat);
+    for (i = 1; i <= nvars; i++)
+        soln[i] = (picosat_deref(picosat, i) > 0) ? 1 : -1;
+
+    for (i = 1; i <= nvars; i++)
+        picosat_add(picosat, (soln[i] < 0) ? i : -i);
+
+    picosat_add(picosat, 0);
+    return 1;
+}
+
+//==============================================================================
 // Return a single solution to a CNF instance.
 //
-// solve(nvars : int, clauses : iter(iter(int)),
+// solve(nvars, clauses,
 //       verbosity=0, default_phase=2, propagation_limit=-1, decision_limit=-1)
 //==============================================================================
 
-PyDoc_STRVAR(solve_docstring, "Return the result of a PicoSAT solver.\n\
+PyDoc_STRVAR(solve_docstring, "\
+Return a single solution to a CNF instance.\n\
 \n\
 If the CNF is satisfiable, return a satisfying input point.\n\
 If the CNF is NOT satisfiable, return None.\n\
@@ -224,7 +254,7 @@ solve(PyObject *self, PyObject *args, PyObject *kwargs) {
     }
     else if (result == PICOSAT_SATISFIABLE) {
         // Might be NULL
-        pyret = get_solution(picosat);
+        pyret = get_soln(picosat);
     }
     else if (result == PICOSAT_UNKNOWN) {
         PyErr_SetString(PicosatError, "PicoSAT returned UNKNOWN");
@@ -241,34 +271,249 @@ SOLVE_RETURN:
 }
 
 //==============================================================================
+// Iterate through all solutions to a CNF instance.
+//
+// iter_solve(nvars, clauses,
+//            verbosity=0, default_phase=2, propagation_limit=-1,
+//            decision_limit=-1)
+//==============================================================================
+
+PyDoc_STRVAR(iter_solve_docstring, "\
+Iterate through all solutions to a CNF instance.\n\
+\n\
+If PicoSAT encounters an error, raise a PicosatError.");
+
+//==============================================================================
+// Iterator state
+//==============================================================================
+
+typedef struct {
+    PyObject_HEAD
+
+    PicoSAT *picosat;
+    int decision_limit;
+    signed char *soln;
+} IterSolveState;
+
+//==============================================================================
+// iter_solve constructor
+//==============================================================================
+
+static PyObject *
+iter_solve_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
+{
+    static char *keywords[] = {
+        "nvars", "clauses",
+        "verbosity", "default_phase", "propagation_limit", "decision_limit",
+        NULL
+    };
+
+    // PicoSAT instance
+    PicoSAT *picosat;
+
+    // PicoSAT input parameters
+    int nvars = 0;
+    PyObject *clauses;
+    int verbosity = 0;
+    int default_phase = 2; // 0 = false, 1 = true, 2 = Jeroslow-Wang, 3 = random
+    int propagation_limit = -1;
+    int decision_limit = -1;
+
+    // Python return value
+    PyObject *pyret = NULL;
+
+    picosat = picosat_minit(NULL, py_malloc, py_realloc, py_free);
+    if (picosat == NULL) {
+        PyErr_SetString(PicosatError, "could not initialize PicoSAT");
+        goto ITER_SOLVE_RETURN;
+    }
+
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "iO|iiii:solve", keywords,
+            &nvars, &clauses,
+            &verbosity, &default_phase, &propagation_limit, &decision_limit)) {
+        goto ITER_SOLVE_RESET_PICOSAT;
+    }
+
+    picosat_set_verbosity(picosat, verbosity);
+    picosat_set_global_default_phase(picosat, default_phase);
+    picosat_set_propagation_limit(picosat, propagation_limit);
+
+    picosat_adjust(picosat, nvars);
+
+    if (!add_clauses(picosat, clauses)) {
+        goto ITER_SOLVE_RESET_PICOSAT;
+    }
+
+    // picosat_assume(picosat, lit);
+    // picosat_set_seed(picosat, seed);
+
+    IterSolveState *state = (IterSolveState *) cls->tp_alloc(cls, 0);
+    if (!state) {
+        goto ITER_SOLVE_RESET_PICOSAT;
+    }
+
+    state->picosat = picosat;
+    state->decision_limit = decision_limit;
+    state->soln = PyMem_Malloc(nvars + 1);
+    if (state->soln == NULL) {
+        PyErr_NoMemory();
+        goto ITER_SOLVE_RESET_PICOSAT;
+    }
+
+    pyret = (PyObject *) state;
+    goto ITER_SOLVE_RETURN;
+
+ITER_SOLVE_RESET_PICOSAT:
+    picosat_reset(picosat);
+
+ITER_SOLVE_RETURN:
+    return pyret;
+}
+
+//==============================================================================
+// iter_solve destructor
+//==============================================================================
+
+static void
+iter_solve_dealloc(IterSolveState *state)
+{
+    PyMem_Free(state->soln);
+    Py_TYPE(state)->tp_free(state);
+
+    picosat_reset(state->picosat);
+}
+
+//==============================================================================
+// iter_solve next method
+//==============================================================================
+
+static PyObject *
+iter_solve_next(IterSolveState *state)
+{
+    PyObject * pysoln;
+
+    // PicoSAT return value
+    int result;
+
+    // Python return value
+    PyObject * pyret = NULL;
+
+    // Do the damn thing
+    Py_BEGIN_ALLOW_THREADS
+    result = picosat_sat(state->picosat, state->decision_limit);
+    Py_END_ALLOW_THREADS
+
+    // Prepare Python return value
+    if (result == PICOSAT_UNSATISFIABLE) {
+        // No solutions
+    }
+    else if (result == PICOSAT_SATISFIABLE) {
+        // Might be NULL
+        pysoln = get_soln(state->picosat);
+        if (pysoln) {
+            blocksoln(state->picosat, state->soln);
+            pyret = pysoln;
+        }
+    }
+    else if (result == PICOSAT_UNKNOWN) {
+        // No more solutions
+    }
+    else {
+        PyErr_Format(PicosatError, "PicoSAT returned: %d", result);
+    }
+
+    return pyret;
+}
+
+//==============================================================================
+// iter_solve type definition
+//==============================================================================
+
+static PyTypeObject
+IterSolveType = {
+    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+
+    "iter_solve",                       // tp_name
+    sizeof(IterSolveState),             // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor) iter_solve_dealloc,    // tp_dealloc
+    0,                                  // tp_print
+    0,                                  // tp_getattr
+    0,                                  // tp_setattr
+    0,                                  // tp_reserved
+    0,                                  // tp_repr
+    0,                                  // tp_as_number
+    0,                                  // tp_as_sequence
+    0,                                  // tp_as_mapping
+    0,                                  // tp_hash
+    0,                                  // tp_call
+    0,                                  // tp_str
+    0,                                  // tp_getattro
+    0,                                  // tp_setattro
+    0,                                  // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    iter_solve_docstring,               // tp_doc
+    0,                                  // tp_traverse
+    0,                                  // tp_clear
+    0,                                  // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    PyObject_SelfIter,                  // tp_iter
+    (iternextfunc) iter_solve_next,     // tp_iternext
+    0,                                  // tp_methods
+    0,                                  // tp_members
+    0,                                  // tp_getset
+    0,                                  // tp_base
+    0,                                  // tp_dict
+    0,                                  // tp_descr_get
+    0,                                  // tp_descr_set
+    0,                                  // tp_dictoffset
+    0,                                  // tp_init
+    PyType_GenericAlloc,                // tp_alloc
+    iter_solve_new,                     // tp_new
+};
+
+//==============================================================================
+// Return the PicoSAT version as a Python string.
+//==============================================================================
+
+static PyObject *
+version(void) {
+    return PyUnicode_FromString("957");
+}
+
+//==============================================================================
+// Return the PicoSAT copyright as a Python string.
+//==============================================================================
+
+static PyObject *
+copyright(void) {
+    return PyUnicode_FromString(picosat_copyright());
+}
+
+//==============================================================================
 // Module Definition
 //==============================================================================
 
-static PyMethodDef methods[] = {
+PyDoc_STRVAR(module_docstring, "Python bindings to PicoSAT");
+
+static PyMethodDef functions[] = {
     {"solve", (PyCFunction) solve, METH_VARARGS | METH_KEYWORDS, solve_docstring},
 
     // sentinel
     {NULL, NULL, 0, NULL}
 };
 
-PyDoc_STRVAR(module_docstring, "Python bindings to PicoSAT");
-
 static PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
 
-    // module name
-    "_picosat",
+    "_picosat",         // m_name
+    module_docstring,   // m_doc
+    -1,                 // m_size
 
-    module_docstring,
-
-    // FIXME: I have not idea what this is for
-    -1,
-
-    // module methods
-    methods,
+    // module functions
+    functions,
 };
-
-PyDoc_STRVAR(picosaterr_docstring, "PicoSAT Error");
 
 PyMODINIT_FUNC PyInit__picosat(void)
 {
@@ -278,12 +523,22 @@ PyMODINIT_FUNC PyInit__picosat(void)
     if (pymodule == NULL)
         return NULL;
 
+    if (PyType_Ready(&IterSolveType) < 0)
+        return NULL;
+
+    // Define Constants
     PyModule_AddObject(pymodule, "PICOSAT_VERSION", version());
     PyModule_AddObject(pymodule, "PICOSAT_COPYRIGHT", copyright());
 
-    PicosatError = PyErr_NewExceptionWithDoc("_picosat.PicosatError", picosaterr_docstring, NULL, NULL);
+    // Define PicosatError
+    PicosatError = PyErr_NewExceptionWithDoc("_picosat.PicosatError",
+                                             picosaterr_docstring, NULL, NULL);
     Py_INCREF(PicosatError);
     PyModule_AddObject(pymodule, "PicosatError", PicosatError);
+
+    // Define iter_solve
+    Py_INCREF((PyObject *) &IterSolveType);
+    PyModule_AddObject(pymodule, "iter_solve", (PyObject *) &IterSolveType);
 
     return pymodule;
 }
