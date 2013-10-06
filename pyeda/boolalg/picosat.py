@@ -2,15 +2,16 @@
 PicoSAT Interface
 
 Constants:
+    PICOSAT_IMPORTED
     PICOSAT_VERSION
     PICOSAT_COPYRIGHT
-    PICOSAT_IMPORTED
 
 Exceptions:
     PicosatError
 
 Interface Functions:
-    solve
+    satisfy_one
+    satisfy_all
 """
 
 # Disable import problems
@@ -18,20 +19,20 @@ Interface Functions:
 # pylint: disable=F0401
 
 try:
-    import pyeda.boolalg._picosat
+    from pyeda.boolalg import _picosat
 except ImportError:
+    PICOSAT_IMPORTED = False
     PICOSAT_VERSION = None
     PICOSAT_COPYRIGHT = None
-    PICOSAT_IMPORTED = False
+    PicosatError = None
 else:
-    from pyeda.boolalg._picosat import PICOSAT_VERSION, PICOSAT_COPYRIGHT
-    from pyeda.boolalg._picosat import PicosatError
-    from pyeda.boolalg._picosat import solve as _solve
-    from pyeda.boolalg._picosat import iter_solve as _iter_solve
     PICOSAT_IMPORTED = True
+    PICOSAT_VERSION = _picosat.PICOSAT_VERSION
+    PICOSAT_COPYRIGHT = _picosat.PICOSAT_COPYRIGHT
+    PicosatError = _picosat.PicosatError
 
-def solve(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
-          decision_limit=-1):
+def satisfy_one(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
+                decision_limit=-1):
     """
     If the input CNF is satisfiable, return a satisfying input point.
     A contradiction will return None.
@@ -47,12 +48,12 @@ def solve(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
     assert propagation_limit >= -1
     assert decision_limit >= -1
 
-    soln = _solve(cnf.nvars, cnf.clauses,
-                  verbosity, default_phase, propagation_limit, decision_limit)
-    return cnf.soln2point(soln)
+    return _picosat.satisfy_one(cnf.nvars, cnf.clauses,
+                                verbosity, default_phase, propagation_limit,
+                                decision_limit)
 
-def iter_solve(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
-               decision_limit=-1):
+def satisfy_all(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
+                decision_limit=-1):
     """
     Iterate through all satisfying input points.
 
@@ -67,8 +68,6 @@ def iter_solve(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
     assert propagation_limit >= -1
     assert decision_limit >= -1
 
-    solns = _iter_solve(cnf.nvars, cnf.clauses,
-                        verbosity, default_phase, propagation_limit,
-                        decision_limit)
-    for soln in solns:
-        yield cnf.soln2point(soln)
+    return _picosat.satisfy_all(cnf.nvars, cnf.clauses,
+                                verbosity, default_phase, propagation_limit,
+                                decision_limit)
