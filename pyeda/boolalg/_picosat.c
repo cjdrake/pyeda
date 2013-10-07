@@ -49,10 +49,12 @@ py_free(void *pmgr, void *p, size_t nbytes) {
 static int
 add_clauses(PicoSAT *picosat, PyObject *clauses) {
 
-    int nvars = picosat_variables(picosat);
+    int nvars;
     PyObject *pyclauses, *pyclause;
     PyObject *pylits, *pylit;
     int lit;
+
+    nvars = picosat_variables(picosat);
 
     pyclauses = PyObject_GetIter(clauses);
     if (pyclauses == NULL) {
