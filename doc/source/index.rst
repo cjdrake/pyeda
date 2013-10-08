@@ -38,6 +38,7 @@ Contents:
    overview.rst
    install.rst
    boolalg.rst
+   expr.rst
    sudoku.rst
    relnotes.rst
 
