@@ -20,10 +20,7 @@ Interface Classes:
           the ExprVariable implementation wherever required.
 """
 
-# Disable "method is abstract but not overridden"
-# pylint: disable=W0223
-
-from pyeda.boolalg import boolfunc, sat
+from pyeda.boolalg import sat
 from pyeda.boolalg.expr import EXPRVARIABLES
 from pyeda.boolalg.expr import (
     Expression, ExprLiteral, ExprOr, ExprAnd
@@ -153,7 +150,7 @@ def CNF_And(*args):
     return ConjNormalForm(clauses)
 
 
-class NormalForm(boolfunc.Function, sat.DPLLInterface):
+class NormalForm(sat.DPLLInterface):
     """
     Normal Form Representation
     """
