@@ -1,6 +1,4 @@
-.. boolalg.rst
-
-.. |smiley| unicode:: 0x263A
+.. _boolalg:
 
 *******************
   Boolean Algebra
@@ -46,7 +44,7 @@ whenever you add, subtract, or divide two numbers, you get another number.
 Algebras are a big part of the "tools of the trade" for a mathematician.
 A plumber has a wrench, a carpenter has a saw,
 and a mathematician has algebras.
-To each his own. |smiley|
+To each his own.
 
 A *Boolean* algebra defines the rules for working with the set :math:`\{0, 1\}`.
 So unlike in normal algebra class where you have more numbers than you can

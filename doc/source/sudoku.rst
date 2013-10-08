@@ -1,6 +1,4 @@
-.. sudoku.rst
-
-.. |smiley| unicode:: 0x263A
+.. _sudoku:
 
 *********************************
   Abusing PyEDA to Solve Sudoku
@@ -23,7 +21,7 @@ First, let's get a few ground rules straight:
 1. There are lots of Sudoku solvers on the Internet;
    I make no claims of novelty.
 2. PyEDA is unlikely to win any speed competitions.
-3. Let's face it--this is a pretty awesome waste of time |smiley|.
+3. Let's face it--this is a pretty awesome waste of time.
 
 Getting Started
 ===============

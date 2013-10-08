@@ -1,4 +1,4 @@
-.. overview.rst
+.. _overview:
 
 ************
   Overview

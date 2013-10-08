@@ -1,4 +1,4 @@
-.. relnotes.rst
+.. _relnotes:
 
 *****************
   Release Notes
@@ -8,7 +8,8 @@ Version 0.15 (Coming Soon)
 ==========================
 
 * Drop support for Python 2.7. Will only support Python 3.2+ going forward.
-* Integrate `PicoSAT <http://fmv.jku.at/picosat/>`_, a compact SAT solver written in C.
+* Integrate `PicoSAT <http://fmv.jku.at/picosat/>`_,
+  a compact SAT solver written in C.
 
 Version 0.14
 ============
