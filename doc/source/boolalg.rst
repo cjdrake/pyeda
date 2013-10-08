@@ -223,8 +223,8 @@ Verify this fact with the following::
    True
 
 .. warning::
-   We recommend that you never do something crazy like assigning :math:`a` and
-   :math:`b` to the same variable instance.
+   We recommend that you never do something crazy like assigning
+   ``a`` and ``b`` to the same variable instance.
 
 If you want to put your variables into a separate namespaces,
 use the ``namespace`` parameter::
