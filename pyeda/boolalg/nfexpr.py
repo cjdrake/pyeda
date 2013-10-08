@@ -26,7 +26,7 @@ Interface Classes:
 from pyeda.boolalg import boolfunc, sat
 from pyeda.boolalg.expr import EXPRVARIABLES
 from pyeda.boolalg.expr import (
-    Expression, EXPRZERO, EXPRONE, ExprLiteral, ExprOr, ExprAnd
+    Expression, ExprLiteral, ExprOr, ExprAnd
 )
 from pyeda.util import bit_on, cached_property
 
@@ -35,7 +35,7 @@ def expr2dnf(expr):
     if not isinstance(expr, Expression):
         raise TypeError("input is not an Expression: " + str(expr))
 
-    if expr is EXPRZERO:
+    if expr.is_zero():
         return DisjNormalForm()
     elif expr.is_dnf():
         # a
@@ -48,7 +48,7 @@ def expr2dnf(expr):
                 clauses = {frozenset([lit.uniqid]) for lit in expr.args}
             # a * b
             elif isinstance(expr, ExprAnd):
-                clauses = {frozenset([lit.uniqid for lit in expr.args])}
+                clauses = {frozenset(lit.uniqid for lit in expr.args)}
             return DisjNormalForm(clauses)
         elif expr.depth == 2:
             clauses = set()
@@ -58,7 +58,7 @@ def expr2dnf(expr):
                     if isinstance(arg, ExprLiteral):
                         clauses.add(frozenset([arg.uniqid]))
                     elif isinstance(arg, ExprAnd):
-                        clauses.add(frozenset([lit.uniqid for lit in arg.args]))
+                        clauses.add(frozenset(lit.uniqid for lit in arg.args))
                 return DisjNormalForm(clauses)
 
     raise ValueError("Expression cannot be converted to DNF: " + str(expr))
@@ -68,7 +68,7 @@ def expr2cnf(expr):
     if not isinstance(expr, Expression):
         raise TypeError("input is not an Expression: " + str(expr))
 
-    if expr is EXPRONE:
+    if expr.is_one():
         return ConjNormalForm()
     elif expr.is_cnf():
         # a
@@ -78,7 +78,7 @@ def expr2cnf(expr):
         elif expr.depth == 1:
             # a + b
             if isinstance(expr, ExprOr):
-                clauses = {frozenset([lit.uniqid for lit in expr.args])}
+                clauses = {frozenset(lit.uniqid for lit in expr.args)}
             # a * b
             elif isinstance(expr, ExprAnd):
                 clauses = {frozenset([lit.uniqid]) for lit in expr.args}
@@ -91,7 +91,7 @@ def expr2cnf(expr):
                     if isinstance(arg, ExprLiteral):
                         clauses.add(frozenset([arg.uniqid]))
                     elif isinstance(arg, ExprOr):
-                        clauses.add(frozenset([lit.uniqid for lit in arg.args]))
+                        clauses.add(frozenset(lit.uniqid for lit in arg.args))
                 return ConjNormalForm(clauses)
 
     raise ValueError("Expression cannot be converted to CNF: " + str(expr))
