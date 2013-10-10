@@ -59,12 +59,15 @@ and stores them internally using a module-level singleton in
    pyeda.boolalg.expr._ExprOne
 
 Once you have converted zero/one to expressions,
-they implement the full Boolean Function API::
+they implement the full Boolean Function API.
 
-   # Constant values have an empty support set
+For example, constants have an empty support set::
+
    >>> one.support
    frozenset()
-   # Apparently, zero is not satisfiable
+
+Also, apparently zero is not satisfiable::
+
    >>> zero.satisfy_one() is None
    True
 
@@ -78,13 +81,96 @@ For example, here is a sneak peak of Shannon expansions::
    >>> one.expand([a, b])
    a' * b' + a' * b + a * b' + a * b
 
-Expression Literals: Variables and Complements
-==============================================
+Expression Literals
+===================
 
-.. exprvar(name, index=None)
-.. exprcomp(exprvar)
+A Boolean *literal* is defined as a variable or its complement.
+The expression variable and complement data types are the primitives of
+Boolean expressions.
 
-.. ordering rules
+Variables
+---------
+
+To create expression variables, use the ``exprvar`` function.
+
+For example, let's create a variable named "a",
+and assign it to a Python object named "a"::
+
+   >>> a = exprvar('a')
+   >>> type(a)
+   pyeda.boolalg.expr.ExprVariable
+
+One efficient method for creating multiple variables is to use Python's builtin
+``map`` function::
+
+   >>> a, b, c = map(exprvar, 'abc')
+
+The primary benefit of using the ``exprvar`` function rather than a class
+constructor is to ensure that variable instances are unique::
+
+   >>> a = exprvar('a')
+   >>> a_new = exprvar('a')
+   >>> id(a) == id(a_new)
+   True
+
+You can name a variable pretty much anything you want,
+though we recommend standard identifiers::
+
+   >>> foo = exprvar('foo')
+   >>> holy_hand_grenade = exprvar('holy_hand_grenade')
+
+By default, all variables go into a global namespace.
+You can assign a variable to a specific namespace by passing a tuple of
+strings as the first argument::
+
+   >>> a1 = exprvar('a')
+   >>> a3 = exprvar(('a', 'b', 'c'))
+   >>> a1.names
+   ('a', )
+   >>> a3.names
+   ('a', 'b', 'c')
+
+Notice that the default representation of a variable will dot all the names
+together starting with the most significant index of the tuple on the left::
+
+   >>> str(a3)
+   'c.b.a'
+
+Since it is very common to deal with grouped variables,
+you may assign indices to variables as well.
+Each index is a new dimension.
+
+To create a variable with a single index, use an integer argument::
+
+   >>> a42 = exprvar('a', 42)
+   >>> str(a42)
+   a[42]
+
+To create a variable with multiple indices, use a tuple argument::
+
+   >>> a_1_2_3 = exprvar('a', (1, 2, 3))
+   >>> str(a_1_2_3)
+   a[1][2][3]
+
+Finally, you can combine multiple namespaces and dimensions::
+
+   >>> c_b_a_1_2_3 = exprvar(('a', 'b', 'c'), (1, 2, 3))
+   >>> str(c_b_a_1_2_3)
+   c.b.a[1][2][3]
+
+.. NOTE::
+   The previous syntax is starting to get a bit cumbersome.
+   For a more powerful method of creating multi-dimensional bit vectors,
+   use the ``bitvec`` function.
+
+Complements
+-----------
+
+Using the ``expr`` Function to Create Literals
+----------------------------------------------
+
+Literal Ordering Rules
+----------------------
 
 Constructing Expressions
 ========================
