@@ -93,7 +93,7 @@ Variables
 
 To create expression variables, use the ``exprvar`` function.
 
-For example, let's create a variable named "a",
+For example, let's create a variable named :math:`a`,
 and assign it to a Python object named "a"::
 
    >>> a = exprvar('a')
@@ -166,17 +166,83 @@ Finally, you can combine multiple namespaces and dimensions::
 Complements
 -----------
 
-Using the ``expr`` Function to Create Literals
-----------------------------------------------
+A complement is defined as the inverse of a variable.
+That is:
 
-Literal Ordering Rules
-----------------------
+.. math::
+   a + \overline{a} = 1
+
+   a \cdot \overline{a} = 0
+
+One way to create a complement from a pre-existing variable is to simply
+apply Python's ``-`` unary negate operator.
+
+For example, let's create a variable and its complement::
+
+   >>> a = exprvar('a')
+   >>> -a
+   a'
+   >>> type(-a)
+   pyeda.boolalg.expr.ExprComplement
+
+All complements created from the same variable instance are not just identical,
+they all refer to the same object::
+
+   >>> id(-a) == id(-a)
+   True
 
 Constructing Expressions
 ========================
 
-From Variables and Operators
-----------------------------
+Expression are defined recursively as being composed of primitives
+(constants, variables),
+and expressions joined by Boolean operators.
+
+Now that we are familiar with all of PyEDA's Boolean primitives,
+we will learn how to construct more interesting expressions.
+
+From Constants, Variables, and Python Operators
+-----------------------------------------------
+
+PyEDA overloads Python's ``-``, ``+`` and ``*`` operators with NOT, OR, and AND,
+respectively.
+
+.. note:: `Sympy <http://sympy.org>`_ overloads ``~``, ``|``, and ``&``
+   for NOT, OR, and AND.
+   PyEDA uses these operators for bit vectors instead.
+
+Let's jump right in by creating a full adder::
+
+   >>> a, b, ci = map(exprvar, "a b ci".split())
+   >>> s = -a * -b * ci + -a * b * -ci + a * -b * -ci + a * b * ci
+   >>> co = a * b + a * ci + b * ci
+
+You can use the ``expr2truthtable`` function to do a quick check that the
+sum logic is correct::
+
+   >>> expr2truthtable(s)
+   inputs: ci b a
+   000 0
+   001 1
+   010 1
+   011 0
+   100 1
+   101 0
+   110 0
+   111 1
+
+Similarly for carry out logic::
+
+   >>> expr2truthtable(co)
+   inputs: ci b a
+   000 0
+   001 0
+   010 0
+   011 1
+   100 0
+   101 1
+   110 1
+   111 1
 
 From Factory Functions
 ----------------------
