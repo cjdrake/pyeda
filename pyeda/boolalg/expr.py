@@ -164,7 +164,7 @@ def upoint2exprpoint(upoint):
         point[EXPRVARIABLES[uniqid]] = 1
     return point
 
-# basic functions
+# primitive functions
 def Not(arg, simplify=True, factor=False, conj=False):
     """Factory function for Boolean NOT expression."""
     arg = Expression.box(arg)
@@ -195,6 +195,7 @@ def And(*args, simplify=True, factor=False, conj=False):
         expr = expr.simplify()
     return expr
 
+# complex functions
 def Xor(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean XOR expression."""
     args = tuple(Expression.box(arg) for arg in args)
@@ -215,7 +216,6 @@ def Xnor(*args, simplify=True, factor=False, conj=False):
         expr = expr.simplify()
     return expr
 
-# higher order functions
 def Equal(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean EQUAL expression."""
     args = tuple(Expression.box(arg) for arg in args)
@@ -259,15 +259,24 @@ def ITE(s, d1, d0, simplify=True, factor=False, conj=False):
         expr = expr.simplify()
     return expr
 
+# higher order functions
 def Nor(*args, simplify=True, factor=False, conj=False):
     """Alias for Not(Or(...))"""
-    return Not(Or(*args, simplify=simplify, factor=factor, conj=conj),
-               simplify=simplify, factor=factor, conj=conj)
+    expr = Not(Or(*args, simplify=False), simplify=False)
+    if factor:
+        expr = expr.factor(conj)
+    elif simplify:
+        expr = expr.simplify()
+    return expr
 
 def Nand(*args, simplify=True, factor=False, conj=False):
     """Alias for Not(And(...))"""
-    return Not(And(*args, simplify=simplify, factor=factor, conj=conj),
-               simplify=simplify, factor=factor, conj=conj)
+    expr = Not(And(*args, simplify=False), simplify=False)
+    if factor:
+        expr = expr.factor(conj)
+    elif simplify:
+        expr = expr.simplify()
+    return expr
 
 def OneHot0(*args, simplify=True, factor=False, conj=False):
     """
@@ -276,28 +285,41 @@ def OneHot0(*args, simplify=True, factor=False, conj=False):
     """
     terms = list()
     for arg1, arg2 in itertools.combinations(args, 2):
-        terms.append(Or(Not(arg1, simplify=simplify, factor=factor, conj=conj),
-                        Not(arg2, simplify=simplify, factor=factor, conj=conj),
-                        simplify=simplify, factor=factor, conj=conj))
-    return And(*terms, simplify=simplify, factor=factor, conj=conj)
+        terms.append(Or(Not(arg1, simplify=False),
+                        Not(arg2, simplify=False), simplify=False))
+    expr = And(*terms, simplify=False)
+    if factor:
+        expr = expr.factor(conj)
+    elif simplify:
+        expr = expr.simplify()
+    return expr
 
 def OneHot(*args, simplify=True, factor=False, conj=False):
     """
     Return an expression that means:
         Exactly one input variable is true.
     """
-    return And(Or(*args, simplify=simplify, factor=factor, conj=conj),
-               OneHot0(*args, simplify=simplify, factor=factor, conj=conj),
-               simplify=simplify, factor=factor, conj=conj)
+    expr = And(Or(*args, simplify=False), OneHot0(*args, simplify=False),
+               simplify=False)
+    if factor:
+        expr = expr.factor(conj)
+    elif simplify:
+        expr = expr.simplify()
+    return expr
 
 def Majority(*args, simplify=True, factor=False, conj=False):
     """
     Return an expression that means:
         The majority of the input variables are true.
     """
-    return Or(*[And(*term, simplify=simplify, factor=factor, conj=conj)
+    expr = Or(*[And(*term, simplify=False)
                 for term in itertools.combinations(args, len(args) // 2 + 1)],
-              simplify=simplify, factor=factor, conj=conj)
+              simplify=False)
+    if factor:
+        expr = expr.factor(conj)
+    elif simplify:
+        expr = expr.simplify()
+    return expr
 
 
 class Expression(boolfunc.Function):
