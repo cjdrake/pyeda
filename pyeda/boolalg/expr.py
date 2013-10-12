@@ -290,6 +290,15 @@ def OneHot(*args, simplify=True, factor=False, conj=False):
                OneHot0(*args, simplify=simplify, factor=factor, conj=conj),
                simplify=simplify, factor=factor, conj=conj)
 
+def Majority(*args, simplify=True, factor=False, conj=False):
+    """
+    Return an expression that means:
+        The majority of the input variables are true.
+    """
+    return Or(*[And(*term, simplify=simplify, factor=factor, conj=conj)
+                for term in itertools.combinations(args, len(args) // 2 + 1)],
+              simplify=simplify, factor=factor, conj=conj)
+
 
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
