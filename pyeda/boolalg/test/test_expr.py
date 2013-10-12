@@ -9,7 +9,7 @@ from pyeda.boolalg.expr import (
     exprvar,
     Expression,
     Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE,
-    Nor, Nand, OneHot0, OneHot,
+    Nor, Nand, OneHot0, OneHot, Majority,
     EXPRZERO, EXPRONE,
 )
 from pyeda.boolalg.vexpr import bitvec
@@ -105,6 +105,17 @@ def test_onehot():
     assert OneHot(1, 1, 0) is EXPRZERO
     assert OneHot(1, 1, 1) is EXPRZERO
     assert OneHot(a, b, c).equivalent((-a + -b) * (-a + -c) * (-b + -c) * (a + b + c))
+
+def test_majority():
+    assert Majority(0, 0, 0) is EXPRZERO
+    assert Majority(0, 0, 1) is EXPRZERO
+    assert Majority(0, 1, 0) is EXPRZERO
+    assert Majority(0, 1, 1) is EXPRONE
+    assert Majority(1, 0, 0) is EXPRZERO
+    assert Majority(1, 0, 1) is EXPRONE
+    assert Majority(1, 1, 0) is EXPRONE
+    assert Majority(1, 1, 1) is EXPRONE
+    assert Majority(a, b, c).equivalent(a * b + a * c + b * c)
 
 def test_ops():
     # __sub__, __rsub__
