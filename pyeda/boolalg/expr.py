@@ -195,7 +195,7 @@ def And(*args, simplify=True, factor=False):
         expr = expr.simplify()
     return expr
 
-# complex functions
+# secondary functions
 def Xor(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean XOR expression."""
     args = tuple(Expression.box(arg) for arg in args)
@@ -259,7 +259,7 @@ def ITE(s, d1, d0, simplify=True, factor=False):
         expr = expr.simplify()
     return expr
 
-# higher order functions
+# high order functions
 def Nor(*args, simplify=True, factor=False):
     """Alias for Not(Or(...))"""
     expr = Not(Or(*args, simplify=False), simplify=False)

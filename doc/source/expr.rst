@@ -211,7 +211,7 @@ respectively.
    for NOT, OR, and AND.
    PyEDA uses these operators for bit vectors instead.
 
-Let's jump right in by creating a full adder::
+Let's jump in by creating a full adder::
 
    >>> a, b, ci = map(exprvar, "a b ci".split())
    >>> s = -a * -b * ci + -a * b * -ci + a * -b * -ci + a * b * ci
@@ -231,7 +231,7 @@ sum logic is correct::
    110 0
    111 1
 
-Similarly for carry out logic::
+Similarly for the carry out logic::
 
    >>> expr2truthtable(co)
    inputs: ci b a
@@ -247,24 +247,105 @@ Similarly for carry out logic::
 From Factory Functions
 ----------------------
 
-.. def Not(arg, simplify=True, factor=False, conj=False)
+Python does not have enough builtin symbols to handle all interesting Boolean
+functions we can represent directly as an expression.
+Also, binary operators are limited to two operands at a time,
+whereas several Boolean operators are N-ary (arbitrary many operands).
+This section will describe all the factory functions that can be used to create
+arbitrary Boolean expressions.
 
-.. invert
+The general form of these functions is
+``OP(arg [, arg], simplify=True, factor=False [, conj=False])``.
+The function is an operator name, followed by one or more arguments,
+followed by the ``simplify``, and ``factor`` parameters.
+Some functions also have a ``conj`` parameter,
+which selects between conjunctive (``conj=True``) and disjunctive
+(``conj=False``) formats.
 
-.. def Or(*args, simplify=True, factor=False, conj=False)
-   def And(*args, simplify=True, factor=False, conj=False)
-   def Xor(*args, simplify=True, factor=False, conj=False)
-   def Xnor(*args, simplify=True, factor=False, conj=False)
-   def Equal(*args, simplify=True, factor=False, conj=False)
-   def Unequal(*args, simplify=True, factor=False, conj=False)
+One advantage of using these functions is that you do not need to create
+variable instances prior to passing them as arguments.
+You can just pass string identifiers,
+and PyEDA will automatically parse and convert them to variables.
 
-.. def Implies(p, q, simplify=True, factor=False, conj=False)
-   def ITE(s, d1, d0, simplify=True, factor=False, conj=False)
+For example, the following two statements are equivalent::
 
-.. def Nor(*args, simplify=True, factor=False, conj=False)
-   def Nand(*args, simplify=True, factor=False, conj=False)
-   def OneHot0(*args, simplify=True, factor=False, conj=False)
-   def OneHot(*args, simplify=True, factor=False, conj=False)
+   >>> Not('a[0]')
+   a[0]'
+
+and::
+
+   >>> a0 = exprvar('a', 0)
+   >>> Not(a0)
+   a[0]'
+
+Fundamental Operators
+^^^^^^^^^^^^^^^^^^^^^
+
+Since NOT, OR, and AND form a complete basis for a Boolean algebra,
+these three operators are *fundamental*.
+
+.. function:: Not(arg, simplify=True, factor=False)
+
+.. function:: Or(\*args, simplify=True, factor=False)
+
+.. function:: And(\*args, simplify=True, factor=False)
+
+Example of full adder logic using ``Not``, ``Or``, and ``And``::
+
+   >>> s = Or(And(Not('a'), Not('b'), 'ci'), And(Not('a'), 'b', Not('ci')),
+              And('a', Not('b'), Not('ci')), And('a', 'b', 'ci'))
+   >>> co = Or(And('a', 'b'), And('a', 'ci'), And('b', 'ci'))
+
+Secondary Operators
+^^^^^^^^^^^^^^^^^^^
+
+A *secondary* operator is a Boolean operator that can be natively represented
+as a PyEDA expression,
+but contains more information than the fundamental operators.
+That is, these expressions always increase in tree size when converted to
+fundamental operators.
+
+.. function:: Xor(\*args, simplify=True, factor=False, conj=False)
+
+.. function:: Xnor(\*args, simplify=True, factor=False, conj=False)
+
+The full adder circuit has a more dense representation when you
+use the ``Xor`` operator::
+
+   >>> s = Xor('a', 'b', 'ci')
+   >>> co = Or(And('a', 'b'), And('a', 'ci'), And('b', 'ci'))
+
+.. function:: Equal(\*args, simplify=True, factor=False, conj=False)
+
+.. function:: Unequal(\*args, simplify=True, factor=False, conj=False)
+
+.. function:: Implies(p, q, simplify=True, factor=False)
+
+.. function:: ITE(s, d1, d0, simplify=True, factor=False)
+
+High Order Operators
+^^^^^^^^^^^^^^^^^^^^
+
+A *high order* operator is a Boolean operator that can NOT be natively
+represented as a PyEDA expression.
+That is, these factory functions will always return expressions composed from
+fundamental and/or secondary operators.
+
+.. function:: Nor(\*args, simplify=True, factor=False)
+
+.. function:: Nand(\*args, simplify=True, factor=False)
+
+.. function:: OneHot0(\*args, simplify=True, factor=False, conj=True)
+
+.. function:: OneHot(\*args, simplify=True, factor=False, conj=True)
+
+.. function:: Majority(\*args, simplify=True, factor=False, conj=True)
+
+The full adder circuit has a much more dense representation when you
+use both the ``Xor`` and ``Majority`` operators::
+
+   >>> s = Xor('a', 'b', 'ci')
+   >>> co = Majority('a', 'b', 'ci')
 
 From the ``expr`` Function
 --------------------------
