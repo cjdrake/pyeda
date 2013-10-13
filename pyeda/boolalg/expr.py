@@ -165,32 +165,32 @@ def upoint2exprpoint(upoint):
     return point
 
 # primitive functions
-def Not(arg, simplify=True, factor=False, conj=False):
+def Not(arg, simplify=True, factor=False):
     """Factory function for Boolean NOT expression."""
     arg = Expression.box(arg)
     expr = ExprNot(arg)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
 
-def Or(*args, simplify=True, factor=False, conj=False):
+def Or(*args, simplify=True, factor=False):
     """Factory function for Boolean OR expression."""
     args = tuple(Expression.box(arg) for arg in args)
     expr = ExprOr(*args)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
 
-def And(*args, simplify=True, factor=False, conj=False):
+def And(*args, simplify=True, factor=False):
     """Factory function for Boolean AND expression."""
     args = tuple(Expression.box(arg) for arg in args)
     expr = ExprAnd(*args)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
@@ -236,73 +236,86 @@ def Unequal(*args, simplify=True, factor=False, conj=False):
         expr = expr.simplify()
     return expr
 
-def Implies(p, q, simplify=True, factor=False, conj=False):
+def Implies(p, q, simplify=True, factor=False):
     """Factory function for Boolean implication expression."""
     p = Expression.box(p)
     q = Expression.box(q)
     expr = ExprImplies(p, q)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
 
-def ITE(s, d1, d0, simplify=True, factor=False, conj=False):
+def ITE(s, d1, d0, simplify=True, factor=False):
     """Factory function for Boolean If-Then-Else expression."""
     s = Expression.box(s)
     d1 = Expression.box(d1)
     d0 = Expression.box(d0)
     expr = ExprITE(s, d1, d0)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
 
 # higher order functions
-def Nor(*args, simplify=True, factor=False, conj=False):
+def Nor(*args, simplify=True, factor=False):
     """Alias for Not(Or(...))"""
     expr = Not(Or(*args, simplify=False), simplify=False)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
 
-def Nand(*args, simplify=True, factor=False, conj=False):
+def Nand(*args, simplify=True, factor=False):
     """Alias for Not(And(...))"""
     expr = Not(And(*args, simplify=False), simplify=False)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
 
-def OneHot0(*args, simplify=True, factor=False, conj=False):
+def OneHot0(*args, simplify=True, factor=False, conj=True):
     """
     Return an expression that means:
         At most one input variable is true.
     """
+    outer = And if conj else Or
     terms = list()
-    for arg1, arg2 in itertools.combinations(args, 2):
-        terms.append(Or(Not(arg1, simplify=False),
-                        Not(arg2, simplify=False), simplify=False))
-    expr = And(*terms, simplify=False)
+    if conj:
+        for arg1, arg2 in itertools.combinations(args, 2):
+            terms.append(Or(Not(arg1, simplify=False),
+                            Not(arg2, simplify=False), simplify=False))
+        expr = And(*terms, simplify=False)
+    else:
+        for comb in itertools.combinations(args, len(args) - 1):
+            terms.append(And(*[Not(arg, simplify=False) for arg in comb]))
+        expr = Or(*terms, simplify=False)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
 
-def OneHot(*args, simplify=True, factor=False, conj=False):
+def OneHot(*args, simplify=True, factor=False, conj=True):
     """
     Return an expression that means:
         Exactly one input variable is true.
     """
-    expr = And(Or(*args, simplify=False), OneHot0(*args, simplify=False),
-               simplify=False)
+    if conj:
+        expr = And(Or(*args, simplify=False), OneHot0(*args, simplify=False),
+                   simplify=False)
+    else:
+        terms = list()
+        for i, arg in enumerate(args):
+            zeros = [Not(x, simplify=False) for x in args[:i] + args[i+1:]]
+            terms.append(And(arg, *zeros, simplify=False))
+        expr = Or(*terms, simplify=False)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
@@ -312,11 +325,18 @@ def Majority(*args, simplify=True, factor=False, conj=False):
     Return an expression that means:
         The majority of the input variables are true.
     """
-    expr = Or(*[And(*term, simplify=False)
-                for term in itertools.combinations(args, len(args) // 2 + 1)],
-              simplify=False)
+    if conj:
+        terms = list()
+        for comb in itertools.combinations(args, (len(args) + 1) // 2):
+            terms.append(Or(*comb, simplify=False))
+        expr = And(*terms, simplify=False)
+    else:
+        terms = list()
+        for comb in itertools.combinations(args, len(args) // 2 + 1):
+            terms.append(And(*comb, simplify=False))
+        expr = Or(*terms, simplify=False)
     if factor:
-        expr = expr.factor(conj)
+        expr = expr.factor()
     elif simplify:
         expr = expr.simplify()
     return expr
@@ -941,7 +961,7 @@ class ExprNot(Expression):
         return obj
 
     def factor(self, conj=False):
-        return self.arg.invert().factor(conj)
+        return self.arg.invert().factor()
 
     @cached_property
     def depth(self):
@@ -1095,7 +1115,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         return obj
 
     def factor(self, conj=False):
-        args = [arg.factor(conj) for arg in self.args]
+        args = [arg.factor() for arg in self.args]
         return self.__class__(*args).simplify()
 
     @cached_property
@@ -1457,16 +1477,30 @@ class ExprExclusive(_ArgumentContainer):
     def factor(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
         terms = list()
+        # Walk through all entries in the truth table
         for num in range(1 << len(self.args)):
-            if parity(num) == self.PARITY:
-                term = list()
-                for i, arg in enumerate(self.args):
-                    if bit_on(num, i):
-                        term.append(arg.factor(conj))
-                    else:
-                        term.append(arg.invert().factor(conj))
-                terms.append(inner(*term))
-        return outer(*terms).simplify()
+            if conj:
+                # Zero outputs
+                if parity(num) != self.PARITY:
+                    term = list()
+                    for i, arg in enumerate(self.args):
+                        if bit_on(num, i):
+                            term.append(arg.invert().factor())
+                        else:
+                            term.append(arg.factor())
+                    terms.append(inner(*term))
+            else:
+                # One outputs
+                if parity(num) == self.PARITY:
+                    term = list()
+                    for i, arg in enumerate(self.args):
+                        if bit_on(num, i):
+                            term.append(arg.factor())
+                        else:
+                            term.append(arg.invert().factor())
+                    terms.append(inner(*term))
+        expr = outer(*terms).simplify()
+        return expr
 
     @cached_property
     def depth(self):
@@ -1618,8 +1652,8 @@ class ExprEqual(ExprEqualBase):
                 args.append(ExprOr(arg1.factor(), arg2.invert().factor()))
             return ExprAnd(*args).simplify()
         else:
-            all0 = ExprAnd(*[arg.invert().factor(conj) for arg in self.args])
-            all1 = ExprAnd(*[arg.factor(conj) for arg in self.args])
+            all0 = ExprAnd(*[arg.invert().factor() for arg in self.args])
+            all1 = ExprAnd(*[arg.factor() for arg in self.args])
             return ExprOr(all0, all1).simplify()
 
     @staticmethod
@@ -1678,8 +1712,8 @@ class ExprUnequal(ExprEqualBase):
 
     def factor(self, conj=False):
         if conj:
-            any0 = ExprOr(*[arg.invert().factor(conj) for arg in self.args])
-            any1 = ExprOr(*[arg.factor(conj) for arg in self.args])
+            any0 = ExprOr(*[arg.invert().factor() for arg in self.args])
+            any1 = ExprOr(*[arg.factor() for arg in self.args])
             return ExprAnd(any0, any1).simplify()
         else:
             args = list()
@@ -1743,8 +1777,8 @@ class ExprImplies(_ArgumentContainer):
     def factor(self, conj=False):
         p, q = self.args
         args = list()
-        args.append(p.invert().factor(conj))
-        args.append(q.factor(conj))
+        args.append(p.invert().factor())
+        args.append(q.factor())
         return ExprOr(*args).simplify()
 
     @cached_property
@@ -1825,8 +1859,8 @@ class ExprITE(_ArgumentContainer):
     def factor(self, conj=False):
         s, d1, d0 = self.args
         args = list()
-        args.append(ExprAnd(s.factor(conj), d1.factor(conj)))
-        args.append(ExprAnd(s.invert().factor(conj), d0.factor(conj)))
+        args.append(ExprAnd(s.factor(), d1.factor()))
+        args.append(ExprAnd(s.invert().factor(), d0.factor()))
         return ExprOr(*args).simplify()
 
     @cached_property
