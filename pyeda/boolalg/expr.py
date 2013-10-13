@@ -1499,8 +1499,7 @@ class ExprExclusive(_ArgumentContainer):
                         else:
                             term.append(arg.invert().factor())
                     terms.append(inner(*term))
-        expr = outer(*terms).simplify()
-        return expr
+        return outer(*terms).simplify()
 
     @cached_property
     def depth(self):
