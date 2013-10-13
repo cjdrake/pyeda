@@ -12,7 +12,7 @@ Interface Functions:
 
     Not, Or, And,
     Xor, Xnor,
-    Equal, Implies, ITE
+    Equal, Unequal, Implies, ITE
 
     Nor, Nand
     OneHot0, OneHot
