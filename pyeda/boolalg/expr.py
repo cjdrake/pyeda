@@ -1729,7 +1729,7 @@ class ExprUnequal(ExprEqualBase):
 class ExprImplies(_ArgumentContainer):
     """Expression implication operator"""
 
-    ASTOP = 'ite'
+    ASTOP = 'implies'
 
     def __init__(self, p, q):
         args = (p, q)
@@ -1964,6 +1964,9 @@ ASTOPS = {
     ExprUnequal.ASTOP : ExprUnequal,
     ExprImplies.ASTOP : ExprImplies,
     ExprITE.ASTOP     : ExprITE,
+
+    'nor'  : Nor,
+    'nand' : Nand,
 }
 
 EXCLOPS = {
