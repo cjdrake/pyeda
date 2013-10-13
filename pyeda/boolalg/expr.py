@@ -1857,10 +1857,14 @@ class ExprITE(_ArgumentContainer):
 
     def factor(self, conj=False):
         s, d1, d0 = self.args
-        args = list()
-        args.append(ExprAnd(s.factor(), d1.factor()))
-        args.append(ExprAnd(s.invert().factor(), d0.factor()))
-        return ExprOr(*args).simplify()
+        if conj:
+            arg0 = ExprOr(s.invert().factor(), d1.factor())
+            arg1 = ExprOr(s.factor(), d0.factor())
+            return ExprAnd(arg0, arg1).simplify()
+        else:
+            arg0 = ExprAnd(s.factor(), d1.factor())
+            arg1 = ExprAnd(s.invert().factor(), d0.factor())
+            return ExprOr(arg0, arg1).simplify()
 
     @cached_property
     def depth(self):
