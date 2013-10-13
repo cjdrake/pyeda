@@ -1924,6 +1924,7 @@ ASTOPS = {
     ExprXor.ASTOP     : ExprXor,
     ExprXnor.ASTOP    : ExprXnor,
     ExprEqual.ASTOP   : ExprEqual,
+    ExprUnequal.ASTOP : ExprUnequal,
     ExprImplies.ASTOP : ExprImplies,
     ExprITE.ASTOP     : ExprITE,
 }
