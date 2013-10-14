@@ -165,8 +165,8 @@ class BoolExprLexer(RegexLexer):
 # EXPR := IMPL '?' EXPR ':' EXPR
 #       | IMPL
 #
-# IMPL := SUM '=>' EXPR
-#       | SUM '<=>' EXPR
+# IMPL := SUM '=>' IMPL
+#       | SUM '<=>' IMPL
 #       | SUM
 #
 # SUM := TERM SUM'
@@ -274,10 +274,10 @@ def _impl(lex):
         return p
 
     if type(tok) is OP_rarrow:
-        q = _expr(lex)
+        q = _impl(lex)
         return ('implies', p, q)
     elif type(tok) is OP_lrarrow:
-        q = _expr(lex)
+        q = _impl(lex)
         return ('equal', p, q)
     else:
         lex.unpop_token(tok)
