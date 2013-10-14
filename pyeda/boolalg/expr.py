@@ -320,7 +320,7 @@ def OneHot(*args, simplify=True, factor=False, conj=True):
         expr = expr.simplify()
     return expr
 
-def Majority(*args, simplify=True, factor=False, conj=True):
+def Majority(*args, simplify=True, factor=False, conj=False):
     """
     Return an expression that means:
         The majority of the input variables are true.
