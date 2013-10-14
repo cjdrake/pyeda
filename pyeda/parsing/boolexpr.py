@@ -41,18 +41,10 @@ class KW_implies(KeywordToken):
 class KW_not(KeywordToken):
     ASTOP = 'not'
 
-NARYOP_TOKS = {
-    KW_or,
-    KW_and,
-    KW_xor,
-    KW_xnor,
-    KW_equal,
-    KW_unequal,
-    KW_nor,
-    KW_nand,
-}
-
 # Operators
+class OP_implies(OperatorToken): pass
+class OP_qmark(OperatorToken): pass
+class OP_colon(OperatorToken): pass
 class OP_not(OperatorToken): pass
 class OP_or(OperatorToken): pass
 class OP_and(OperatorToken): pass
@@ -109,8 +101,11 @@ class BoolExprLexer(RegexLexer):
             (r"[a-zA-Z][a-zA-Z_]*(?:\.[a-zA-Z][a-zA-Z_]*)*(?:\[\d+\])*", name),
             (r"\b[01]\b", num),
 
-            (r"\+", operator),
+            (r"=>", operator),
+            (r"\?", operator),
+            (r":", operator),
             (r"\-", operator),
+            (r"\+", operator),
             (r"\*", operator),
 
             (r"\(", punct),
@@ -135,9 +130,12 @@ class BoolExprLexer(RegexLexer):
     }
 
     OPERATORS = {
-        '-': OP_not,
-        '+': OP_or,
-        '*': OP_and,
+        '=>' : OP_implies,
+        '?'  : OP_qmark,
+        ':'  : OP_colon,
+        '-'  : OP_not,
+        '+'  : OP_or,
+        '*'  : OP_and,
     }
 
     PUNCTUATION = {
@@ -149,38 +147,61 @@ class BoolExprLexer(RegexLexer):
 
 # Grammar for a Boolean expression
 #
-# E := T E'
+# EXPR := IMPL '?' EXPR ':' EXPR
+#       | IMPL
 #
-# E' := '+' T E'
-#     | null
+# IMPL := SUM '=>' EXPR
+#       | SUM
 #
-# T := F T'
+# SUM := TERM SUM'
 #
-# T' := '*' F T'
-#     | null
+# SUM' := '+' TERM SUM'
+#       | null
 #
-# F := '-' F
-#    | '(' EXPR ')'
-#    | NARYOP '(' ARGS ')'
-#    | 'ITE' '(' EXPR ',' EXPR ',' EXPR ')'
-#    | 'Implies' '(' EXPR ',' EXPR ')'
-#    | 'Not' '(' EXPR ')'
-#    | VAR
-#    | '0'
-#    | '1'
+# TERM := FACTOR TERM'
 #
-# NARYOP := 'Or'
-#         | 'And'
-#         | 'Xor'
-#         | 'Xnor'
-#         | 'Equal'
-#         | 'Unequal'
-#         | 'Nor'
-#         | 'Nand'
+# TERM' := '*' FACTOR TERM'
+#        | null
+#
+# FACTOR := '-' FACTOR
+#         | '(' EXPR ')'
+#         | OPN '(' ARGS ')'
+#         | 'ITE' '(' EXPR ',' EXPR ',' EXPR ')'
+#         | 'Implies' '(' EXPR ',' EXPR ')'
+#         | 'Not' '(' EXPR ')'
+#         | VAR
+#         | '0'
+#         | '1'
+#
+# OPN := 'Or'
+#      | 'And'
+#      | 'Xor'
+#      | 'Xnor'
+#      | 'Equal'
+#      | 'Unequal'
+#      | 'Nor'
+#      | 'Nand'
 #
 # ARGS := EXPR ',' ARGS
 #       | EXPR
 #       | null
+
+OPN_TOKS = {
+    KW_or,
+    KW_and,
+    KW_xor,
+    KW_xnor,
+    KW_equal,
+    KW_unequal,
+    KW_nor,
+    KW_nand,
+}
+
+FACTOR_TOKS = {
+    OP_not, LPAREN,
+    KW_ite, KW_implies, KW_not,
+    NameToken, IntegerToken,
+} | OPN_TOKS
 
 def parse(s):
     """
@@ -208,14 +229,44 @@ def _expect_token(lex, types):
         raise BoolExprParseError("unexpected token: " + str(tok))
 
 def _expr(lex):
+    s = _impl(lex)
+    try:
+        tok = next(lex)
+    except StopIteration:
+        return s
+
+    if type(tok) is OP_qmark:
+        d1 = _expr(lex)
+        _expect_token(lex, {OP_colon})
+        d0 = _expr(lex)
+        return ('ite', s, d1, d0)
+    else:
+        lex.unpop_token(tok)
+        return s
+
+def _impl(lex):
+    p = _sum(lex)
+    try:
+        tok = next(lex)
+    except StopIteration:
+        return p
+
+    if type(tok) is OP_implies:
+        q = _expr(lex)
+        return ('implies', p, q)
+    else:
+        lex.unpop_token(tok)
+        return p
+
+def _sum(lex):
     term = _term(lex)
-    expr_prime = _expr_prime(lex)
+    expr_prime = _sum_prime(lex)
     if expr_prime is None:
         return term
     else:
         return ('or', term, expr_prime)
 
-def _expr_prime(lex):
+def _sum_prime(lex):
     try:
         tok = next(lex)
     except StopIteration:
@@ -224,7 +275,7 @@ def _expr_prime(lex):
     toktype = type(tok)
     if toktype is OP_or:
         term = _term(lex)
-        expr_prime = _expr_prime(lex)
+        expr_prime = _sum_prime(lex)
         if expr_prime is None:
             return term
         else:
@@ -261,12 +312,6 @@ def _term_prime(lex):
         lex.unpop_token(tok)
         return None
 
-FACTOR_TOKS = {
-    OP_not, LPAREN,
-    KW_ite, KW_implies, KW_not,
-    NameToken, IntegerToken,
-} | NARYOP_TOKS
-
 def _factor(lex):
     tok = _expect_token(lex, FACTOR_TOKS)
     # '-' F
@@ -278,8 +323,8 @@ def _factor(lex):
         expr = _expr(lex)
         _expect_token(lex, {RPAREN})
         return expr
-    # NARYOP '(' ... ')'
-    elif any(toktype is t for t in NARYOP_TOKS):
+    # OPN '(' ... ')'
+    elif any(toktype is t for t in OPN_TOKS):
         _expect_token(lex, {LPAREN})
         args = _args(lex)
         _expect_token(lex, {RPAREN})
