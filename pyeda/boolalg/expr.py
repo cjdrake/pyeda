@@ -6,7 +6,6 @@ Interface Functions:
     exprcomp
     expr
     ast2expr
-    expr2dimacscnf
     expr2dimacssat
     upoint2exprpoint
 
