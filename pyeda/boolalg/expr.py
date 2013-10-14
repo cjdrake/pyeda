@@ -16,6 +16,7 @@ Interface Functions:
 
     Nor, Nand
     OneHot0, OneHot
+    Majority
 
 Interface Classes:
     Expression
