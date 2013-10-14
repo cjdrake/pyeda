@@ -42,8 +42,9 @@ class KW_not(KeywordToken):
     ASTOP = 'not'
 
 # Operators
-class OP_implies(OperatorToken): pass
-class OP_qmark(OperatorToken): pass
+class OP_rarrow(OperatorToken): pass
+class OP_lrarrow(OperatorToken): pass
+class OP_question(OperatorToken): pass
 class OP_colon(OperatorToken): pass
 class OP_not(OperatorToken): pass
 class OP_or(OperatorToken): pass
@@ -102,6 +103,7 @@ class BoolExprLexer(RegexLexer):
             (r"\b[01]\b", num),
 
             (r"=>", operator),
+            (r"<=>", operator),
             (r"\?", operator),
             (r":", operator),
             (r"\-", operator),
@@ -130,12 +132,13 @@ class BoolExprLexer(RegexLexer):
     }
 
     OPERATORS = {
-        '=>' : OP_implies,
-        '?'  : OP_qmark,
-        ':'  : OP_colon,
-        '-'  : OP_not,
-        '+'  : OP_or,
-        '*'  : OP_and,
+        '=>'  : OP_rarrow,
+        '<=>' : OP_lrarrow,
+        '?'   : OP_question,
+        ':'   : OP_colon,
+        '-'   : OP_not,
+        '+'   : OP_or,
+        '*'   : OP_and,
     }
 
     PUNCTUATION = {
@@ -151,6 +154,7 @@ class BoolExprLexer(RegexLexer):
 #       | IMPL
 #
 # IMPL := SUM '=>' EXPR
+#       | SUM '<=>' EXPR
 #       | SUM
 #
 # SUM := TERM SUM'
@@ -235,7 +239,7 @@ def _expr(lex):
     except StopIteration:
         return s
 
-    if type(tok) is OP_qmark:
+    if type(tok) is OP_question:
         d1 = _expr(lex)
         _expect_token(lex, {OP_colon})
         d0 = _expr(lex)
@@ -251,9 +255,12 @@ def _impl(lex):
     except StopIteration:
         return p
 
-    if type(tok) is OP_implies:
+    if type(tok) is OP_rarrow:
         q = _expr(lex)
         return ('implies', p, q)
+    elif type(tok) is OP_lrarrow:
+        q = _expr(lex)
+        return ('equal', p, q)
     else:
         lex.unpop_token(tok)
         return p
