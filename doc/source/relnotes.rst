@@ -4,12 +4,44 @@
   Release Notes
 *****************
 
-Version 0.15 (Coming Soon)
-==========================
+Version 0.15
+============
+
+This is probably the most exciting release of PyEDA yet!
+Integration of the popular `PicoSAT <http://fmv.jku.at/picosat/>`_
+fast C SAT solver makes PyEDA suitable for industrial-strength applications.
+Unfortunately, I have no idea how to make this work on Windows yet.
+
+Here are the full release notes:
 
 * Drop support for Python 2.7. Will only support Python 3.2+ going forward.
 * Integrate `PicoSAT <http://fmv.jku.at/picosat/>`_,
   a compact SAT solver written in C.
+* Added *lots* of new capabilities to Boolean expression parsing:
+
+  * ``s ? d1 : d0`` (ITE), ``p => q`` (Implies),
+    and ``p <=> q`` (Equal) symbolic operators.
+  * Full complement of explicit form Boolean operators:
+    ``Or``, ``And``, ``Xor``, ``Xnor``, ``Equal``, ``Unequal``,
+    ``Nor``, ``Nand``, ``OneHot0``, ``OneHot``, ``Majority``,
+    ``ITE``, ``Implies``, ``Not``
+  * The ``expr`` function now simplifies by default,
+    and has ``simplify=True``, and ``factor=False`` parameters.
+
+* New ``Unequal`` expression operator.
+* New ``Majority`` high-order expression operator.
+* ``OneHot0``, ``OneHot``, and ``Majority`` all have both disjunctive
+  (``conj=False``) and conjunctive (``conj=True``) forms.
+* Add new ``Expression.to_ast`` method.
+  This might replace the ``expr2dimacssat`` function in the future,
+* Fixed bug: ``Xor.factor(conj=True)`` returns non-equivalent expression.
+* Changed the meaning of ``conj`` parameter in ``Expression.factor`` method.
+  Now it is only used by the top-level, and not passed recursively.
+* Normal form expression no longer inherit from ``Function``.
+  They didn't implement the full interface, so this just made sense.
+* Replaced ``pyeda.expr.expr2dimacscnf`` with a new
+  ``pyeda.expr.DimacsCNF`` class.
+  This might be unified with normal form expressions in the future.
 
 Version 0.14
 ============
