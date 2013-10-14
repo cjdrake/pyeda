@@ -1968,6 +1968,10 @@ ASTOPS = {
 
     'nor'  : Nor,
     'nand' : Nand,
+
+    'onehot0'  : OneHot0,
+    'onehot'   : OneHot,
+    'majority' : Majority,
 }
 
 EXCLOPS = {

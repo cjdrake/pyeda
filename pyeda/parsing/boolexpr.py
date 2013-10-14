@@ -34,6 +34,12 @@ class KW_nor(KeywordToken):
     ASTOP = 'nor'
 class KW_nand(KeywordToken):
     ASTOP = 'nand'
+class KW_onehot0(KeywordToken):
+    ASTOP = 'onehot0'
+class KW_onehot(KeywordToken):
+    ASTOP = 'onehot'
+class KW_majority(KeywordToken):
+    ASTOP = 'majority'
 class KW_ite(KeywordToken):
     ASTOP = 'ite'
 class KW_implies(KeywordToken):
@@ -94,6 +100,9 @@ class BoolExprLexer(RegexLexer):
             (r"\bUnequal\b", keyword),
             (r"\bNor\b", keyword),
             (r"\bNand\b", keyword),
+            (r"\bOneHot0\b", keyword),
+            (r"\bOneHot\b", keyword),
+            (r"\bMajority\b", keyword),
 
             (r"\bITE\b", keyword),
             (r"\bImplies\b", keyword),
@@ -117,14 +126,17 @@ class BoolExprLexer(RegexLexer):
     }
 
     KEYWORDS = {
-        'Or'      : KW_or,
-        'And'     : KW_and,
-        'Xor'     : KW_xor,
-        'Xnor'    : KW_xnor,
-        'Equal'   : KW_equal,
-        'Unequal' : KW_unequal,
-        'Nor'     : KW_nor,
-        'Nand'    : KW_nand,
+        'Or'       : KW_or,
+        'And'      : KW_and,
+        'Xor'      : KW_xor,
+        'Xnor'     : KW_xnor,
+        'Equal'    : KW_equal,
+        'Unequal'  : KW_unequal,
+        'Nor'      : KW_nor,
+        'Nand'     : KW_nand,
+        'OneHot0'  : KW_onehot0,
+        'OneHot'   : KW_onehot,
+        'Majority' : KW_majority,
 
         'ITE'     : KW_ite,
         'Implies' : KW_implies,
@@ -185,6 +197,9 @@ class BoolExprLexer(RegexLexer):
 #      | 'Unequal'
 #      | 'Nor'
 #      | 'Nand'
+#      | 'OneHot0'
+#      | 'OneHot'
+#      | 'Majority'
 #
 # ARGS := EXPR ',' ARGS
 #       | EXPR
@@ -199,6 +214,9 @@ OPN_TOKS = {
     KW_unequal,
     KW_nor,
     KW_nand,
+    KW_onehot0,
+    KW_onehot,
+    KW_majority,
 }
 
 FACTOR_TOKS = {
