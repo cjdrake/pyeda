@@ -162,8 +162,10 @@ class BoolExprLexer(RegexLexer):
 
 # Grammar for a Boolean expression
 #
-# EXPR := IMPL '?' EXPR ':' EXPR
-#       | IMPL
+# EXPR := ITE
+#
+# ITE := IMPL '?' ITE ':' ITE
+#      | IMPL
 #
 # IMPL := SUM '=>' IMPL
 #       | SUM '<=>' IMPL
@@ -251,6 +253,9 @@ def _expect_token(lex, types):
         raise BoolExprParseError("unexpected token: " + str(tok))
 
 def _expr(lex):
+    return _ite(lex)
+
+def _ite(lex):
     s = _impl(lex)
     try:
         tok = next(lex)
@@ -258,9 +263,9 @@ def _expr(lex):
         return s
 
     if type(tok) is OP_question:
-        d1 = _expr(lex)
+        d1 = _ite(lex)
         _expect_token(lex, {OP_colon})
-        d0 = _expr(lex)
+        d0 = _ite(lex)
         return ('ite', s, d1, d0)
     else:
         lex.unpop_token(tok)
