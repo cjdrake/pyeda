@@ -7,6 +7,15 @@
 Version 0.15
 ============
 
+Release 0.15.1
+--------------
+
+* Thanks to `Christoph Gohlke <http://www.lfd.uci.edu/~gohlke>`_,
+  added build support for Windows platforms.
+
+Release 0.15.0
+--------------
+
 This is probably the most exciting release of PyEDA yet!
 Integration of the popular `PicoSAT <http://fmv.jku.at/picosat/>`_
 fast C SAT solver makes PyEDA suitable for industrial-strength applications.
@@ -45,6 +54,39 @@ Here are the full release notes:
 
 Version 0.14
 ============
+
+Release 0.14.2
+--------------
+
+Fixed `Issue #42 <https://github.com/cjdrake/pyeda/issues/42>`_.
+
+There was a bug in the implementation of ``OrAnd``,
+due to the new usage of a `frozenset` to represent the argument container.
+
+With ``0.14.1``, you could get this::
+
+   >>> And('a', 'b', 'c') == Or('a', 'b', 'c')
+   True
+
+Now::
+
+   >>> And('a', 'b', 'c') == Or('a', 'b', 'c')
+   False
+
+The ``==`` operator is only used by PyEDA for hashing,
+and is not overloaded by ``Expression``.
+Therefore, this could potentially cause some serious issues with ``Or``/``And``
+expressions that prune arguments incorrectly.
+
+Release 0.14.1
+--------------
+
+Fixed `Issue #41 <https://github.com/cjdrake/pyeda/issues/41>`_.
+Basically, the package metadata in the ``0.14.0`` release was incomplete,
+so the source distribution only contained a few modules. Whoops.
+
+Release 0.14.0
+--------------
 
 This release reorganizes the PyEDA source code around quite a bit,
 and introduces some awesome new parsing utilities.
@@ -112,36 +154,6 @@ This allows you to represent arbitrary expressions, for example::
 * Preliminary support for Tseitin encoding of logic expressions.
 * Rename ``pyeda.common`` to ``pyeda.util``.
 
-Release 0.14.1
---------------
-
-Fixed `Issue #41 <https://github.com/cjdrake/pyeda/issues/41>`_.
-Basically, the package metadata in the ``0.14.0`` release was incomplete,
-so the source distribution only contained a few modules. Whoops.
-
-Release 0.14.2
---------------
-
-Fixed `Issue #42 <https://github.com/cjdrake/pyeda/issues/42>`_.
-
-There was a bug in the implementation of ``OrAnd``,
-due to the new usage of a `frozenset` to represent the argument container.
-
-With ``0.14.1``, you could get this::
-
-   >>> And('a', 'b', 'c') == Or('a', 'b', 'c')
-   True
-
-Now::
-
-   >>> And('a', 'b', 'c') == Or('a', 'b', 'c')
-   False
-
-The ``==`` operator is only used by PyEDA for hashing,
-and is not overloaded by ``Expression``.
-Therefore, this could potentially cause some serious issues with ``Or``/``And``
-expressions that prune arguments incorrectly.
-
 Version 0.13
 ============
 
@@ -205,6 +217,14 @@ Version 0.12
 Version 0.11
 ============
 
+Release 0.11.1
+--------------
+
+* Fixed bug #16: ``Function.reduce`` only implemented by Variable
+
+Release 0.11.0
+--------------
+
 * In ``pyeda.dimacs`` changed ``parse_cnf`` method name to ``load_cnf``
 * In ``pyeda.dimacs`` changed ``parse_sat`` method name to ``load_sat``
 * In ``pyeda.dimacs`` added new method ``dump_cnf``, to convert expressions
@@ -220,8 +240,3 @@ Version 0.11
 * Expressions gained an ``expand`` method, to implement Shannon expansion.
 * New if-then-else (ITE) expression type.
 * NormalForm expressions now both support ``-``, ``+``, and ``*`` operators.
-
-Release 0.11.1
---------------
-
-* Fixed bug #16: ``Function.reduce`` only implemented by Variable
