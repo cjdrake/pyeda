@@ -72,10 +72,14 @@ TEST_PKGS = [
 
 PACKAGES = PYEDA_PKGS + TEST_PKGS
 
+with open(os.path.join('extension', 'picosat', 'VERSION')) as fin:
+    PICOSAT_VERSION = '"' + fin.read().strip() + '"'
+
 # PicoSAT extension
 PICOSAT = dict(
     define_macros = [
         ('NDEBUG', None),
+        ('PICOSAT_VERSION', PICOSAT_VERSION),
     ],
     include_dirs = [
         os.path.join('extension', 'picosat'),
