@@ -1,6 +1,7 @@
 # Filename: setup.py
 
 import os
+import sys
 
 import pyeda
 
@@ -89,6 +90,12 @@ PICOSAT = dict(
         os.path.join('pyeda', 'boolalg', '_picosat.c'),
     ],
 )
+
+if sys.platform == 'win32':
+    PICOSAT['define_macros'] += [
+        ('NGETRUSAGE', None),
+        ('inline', '__inline'),
+    ]
 
 EXT_MODULES = [
     Extension('pyeda.boolalg._picosat', **PICOSAT),

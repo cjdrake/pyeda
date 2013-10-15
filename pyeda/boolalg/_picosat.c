@@ -329,6 +329,9 @@ satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     int propagation_limit = -1;
     int decision_limit = -1;
 
+    // Python return value
+    SatisfyAllState *state;
+
     picosat = picosat_minit(NULL, py_malloc, py_realloc, py_free);
     if (picosat == NULL) {
         PyErr_SetString(PicosatError, "could not initialize PicoSAT");
@@ -355,7 +358,7 @@ satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     // picosat_assume(picosat, lit);
     // picosat_set_seed(picosat, seed);
 
-    SatisfyAllState *state = (SatisfyAllState *) cls->tp_alloc(cls, 0);
+    state = (SatisfyAllState *) cls->tp_alloc(cls, 0);
     if (state == NULL) {
         goto SATISFY_ALL_RESET_PICOSAT;
     }
@@ -439,7 +442,8 @@ satisfy_all_next(SatisfyAllState *state)
 
 static PyTypeObject
 SatisfyAllType = {
-    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+    //PyObject_HEAD_INIT(NULL)
+    PyVarObject_HEAD_INIT(NULL, 0)
 
     "satisfy_all",                      // tp_name
     sizeof(SatisfyAllState),            // tp_basicsize
