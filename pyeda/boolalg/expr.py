@@ -143,15 +143,19 @@ def _expr2sat(expr, lit2idx):
     if isinstance(expr, ExprLiteral):
         return str(lit2idx[expr])
     elif isinstance(expr, ExprOr):
-        return "+(" + " ".join(_expr2sat(arg, lit2idx) for arg in expr.args) + ")"
+        return "+(" + " ".join(_expr2sat(arg, lit2idx)
+                               for arg in expr.args) + ")"
     elif isinstance(expr, ExprAnd):
-        return "*(" + " ".join(_expr2sat(arg, lit2idx) for arg in expr.args) + ")"
+        return "*(" + " ".join(_expr2sat(arg, lit2idx)
+                               for arg in expr.args) + ")"
     elif isinstance(expr, ExprNot):
         return "-(" + _expr2sat(expr.arg, lit2idx) + ")"
     elif isinstance(expr, ExprXor):
-        return ("xor(" + " ".join(_expr2sat(arg, lit2idx) for arg in expr.args) + ")")
+        return ("xor(" + " ".join(_expr2sat(arg, lit2idx)
+                                  for arg in expr.args) + ")")
     elif isinstance(expr, ExprEqual):
-        return "=(" + " ".join(_expr2sat(arg, lit2idx) for arg in expr.args) + ")"
+        return "=(" + " ".join(_expr2sat(arg, lit2idx)
+                               for arg in expr.args) + ")"
     else:
         raise ValueError("invalid expression")
 
@@ -1027,7 +1031,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         # Or() = 0; And() = 1
         if len(args) == 0:
             return cls.IDENTITY
-        # Or(x) = x; And(x) = x
+        # Or(a) = a; And(a) = a
         elif len(args) == 1:
             return args[0]
         else:
@@ -1161,8 +1165,8 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         """Return a flattened OR/AND expression.
 
         Use the distributive law to flatten all nested expressions:
-        x + (y * z) = (x + y) * (x + z)
-        x * (y + z) = (x * y) + (x * z)
+        a + (b * c) = (a + b) * (a + c)
+        a * (b + c) = (a * b) + (a * c)
 
         Parameters
         ----------
@@ -1192,8 +1196,8 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
     def absorb(self):
         """Return the OR/AND expression after absorption.
 
-        x + (x * y) = x
-        x * (x + y) = x
+        a + (a * b) = a
+        a * (a + b) = a
 
         .. NOTE:: This method assumes the expression is already factored and
                   flattened. Do NOT call this method directly -- use the
@@ -1460,11 +1464,11 @@ class ExprExclusive(_ArgumentContainer):
             # associative
             elif isinstance(arg, self.__class__):
                 temps.extend(arg.args)
-            # Xor(x, x') = 1
+            # Xor(a, a') = 1
             elif isinstance(arg, ExprLiteral) and -arg in args:
                 args.remove(-arg)
                 par ^= 1
-            # Xor(x, x) = 0
+            # Xor(a, a) = 0
             elif arg in args:
                 args.remove(arg)
             else:
@@ -1526,7 +1530,7 @@ class ExprXor(ExprExclusive):
         # Xor() = 0
         if len(args) == 0:
             return EXPRZERO
-        # Xor(x) = x
+        # Xor(a) = a
         elif len(args) == 1:
             return args[0]
         else:
@@ -1551,7 +1555,7 @@ class ExprXnor(ExprExclusive):
         # Xnor() = 1
         if len(args) == 0:
             return EXPRONE
-        # Xnor(x) = x'
+        # Xnor(a) = a'
         elif len(args) == 1:
             return ExprNot(args[0]).simplify()
         else:
@@ -1591,6 +1595,10 @@ class ExprEqualBase(_ArgumentContainer):
 
     @staticmethod
     def get_dual():
+        """Return the dual function.
+
+        The dual of Equal is Unequal, and the dual of Unequal is Equal.
+        """
         raise NotImplementedError()
 
 
@@ -1600,7 +1608,7 @@ class ExprEqual(ExprEqualBase):
     ASTOP = 'equal'
 
     def __new__(cls, *args):
-        # Equal(x) = Equal() = 1
+        # Equal(a) = Equal() = 1
         if len(args) <= 1:
             return EXPRONE
         else:
@@ -1633,7 +1641,7 @@ class ExprEqual(ExprEqualBase):
         temps, args = args, set()
         while temps:
             arg = temps.pop()
-            # Equal(x, -x) = 0
+            # Equal(a, -a) = 0
             if isinstance(arg, ExprLiteral) and -arg in args:
                 return EXPRZERO
             else:
@@ -1666,7 +1674,7 @@ class ExprUnequal(ExprEqualBase):
     ASTOP = 'unequal'
 
     def __new__(cls, *args):
-        # Unequal(x) = Unequal() = 0
+        # Unequal(a) = Unequal() = 0
         if len(args) <= 1:
             return EXPRZERO
         else:
@@ -1699,7 +1707,7 @@ class ExprUnequal(ExprEqualBase):
         temps, args = args, set()
         while temps:
             arg = temps.pop()
-            # Unequal(x, -x) = 1
+            # Unequal(a, -a) = 1
             if isinstance(arg, ExprLiteral) and -arg in args:
                 return EXPRONE
             else:
@@ -1762,10 +1770,10 @@ class ExprImplies(_ArgumentContainer):
         # p => 0 = p'
         elif q is EXPRZERO:
             return ExprNot(p).simplify()
-        # p -> p = 1
+        # p => p = 1
         elif p == q:
             return EXPRONE
-        # -p -> p = p
+        # -p => p = p
         elif isinstance(p, ExprLiteral) and -p == q:
             return q
 
@@ -1907,18 +1915,22 @@ class DimacsCNF(object):
 
     @property
     def nvars(self):
+        """Return the count of variables in the CNF."""
         return len(self.idx2var)
 
     @property
     def nclauses(self):
+        """Return the count of clauses in the CNF."""
         return len(self.clauses)
 
     @property
     def _formula(self):
+        """Return the formula string."""
         return "\n".join(" ".join(str(lit) for lit in clause) + " 0"
                          for clause in self.clauses)
 
     def soln2point(self, soln):
+        """Convert a solution vector to a point."""
         return { self.idx2var[i]: int(val > 0)
                  for i, val in enumerate(soln, start=1) }
 
