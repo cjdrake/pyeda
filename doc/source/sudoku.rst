@@ -30,7 +30,7 @@ First, import all the standard symbols from PyEDA.
 
 ::
 
-   >>> from pyeda import *
+   >>> from pyeda.inter import *
 
 Let's also define a variable "DIGITS" that makes it easier to access the
 Sudoku square values.
@@ -93,7 +93,7 @@ Let's say I have three variables, **a**, **b**, and **c**.
 
 ::
 
-   >>> a, b, c = map(var, 'abc')
+   >>> a, b, c = map(exprvar, 'abc')
 
 I want to write a Boolean formula that guarantees that only one of them is
 True at any given moment.
@@ -102,7 +102,7 @@ True at any given moment.
 
    >>> f = OneHot(a, b, c)
 
-You can use PyEDA to automatically produce the truth table, in Espresso format.
+You can use PyEDA to automatically produce the truth table.
 
 ::
 
@@ -201,20 +201,10 @@ we need to combine them all into a single formula.
 We will use the ``And`` function to join the constraints,
 because all constraints must be true for the puzzle to be solved.
 
-Instead of using the ``And`` constructor,
-which will create a new logic expression,
-we will instead use the ``CNF_And`` constructor.
-The reason for this is simply speed.
-By now we have a *massive* logic expression that is written in conjunctive
-normal form,
-so we will use the pyeda.cnf.ConjNormalForm data type to represent the final
-equation,
-because it will be smaller and faster when we kick off the SAT solver.
-
 ::
 
-   >>> S = CNF_And(V, R, C, B)
-   >>> len(S.clauses)
+   >>> S = And(V, R, C, B)
+   >>> len(S.args)
    10530
 
 As you can see, the constraints formula is *quite* large.
@@ -240,9 +230,8 @@ This function also returns a CNF data type.
    >>> def parse_grid(grid):
    ...     chars = [c for c in grid if c in DIGITS or c in "0."]
    ...     assert len(chars) == 9 ** 2
-   ...     I = And(*[ X[i // 9 + 1][i % 9 + 1][int(c)]
-   ...                for i, c in enumerate(chars) if c in DIGITS ])
-   ...     return expr2cnf(I)
+   ...     return And(*[ X[i // 9 + 1][i % 9 + 1][int(c)]
+   ...                   for i, c in enumerate(chars) if c in DIGITS ])
 
 The example grid above can be written like this::
 
