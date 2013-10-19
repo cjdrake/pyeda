@@ -29,7 +29,9 @@ All of the following conversions from :math:`0` have the same effect::
    >>> zeroA = expr(0)
    >>> zeroB = expr(False)
    >>> zeroC = expr("0")
-   # All three 'zero' objects are the same
+
+All three "zero" objects are the same::
+
    >>> zeroA == zeroB == zeroC
    True
 
@@ -38,7 +40,9 @@ Similarly for :math:`1`::
    >>> oneA = expr(1)
    >>> oneB = expr(True)
    >>> oneC = expr("1")
-   # All three 'one' objects are the same
+
+All three "one" objects are the same::
+
    >>> oneA == oneB == oneC
    True
 
@@ -94,7 +98,7 @@ Variables
 To create expression variables, use the ``exprvar`` function.
 
 For example, let's create a variable named :math:`a`,
-and assign it to a Python object named "a"::
+and assign it to a Python object named ``a``::
 
    >>> a = exprvar('a')
    >>> type(a)
@@ -123,17 +127,17 @@ By default, all variables go into a global namespace.
 You can assign a variable to a specific namespace by passing a tuple of
 strings as the first argument::
 
-   >>> a1 = exprvar('a')
-   >>> a3 = exprvar(('a', 'b', 'c'))
-   >>> a1.names
+   >>> a = exprvar('a')
+   >>> c_b_a = exprvar(('a', 'b', 'c'))
+   >>> a.names
    ('a', )
-   >>> a3.names
+   >>> c_b_a.names
    ('a', 'b', 'c')
 
 Notice that the default representation of a variable will dot all the names
 together starting with the most significant index of the tuple on the left::
 
-   >>> str(a3)
+   >>> str(c_b_a)
    'c.b.a'
 
 Since it is very common to deal with grouped variables,
@@ -255,7 +259,7 @@ This section will describe all the factory functions that can be used to create
 arbitrary Boolean expressions.
 
 The general form of these functions is
-``OP(arg [, arg], simplify=True, factor=False [, conj=False])``.
+``OP(arg [, arg], simplify=True, factor=False)``.
 The function is an operator name, followed by one or more arguments,
 followed by the ``simplify``, and ``factor`` parameters.
 Some functions also have a ``conj`` parameter,
@@ -278,11 +282,11 @@ and::
    >>> Not(a0)
    a[0]'
 
-Fundamental Operators
-^^^^^^^^^^^^^^^^^^^^^
+Primary Operators
+^^^^^^^^^^^^^^^^^
 
 Since NOT, OR, and AND form a complete basis for a Boolean algebra,
-these three operators are *fundamental*.
+these three operators are *primary*.
 
 .. function:: Not(arg, simplify=True, factor=False)
 
@@ -301,13 +305,14 @@ Secondary Operators
 
 A *secondary* operator is a Boolean operator that can be natively represented
 as a PyEDA expression,
-but contains more information than the fundamental operators.
+but contains more information than the primary operators.
 That is, these expressions always increase in tree size when converted to
-fundamental operators.
+primary operators.
 
 .. function:: Xor(\*args, simplify=True, factor=False, conj=False)
 
-.. function:: Xnor(\*args, simplify=True, factor=False, conj=False)
+Return an expression that evaluates to :math:`1` if and only if the parity of
+its inputs is odd.
 
 The full adder circuit has a more dense representation when you
 use the ``Xor`` operator::
@@ -315,13 +320,63 @@ use the ``Xor`` operator::
    >>> s = Xor('a', 'b', 'ci')
    >>> co = Or(And('a', 'b'), And('a', 'ci'), And('b', 'ci'))
 
+.. function:: Xnor(\*args, simplify=True, factor=False, conj=False)
+
+Return an expression that evaluates to :math:`1` if and only if the parity of
+its outputs is even.
+
 .. function:: Equal(\*args, simplify=True, factor=False, conj=False)
+
+Return an expression that evaluates to :math:`1` if and only if its inputs are
+either all zeros or all ones.
 
 .. function:: Unequal(\*args, simplify=True, factor=False, conj=False)
 
+Return an expression that evaluates to :math:`1` if and only if its inputs are
+neither all zeros nor all ones.
+
 .. function:: Implies(p, q, simplify=True, factor=False)
 
+Return an expression that implements Boolean implication
+(:math:`p \rightarrow q`).
+
++-----------+-----------+-------------------------+
+| :math:`f` | :math:`g` | :math:`f \rightarrow g` |
++===========+===========+=========================+
+|         0 |         0 |                       1 |
++-----------+-----------+-------------------------+
+|         0 |         1 |                       1 |
++-----------+-----------+-------------------------+
+|         1 |         0 |                       0 |
++-----------+-----------+-------------------------+
+|         1 |         1 |                       1 |
++-----------+-----------+-------------------------+
+
 .. function:: ITE(s, d1, d0, simplify=True, factor=False)
+
+Return an expression that implements the Boolean "if, then, else" operator.
+If :math:`s = 1`, then the output is equal to :math:`d_{0}`.
+Otherwise (:math:`s = 0`), the output is equal to :math:`d_{1}`.
+
++-----------+---------------+---------------+------------------------------+
+| :math:`s` | :math:`d_{1}` | :math:`d_{0}` | :math:`ite(s, d_{1}, d_{0})` |
++===========+===============+===============+==============================+
+|         0 |             0 |             0 |                            0 |
++-----------+---------------+---------------+------------------------------+
+|         0 |             0 |             1 |                            1 |
++-----------+---------------+---------------+------------------------------+
+|         0 |             1 |             0 |                            0 |
++-----------+---------------+---------------+------------------------------+
+|         0 |             1 |             1 |                            1 |
++-----------+---------------+---------------+------------------------------+
+|         1 |             0 |             0 |                            0 |
++-----------+---------------+---------------+------------------------------+
+|         1 |             0 |             1 |                            0 |
++-----------+---------------+---------------+------------------------------+
+|         1 |             1 |             0 |                            1 |
++-----------+---------------+---------------+------------------------------+
+|         1 |             1 |             1 |                            1 |
++-----------+---------------+---------------+------------------------------+
 
 High Order Operators
 ^^^^^^^^^^^^^^^^^^^^
@@ -329,17 +384,32 @@ High Order Operators
 A *high order* operator is a Boolean operator that can NOT be natively
 represented as a PyEDA expression.
 That is, these factory functions will always return expressions composed from
-fundamental and/or secondary operators.
+primary and/or secondary operators.
 
 .. function:: Nor(\*args, simplify=True, factor=False)
 
+Return ``Not(Or(*args, ...))``.
+
 .. function:: Nand(\*args, simplify=True, factor=False)
+
+Return ``Not(And(*args, ...))``.
 
 .. function:: OneHot0(\*args, simplify=True, factor=False, conj=True)
 
+Return an expression that evaluates to :math:`1` if and only if the number of
+inputs equal to :math:`1` is less than or equal to :math:`1`.
+That is, return true when either one or zero of its inputs are "hot".
+
 .. function:: OneHot(\*args, simplify=True, factor=False, conj=True)
 
-.. function:: Majority(\*args, simplify=True, factor=False, conj=True)
+Return an expression that evaluates to :math:`1` if and only if exactly one
+input is equal to :math:`1`.
+That is, return true when exactly one input is "hot".
+
+.. function:: Majority(\*args, simplify=True, factor=False, conj=False)
+
+Return an expression that evaluates to :math:`1` if and only if the majority
+of its inputs are equal to :math:`1`.
 
 The full adder circuit has a much more dense representation when you
 use both the ``Xor`` and ``Majority`` operators::
@@ -350,19 +420,146 @@ use both the ``Xor`` and ``Majority`` operators::
 From the ``expr`` Function
 --------------------------
 
-.. expr(arg, simplify=True, factor=False)
+.. function:: expr(arg, simplify=True, factor=False)
+
+The ``expr`` function is very special.
+It will attempt to convert the input argument to an ``Expression`` object.
+
+We have already seen how the ``expr`` function converts a Python ``bool``
+input to a constant expression::
+
+   >>> expr(False)
+   0
+
+Now let's pass a ``str`` as the input argument::
+
+   >>> expr('0')
+   0
+
+If given an input string, the ``expr`` function will attempt to parse the input
+string and return an expression.
+
+Examples of input expressions::
+
+   >>> expr("-a * b + -c * d")
+   a' * b + c' * d
+   >>> expr("p => q")
+   p => q
+   >>> expr("p <=> q")
+   Equal(p, q)
+   >>> expr("s ? d[1] : d[0]")
+   s ? d[1] : d[0]
+   >>> expr("Or(a, b, Not(c))")
+   a + b + c'
+   >>> expr("Majority(a, b, c)")
+   a * b + a * c + b * c
+
+Operator Precedence Table (lowest to highest):
+
++-----------------------------------------------+-------------------------------------+
+| Operator                                      | Description                         |
++===============================================+=====================================+
+| ``s ? d1 : d0``                               | If Then Else                        |
++-----------------------------------------------+-------------------------------------+
+| ``=>``                                        | Binary Implies,                     |
+| ``<=>``                                       | Binary Equal                        |
++-----------------------------------------------+-------------------------------------+
+| ``+``                                         | Binary OR                           |
++-----------------------------------------------+-------------------------------------+
+| ``*``                                         | Binary AND                          |
++-----------------------------------------------+-------------------------------------+
+| ``-x``                                        | Unary NOT                           |
++-----------------------------------------------+-------------------------------------+
+| ``(expr ...)``                                | Parenthesis,                        |
+| ``OP(expr ...)``                              | Explicit operators                  |
++-----------------------------------------------+-------------------------------------+
+
+The full list of valid operators accepted by the expression parser:
+
+* ``Or(...)``
+* ``And(...)``
+* ``Xor(...)``
+* ``Xnor(...)``
+* ``Equal(...)``
+* ``Unequal(...)``
+* ``Nor(...)``
+* ``Nand(...)``
+* ``OneHot0(...)``
+* ``OneHot(...)``
+* ``Majority(...)``
+* ``ITE(s, d1, d0)``
+* ``Implies(p, q)``
+* ``Not(a)``
 
 Expression Types
 ================
 
-* basic (unsimplified)
-* simplifed
-* factored
-* normal form (depth, term_index)
-* canonical normal form (reduce)
+Unsimplified
+------------
+
+An unsimplified expression consists of the following components:
+
+* Constants
+* Expressions that can *easily* be converted to constants (eg :math:`x + -x = 1`)
+* Literals
+* Primary operators: ``Not``, ``Or``, ``And``
+* Secondary operators
+
+Simplifed
+---------
+
+A simplified expression consists of the following components:
+
+* Literals
+* Primary operators: ``Not``, ``Or``, ``And``
+* Secondary operators
+
+That is, the act of *simplifying* an expression eliminates constants,
+and all sub-expressions that can be easily converted to constants.
+
+Factored
+--------
+
+A factored expression consists of the following components:
+
+* Literals
+* Primary operators: ``Or``, ``And``
+
+That is, the act of *factoring* an expression converts all secondary operators
+to primary operators,
+and uses DeMorgan's transform to eliminate ``Not`` operators.
+
+Normal Form
+-----------
+
+A normal form expression is a factored expression with depth less than or
+equal to two.
+
+That is, a normal form expression has been factored, and *flattened*.
+
+There are two types of normal forms:
+
+* disjunctive normal form (SOP: sum of products)
+* conjunctive normal form (POS: product of sums)
+
+.. depth
+.. term_index
+
+Canonical Normal Form
+---------------------
+
+A canonical normal form expression is a normal form expression with the
+additional property that all terms in the expression have the same degree as
+the expression itself.
+
+That is, a canonical normal form expression has been factored, flattened,
+and *reduced*.
 
 .. term ordering rules
 .. shannon expansions
+
+Satisfiability
+==============
 
 Tseitin's Encoding
 ==================
