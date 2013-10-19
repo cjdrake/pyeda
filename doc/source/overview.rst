@@ -9,7 +9,8 @@ What is Electronic Design Eutomation (EDA)?
 
 The Intel 4004, the world's first commercially available microprocessor,
 was built from approximately 2300 transistors,
-and had a clock frequency of 740 kilohertz (thousands of cycles per second).
+and had a clock frequency of 740 kilohertz (thousands of cycles per second)
+[#f1]_ [#f2]_.
 A modern Intel microprocessor can contain over 1.5 billion transistors,
 and will typically have a clock frequency ranging from two to four gigahertz
 (billions of cycles per second).
@@ -58,3 +59,6 @@ Repository
 
 View the PyEDA source code on
 `GitHub <http://github.com/cjdrake/pyeda>`_.
+
+.. [#f1] `Wikipedia: Intel 4004 <http://en.wikipedia.org/wiki/Intel_4004>`_
+.. [#f2] `The Story of the Intel 4004 <http://www.intel.com/content/www/us/en/history/museum-story-of-intel-4004.html>`_
