@@ -42,7 +42,6 @@ Contents:
    sudoku.rst
    relnotes.rst
 
-
 Indices and Tables
 ==================
 
