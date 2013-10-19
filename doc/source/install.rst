@@ -19,10 +19,8 @@ and adhere to the majority of conventions observed by the community.
 Supported Platforms
 ===================
 
-PyEDA is only tested on Linux, though it's very likely to also work on any
-Unix-like system, including MacOS.
-The portion of PyEDA that is pure Python runs fine on Windows,
-but there is currently no support for binary distribution of the C extensions.
+PyEDA supports Windows, and any platform with a C compiler.
+The author does most development and testing on Linux Mint.
 
 Supported Python Versions
 =========================
