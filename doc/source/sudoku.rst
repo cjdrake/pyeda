@@ -1,8 +1,8 @@
 .. _sudoku:
 
-*********************************
-  Abusing PyEDA to Solve Sudoku
-*********************************
+*******************************
+  Using PyEDA to Solve Sudoku
+*******************************
 
 According to Peter Norvig in his
 `fantastic essay <http://norvig.com/sudoku.html>`_
@@ -13,14 +13,14 @@ once stated that "Sudoku is a denial of service attack on human intellect".
 I can personally attest to that.
 
 In this example,
-I will explain how to misuse/abuse PyEDA's Boolean expressions and
+I will explain how to use PyEDA's Boolean expressions and
 satisfiability engine to create a general-purpose Sudoku solver.
 
 First, let's get a few ground rules straight:
 
 1. There are lots of Sudoku solvers on the Internet;
    I make no claims of novelty.
-2. PyEDA is unlikely to win any speed competitions.
+2. PyEDA is pretty fast, but unlikely to win any speed competitions.
 3. Let's face it--this is a pretty awesome waste of time.
 
 Getting Started
