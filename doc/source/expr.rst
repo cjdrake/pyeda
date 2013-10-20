@@ -650,8 +650,103 @@ Using the same function from the previous section as an example::
 Satisfiability
 ==============
 
+Expressions have smart support for Boolean satisfiability.
+
+They inherit both the ``satisfy_one`` and ``satisfy_all`` methods from the
+``Function`` interface.
+
+For example::
+
+   >>> f = Xor('a', Implies('b', 'c'))
+   >>> f.satisfy_one()
+   {a: 0, b: 0}
+   >>> list(f.satisfy_all())
+   [{a: 0, b: 0}, {a: 0, b: 1, c: 1}, {a: 1, b: 1, c: 0}]
+
+By default, Boolean expressions use a very naive "backtracking" algorithm to
+solve for satisfying input points.
+Since SAT is an NP-complete algorithm,
+you should always use care when preparing your inputs.
+
+A conjunctive normal form expression will automatically use the
+`PicoSAT <http://fmv.jku.at/picosat>`_ C extension.
+This is an industrial-strength SAT solver,
+and can be used to solve very non-trivial problems.
+
+   >>> g = f.to_cnf()
+   >>> g.satisfy_one()
+   {a: 0, b: 0, c: 1}
+   >>> list(g.satisfy_all())
+   [{a: 0, b: 0}, {a: 0, b: 1, c: 1}, {a: 1, b: 1, c: 0}]
+
+.. note:: Future versions of PyEDA might support additional C/C++ extensions
+          for SAT solving. This is an active area of research, and no single
+          solver is ideal for all cases.
+
 Tseitin's Encoding
 ==================
 
+To take advantage of the PicoSAT solver,
+you need an expression that is in conjunctive normal form.
+Some expressions (especially Xor) have exponentially large size when you
+expand them to a CNF.
+
+One way to work around this limitation is to use Tseitin's encoding.
+To convert an expression to Tseitin's encoding, use the ``tseitin`` method::
+
+   >>> f = Xor('a', Implies('b', 'c'))
+   >>> tf = f.tseitin()
+   >>> tf
+   (a + aux[0]') * (a' + aux[0] + b' + c) * (a' + aux[2]') * (a + aux[1]' + aux[2]) * (aux[0] + aux[2]) * (aux[0]' + b) * (aux[0]' + c') * (aux[1] + aux[2]') * (aux[1] + b) * (aux[1] + c') * (aux[1]' + b' + c)
+
+As you can see, Tseitin's encoding introduces several "auxiliary" variables
+into the expression.
+
+You can change the name of the auxiliary variable by using the ``auxvarname``
+parameter::
+
+   >>> f = Xor('a', Implies('b', 'c'))
+   >>> f.tseitin(auxvarname='z')
+   (a + z[0]') * (a' + b' + c + z[0]) * (a' + z[2]') * (z[1] + z[2]') * (a + z[1]' + z[2]) * (b + z[1]) * (c' + z[1]) * (b' + c + z[1]') * (b + z[0]') * (c' + z[0]') * (z[0] + z[2])
+
+You will see the auxiliary variables in the satisfying points::
+
+   >>> tf.satisfy_one()
+   {a: 0, aux[0]: 0, aux[1]: 1, aux[2]: 1, b: 0, c: 1}
+   >>> list(tf.satisfy_all())
+   [{a: 0, aux[0]: 0, aux[1]: 1, aux[2]: 1, b: 0},
+    {a: 0, aux[0]: 0, aux[1]: 1, aux[2]: 1, b: 1, c: 1},
+    {a: 1, aux[0]: 1, aux[1]: 0, aux[2]: 0, b: 1, c: 0}]
+
+Just filter them out to get the answer you're looking for::
+
+   >>> [{v: val for v, val in point.items() if v.name != 'aux'} for point in tf.satisfy_all()]
+   [{a: 0, b: 0}, {a: 0, b: 1, c: 1}, {a: 1, b: 1, c: 0}]
+
 Formal Equivalence
 ==================
+
+Two Boolean expressions :math:`f` and :math:`g` are formally equivalent if
+:math:`f \oplus g` is not satisfiable.
+
+Boolean expressions have an ``equivalent`` method that implements this basic
+functionality.
+It uses the naive backtracking SAT,
+because it is difficult to determine whether any particular expression can
+be converted efficiently to a CNF.
+
+Let's test whether bit 6 of a ripple carry adder is equivalent to bit 6 of a
+Kogge Stone adder::
+
+   >>> from pyeda.logic.addition import ripple_carry_add, kogge_stone_add
+   >>> A = bitvec('a', 16)
+   >>> B = bitvec('b', 16)
+   >>> S1, C1 = ripple_carry_add(A, B)
+   >>> S2, C2 = kogge_stone_add(A, B)
+   >>> S1[6].equivalent(S2[6])
+   True
+
+Note that this is the same as the following::
+
+   >>> Xor(S1[6], S2[6]).satisfy_one() is None
+   True
