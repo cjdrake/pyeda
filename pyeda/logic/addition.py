@@ -9,7 +9,7 @@ Interface Functions:
 # Disable "invalid variable name"
 # pylint: disable=C0103
 
-from pyeda.boolalg.expr import Xor
+from pyeda.boolalg.expr import Xor, Majority
 from pyeda.boolalg.vexpr import BitVector
 from pyeda.util import clog2
 
@@ -20,7 +20,7 @@ def ripple_carry_add(A, B, cin=0):
     for i, ai in enumerate(A, A.start):
         carry = (cin if i == 0 else c[i-1])
         s.append(Xor(ai, B[i], carry))
-        c.append(ai * B[i] + ai * carry + B[i] * carry)
+        c.append(Majority(ai, B[i], carry))
     return BitVector(s), BitVector(c)
 
 def kogge_stone_add(A, B, cin=0):
