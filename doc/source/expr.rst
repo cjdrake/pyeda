@@ -311,8 +311,8 @@ primary operators.
 
 .. function:: Xor(\*args, simplify=True, factor=False, conj=False)
 
-Return an expression that evaluates to :math:`1` if and only if the parity of
-its inputs is odd.
+   Return an expression that evaluates to :math:`1` if and only if the parity of
+   its inputs is odd.
 
 The full adder circuit has a more dense representation when you
 use the ``Xor`` operator::
@@ -322,23 +322,23 @@ use the ``Xor`` operator::
 
 .. function:: Xnor(\*args, simplify=True, factor=False, conj=False)
 
-Return an expression that evaluates to :math:`1` if and only if the parity of
-its outputs is even.
+   Return an expression that evaluates to :math:`1` if and only if the parity
+   of its outputs is even.
 
 .. function:: Equal(\*args, simplify=True, factor=False, conj=False)
 
-Return an expression that evaluates to :math:`1` if and only if its inputs are
-either all zeros or all ones.
+   Return an expression that evaluates to :math:`1` if and only if its inputs
+   are either all zeros or all ones.
 
 .. function:: Unequal(\*args, simplify=True, factor=False, conj=False)
 
-Return an expression that evaluates to :math:`1` if and only if its inputs are
-neither all zeros nor all ones.
+   Return an expression that evaluates to :math:`1` if and only if its inputs
+   are neither all zeros nor all ones.
 
 .. function:: Implies(p, q, simplify=True, factor=False)
 
-Return an expression that implements Boolean implication
-(:math:`p \rightarrow q`).
+   Return an expression that implements Boolean implication
+   (:math:`p \rightarrow q`).
 
 +-----------+-----------+-------------------------+
 | :math:`f` | :math:`g` | :math:`f \rightarrow g` |
@@ -354,9 +354,9 @@ Return an expression that implements Boolean implication
 
 .. function:: ITE(s, d1, d0, simplify=True, factor=False)
 
-Return an expression that implements the Boolean "if, then, else" operator.
-If :math:`s = 1`, then the output is equal to :math:`d_{0}`.
-Otherwise (:math:`s = 0`), the output is equal to :math:`d_{1}`.
+   Return an expression that implements the Boolean "if, then, else" operator.
+   If :math:`s = 1`, then the output is equal to :math:`d_{0}`.
+   Otherwise (:math:`s = 0`), the output is equal to :math:`d_{1}`.
 
 +-----------+---------------+---------------+------------------------------+
 | :math:`s` | :math:`d_{1}` | :math:`d_{0}` | :math:`ite(s, d_{1}, d_{0})` |
@@ -388,28 +388,28 @@ primary and/or secondary operators.
 
 .. function:: Nor(\*args, simplify=True, factor=False)
 
-Return ``Not(Or(*args, ...))``.
+   Return ``Not(Or(*args, ...))``.
 
 .. function:: Nand(\*args, simplify=True, factor=False)
 
-Return ``Not(And(*args, ...))``.
+   Return ``Not(And(*args, ...))``.
 
 .. function:: OneHot0(\*args, simplify=True, factor=False, conj=True)
 
-Return an expression that evaluates to :math:`1` if and only if the number of
-inputs equal to :math:`1` is less than or equal to :math:`1`.
-That is, return true when either one or zero of its inputs are "hot".
+   Return an expression that evaluates to :math:`1` if and only if the number
+   of inputs equal to :math:`1` is less than or equal to :math:`1`.
+   That is, return true when either one or zero of its inputs are "hot".
 
 .. function:: OneHot(\*args, simplify=True, factor=False, conj=True)
 
-Return an expression that evaluates to :math:`1` if and only if exactly one
-input is equal to :math:`1`.
-That is, return true when exactly one input is "hot".
+   Return an expression that evaluates to :math:`1` if and only if exactly one
+   input is equal to :math:`1`.
+   That is, return true when exactly one input is "hot".
 
 .. function:: Majority(\*args, simplify=True, factor=False, conj=False)
 
-Return an expression that evaluates to :math:`1` if and only if the majority
-of its inputs are equal to :math:`1`.
+   Return an expression that evaluates to :math:`1` if and only if the majority
+   of its inputs are equal to :math:`1`.
 
 The full adder circuit has a much more dense representation when you
 use both the ``Xor`` and ``Majority`` operators::
@@ -456,23 +456,23 @@ Examples of input expressions::
 
 Operator Precedence Table (lowest to highest):
 
-+-----------------------------------------------+-------------------------------------+
-| Operator                                      | Description                         |
-+===============================================+=====================================+
-| ``s ? d1 : d0``                               | If Then Else                        |
-+-----------------------------------------------+-------------------------------------+
-| ``=>``                                        | Binary Implies,                     |
-| ``<=>``                                       | Binary Equal                        |
-+-----------------------------------------------+-------------------------------------+
-| ``+``                                         | Binary OR                           |
-+-----------------------------------------------+-------------------------------------+
-| ``*``                                         | Binary AND                          |
-+-----------------------------------------------+-------------------------------------+
-| ``-x``                                        | Unary NOT                           |
-+-----------------------------------------------+-------------------------------------+
-| ``(expr ...)``                                | Parenthesis,                        |
-| ``OP(expr ...)``                              | Explicit operators                  |
-+-----------------------------------------------+-------------------------------------+
++--------------------------------------+---------------------------------------+
+| Operator                             | Description                           |
++======================================+=======================================+
+| ``s ? d1 : d0``                      | If Then Else                          |
++--------------------------------------+---------------------------------------+
+| ``=>``                               | Binary Implies,                       |
+| ``<=>``                              | Binary Equal                          |
++--------------------------------------+---------------------------------------+
+| ``+``                                | Binary OR                             |
++--------------------------------------+---------------------------------------+
+| ``*``                                | Binary AND                            |
++--------------------------------------+---------------------------------------+
+| ``-x``                               | Unary NOT                             |
++--------------------------------------+---------------------------------------+
+| ``(expr ...)``                       | Parenthesis,                          |
+| ``OP(expr ...)``                     | Explicit operators                    |
++--------------------------------------+---------------------------------------+
 
 The full list of valid operators accepted by the expression parser:
 
@@ -494,6 +494,8 @@ The full list of valid operators accepted by the expression parser:
 Expression Types
 ================
 
+This section will cover the hierarchy of Boolean expression types.
+
 Unsimplified
 ------------
 
@@ -505,6 +507,25 @@ An unsimplified expression consists of the following components:
 * Primary operators: ``Not``, ``Or``, ``And``
 * Secondary operators
 
+Also, an unsimplified expression does not automatically join adjacent,
+associative operators.
+For example, :math:`a + (b + c)` is equivalent to :math:`a + b + c`.
+The depth of the unsimplified expression is two::
+
+   >>> f = Or('a', Or('b', 'c'), simplify=False)
+   >>> f.args
+   frozenset({a, b + c})
+   >>> f.depth
+   2
+
+The depth of the simplified expression is one::
+
+   >>> g = f.simplify()
+   >>> g.args
+   frozenset({a, b, c})
+   >>> g.depth
+   1
+
 Simplifed
 ---------
 
@@ -514,8 +535,43 @@ A simplified expression consists of the following components:
 * Primary operators: ``Not``, ``Or``, ``And``
 * Secondary operators
 
+Also, :math:`0` and :math:`1` are considered simplified by themselves.
+
 That is, the act of *simplifying* an expression eliminates constants,
 and all sub-expressions that can be easily converted to constants.
+
+All expressions constructed using overloaded operatiors are automatically
+simplified::
+
+   >>> a + 0
+   a
+   >>> a + 1
+   1
+   >>> a + b * -b
+   a
+
+Unsimplified expressions are not very useful,
+so the factory functions also simplify by default::
+
+   >>> Or(a, And(b, -b))
+   a
+
+To simplify an expression, use the ``simplify`` method::
+
+   >>> f = Or(a, 0, simplify=False)
+   >>> f
+   0 + a
+   >>> g = f.simplify()
+   >>> g
+   a
+
+You can check whether an expression is simplified using the ``simplified``
+attribute::
+
+   >>> f.simplified
+   False
+   >>> g.simplified
+   True
 
 Factored
 --------
@@ -528,6 +584,25 @@ A factored expression consists of the following components:
 That is, the act of *factoring* an expression converts all secondary operators
 to primary operators,
 and uses DeMorgan's transform to eliminate ``Not`` operators.
+
+You can factor all secondary operators::
+
+   >>> Xor(a, b, c).factor()
+   a' * b' * c + a' * b * c' + a * b' * c' + a * b * c
+   >>> Implies(p, q).factor()
+   p' + q
+   >>> Equal(a, b, c).factor()
+   a' * b' * c' + a * b * c
+   >>> ITE(s, a, b).factor()
+   a * s + b * s'
+
+Factoring also eliminates all ``Not`` operators,
+by using DeMorgan's law::
+
+   >>> Not(a + b).factor()
+   a' * b'
+   >>> Not(a * b).factor()
+   a' + b'
 
 Normal Form
 -----------
@@ -542,8 +617,14 @@ There are two types of normal forms:
 * disjunctive normal form (SOP: sum of products)
 * conjunctive normal form (POS: product of sums)
 
-.. depth
-.. term_index
+The preferred method for creating normal form expressions is to use the
+``to_dnf`` and ``to_cnf`` methods::
+
+   >>> f = Xor(a, Implies(b, c))
+   >>> f.to_dnf()
+   a' * b' + a' * c + a * b * c'
+   >>> f.to_cnf()
+   (a' + b) * (a' + c') * (a + b' + c)
 
 Canonical Normal Form
 ---------------------
@@ -555,8 +636,16 @@ the expression itself.
 That is, a canonical normal form expression has been factored, flattened,
 and *reduced*.
 
-.. term ordering rules
-.. shannon expansions
+The preferred method for creating canonical normal form expressions is to use
+the ``to_cdnf`` and ``to_ccnf`` methods.
+
+Using the same function from the previous section as an example::
+
+   >>> f = Xor(a, Implies(b, c))
+   >>> f.to_cdnf()
+   a' * b' * c' + a' * b' * c + a' * b * c + a * b * c'
+   >>> f.to_ccnf()
+   (a + b' + c) * (a' + b + c) * (a' + b + c') * (a' + b' + c')
 
 Satisfiability
 ==============
