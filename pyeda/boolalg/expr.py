@@ -350,6 +350,7 @@ class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
 
     ASTOP = NotImplemented
+    PRECEDENCE = -1
 
     def __init__(self):
         self._simplified = False
@@ -1256,8 +1257,16 @@ class ExprOr(ExprOrAnd):
     """Expression OR operator"""
 
     ASTOP = 'or'
+    PRECEDENCE = 2
 
     def __str__(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: =>, ?:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
+            else:
+                parts.append(str(arg))
         return self.args_str(" + ")
 
     # From Expression
@@ -1340,11 +1349,13 @@ class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
 
     ASTOP = 'and'
+    PRECEDENCE = 0
 
     def __str__(self):
         parts = list()
         for arg in sorted(self.args):
-            if isinstance(arg, ExprOr):
+            # lower precedence: +, xor/xnor, =>, ?:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
@@ -1440,6 +1451,8 @@ class ExprAnd(ExprOrAnd):
 
 class ExprExclusive(_ArgumentContainer):
     """Expression exclusive (XOR, XNOR) operator"""
+
+    PRECEDENCE = 1
 
     def __init__(self, *args):
         super(ExprExclusive, self).__init__(args)
@@ -1537,7 +1550,15 @@ class ExprXor(ExprExclusive):
             return super(ExprXor, cls).__new__(cls)
 
     def __str__(self):
-        return "Xor(" + self.args_str(", ") + ")"
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: +, xnor, =>, ?:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
+            else:
+                parts.append(str(arg))
+        # Circled plus
+        return " \u2295 ".join(parts)
 
     PARITY = 1
 
@@ -1562,7 +1583,15 @@ class ExprXnor(ExprExclusive):
             return super(ExprXnor, cls).__new__(cls)
 
     def __str__(self):
-        return "Xnor(" + self.args_str(", ") + ")"
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: +, xor, =>, ?:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
+            else:
+                parts.append(str(arg))
+        # Circled dot operator
+        return " \u2299 ".join(parts)
 
     PARITY = 0
 
@@ -1738,6 +1767,7 @@ class ExprImplies(_ArgumentContainer):
     """Expression implication operator"""
 
     ASTOP = 'implies'
+    PRECEDENCE = 3
 
     def __init__(self, p, q):
         args = (p, q)
@@ -1746,11 +1776,13 @@ class ExprImplies(_ArgumentContainer):
     def __str__(self):
         parts = list()
         for arg in self.args:
-            if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
-                parts.append(str(arg))
+            # lower precedence: ?:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
             else:
-                parts.append("(" + str(arg) + ")")
-        return " => ".join(parts)
+                parts.append(str(arg))
+        # Rightwards double arrow
+        return " \u21D2 ".join(parts)
 
     # From Expression
     def invert(self):
@@ -1797,6 +1829,7 @@ class ExprITE(_ArgumentContainer):
     """Expression if-then-else ternary operator"""
 
     ASTOP = 'ite'
+    PRECEDENCE = 4
 
     def __init__(self, s, d1, d0):
         args = (s, d1, d0)
@@ -1805,10 +1838,11 @@ class ExprITE(_ArgumentContainer):
     def __str__(self):
         parts = list()
         for arg in self.args:
-            if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
-                parts.append(str(arg))
+            # lower precedence:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
             else:
-                parts.append("(" + str(arg) + ")")
+                parts.append(str(arg))
         return "{} ? {} : {}".format(*parts)
 
     # From Expression

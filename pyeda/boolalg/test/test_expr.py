@@ -418,7 +418,7 @@ def test_xor():
     assert Xor(a, -a) is EXPRONE
     assert Xor(-a, a) is EXPRONE
 
-    assert str(Xor(a, 0, simplify=False)) == "Xor(0, a)"
+    assert str(Xor(a, 0, simplify=False)) == "0 \u2295 a"
 
 def test_xnor():
     # Function
@@ -451,7 +451,7 @@ def test_xnor():
     assert Xnor(a, -a) is EXPRZERO
     assert Xnor(-a, a) is EXPRZERO
 
-    assert str(Xnor(a, 0, simplify=False)) == "Xnor(0, a)"
+    assert str(Xnor(a, 0, simplify=False)) == "0 \u2299 a"
 
 def test_equal():
     # Function
@@ -540,8 +540,8 @@ def test_implies():
     assert Implies(p, -p) == -p
     assert Implies(-p, p) == p
 
-    assert str(p >> q) == "p => q"
-    assert str((a * b) >> (c + d)) == "(a * b) => (c + d)"
+    assert str(p >> q) == "p \u21D2 q"
+    assert str((a * b) >> (c + d)) == "a * b \u21D2 c + d"
 
     assert (p >> q).restrict({p: 0}) is EXPRONE
     assert (p >> q).compose({q: a}).equivalent(p >> a)
@@ -549,7 +549,7 @@ def test_implies():
     assert ((a * b) >> (c + d)).depth == 2
 
     f = Implies(p, 1, simplify=False)
-    assert str(f) == "p => 1"
+    assert str(f) == "p \u21D2 1"
 
 def test_ite():
     # Function
@@ -587,7 +587,7 @@ def test_ite():
     assert ITE(s, a, a) == a
 
     assert str(ITE(s, a, b)) == "s ? a : b"
-    assert str(ITE(s, a * b, c + d)) == "s ? (a * b) : (c + d)"
+    assert str(ITE(s, a * b, c + d)) == "s ? a * b : c + d"
 
     assert ITE(s, a, b).restrict({a: 1, b: 1}) is EXPRONE
     assert ITE(s, a, b).compose({a: b, b: a}).equivalent(s * b + -s * a)
