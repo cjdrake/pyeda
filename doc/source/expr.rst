@@ -397,8 +397,8 @@ primary and/or secondary operators.
 .. function:: OneHot0(\*args, simplify=True, factor=False, conj=True)
 
    Return an expression that evaluates to :math:`1` if and only if the number
-   of inputs equal to :math:`1` is less than or equal to :math:`1`.
-   That is, return true when either one or zero of its inputs are "hot".
+   of inputs equal to :math:`1` is at most :math:`1`.
+   That is, return true when at most one of its inputs are "hot".
 
 .. function:: OneHot(\*args, simplify=True, factor=False, conj=True)
 
