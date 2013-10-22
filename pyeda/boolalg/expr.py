@@ -344,6 +344,20 @@ def Majority(*args, simplify=True, factor=False, conj=False):
         expr = expr.simplify()
     return expr
 
+def ForAll(vs, expr):
+    """
+    Return an expression that means:
+        For all variables in 'vs', the expression is true.
+    """
+    return And(*expr.cofactors(vs))
+
+def Exists(vs, expr):
+    """
+    Return an expression that means:
+        There exists a variable in 'vs' such that the expression is true.
+    """
+    return Or(*expr.cofactors(vs))
+
 
 class Expression(boolfunc.Function):
     """Boolean function represented by a logic expression"""
