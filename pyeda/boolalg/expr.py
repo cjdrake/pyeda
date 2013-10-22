@@ -1560,6 +1560,7 @@ class ExprXor(ExprExclusive):
         # Circled plus
         return " \u2295 ".join(parts)
 
+    # Specific to ExprExclusive
     PARITY = 1
 
     @staticmethod
@@ -1593,6 +1594,7 @@ class ExprXnor(ExprExclusive):
         # Circled dot operator
         return " \u2299 ".join(parts)
 
+    # Specific to ExprExclusive
     PARITY = 0
 
     @staticmethod
