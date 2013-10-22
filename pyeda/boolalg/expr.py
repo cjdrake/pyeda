@@ -287,7 +287,6 @@ def OneHot0(*args, simplify=True, factor=False, conj=True):
     Return an expression that means:
         At most one input variable is true.
     """
-    outer = And if conj else Or
     terms = list()
     if conj:
         for arg1, arg2 in itertools.combinations(args, 2):
