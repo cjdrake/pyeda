@@ -198,7 +198,7 @@ they all refer to the same object::
 Constructing Expressions
 ========================
 
-Expression are defined recursively as being composed of primitives
+Expressions are defined recursively as being composed of primitives
 (constants, variables),
 and expressions joined by Boolean operators.
 
@@ -251,7 +251,7 @@ Similarly for the carry out logic::
 From Factory Functions
 ----------------------
 
-Python does not have enough builtin symbols to handle all interesting Boolean
+Python does not have enough builtin operators to handle all interesting Boolean
 functions we can represent directly as an expression.
 Also, binary operators are limited to two operands at a time,
 whereas several Boolean operators are N-ary (arbitrary many operands).
@@ -290,14 +290,21 @@ these three operators are *primary*.
 
 .. function:: Not(arg, simplify=True, factor=False)
 
+   Return an expression that is the inverse of the input.
+
 .. function:: Or(\*args, simplify=True, factor=False)
+
+   Return an expression that evaluates to :math:`1` if and only if *any* inputs
+   are :math:`1`.
 
 .. function:: And(\*args, simplify=True, factor=False)
 
+   Return an expression that evaluates to :math:`1` if and only if *all* inputs
+   are :math:`1`.
+
 Example of full adder logic using ``Not``, ``Or``, and ``And``::
 
-   >>> s = Or(And(Not('a'), Not('b'), 'ci'), And(Not('a'), 'b', Not('ci')),
-              And('a', Not('b'), Not('ci')), And('a', 'b', 'ci'))
+   >>> s = Or(And(Not('a'), Not('b'), 'ci'), And(Not('a'), 'b', Not('ci')), And('a', Not('b'), Not('ci')), And('a', 'b', 'ci'))
    >>> co = Or(And('a', 'b'), And('a', 'ci'), And('b', 'ci'))
 
 Secondary Operators
@@ -311,8 +318,8 @@ primary operators.
 
 .. function:: Xor(\*args, simplify=True, factor=False, conj=False)
 
-   Return an expression that evaluates to :math:`1` if and only if the parity of
-   its inputs is odd.
+   Return an expression that evaluates to :math:`1` if and only if the input
+   parity is odd.
 
 The full adder circuit has a more dense representation when you
 use the ``Xor`` operator::
@@ -322,18 +329,18 @@ use the ``Xor`` operator::
 
 .. function:: Xnor(\*args, simplify=True, factor=False, conj=False)
 
-   Return an expression that evaluates to :math:`1` if and only if the parity
-   of its outputs is even.
+   Return an expression that evaluates to :math:`1` if and only if the input
+   parity is even.
 
 .. function:: Equal(\*args, simplify=True, factor=False, conj=False)
 
-   Return an expression that evaluates to :math:`1` if and only if its inputs
-   are either all zeros or all ones.
+   Return an expression that evaluates to :math:`1` if and only if all inputs
+   are equivalent.
 
 .. function:: Unequal(\*args, simplify=True, factor=False, conj=False)
 
-   Return an expression that evaluates to :math:`1` if and only if its inputs
-   are neither all zeros nor all ones.
+   Return an expression that evaluates to :math:`1` if and only if *not* all
+   inputs are equivalent.
 
 .. function:: Implies(p, q, simplify=True, factor=False)
 
@@ -355,8 +362,8 @@ use the ``Xor`` operator::
 .. function:: ITE(s, d1, d0, simplify=True, factor=False)
 
    Return an expression that implements the Boolean "if, then, else" operator.
-   If :math:`s = 1`, then the output is equal to :math:`d_{0}`.
-   Otherwise (:math:`s = 0`), the output is equal to :math:`d_{1}`.
+   If :math:`s = 1`, then the output equals :math:`d_{0}`.
+   Otherwise (:math:`s = 0`), the output equals :math:`d_{1}`.
 
 +-----------+---------------+---------------+------------------------------+
 | :math:`s` | :math:`d_{1}` | :math:`d_{0}` | :math:`ite(s, d_{1}, d_{0})` |
@@ -398,7 +405,7 @@ primary and/or secondary operators.
 
    Return an expression that evaluates to :math:`1` if and only if the number
    of inputs equal to :math:`1` is at most :math:`1`.
-   That is, return true when at most one of its inputs are "hot".
+   That is, return true when at most one input is "hot".
 
 .. function:: OneHot(\*args, simplify=True, factor=False, conj=True)
 
@@ -409,7 +416,7 @@ primary and/or secondary operators.
 .. function:: Majority(\*args, simplify=True, factor=False, conj=False)
 
    Return an expression that evaluates to :math:`1` if and only if the majority
-   of its inputs are equal to :math:`1`.
+   of inputs equal :math:`1`.
 
 The full adder circuit has a much more dense representation when you
 use both the ``Xor`` and ``Majority`` operators::
