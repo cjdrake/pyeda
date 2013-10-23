@@ -684,7 +684,10 @@ and can be used to solve very non-trivial problems.
    >>> g.satisfy_one()
    {a: 0, b: 0, c: 1}
    >>> list(g.satisfy_all())
-   [{a: 0, b: 0}, {a: 0, b: 1, c: 1}, {a: 1, b: 1, c: 0}]
+   [{a: 0, b: 1, c: 1},
+    {a: 0, b: 0, c: 0},
+    {a: 0, b: 0, c: 1},
+    {a: 1, b: 1, c: 0}]
 
 .. note:: Future versions of PyEDA might support additional C/C++ extensions
           for SAT solving. This is an active area of research, and no single
@@ -721,14 +724,18 @@ You will see the auxiliary variables in the satisfying points::
    >>> tf.satisfy_one()
    {a: 0, aux[0]: 0, aux[1]: 1, aux[2]: 1, b: 0, c: 1}
    >>> list(tf.satisfy_all())
-   [{a: 0, aux[0]: 0, aux[1]: 1, aux[2]: 1, b: 0},
-    {a: 0, aux[0]: 0, aux[1]: 1, aux[2]: 1, b: 1, c: 1},
-    {a: 1, aux[0]: 1, aux[1]: 0, aux[2]: 0, b: 1, c: 0}]
+   [{a: 1, aux[0]: 0, aux[1]: 0, aux[2]: 1, b: 1, c: 0},
+    {a: 0, aux[0]: 1, aux[1]: 1, aux[2]: 0, b: 1, c: 1},
+    {a: 0, aux[0]: 1, aux[1]: 1, aux[2]: 0, b: 0, c: 0},
+    {a: 0, aux[0]: 1, aux[1]: 1, aux[2]: 0, b: 0, c: 1}]
 
 Just filter them out to get the answer you're looking for::
 
    >>> [{v: val for v, val in point.items() if v.name != 'aux'} for point in tf.satisfy_all()]
-   [{a: 0, b: 0}, {a: 0, b: 1, c: 1}, {a: 1, b: 1, c: 0}]
+   [{a: 1, b: 1, c: 0},
+    {a: 0, b: 1, c: 1},
+    {a: 0, b: 0, c: 0},
+    {a: 0, b: 0, c: 1}]
 
 Formal Equivalence
 ==================
