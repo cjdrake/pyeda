@@ -17,6 +17,8 @@ Interface Functions:
     OneHot0, OneHot
     Majority
 
+    ForAll, Exists
+
 Interface Classes:
     Expression
         ExprConstant
