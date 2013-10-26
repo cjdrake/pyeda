@@ -521,14 +521,15 @@ class Expression(boolfunc.Function):
         """Return a simplified expression."""
         raise NotImplementedError()
 
-    @property
-    def simplified(self):
-        """Return whether the expression is in simplified form.
-
-        A simplified expression contains no constant values (0, 1),
-        or sub-expressions that can be easily converted to constant values.
-        """
+    def _get_simplified(self):
+        """Expression.simplified getter."""
         return self._simplified
+
+    def _set_simplified(self, val):
+        """Expression.simplified setter."""
+        self._simplified = val
+
+    simplified = property(fget=_get_simplified, fset=_set_simplified)
 
     def factor(self, conj=False):
         """Return a factored expression.
@@ -977,7 +978,7 @@ class ExprNot(Expression):
 
         arg = self.arg.simplify()
         obj = self.__class__(arg)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def factor(self, conj=False):
@@ -1106,7 +1107,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
     def invert(self):
         args = tuple(arg.invert() for arg in self.args)
         obj = self.get_dual()(*args)
-        obj._simplified = self._simplified
+        obj.simplified = self._simplified
         return obj
 
     def simplify(self):
@@ -1131,7 +1132,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                 args.add(arg)
 
         obj = self.__class__(*args)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def factor(self, conj=False):
@@ -1237,7 +1238,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                 args.append(fst)
 
         obj = self.__class__(*args)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def reduce(self):
@@ -1260,7 +1261,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                     indices.add(eterm.term_index)
 
         obj = self.__class__(*terms)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def _term_expand(self, term, vs):
@@ -1475,7 +1476,7 @@ class ExprExclusive(_ArgumentContainer):
     # From Expression
     def invert(self):
         obj = self.get_dual()(*self.args)
-        obj._simplified = self._simplified
+        obj.simplified = self._simplified
         return obj
 
     def simplify(self):
@@ -1503,7 +1504,7 @@ class ExprExclusive(_ArgumentContainer):
                 args.add(arg)
 
         obj = EXCLOPS[par](*args)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def factor(self, conj=False):
@@ -1632,7 +1633,7 @@ class ExprEqualBase(_ArgumentContainer):
     # From Expression
     def invert(self):
         obj = self.get_dual()(*self.args)
-        obj._simplified = self._simplified
+        obj.simplified = self._simplified
         return obj
 
     @cached_property
@@ -1694,7 +1695,7 @@ class ExprEqual(ExprEqualBase):
                 args.add(arg)
 
         obj = self.__class__(*args)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def factor(self, conj=False):
@@ -1760,7 +1761,7 @@ class ExprUnequal(ExprEqualBase):
                 args.add(arg)
 
         obj = self.__class__(*args)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def factor(self, conj=False):
@@ -1827,7 +1828,7 @@ class ExprImplies(_ArgumentContainer):
             return q
 
         obj = self.__class__(p, q)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def factor(self, conj=False):
@@ -1911,7 +1912,7 @@ class ExprITE(_ArgumentContainer):
             return d1
 
         obj = self.__class__(s, d1, d0)
-        obj._simplified = True
+        obj.simplified = True
         return obj
 
     def factor(self, conj=False):
