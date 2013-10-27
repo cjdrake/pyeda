@@ -111,7 +111,7 @@ def ast2expr(ast):
     elif ast[0] == 'var':
         return exprvar(ast[1], ast[2])
     else:
-        args = tuple(ast2expr(arg) for arg in ast[1:])
+        args = [ast2expr(arg) for arg in ast[1:]]
         return ASTOPS[ast[0]](*args)
 
 def expr2dimacssat(expr):
@@ -183,7 +183,7 @@ def Not(arg, simplify=True, factor=False):
 
 def Or(*args, simplify=True, factor=False):
     """Factory function for Boolean OR expression."""
-    args = tuple(Expression.box(arg) for arg in args)
+    args = [Expression.box(arg) for arg in args]
     expr = ExprOr(*args)
     if factor:
         expr = expr.factor()
@@ -193,7 +193,7 @@ def Or(*args, simplify=True, factor=False):
 
 def And(*args, simplify=True, factor=False):
     """Factory function for Boolean AND expression."""
-    args = tuple(Expression.box(arg) for arg in args)
+    args = [Expression.box(arg) for arg in args]
     expr = ExprAnd(*args)
     if factor:
         expr = expr.factor()
@@ -204,7 +204,7 @@ def And(*args, simplify=True, factor=False):
 # secondary functions
 def Xor(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean XOR expression."""
-    args = tuple(Expression.box(arg) for arg in args)
+    args = [Expression.box(arg) for arg in args]
     expr = ExprXor(*args)
     if factor:
         expr = expr.factor(conj)
@@ -214,7 +214,7 @@ def Xor(*args, simplify=True, factor=False, conj=False):
 
 def Xnor(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean XNOR expression."""
-    args = tuple(Expression.box(arg) for arg in args)
+    args = [Expression.box(arg) for arg in args]
     expr = ExprXnor(*args)
     if factor:
         expr = expr.factor(conj)
@@ -224,7 +224,7 @@ def Xnor(*args, simplify=True, factor=False, conj=False):
 
 def Equal(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean EQUAL expression."""
-    args = tuple(Expression.box(arg) for arg in args)
+    args = [Expression.box(arg) for arg in args]
     expr = ExprEqual(*args)
     if factor:
         expr = expr.factor(conj)
@@ -234,7 +234,7 @@ def Equal(*args, simplify=True, factor=False, conj=False):
 
 def Unequal(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean UNEQUAL expression."""
-    args = tuple(Expression.box(arg) for arg in args)
+    args = [Expression.box(arg) for arg in args]
     expr = ExprUnequal(*args)
     if factor:
         expr = expr.factor(conj)
@@ -995,7 +995,7 @@ class ExprNot(Expression):
 class _ArgumentContainer(Expression):
     """Common methods for expressions that are argument containers."""
 
-    def __init__(self, args):
+    def __init__(self, *args):
         super(_ArgumentContainer, self).__init__()
         self.args = args
 
@@ -1054,19 +1054,10 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         else:
             return super(ExprOrAnd, cls).__new__(cls)
 
-    def __init__(self, *args):
-        super(ExprOrAnd, self).__init__(frozenset(args))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.args == other.args
-
-    def __hash__(self):
-        return hash(self.args)
-
     @cached_property
     def arg_set(self):
         """Return the argument set for a normal form term."""
-        return self.args
+        return frozenset(self.args)
 
     # From Function
     def urestrict(self, upoint):
@@ -1105,7 +1096,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         return id(self) < id(other)
 
     def invert(self):
-        args = tuple(arg.invert() for arg in self.args)
+        args = [arg.invert() for arg in self.args]
         obj = self.get_dual()(*args)
         obj.simplified = self._simplified
         return obj
@@ -1197,10 +1188,10 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                   'to_cnf' methods instead.
         """
         if isinstance(self, op):
-            for arg in self.args:
-                if isinstance(arg, self.get_dual()):
-                    others = self.args - {arg}
-                    args = [op(arg, *others) for arg in arg.args]
+            for i, argi in enumerate(self.args):
+                if isinstance(argi, self.get_dual()):
+                    others = self.args[:i] + self.args[i+1:]
+                    args = [op(arg, *others) for arg in argi.args]
                     expr = op.get_dual()(*args).simplify()
                     return expr.flatten(op).absorb()
             return self
@@ -1470,9 +1461,6 @@ class ExprExclusive(_ArgumentContainer):
 
     PRECEDENCE = 1
 
-    def __init__(self, *args):
-        super(ExprExclusive, self).__init__(args)
-
     # From Expression
     def invert(self):
         obj = self.get_dual()(*self.args)
@@ -1620,15 +1608,6 @@ class ExprXnor(ExprExclusive):
 
 class ExprEqualBase(_ArgumentContainer):
     """Expression equality (EQUAL, UNEQUAL) operators"""
-
-    def __init__(self, *args):
-        super(ExprEqualBase, self).__init__(frozenset(args))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.args == other.args
-
-    def __hash__(self):
-        return hash(self.args)
 
     # From Expression
     def invert(self):
@@ -1788,8 +1767,7 @@ class ExprImplies(_ArgumentContainer):
     PRECEDENCE = 3
 
     def __init__(self, p, q):
-        args = (p, q)
-        super(ExprImplies, self).__init__(args)
+        super(ExprImplies, self).__init__(p, q)
 
     def __str__(self):
         parts = list()
@@ -1850,8 +1828,7 @@ class ExprITE(_ArgumentContainer):
     PRECEDENCE = 4
 
     def __init__(self, s, d1, d0):
-        args = (s, d1, d0)
-        super(ExprITE, self).__init__(args)
+        super(ExprITE, self).__init__(s, d1, d0)
 
     def __str__(self):
         parts = list()
