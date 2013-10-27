@@ -620,6 +620,11 @@ class Expression(boolfunc.Function):
         rst = [Equal(f, expr).to_cnf() for f, expr in cons[:-1]]
         return And(fst, *rst)
 
+    def complete_sum(self):
+        """Return a DNF that contains all prime implicants."""
+        dnf = self.to_dnf(flatten=False)
+        return _complete_sum(dnf)
+
     def equivalent(self, other):
         """Return whether this expression is equivalent to another."""
         other = self.box(other)
@@ -685,9 +690,6 @@ class ExprConstant(Expression, sat.DPLLInterface):
 
     def reduce(self):
         """Degenerate form of a reduced expression."""
-        return self
-
-    def complete_sum(self):
         return self
 
 
@@ -816,9 +818,6 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     def reduce(self):
         """Degenerate form of a reduced expression."""
-        return self
-
-    def complete_sum(self):
         return self
 
     @cached_property
@@ -1204,8 +1203,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                   'to_cnf' methods instead.
         """
         if isinstance(self, op):
+            self_dual = self.get_dual()
             for i, argi in enumerate(self.args):
-                if isinstance(argi, self.get_dual()):
+                if isinstance(argi, self_dual):
                     others = self.args[:i] + self.args[i+1:]
                     args = [op(arg, *others) for arg in argi.args]
                     expr = op.get_dual()(*args).simplify()
@@ -1356,17 +1356,6 @@ class ExprOr(ExprOrAnd):
     def _term_expand(self, term, vs):
         return term.expand(vs, conj=False).args
 
-    def complete_sum(self):
-        if self.depth == 1:
-            return self
-        else:
-            cnt = collections.Counter(v for clause in self.args
-                                        for v in clause.support)
-            v = cnt.most_common(1)[0][0]
-            fv0, fv1 = self.cofactors(v)
-            f = (v + fv0.complete_sum()) * (-v + fv1.complete_sum())
-            return f.flatten(ExprAnd)
-
 
 class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
@@ -1459,17 +1448,6 @@ class ExprAnd(ExprOrAnd):
 
     def _term_expand(self, term, vs):
         return term.expand(vs, conj=True).args
-
-    def complete_sum(self):
-        if self.depth == 1:
-            return self
-        else:
-            cnt = collections.Counter(v for clause in self.args
-                                        for v in clause.support)
-            v = cnt.most_common(1)[0][0]
-            fv0, fv1 = self.cofactors(v)
-            f = (-v * fv0.complete_sum()) + (v * fv1.complete_sum())
-            return f.flatten(ExprOr)
 
 
 class ExprExclusive(_ArgumentContainer):
@@ -2027,6 +2005,28 @@ def _tseitin(expr, auxvarname, auxvars=None):
 
         cons.append((auxvar, expr.__class__(*fs)))
         return auxvar, cons
+
+def _complete_sum(expr):
+    """
+    Recursive complete_sum function implementation.
+
+    CS(f) = ABS([x1 + CS(0, x2, ..., xn)] * [-x1 + CS(1, x2, ..., xn)])
+    """
+    if expr.depth <= 1:
+        return expr
+    else:
+        # Heuristic: find variable that appears in max # of terms
+        cnt = collections.Counter()
+        for term in expr.args:
+            for v in expr.support:
+                cnt[v] += (v in term.support)
+        v = cnt.most_common(1)[0][0]
+        fv0, fv1 = expr.cofactors(v)
+        f = And(Or(v, _complete_sum(fv0)), Or(-v, _complete_sum(fv1)))
+        if isinstance(f, ExprAnd):
+            f = Or(*[And(x, y) for x in f.args[0].arg_set
+                               for y in f.args[1].arg_set])
+        return f.absorb()
 
 
 # Convenience dictionaries
