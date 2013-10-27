@@ -570,25 +570,41 @@ class Expression(boolfunc.Function):
         else:
             return self
 
-    def to_dnf(self):
+    def to_dnf(self, flatten=True):
         """Return the expression in disjunctive normal form."""
-        return self.factor().flatten(ExprAnd)
+        if flatten:
+            return self.factor().flatten(ExprAnd)
+        else:
+            terms = list()
+            for upnt in _iter_ones(self):
+                lits = [-EXPRVARIABLES[uniqid] for uniqid in upnt[0]]
+                lits += [EXPRVARIABLES[uniqid] for uniqid in upnt[1]]
+                terms.append(And(*lits))
+            return Or(*terms)
 
-    def to_cdnf(self):
+    def to_cdnf(self, flatten=True):
         """Return the expression in canonical disjunctive normal form."""
-        return self.to_dnf().reduce()
+        return self.to_dnf(flatten).reduce()
 
     def is_dnf(self):
         """Return whether this expression is in disjunctive normal form."""
         return False
 
-    def to_cnf(self):
+    def to_cnf(self, flatten=True):
         """Return the expression in conjunctive normal form."""
-        return self.factor().flatten(ExprOr)
+        if flatten:
+            return self.factor().flatten(ExprOr)
+        else:
+            terms = list()
+            for upnt in _iter_zeros(self):
+                lits = [EXPRVARIABLES[uniqid] for uniqid in upnt[0]]
+                lits += [-EXPRVARIABLES[uniqid] for uniqid in upnt[1]]
+                terms.append(Or(*lits))
+            return And(*terms)
 
-    def to_ccnf(self):
+    def to_ccnf(self, flatten=True):
         """Return the expression in canonical conjunctive normal form."""
-        return self.to_cnf().reduce()
+        return self.to_cnf(flatten).reduce()
 
     def is_cnf(self):
         """Return whether this expression is in conjunctive normal form."""
@@ -1988,6 +2004,29 @@ def _tseitin(expr, auxvarname, auxvars=None):
         cons.append((auxvar, expr.__class__(*fs)))
         return auxvar, cons
 
+def _iter_zeros(expr):
+    """Iterate through all upoints that map to element zero."""
+    if expr is EXPRZERO:
+        yield frozenset(), frozenset()
+    elif expr is not EXPRONE:
+        v = expr.top
+        upnt0 = frozenset([v.uniqid]), frozenset()
+        upnt1 = frozenset(), frozenset([v.uniqid])
+        for upnt in [upnt0, upnt1]:
+            for zero_upnt in _iter_zeros(expr.urestrict(upnt)):
+                yield (upnt[0] | zero_upnt[0], upnt[1] | zero_upnt[1])
+
+def _iter_ones(expr):
+    """Iterate through all upoints that map to element one."""
+    if expr is EXPRONE:
+        yield frozenset(), frozenset()
+    elif expr is not EXPRZERO:
+        v = expr.top
+        upnt0 = frozenset([v.uniqid]), frozenset()
+        upnt1 = frozenset(), frozenset([v.uniqid])
+        for upnt in [upnt0, upnt1]:
+            for one_upnt in _iter_ones(expr.urestrict(upnt)):
+                yield (upnt[0] | one_upnt[0], upnt[1] | one_upnt[1])
 
 # Convenience dictionaries
 CONSTANTS = {
