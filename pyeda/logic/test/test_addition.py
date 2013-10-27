@@ -21,24 +21,26 @@ def sadd(S, A, B, aval, bval):
     return R.to_int()
 
 def test_unsigned_add():
-    A = bitvec('A', 8)
-    B = bitvec('B', 8)
+    N = 8
+
+    A = bitvec('A', N)
+    B = bitvec('B', N)
 
     for adder in (rca, ksa):
         S, C = adder(A, B)
-        S.append(C[7])
+        S.append(C[N-1])
 
         # 0 + 0 = 0
         assert uadd(S, A, B, 0, 0) == 0
         # 255 + 255 = 510
-        assert uadd(S, A, B, 255, 255) == 510
+        assert uadd(S, A, B, 2**N-1, 2**N-1) == (2**(N+1)-2)
         # 255 + 1 = 256
-        assert uadd(S, A, B, 255, 1) == 256
+        assert uadd(S, A, B, 2**N-1, 1) == 2**N
 
         # unsigned random vectors
         for i in range(NVECS):
-            ra = random.randint(0, 2**8-1)
-            rb = random.randint(0, 2**8-1)
+            ra = random.randint(0, 2**N-1)
+            rb = random.randint(0, 2**N-1)
             assert uadd(S, A, B, ra, rb) == ra + rb
 
 def test_signed_add():
