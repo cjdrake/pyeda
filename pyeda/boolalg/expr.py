@@ -1980,6 +1980,30 @@ class DimacsCNF(object):
                  for i, val in enumerate(soln, start=1) }
 
 
+def _iter_zeros(expr):
+    """Iterate through all upoints that map to element zero."""
+    if expr is EXPRZERO:
+        yield frozenset(), frozenset()
+    elif expr is not EXPRONE:
+        v = expr.top
+        upnt0 = frozenset([v.uniqid]), frozenset()
+        upnt1 = frozenset(), frozenset([v.uniqid])
+        for upnt in [upnt0, upnt1]:
+            for zero_upnt in _iter_zeros(expr.urestrict(upnt)):
+                yield (upnt[0] | zero_upnt[0], upnt[1] | zero_upnt[1])
+
+def _iter_ones(expr):
+    """Iterate through all upoints that map to element one."""
+    if expr is EXPRONE:
+        yield frozenset(), frozenset()
+    elif expr is not EXPRZERO:
+        v = expr.top
+        upnt0 = frozenset([v.uniqid]), frozenset()
+        upnt1 = frozenset(), frozenset([v.uniqid])
+        for upnt in [upnt0, upnt1]:
+            for one_upnt in _iter_ones(expr.urestrict(upnt)):
+                yield (upnt[0] | one_upnt[0], upnt[1] | one_upnt[1])
+
 def _tseitin(expr, auxvarname, auxvars=None):
     """
     Convert a factored expression to a literal, and a list of constraints.
@@ -2004,29 +2028,6 @@ def _tseitin(expr, auxvarname, auxvars=None):
         cons.append((auxvar, expr.__class__(*fs)))
         return auxvar, cons
 
-def _iter_zeros(expr):
-    """Iterate through all upoints that map to element zero."""
-    if expr is EXPRZERO:
-        yield frozenset(), frozenset()
-    elif expr is not EXPRONE:
-        v = expr.top
-        upnt0 = frozenset([v.uniqid]), frozenset()
-        upnt1 = frozenset(), frozenset([v.uniqid])
-        for upnt in [upnt0, upnt1]:
-            for zero_upnt in _iter_zeros(expr.urestrict(upnt)):
-                yield (upnt[0] | zero_upnt[0], upnt[1] | zero_upnt[1])
-
-def _iter_ones(expr):
-    """Iterate through all upoints that map to element one."""
-    if expr is EXPRONE:
-        yield frozenset(), frozenset()
-    elif expr is not EXPRZERO:
-        v = expr.top
-        upnt0 = frozenset([v.uniqid]), frozenset()
-        upnt1 = frozenset(), frozenset([v.uniqid])
-        for upnt in [upnt0, upnt1]:
-            for one_upnt in _iter_ones(expr.urestrict(upnt)):
-                yield (upnt[0] | one_upnt[0], upnt[1] | one_upnt[1])
 
 # Convenience dictionaries
 CONSTANTS = {
