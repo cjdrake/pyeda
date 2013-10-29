@@ -622,8 +622,11 @@ class Expression(boolfunc.Function):
 
     def complete_sum(self):
         """Return a DNF that contains all prime implicants."""
-        dnf = self.to_dnf(flatten=False)
-        return _complete_sum(dnf)
+        if self.is_dnf():
+            dnf = self
+        else:
+            dnf = self.to_dnf(flatten=False)
+        return _complete_sum(self)
 
     def equivalent(self, other):
         """Return whether this expression is equivalent to another."""
@@ -2007,22 +2010,22 @@ def _tseitin(expr, auxvarname, auxvars=None):
         cons.append((auxvar, expr.__class__(*fs)))
         return auxvar, cons
 
-def _complete_sum(expr):
+def _complete_sum(dnf):
     """
     Recursive complete_sum function implementation.
 
     CS(f) = ABS([x1 + CS(0, x2, ..., xn)] * [-x1 + CS(1, x2, ..., xn)])
     """
-    if expr.depth <= 1:
-        return expr
+    if dnf.depth <= 1:
+        return dnf
     else:
         # Heuristic: find variable that appears in max # of terms
         cnt = collections.Counter()
-        for term in expr.args:
-            for v in expr.support:
+        for term in dnf.args:
+            for v in dnf.support:
                 cnt[v] += (v in term.support)
         v = cnt.most_common(1)[0][0]
-        fv0, fv1 = expr.cofactors(v)
+        fv0, fv1 = dnf.cofactors(v)
         f = And(Or(v, _complete_sum(fv0)), Or(-v, _complete_sum(fv1)))
         if isinstance(f, ExprAnd):
             f = Or(*[And(x, y) for x in f.args[0].arg_set
