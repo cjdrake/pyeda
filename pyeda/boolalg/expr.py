@@ -1804,6 +1804,7 @@ class ExprImplies(_ArgumentContainer):
         return obj
 
     def factor(self, conj=False):
+        # pylint: disable=W0632
         p, q = self.args
         args = list()
         args.append(p.invert().factor())
@@ -1887,6 +1888,7 @@ class ExprITE(_ArgumentContainer):
         return obj
 
     def factor(self, conj=False):
+        # pylint: disable=W0632
         s, d1, d0 = self.args
         if conj:
             arg0 = ExprOr(s.invert().factor(), d1.factor())
