@@ -20,6 +20,7 @@ Interface Classes:
           the ExprVariable implementation wherever required.
 """
 
+from pyeda.boolalg import boolfunc
 from pyeda.boolalg import sat
 from pyeda.boolalg.expr import EXPRVARIABLES
 from pyeda.boolalg.expr import (
@@ -191,6 +192,9 @@ class NormalForm(sat.DPLLInterface):
     @cached_property
     def inputs(self):
         return sorted(self.support)
+
+    def restrict(self, point):
+        return self.urestrict(boolfunc.point2upoint(point))
 
     def urestrict(self, upoint):
         idents = set()
