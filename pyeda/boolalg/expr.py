@@ -626,7 +626,7 @@ class Expression(boolfunc.Function):
             dnf = self
         else:
             dnf = self.to_dnf(flatten=False)
-        return _complete_sum(self)
+        return _complete_sum(dnf)
 
     def equivalent(self, other):
         """Return whether this expression is equivalent to another."""
