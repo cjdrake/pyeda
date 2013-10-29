@@ -887,6 +887,11 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
     minterm_index = 1
     maxterm_index = 0
 
+    @property
+    def splitvar(self):
+        """Return a good splitting variable."""
+        return self
+
 
 class ExprComplement(ExprLiteral):
     """Expression complement"""
@@ -947,6 +952,11 @@ class ExprComplement(ExprLiteral):
 
     minterm_index = 0
     maxterm_index = 1
+
+    @property
+    def splitvar(self):
+        """Return a good splitting variable."""
+        return self.exprvar
 
 
 class ExprNot(Expression):
@@ -1009,6 +1019,11 @@ class ExprNot(Expression):
     def to_ast(self):
         return (self.ASTOP, self.arg.to_ast())
 
+    @property
+    def splitvar(self):
+        """Return a good splitting variable."""
+        return self.arg.splitvar
+
 
 class _ArgumentContainer(Expression):
     """Common methods for expressions that are argument containers."""
@@ -1057,6 +1072,18 @@ class _ArgumentContainer(Expression):
     def args_str(self, sep):
         """Return arguments as a string, joined by a separator."""
         return sep.join(str(arg) for arg in sorted(self.args))
+
+    @cached_property
+    def splitvar(self):
+        """Return a good splitting variable.
+
+        Heuristic: find the variable that appears in the max # of args.
+        """
+        cnt = collections.Counter()
+        for arg in self.args:
+            for v in self.support:
+                cnt[v] += (v in arg.support)
+        return cnt.most_common(1)[0][0]
 
 
 class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
@@ -1967,7 +1994,7 @@ def _iter_zeros(expr):
     if expr is EXPRZERO:
         yield frozenset(), frozenset()
     elif expr is not EXPRONE:
-        v = expr.top
+        v = expr.splitvar
         upnt0 = frozenset([v.uniqid]), frozenset()
         upnt1 = frozenset(), frozenset([v.uniqid])
         for upnt in [upnt0, upnt1]:
@@ -1979,7 +2006,7 @@ def _iter_ones(expr):
     if expr is EXPRONE:
         yield frozenset(), frozenset()
     elif expr is not EXPRZERO:
-        v = expr.top
+        v = expr.splitvar
         upnt0 = frozenset([v.uniqid]), frozenset()
         upnt1 = frozenset(), frozenset([v.uniqid])
         for upnt in [upnt0, upnt1]:
@@ -2019,12 +2046,7 @@ def _complete_sum(dnf):
     if dnf.depth <= 1:
         return dnf
     else:
-        # Heuristic: find variable that appears in max # of terms
-        cnt = collections.Counter()
-        for term in dnf.args:
-            for v in dnf.support:
-                cnt[v] += (v in term.support)
-        v = cnt.most_common(1)[0][0]
+        v = dnf.splitvar
         fv0, fv1 = dnf.cofactors(v)
         f = And(Or(v, _complete_sum(fv0)), Or(-v, _complete_sum(fv1)))
         if isinstance(f, ExprAnd):
