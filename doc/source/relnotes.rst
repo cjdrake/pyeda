@@ -4,6 +4,35 @@
   Release Notes
 *****************
 
+Version 0.16
+============
+
+New stuff in this release:
+
+* Added Expression ``complete_sum`` method,
+  to generate a normal form expression that contains all prime implicants.
+* Unicode expression symbols, because it's awesome
+
+::
+
+   >>> Xor(a, b)
+   a ⊕ b
+   >>> Xnor(a, b)
+   a ⊙ b
+   >>> Implies(p, q)
+   p ⇒ q
+
+* Added new Expression ForEach, Exists factory functions.
+* Changed ``frozenset`` implementation of ``OrAnd`` and ``EqualBase`` arguments
+  back to ``tuple``.
+  The simplification aspects had an unfortunate performance penalty.
+  Use ``absorb`` to get rid of duplicate terms in DNF/CNF forms.
+* Added flatten=False/True to Expression to_dnf, to_cdnf, to_cnf, to_ccnf methods.
+  Often, flatten=False is faster at reducing to a normal form.
+* Simplified absorb algorithm using Python sets.
+* Expression added a new splitvar property,
+  which implements a common heuristic to find a good splitting variable.
+
 Version 0.15
 ============
 
