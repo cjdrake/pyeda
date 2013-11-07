@@ -1950,16 +1950,16 @@ class DimacsCNF(object):
             self.idx2var[i] = v
 
         if expr is EXPRONE:
-            self.clauses = tuple()
+            self.clauses = []
         elif isinstance(expr, ExprLiteral):
-            self.clauses = ((lit2idx[expr], ), )
+            self.clauses = [[lit2idx[expr]]]
         elif isinstance(expr, ExprOr) and expr.depth == 1:
-            self.clauses = (tuple(lit2idx[lit] for lit in expr.args), )
+            self.clauses = [[lit2idx[lit] for lit in expr.args]]
         elif isinstance(expr, ExprAnd) and expr.depth == 1:
-            self.clauses = tuple((lit2idx[lit], ) for lit in expr.args)
+            self.clauses = [[lit2idx[lit]] for lit in expr.args]
         else:
-            self.clauses = tuple(tuple(lit2idx[lit] for lit in arg.arg_set)
-                                 for arg in expr.args)
+            self.clauses = [[lit2idx[lit] for lit in arg.arg_set]
+                            for arg in expr.args]
 
     def __repr__(self):
         return self.__str__()
