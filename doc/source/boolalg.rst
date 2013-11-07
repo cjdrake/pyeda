@@ -65,9 +65,9 @@ The output of the Boolean complement is defined by:
 
 .. math::
 
-   0^{\prime} = 1
+   \overline{0} = 1
 
-   1^{\prime} = 0
+   \overline{1} = 0
 
 Sum Operator
 ------------
@@ -117,6 +117,33 @@ As you can see, the product operator looks exactly like normal multiplication.
 The Boolean product is also called **AND** because the output of
 :math:`x` *and* :math:`y` equals 1 *if and only if*
 both :math:`x = 1`, *and* :math:`y = 1`.
+
+Other Binary Operators
+----------------------
+
+For reference, here is a table of all binary Boolean operators:
+
+.. csv-table::
+   :header: :math:`f`, :math:`g`, 0, :math:`f \\downarrow g`, :math:`f \\lt g`, :math:`\\overline{f}`, :math:`f \\gt g`, :math:`\\overline{g}`, :math:`f \\ne g`, :math:`f \\uparrow g`, :math:`f \\cdot g`, :math:`f = g`, :math:`g`, :math:`f \\le g`, :math:`f`, :math:`f \\ge g`, :math:`f + g`, 1
+   :widths: 4, 4, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
+   :stub-columns: 2
+
+   0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
+   0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1
+   1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1
+   1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1
+
+Some additional notes:
+
+* :math:`f \downarrow g` is the binary **NOR** (not or) operator.
+* :math:`f \uparrow g` is the binary **NAND** (not and) operator.
+* :math:`f \leq g` is commonly written using the binary implication operator
+  :math:`f \implies g`.
+* :math:`f = g` is commonly written using either the binary equivalence
+  operator :math:`f \iff g`,
+  or the binary **XNOR** (exclusive nor) operator :math:`f \odot g`.
+* :math:`f \ne g` is commonly written using the binary **XOR** (exclusive or)
+  operator :math:`f \oplus g`.
 
 Additional Perspective
 ----------------------
