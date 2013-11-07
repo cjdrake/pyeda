@@ -14,7 +14,6 @@ We will be using some mathematical language here and there,
 but please do not run away screaming in fear.
 This document assumes very little background knowledge.
 
-
 What is Boolean Algebra?
 ========================
 
@@ -54,18 +53,31 @@ Even though it is possible to define a Boolean Algebra using different
 operators,
 by far the most common operators are complement, sum, and product.
 
-The complement, denoted with an overline (:math:`\overline{x}`),
-the :math:`\neg` symbol, or *NOT*, is defined by:
+Complement Operator
+-------------------
+
+The complement operator is a *unary* operator,
+which means it acts on a single Boolean input: :math:`x`.
+The Boolean complement of :math:`x` is usually written as
+:math:`x^{\prime}`, :math:`\overline{x}`, or :math:`\lnot x`.
+
+The output of the Boolean complement is defined by:
 
 .. math::
 
-   \overline{0} = 1
+   0^{\prime} = 1
 
-   \overline{1} = 0
+   1^{\prime} = 0
 
-The sum (or disjunction), denoted with the :math:`+` symbol,
-:math:`\vee` symbol, or *OR*,
-is defined by:
+Sum Operator
+------------
+
+The sum (or disjunction) operator is a *binary* operator,
+which means it acts on two Boolean inputs: :math:`(x, y)`.
+The Boolean sum of :math:`x` and :math:`y` is usually written as
+:math:`x + y`, or :math:`x \vee y`.
+
+The output of the Boolean sum is defined by:
 
 .. math::
 
@@ -78,12 +90,18 @@ is defined by:
    1 + 1 = 1
 
 This looks familiar so far except for the :math:`1 + 1 = 1` part.
-The Boolean sum is called *OR* because the output of :math:`a` *OR* :math:`b`
-equals 1 *if and only if* :math:`a = 1`, or :math:`b = 1`, or both.
+The Boolean sum operator is also called **OR** because the output of
+:math:`x` *or* :math:`y` equals 1 *if and only if*
+:math:`x = 1`, *or* :math:`y = 1`, *or* both.
 
-The product (or conjunction), denoted with the :math:`\cdot` symbol,
-:math:`\wedge`, or *AND*,
-is defined by:
+Product Operator
+----------------
+
+The product (or conjunction) operator is also a *binary* operator.
+The Boolean product of :math:`x` and :math:`y` is usually written as
+:math:`x \cdot y`, or :math:`x \wedge y`.
+
+The output of the Boolean product is defined by:
 
 .. math::
 
@@ -95,26 +113,27 @@ is defined by:
 
    1 \cdot 1 = 1
 
-The Boolean product is called *AND* because the output of :math:`a` *AND*
-:math:`b` equals 1 *if and only if* both :math:`a = 1`, and :math:`b = 1`.
+As you can see, the product operator looks exactly like normal multiplication.
+The Boolean product is also called **AND** because the output of
+:math:`x` *and* :math:`y` equals 1 *if and only if*
+both :math:`x = 1`, *and* :math:`y = 1`.
 
 Additional Perspective
 ----------------------
 
 You are probably thinking this is all very nice,
 but what can you possibly do with an algebra that only concerns itself with
-0, 1, *NOT*, *OR*, and *AND*?
+0, 1, **NOT**, **OR**, and **AND**?
 
 In 1937, `Claude Shannon <http://en.wikipedia.org/wiki/Claude_Shannon>`_
 realized that electronic circuits have two-value switches that can be combined
 into networks capable of solving any logical or numeric relationship.
 A transistor is nothing but an electrical switch.
 Similar to a light bulb, it has two states: off (0), and on (1).
-Wiring transistors together in serial imitates the *AND* function,
-and wiring them together in parallel imitates the *OR* function.
+Wiring transistors together in serial imitates the **AND** operator,
+and wiring them together in parallel imitates the **OR** operator.
 If you wire a few thousand transistors together in interesting ways,
 you can build a computer.
-
 
 Import Symbols from PyEDA
 =========================
@@ -122,15 +141,14 @@ Import Symbols from PyEDA
 All examples in this document require that you execute the following statements
 in your interpreter::
 
-   >>> from pyeda import *
+   >>> from pyeda.inter import *
 
 If you want to see all the symbols you import with this statement,
-look into ``pyeda/__init__.py``.
+look into ``pyeda/inter.py``.
 
 .. note::
    Using the ``from ... import *`` syntax is generally frowned upon for Python
    programming, but is *extremely* convenient for interactive use.
-
 
 Built-in Python Boolean Operations
 ==================================
@@ -176,7 +194,6 @@ You can use the ``boolify`` function to manually convert the ``bool`` and
    >>> boolify('0')
    0
 
-
 Boolean Variables
 =================
 
@@ -186,27 +203,32 @@ and Python can already do everything we need, right?
 Just like in high school algebra,
 things start to get interesting when we introduce a few *variables*.
 
-A Boolean variable is a numerical quantity that may assume any value in the
-set :math:`B = \{0, 1\}`.
+A Boolean variable is an abstract numerical quantity that may assume any value
+in the set :math:`B = \{0, 1\}`.
 
-To put it another way,
-a *variable* is a handy label for a concept in the mind of its author.
 For example, if we flip a coin, the result will either be "heads" or "tails".
-Let's say we assign "tails" the value 0, and "heads" the value 1.
-Before we flip the coin,
-the face the coin will ultimately show is unknown.
-We could call this idea ``flip_result``,
-or just :math:`x` if we are going for brevity.
-Before the coin is flipped, its final result may *vary*,
-and is therefore referred to as a *variable*.
-After the coin is flipped, the result is a constant.
+Let's say we assign tails the value :math:`0`,
+and heads the value :math:`1`.
+Now divide all of time into two periods: 1) before the flip, and 2) after the flip.
+
+Before you flip the coin,
+imagine the possibility of either "tails" (0) or "heads" (1).
+The abstract concept in your mind about a coin that may land in one of two ways
+is the *variable*.
+Normally, we will give the abstract quantity a name to distinguish it from
+other abstract quantities we might be simultaneously considering.
+The most familiar name for an arbitrary algebraic variable is :math:`x`.
+
+After you flip the coin,
+you can see the result in front of you.
+The coin flip is no longer an imaginary variable; it is a known constant.
 
 Creating Variable Instances
 ---------------------------
 
-Let's create a few Boolean variables using the ``var`` convenience method::
+Let's create a few Boolean expression variables using the ``exprvar`` method::
 
-   >>> a, b, c, d = map(var, 'abcd')
+   >>> a, b, c, d = map(exprvar, 'abcd')
    >>> a.name
    a
    >>> b.name
@@ -217,36 +239,14 @@ Also, all variable instances are singletons.
 That is, only one variable is allowed to exist per name.
 Verify this fact with the following::
 
-   >>> a = var('a')
-   >>> b = var('a')
-   >>> id(a) == id(b)
+   >>> a = exprvar('a')
+   >>> _a = exprvar('a')
+   >>> id(a) == id(_a)
    True
 
 .. warning::
    We recommend that you never do something crazy like assigning
-   ``a`` and ``b`` to the same variable instance.
-
-If you want to put your variables into a separate namespaces,
-use the ``namespace`` parameter::
-
-   >>> eggs1 = var('eggs', namespace='ham')
-   >>> eggs2 = var('eggs', namespace='spam')
-   >>> str(eggs1)
-   ham.eggs
-   >>> str(eggs2)
-   spam.eggs
-   >>> id(eggs1) == id(eggs2)
-   False
-
-Get All Alphabetic Variables
-----------------------------
-
-For convenience, you can just import all of the single-letter variable
-instances from the ``pyeda.alphas`` module::
-
-   >>> from pyeda.alphas import *
-   >>> a, b, c
-   (a, b, c)
+   ``a`` and ``_a`` to the same variable instance.
 
 Indexing Variables
 ------------------
@@ -255,8 +255,10 @@ Indexing Variables
 
    -- Tim Bray
 
-In the coin-flipping example you could start naming your variables by assigning
-the first flip to :math:`x`, followed by :math:`y`, and so on.
+Consider the coin-flipping example from before.
+But this time, instead of flipping one coin, we want to flip a hundred coins.
+You could start naming your variables by assigning the first flip to :math:`x`,
+followed by :math:`y`, and so on.
 But there are only twenty-six letters in the English alphabet,
 so unless we start resorting to other alphabets,
 we will hit some limitations with this system very quickly.
@@ -265,10 +267,10 @@ For cases like these, it is convenient to give variables an *index*.
 Then, you can name the variable for the first coin flip :math:`x[0]`,
 followed by :math:`x[1]`, :math:`x[2]`, and so on.
 
-Here is how to give variables indices using the ``var`` function::
+Here is how to give variables indices using the ``exprvar`` function::
 
-   >>> x_0 = var('x', 0)
-   >>> x_1 = var('x', 1)
+   >>> x_0 = exprvar('x', 0)
+   >>> x_1 = exprvar('x', 1)
    >>> x_0, x_1
    (x[0], x[1])
 
@@ -277,35 +279,6 @@ You can even give variables multiple indices by using a tuple::
    >>> x_0_1_2_3 = var('x', (0, 1, 2 ,3))
    >>> x_0_1_2_3
    x[0][1][2][3]
-
-Ordering Variables
-------------------
-
-In order to provide a canonical representation, all variables are ordered.
-
-The rules for ordering variables are:
-
-* If both variables have the same name,
-  perform a tuple comparison of their indices
-* Otherwise, do a string compare of their names
-
-For example::
-
-   >>> a < b
-   True
-   >>> a < q < w
-   True
-
-   # x_0 == x[0]
-   # x_1 == x[1]
-   # x_10 == x[10]
-   >>> a < x_0
-   True
-   >>> x_0 < x_1
-   True
-   >>> x_1 < x_10
-   True
-
 
 Points in Boolean Space
 =======================
@@ -320,14 +293,14 @@ Later, you probably investigated slightly more interesting functions such as
 All of these are functions of a single variable.
 That is, the domain of these functions is the set of all values the variable
 :math:`x` can take.
-In all these cases, that domain is :math:`[-\infty, +\infty]`
+In all these cases, that domain is :math:`[-\infty, +\infty]`.
 
 Remember that variables in Boolean algebra can only take values of 0 or 1.
 So to create interesting functions in Boolean algebra,
 you use many variables.
 
-Let's revisit the coin-flipping example from before.
-This time we will flip the coin twice.
+Let's revisit the coin-flipping example again.
+This time we will flip the coin exactly twice.
 Create a variable :math:`x` to represent the result of the first flip,
 and a variable :math:`y` to represent the result of the second flip.
 Use zero (0) to represent "tails", and one (1) to represent "heads".
@@ -336,13 +309,13 @@ The number of variables you use is called the "dimension".
 All the possible outcomes of this experiment is called the "space".
 Each possible outcome is called a "point".
 
-If you flip the coin twice, and the result is "heads", "tails",
+If you flip the coin twice, and the result is (heads, tails),
 that result is point :math:`(1, 0)` in a 2-dimensional Boolean space.
 
 Use the ``iter_points`` generator to iterate through all possible points in an
 N-dimensional Boolean space::
 
-   >>> [point for point in iter_points([x, y])]
+   >>> list(iter_points([x, y]))
    [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}]
 
 PyEDA uses a dictionary to represent a point.
@@ -354,7 +327,7 @@ Use the variable :math:`z` to represent the result of the third flip.
 
 ::
 
-   >>> [point for point in iter_points([z, y, x])]
+   >>> list(iter_points([z, y, x]))
    [{x: 0, y: 0, z: 0},
     {x: 0, y: 0, z: 1},
     {x: 0, y: 1, z: 0},
@@ -369,7 +342,6 @@ The observant reader will notice that this is equivalent to:
 * generating all bit-strings of length :math:`N`
 * counting from 0 to 7 in the binary number system
 
-
 Boolean Functions
 =================
 
@@ -383,7 +355,7 @@ Boolean Function Interface
    :members: __neg__, __add__, __mul__, xor,
              support, usupport, inputs, top, degree, cardinality,
              iter_domain, iter_image, iter_relation,
-             restrict, urestrict, vrestrict, compose,
+             restrict, vrestrict, compose,
              satisfy_one, satisfy_all, satisfy_count,
              iter_cofactors, cofactors,
              is_neg_unate, is_pos_unate, is_binate,
