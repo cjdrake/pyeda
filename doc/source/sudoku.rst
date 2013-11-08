@@ -71,7 +71,7 @@ For example, we could also have used ``bitvec('x', 10, 10, 10)``,
 but that would have given ``X[0:9][0:9][0:9]`` instead of ``X[1:10][1:10][1:10]``.
 
 The variable ``X`` is a 9x9x9 bit vector,
-indexed as ``X[row][column][value]``
+indexed as ``X[row][column][value]``.
 So for the :ref:`Example_grid`, since row 5, column 3 has value '8', we would
 represent this by setting ``X[5][3][8] = 1``.
 
@@ -96,7 +96,7 @@ Let's say I have three variables, **a**, **b**, and **c**.
    >>> a, b, c = map(exprvar, 'abc')
 
 I want to write a Boolean formula that guarantees that only one of them is
-True at any given moment.
+true at any given moment.
 
 ::
 
@@ -117,7 +117,7 @@ You can use PyEDA to automatically produce the truth table.
    110 0
    111 0
 
-By default, the OneHot function returns a formula in conjunctive normal
+By default, the ``OneHot`` function returns a formula in conjunctive normal
 (product-of-sums) form.
 Roughly translated, this formula says that "no two variables can both be true,
 and at least one must be true".
@@ -280,8 +280,8 @@ it maps N Boolean variables (in our case 729) onto their values in {0, 1}.
 Finding the Solution
 ====================
 
-Without further do,
-let's use PyEDA's built-in DPLL SAT solver to crunch the numbers.
+Without further ado,
+let's use the `PicoSAT <http://fmv.jku.at/picosat>`_ fast SAT solver to crunch the numbers.
 
 ::
 
