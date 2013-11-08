@@ -516,7 +516,7 @@ PyInit__picosat(void)
         goto INIT_PICOSAT_ERROR;
 
     // Define Constants
-    if (PyModule_AddStringConstant(pymodule, "PICOSAT_VERSION", PICOSAT_VERSION) < 0)
+    if (PyModule_AddStringConstant(pymodule, "PICOSAT_VERSION", "957") < 0)
         goto INIT_PICOSAT_ERROR;
     if (PyModule_AddStringConstant(pymodule, "PICOSAT_COPYRIGHT", picosat_copyright()) < 0)
         goto INIT_PICOSAT_ERROR;

@@ -80,7 +80,6 @@ with open(os.path.join('extension', 'picosat', 'VERSION')) as fin:
 PICOSAT = dict(
     define_macros = [
         ('NDEBUG', None),
-        ('PICOSAT_VERSION', PICOSAT_VERSION),
     ],
     include_dirs = [
         os.path.join('extension', 'picosat'),
