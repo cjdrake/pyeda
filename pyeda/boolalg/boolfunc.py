@@ -481,7 +481,7 @@ class Function(object):
     def derivative(self, vs=None):
         r"""Return the derivative of a function.
 
-        The *derivate* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
+        The *derivative* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
         to variable :math:`x_i` is
         :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`.
         """
