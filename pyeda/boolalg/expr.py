@@ -1257,20 +1257,24 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                   flattened. Do NOT call this method directly -- use the
                   'to_dnf' or 'to_cnf' methods instead.
         """
-        temps, args = set(self.args), list()
+        dual = self.get_dual()
+
+        # Get rid of all equivalent terms
+        temps = {arg.arg_set for arg in self.args}
+        args = list()
 
         # Drop all terms that are a superset of other terms
         while temps:
             fst = temps.pop()
             drop_fst = False
             drop_rst = set()
-            for term in temps:
-                if fst.arg_set > term.arg_set:
+            for temp in temps:
+                if fst > temp:
                     drop_fst = True
-                elif fst.arg_set <= term.arg_set:
-                    drop_rst.add(term)
+                elif fst < temp:
+                    drop_rst.add(temp)
             if not drop_fst:
-                args.append(fst)
+                args.append(dual(*fst))
             temps -= drop_rst
 
         obj = self.__class__(*args)
