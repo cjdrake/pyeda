@@ -1274,7 +1274,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                 elif fst < temp:
                     drop_rst.add(temp)
             if not drop_fst:
-                args.append(dual(*fst))
+                arg = dual(*fst)
+                arg.simplified = True
+                args.append(arg)
             temps -= drop_rst
 
         obj = self.__class__(*args)
