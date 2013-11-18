@@ -26,11 +26,11 @@ from pyeda.boolalg.bdd import (
 from pyeda.boolalg.expr import (
     exprvar, exprcomp, expr,
     ast2expr, expr2dimacssat, upoint2exprpoint,
-    Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE,
+    Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot, Majority,
     ForAll, Exists,
     Expression, ExprConstant, ExprLiteral, ExprVariable, ExprComplement,
-    ExprNot, ExprOrAnd, ExprOr, ExprAnd,
+    ExprNot, ExprOrAnd, ExprOr, ExprAnd, ExprNor, ExprNand,
     ExprExclusive, ExprXor, ExprXnor, ExprEqual, ExprUnequal,
     ExprImplies, ExprITE,
 )

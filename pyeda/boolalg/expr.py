@@ -31,6 +31,9 @@ Interface Classes:
         ExprOrAnd
             ExprOr
             ExprAnd
+        ExprNorNand
+            ExprNor
+            ExprNand
         ExprExclusive
             ExprXor
             ExprXnor
@@ -201,6 +204,26 @@ def And(*args, simplify=True, factor=False):
         expr = expr.simplify()
     return expr
 
+def Nor(*args, simplify=True, factor=False):
+    """Alias for Not(Or(...))"""
+    args = [Expression.box(arg) for arg in args]
+    expr = ExprNor(*args)
+    if factor:
+        expr = expr.factor()
+    elif simplify:
+        expr = expr.simplify()
+    return expr
+
+def Nand(*args, simplify=True, factor=False):
+    """Alias for Not(And(...))"""
+    args = [Expression.box(arg) for arg in args]
+    expr = ExprNand(*args)
+    if factor:
+        expr = expr.factor()
+    elif simplify:
+        expr = expr.simplify()
+    return expr
+
 # secondary functions
 def Xor(*args, simplify=True, factor=False, conj=False):
     """Factory function for Boolean XOR expression."""
@@ -266,24 +289,6 @@ def ITE(s, d1, d0, simplify=True, factor=False):
     return expr
 
 # high order functions
-def Nor(*args, simplify=True, factor=False):
-    """Alias for Not(Or(...))"""
-    expr = Not(Or(*args, simplify=False), simplify=False)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
-        expr = expr.simplify()
-    return expr
-
-def Nand(*args, simplify=True, factor=False):
-    """Alias for Not(And(...))"""
-    expr = Not(And(*args, simplify=False), simplify=False)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
-        expr = expr.simplify()
-    return expr
-
 def OneHot0(*args, simplify=True, factor=False, conj=True):
     """
     Return an expression that means:
@@ -1468,6 +1473,164 @@ class ExprAnd(ExprOrAnd):
         return term.expand(vs, conj=True).args
 
 
+class ExprNorNand(_ArgumentContainer):
+    """Base class for Expression NOR/NAND expressions"""
+
+    @cached_property
+    def depth(self):
+        return max(arg.depth + 1 for arg in self.args)
+
+
+class ExprNor(ExprNorNand):
+    """Expression NOR operator"""
+
+    ASTOP = 'nor'
+    PRECEDENCE = 2
+
+    def __new__(cls, *args):
+        # Nor() = 1
+        if len(args) == 0:
+            return EXPRONE
+        # Nor(a) = -a
+        elif len(args) == 1:
+            return Not(args[0])
+        else:
+            return super(ExprNor, cls).__new__(cls)
+
+    # From Function
+    def urestrict(self, upoint):
+        if self.usupport & (upoint[0] | upoint[1]):
+            # speed hack
+            if EXPRONE in self.args:
+                return EXPRZERO
+            else:
+                args = {arg.urestrict(upoint) for arg in self.args}
+            return self.__class__(*args).simplify()
+        else:
+            return self.simplify()
+
+    # From Expression
+    def invert(self):
+        obj = ExprOr(*self.args)
+        obj.simplified = self._simplified
+        return obj
+
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        temps, args = set(self.args), set()
+        while temps:
+            arg = temps.pop()
+            arg = arg.simplify()
+            if arg is EXPRONE:
+                return EXPRZERO
+            elif arg is EXPRZERO:
+                pass
+            # associative
+            elif isinstance(arg, ExprOr):
+                temps.update(arg.args)
+            # complement
+            elif isinstance(arg, ExprLiteral) and -arg in args:
+                return EXPRZERO
+            else:
+                args.add(arg)
+
+        obj = self.__class__(*args)
+        obj.simplified = True
+        return obj
+
+    def factor(self, conj=False):
+        args = [arg.invert().factor() for arg in self.args]
+        return ExprAnd(*args).simplify()
+
+    def __str__(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
+            else:
+                parts.append(str(arg))
+        # Downwards arrow - U2193
+        return self.args_str(" ↓ ")
+
+
+class ExprNand(ExprNorNand):
+    """Expression NAND operator"""
+
+    ASTOP = 'nand'
+    PRECEDENCE = 0
+
+    def __new__(cls, *args):
+        # Nand() = 0
+        if len(args) == 0:
+            return EXPRZERO
+        # Nand(a) = -a
+        elif len(args) == 1:
+            return Not(args[0])
+        else:
+            return super(ExprNand, cls).__new__(cls)
+
+    # From Function
+    def urestrict(self, upoint):
+        if self.usupport & (upoint[0] | upoint[1]):
+            # speed hack
+            if EXPRZERO in self.args:
+                return EXPRONE
+            else:
+                args = {arg.urestrict(upoint) for arg in self.args}
+            return self.__class__(*args).simplify()
+        else:
+            return self.simplify()
+
+    # From Expression
+    def invert(self):
+        obj = ExprAnd(*self.args)
+        obj.simplified = self._simplified
+        return obj
+
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        temps, args = set(self.args), set()
+        while temps:
+            arg = temps.pop()
+            arg = arg.simplify()
+            if arg is EXPRZERO:
+                return EXPRONE
+            elif arg is EXPRONE:
+                pass
+            # associative
+            elif isinstance(arg, ExprAnd):
+                temps.update(arg.args)
+            # complement
+            elif isinstance(arg, ExprLiteral) and -arg in args:
+                return EXPRONE
+            else:
+                args.add(arg)
+
+        obj = self.__class__(*args)
+        obj.simplified = True
+        return obj
+
+    def factor(self, conj=False):
+        args = [arg.invert().factor() for arg in self.args]
+        return ExprOr(*args).simplify()
+
+    def __str__(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: +, xor/xnor, =>, ?:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
+            else:
+                parts.append(str(arg))
+        # Upwards arrow - U2191
+        return " ↑ ".join(parts)
+
+
 class ExprExclusive(_ArgumentContainer):
     """Expression exclusive (XOR, XNOR) operator"""
 
@@ -2034,15 +2197,14 @@ ASTOPS = {
     ExprNot.ASTOP     : ExprNot,
     ExprOr.ASTOP      : ExprOr,
     ExprAnd.ASTOP     : ExprAnd,
+    ExprNor.ASTOP     : ExprNor,
+    ExprNand.ASTOP    : ExprNand,
     ExprXor.ASTOP     : ExprXor,
     ExprXnor.ASTOP    : ExprXnor,
     ExprEqual.ASTOP   : ExprEqual,
     ExprUnequal.ASTOP : ExprUnequal,
     ExprImplies.ASTOP : ExprImplies,
     ExprITE.ASTOP     : ExprITE,
-
-    'nor'  : Nor,
-    'nand' : Nand,
 
     'onehot0'  : OneHot0,
     'onehot'   : OneHot,

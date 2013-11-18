@@ -316,6 +316,18 @@ but contains more information than the primary operators.
 That is, these expressions always increase in tree size when converted to
 primary operators.
 
+.. function:: Nor(\*args, simplify=True, factor=False)
+
+   Return an expression that evaluates to :math:`0` if and only if *any* inputs
+   are :math:`1`.
+   The inverse of `Or`.
+
+.. function:: Nand(\*args, simplify=True, factor=False)
+
+   Return an expression that evaluates to :math:`0` if an only if *all* inputs
+   are :math:`1`.
+   The inverse of `And`.
+
 .. function:: Xor(\*args, simplify=True, factor=False, conj=False)
 
    Return an expression that evaluates to :math:`1` if and only if the input
@@ -392,14 +404,6 @@ A *high order* operator is a Boolean operator that can NOT be natively
 represented as a PyEDA expression.
 That is, these factory functions will always return expressions composed from
 primary and/or secondary operators.
-
-.. function:: Nor(\*args, simplify=True, factor=False)
-
-   Return ``Not(Or(*args, ...))``.
-
-.. function:: Nand(\*args, simplify=True, factor=False)
-
-   Return ``Not(And(*args, ...))``.
 
 .. function:: OneHot0(\*args, simplify=True, factor=False, conj=True)
 
