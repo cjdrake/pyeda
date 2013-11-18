@@ -40,6 +40,7 @@ Contents:
    boolalg.rst
    expr.rst
    sudoku.rst
+   queens.rst
    relnotes.rst
 
 Indices and Tables
