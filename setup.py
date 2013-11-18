@@ -10,7 +10,7 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-NAME = 'pyeda'
+NAME = pyeda.__name__
 
 VERSION = pyeda.__version__
 
