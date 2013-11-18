@@ -1815,7 +1815,7 @@ class ExprEqual(ExprEqualBase):
             # Equal(0, x0, x1, ...) = Nor(x0, x1, ...)
             else:
                 args.remove(EXPRZERO)
-                return ExprNot(ExprOr(*args)).simplify()
+                return ExprNor(*args).simplify()
         # Equal(1, x0, x1, ...) = And(x0, x1, ...)
         if EXPRONE in args:
             args.remove(EXPRONE)
@@ -1886,7 +1886,7 @@ class ExprUnequal(ExprEqualBase):
         # Unequal(1, x0, x1, ...) = Nand(x0, x1, ...)
         if EXPRONE in args:
             args.remove(EXPRONE)
-            return ExprNot(ExprAnd(*args)).simplify()
+            return ExprNand(*args).simplify()
 
         # no constants; all simplified
         temps, args = args, set()
