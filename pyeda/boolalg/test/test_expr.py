@@ -8,8 +8,8 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import (
     exprvar,
     Expression,
-    Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE,
-    Nor, Nand, OneHot0, OneHot, Majority,
+    Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
+    OneHot0, OneHot, Majority,
     EXPRZERO, EXPRONE,
 )
 from pyeda.boolalg.vexpr import bitvec
@@ -71,17 +71,43 @@ def test_box():
     nose.tools.assert_raises(TypeError, Expression.box, 42)
 
 def test_nor():
+    assert Nor() is EXPRONE
+    assert Nor(a) is -a
+
     assert Nor(0, 0) is EXPRONE
     assert Nor(0, 1) is EXPRZERO
     assert Nor(1, 0) is EXPRZERO
     assert Nor(1, 1) is EXPRZERO
+
+    assert Nor(0, 0, 0) is EXPRONE
+    assert Nor(0, 0, 1) is EXPRZERO
+    assert Nor(0, 1, 0) is EXPRZERO
+    assert Nor(0, 1, 1) is EXPRZERO
+    assert Nor(1, 0, 0) is EXPRZERO
+    assert Nor(1, 0, 1) is EXPRZERO
+    assert Nor(1, 1, 0) is EXPRZERO
+    assert Nor(1, 1, 1) is EXPRZERO
+
     assert Nor(a, b).equivalent(-a * -b)
 
 def test_nand():
+    assert Nand() is EXPRZERO
+    assert Nand(a) is -a
+
     assert Nand(0, 0) is EXPRONE
     assert Nand(0, 1) is EXPRONE
     assert Nand(1, 0) is EXPRONE
     assert Nand(1, 1) is EXPRZERO
+
+    assert Nand(0, 0, 0) is EXPRONE
+    assert Nand(0, 0, 1) is EXPRONE
+    assert Nand(0, 1, 0) is EXPRONE
+    assert Nand(0, 1, 1) is EXPRONE
+    assert Nand(1, 0, 0) is EXPRONE
+    assert Nand(1, 0, 1) is EXPRONE
+    assert Nand(1, 1, 0) is EXPRONE
+    assert Nand(1, 1, 1) is EXPRZERO
+
     assert Nand(a, b).equivalent(-a + -b)
 
 def test_onehot0():
