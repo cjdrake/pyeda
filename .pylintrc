@@ -44,7 +44,7 @@ load-plugins=
 # W0602 = Using global for ... but no assignment is done
 # R0903 = Too few public methods
 # R0904 = Too many public methods
-disable=similarities,C0302,W0142,W0602,R0903,R0904
+disable=similarities,C0302,W0142,W0223,W0602,R0903,R0904
 
 [REPORTS]
 

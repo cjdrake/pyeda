@@ -588,6 +588,7 @@ class Expression(boolfunc.Function):
 
     def is_dnf(self):
         """Return whether this expression is in disjunctive normal form."""
+        # pylint: disable=R0201
         return False
 
     def to_cnf(self, flatten=True):
@@ -608,6 +609,7 @@ class Expression(boolfunc.Function):
 
     def is_cnf(self):
         """Return whether this expression is in conjunctive normal form."""
+        # pylint: disable=R0201
         return False
 
     def tseitin(self, auxvarname='aux'):
@@ -666,9 +668,6 @@ class ExprConstant(Expression, sat.DPLLInterface):
         return self
 
     # From Expression
-    def invert(self):
-        raise NotImplementedError()
-
     def simplify(self):
         return self
 
@@ -791,9 +790,6 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         return frozenset([self])
 
     # From Expression
-    def invert(self):
-        raise NotImplementedError()
-
     def simplify(self):
         return self
 
@@ -1052,19 +1048,6 @@ class _ArgumentContainer(Expression):
             return self.simplify()
 
     # From Expression
-    def invert(self):
-        raise NotImplementedError()
-
-    def simplify(self):
-        raise NotImplementedError()
-
-    def factor(self, conj=False):
-        raise NotImplementedError()
-
-    @property
-    def depth(self):
-        raise NotImplementedError()
-
     def to_ast(self):
         return (self.ASTOP, ) + tuple(arg.to_ast() for arg in self.args)
 

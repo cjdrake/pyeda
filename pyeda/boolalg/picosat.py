@@ -24,11 +24,13 @@ except ImportError:
     PICOSAT_IMPORTED = False
     PICOSAT_VERSION = None
     PICOSAT_COPYRIGHT = None
+    # pylint: disable=C0103
     PicosatError = None
 else:
     PICOSAT_IMPORTED = True
     PICOSAT_VERSION = _picosat.PICOSAT_VERSION
     PICOSAT_COPYRIGHT = _picosat.PICOSAT_COPYRIGHT
+    # pylint: disable=C0103
     PicosatError = _picosat.PicosatError
 
 def satisfy_one(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
