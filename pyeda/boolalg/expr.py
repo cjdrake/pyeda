@@ -1308,7 +1308,7 @@ class ExprOr(ExprOrAnd):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        return self.args_str(" + ")
+        return " + ".join(parts)
 
     # From Expression
     def is_dnf(self):
@@ -1560,8 +1560,8 @@ class ExprXor(ExprExclusive):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        # Circled plus
-        return " \u2295 ".join(parts)
+        # Circled plus - U2295
+        return " ⊕ ".join(parts)
 
     # From Expression
     def invert(self):
@@ -1596,8 +1596,8 @@ class ExprXnor(ExprExclusive):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        # Circled dot operator
-        return " \u2299 ".join(parts)
+        # Circled dot - U2299
+        return " ⊙ ".join(parts)
 
     # From Expression
     def invert(self):
@@ -1769,8 +1769,8 @@ class ExprImplies(_ArgumentContainer):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        # Rightwards double arrow
-        return " \u21D2 ".join(parts)
+        # Rightwards double arrow - 21D2
+        return " ⇒ ".join(parts)
 
     # From Expression
     def invert(self):
