@@ -48,7 +48,8 @@ class SudokuSolver(object):
     def _parse_grid(self, grid):
         """Return the input constraints for a Sudoku grid."""
         chars = [c for c in grid if c in DIGITS or c in "0."]
-        assert len(chars) == 9 ** 2
+        if len(chars) != 9 ** 2:
+            raise ValueError("expected 9x9 grid")
         I = And(*[ self.X[i // 9 + 1][i % 9 + 1][int(c)]
                    for i, c in enumerate(chars) if c in DIGITS ])
         return I

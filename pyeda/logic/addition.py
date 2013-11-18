@@ -18,7 +18,8 @@ from pyeda.util import clog2
 
 def ripple_carry_add(A, B, cin=0):
     """Return symbolic logic for an N-bit ripple carry adder."""
-    assert len(A) == len(B)
+    if len(A) != len(B):
+        raise ValueError("expected A and B to be equal length")
     s, c = list(), list()
     for i, ai in enumerate(A, A.start):
         carry = (cin if i == 0 else c[i-1])
@@ -28,7 +29,8 @@ def ripple_carry_add(A, B, cin=0):
 
 def kogge_stone_add(A, B, cin=0):
     """Return symbolic logic for an N-bit Kogge-Stone adder."""
-    assert len(A) == len(B)
+    if len(A) != len(B):
+        raise ValueError("expected A and B to be equal length")
     N = len(A)
     # generate/propagate logic
     g = [A[i] * B[i] for i in range(N)]
@@ -44,7 +46,8 @@ def kogge_stone_add(A, B, cin=0):
 
 def brent_kung_add(A, B, cin=0):
     """Return symbolic logic for an N-bit Brent-Kung adder."""
-    assert len(A) == len(B)
+    if len(A) != len(B):
+        raise ValueError("expected A and B to be equal length")
     N = len(A)
     # generate/propagate logic
     g = [A[i] * B[i] for i in range(N)]
