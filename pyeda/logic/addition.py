@@ -29,17 +29,17 @@ def ripple_carry_add(A, B, cin=0):
 def kogge_stone_add(A, B, cin=0):
     """Return symbolic logic for an N-bit Kogge-Stone adder."""
     assert len(A) == len(B)
-    stop = len(A)
+    N = len(A)
     # generate/propagate logic
-    g = [A[i] * B[i] for i in range(stop)]
-    p = [Xor(A[i], B[i]) for i in range(stop)]
-    for i in range(clog2(stop)):
+    g = [A[i] * B[i] for i in range(N)]
+    p = [Xor(A[i], B[i]) for i in range(N)]
+    for i in range(clog2(N)):
         start = 1 << i
-        for j in range(start, stop):
+        for j in range(start, N):
             g[j] = g[j] + p[j] * g[j-start]
             p[j] = p[j] * p[j-start]
     # sum logic
-    s = [Xor(A[i], B[i], (cin if i == 0 else g[i-1])) for i in range(stop)]
+    s = [Xor(A[i], B[i], (cin if i == 0 else g[i-1])) for i in range(N)]
     return BitVector(s), BitVector(g)
 
 def brent_kung_add(A, B, cin=0):
