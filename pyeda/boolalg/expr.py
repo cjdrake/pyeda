@@ -1491,11 +1491,6 @@ class ExprExclusive(_ArgumentContainer):
     PRECEDENCE = 1
 
     # From Expression
-    def invert(self):
-        obj = self.get_dual()(*self.args)
-        obj.simplified = self._simplified
-        return obj
-
     def simplify(self):
         if self._simplified:
             return self
@@ -1558,14 +1553,6 @@ class ExprExclusive(_ArgumentContainer):
     # Specific to ExprExclusive
     PARITY = NotImplemented
 
-    @staticmethod
-    def get_dual():
-        """Return the dual function.
-
-        The dual of Xor and Xnor, and the dual of Xnor is Xor.
-        """
-        raise NotImplementedError()
-
 
 class ExprXor(ExprExclusive):
     """Expression Exclusive OR (XOR) operator"""
@@ -1593,12 +1580,14 @@ class ExprXor(ExprExclusive):
         # Circled plus
         return " \u2295 ".join(parts)
 
+    # From Expression
+    def invert(self):
+        obj = ExprXnor(*self.args)
+        obj.simplified = self._simplified
+        return obj
+
     # Specific to ExprExclusive
     PARITY = 1
-
-    @staticmethod
-    def get_dual():
-        return ExprXnor
 
 
 class ExprXnor(ExprExclusive):
@@ -1627,34 +1616,23 @@ class ExprXnor(ExprExclusive):
         # Circled dot operator
         return " \u2299 ".join(parts)
 
+    # From Expression
+    def invert(self):
+        obj = ExprXor(*self.args)
+        obj.simplified = self._simplified
+        return obj
+
     # Specific to ExprExclusive
     PARITY = 0
-
-    @staticmethod
-    def get_dual():
-        return ExprXor
 
 
 class ExprEqualBase(_ArgumentContainer):
     """Expression equality (EQUAL, UNEQUAL) operators"""
 
     # From Expression
-    def invert(self):
-        obj = self.get_dual()(*self.args)
-        obj.simplified = self._simplified
-        return obj
-
     @cached_property
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
-
-    @staticmethod
-    def get_dual():
-        """Return the dual function.
-
-        The dual of Equal is Unequal, and the dual of Unequal is Equal.
-        """
-        raise NotImplementedError()
 
 
 class ExprEqual(ExprEqualBase):
@@ -1673,6 +1651,11 @@ class ExprEqual(ExprEqualBase):
         return "Equal(" + self.args_str(", ") + ")"
 
     # From Expression
+    def invert(self):
+        obj = ExprUnequal(*self.args)
+        obj.simplified = self._simplified
+        return obj
+
     def simplify(self):
         if self._simplified:
             return self
@@ -1718,10 +1701,6 @@ class ExprEqual(ExprEqualBase):
             all1 = ExprAnd(*[arg.factor() for arg in self.args])
             return ExprOr(all0, all1).simplify()
 
-    @staticmethod
-    def get_dual():
-        return ExprUnequal
-
 
 class ExprUnequal(ExprEqualBase):
     """Expression UNEQUAL operator"""
@@ -1739,6 +1718,11 @@ class ExprUnequal(ExprEqualBase):
         return "Unequal(" + self.args_str(", ") + ")"
 
     # From Expression
+    def invert(self):
+        obj = ExprEqual(*self.args)
+        obj.simplified = self._simplified
+        return obj
+
     def simplify(self):
         if self._simplified:
             return self
@@ -1783,10 +1767,6 @@ class ExprUnequal(ExprEqualBase):
                 args.append(ExprAnd(arg1.invert().factor(), arg2.factor()))
                 args.append(ExprAnd(arg1.factor(), arg2.invert().factor()))
             return ExprOr(*args).simplify()
-
-    @staticmethod
-    def get_dual():
-        return ExprEqual
 
 
 class ExprImplies(_ArgumentContainer):
