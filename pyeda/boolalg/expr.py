@@ -1723,7 +1723,7 @@ class ExprUnequal(ExprEqualBase):
         # Unequal(1, x0, x1, ...) = Nand(x0, x1, ...)
         if EXPRONE in args:
             args.remove(EXPRONE)
-            return Not(ExprAnd(*args)).simplify()
+            return ExprNot(ExprAnd(*args)).simplify()
 
         # no constants; all simplified
         temps, args = args, set()
