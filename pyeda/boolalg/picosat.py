@@ -64,7 +64,10 @@ def satisfy_one(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
 
     Returns
     -------
-    {Variable : {0, 1}} or None
+    tuple of {-1, 0, 1}
+        -1 : zero
+         0 : dont-care
+         1 : one
     """
     return _picosat.satisfy_one(cnf.nvars, cnf.clauses,
                                 verbosity, default_phase, propagation_limit,
@@ -100,7 +103,10 @@ def satisfy_all(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
 
     Returns
     -------
-    iter of {Variable : {0, 1}}
+    iter of tuple of {-1, 0, 1}
+        -1 : zero
+         0 : dont-care
+         1 : one
     """
     return _picosat.satisfy_all(cnf.nvars, cnf.clauses,
                                 verbosity, default_phase, propagation_limit,
