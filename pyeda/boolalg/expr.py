@@ -1128,12 +1128,6 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                     return False
         return id(self) < id(other)
 
-    def invert(self):
-        args = [arg.invert() for arg in self.args]
-        obj = self.get_dual()(*args)
-        obj.simplified = self._simplified
-        return obj
-
     def simplify(self):
         if self._simplified:
             return self
@@ -1316,6 +1310,11 @@ class ExprOr(ExprOrAnd):
         return " + ".join(parts)
 
     # From Expression
+    def invert(self):
+        obj = ExprNor(*self.args)
+        obj.simplified = self._simplified
+        return obj
+
     def is_dnf(self):
         # a + b
         if self.depth == 1:
@@ -1397,6 +1396,11 @@ class ExprAnd(ExprOrAnd):
         return " * ".join(parts)
 
     # From Expression
+    def invert(self):
+        obj = ExprNand(*self.args)
+        obj.simplified = self._simplified
+        return obj
+
     def is_dnf(self):
         # a * b
         if self.depth == 1:
