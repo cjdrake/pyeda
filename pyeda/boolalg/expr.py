@@ -375,6 +375,12 @@ class Expression(boolfunc.Function):
     def __init__(self):
         self._simplified = False
 
+    def __repr__(self):
+        return self.__str__()
+
+    def __lt__(self, other):
+        return id(self) < id(other)
+
     # Operators
     def __neg__(self):
         return Not(self)
@@ -512,12 +518,6 @@ class Expression(boolfunc.Function):
             raise TypeError(fstr)
 
     # Specific to Expression
-    def __lt__(self, other):
-        return id(self) < id(other)
-
-    def __repr__(self):
-        return self.__str__()
-
     def invert(self):
         """Return an inverted expression."""
         raise NotImplementedError()
@@ -709,16 +709,16 @@ class _ExprZero(ExprConstant):
 
     VALUE = 0
 
-    # From Function
-    def is_zero(self):
-        return True
-
-    # From Expression
     def __lt__(self, other):
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
 
+    # From Function
+    def is_zero(self):
+        return True
+
+    # From Expression
     def invert(self):
         return EXPRONE
 
@@ -747,11 +747,6 @@ class _ExprOne(ExprConstant):
 
     VALUE = 1
 
-    # From Function
-    def is_one(self):
-        return True
-
-    # From Expression
     def __lt__(self, other):
         if other is EXPRZERO:
             return False
@@ -759,6 +754,11 @@ class _ExprOne(ExprConstant):
             return True
         return id(self) < id(other)
 
+    # From Function
+    def is_one(self):
+        return True
+
+    # From Expression
     def invert(self):
         return EXPRZERO
 
@@ -789,11 +789,6 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         super(ExprLiteral, self).__init__()
         self._simplified = True
 
-    @cached_property
-    def arg_set(self):
-        """Return the argument set for a normal form term."""
-        return frozenset([self])
-
     # From Expression
     def simplify(self):
         return self
@@ -815,6 +810,12 @@ class ExprLiteral(Expression, sat.DPLLInterface):
     def flatten(self, op):
         """Degenerate form of a flattened expression."""
         return self
+
+    # FlattenedExpression
+    @cached_property
+    def arg_set(self):
+        """Return the argument set for a normal form term."""
+        return frozenset([self])
 
     def absorb(self):
         """Degenerate form of a flattened expression."""
@@ -841,6 +842,17 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
         boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         ExprLiteral.__init__(self)
 
+    def __lt__(self, other):
+        if isinstance(other, ExprConstant):
+            return False
+        if isinstance(other, ExprVariable):
+            return boolfunc.Variable.__lt__(self, other)
+        if isinstance(other, ExprComplement):
+            return boolfunc.Variable.__lt__(self, other.exprvar)
+        if isinstance(other, Expression):
+            return True
+        return id(self) < id(other)
+
     # From Function
     @cached_property
     def support(self):
@@ -861,17 +873,6 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
             return self
 
     # From Expression
-    def __lt__(self, other):
-        if isinstance(other, ExprConstant):
-            return False
-        if isinstance(other, ExprVariable):
-            return boolfunc.Variable.__lt__(self, other)
-        if isinstance(other, ExprComplement):
-            return boolfunc.Variable.__lt__(self, other.exprvar)
-        if isinstance(other, Expression):
-            return True
-        return id(self) < id(other)
-
     def invert(self):
         return exprcomp(self)
 
@@ -905,6 +906,19 @@ class ExprComplement(ExprLiteral):
     def __str__(self):
         return str(self.exprvar) + "'"
 
+    def __lt__(self, other):
+        if isinstance(other, ExprConstant):
+            return False
+        if isinstance(other, ExprVariable):
+            return ( self.exprvar.names < other.names or
+                     self.exprvar.names == other.names and
+                     self.exprvar.indices <= other.indices )
+        if isinstance(other, ExprComplement):
+            return boolfunc.Variable.__lt__(self.exprvar, other.exprvar)
+        if isinstance(other, Expression):
+            return True
+        return id(self) < id(other)
+
     # From Function
     @cached_property
     def support(self):
@@ -925,19 +939,6 @@ class ExprComplement(ExprLiteral):
             return self
 
     # From Expression
-    def __lt__(self, other):
-        if isinstance(other, ExprConstant):
-            return False
-        if isinstance(other, ExprVariable):
-            return ( self.exprvar.names < other.names or
-                     self.exprvar.names == other.names and
-                     self.exprvar.indices <= other.indices )
-        if isinstance(other, ExprComplement):
-            return boolfunc.Variable.__lt__(self.exprvar, other.exprvar)
-        if isinstance(other, Expression):
-            return True
-        return id(self) < id(other)
-
     def invert(self):
         return self.exprvar
 
@@ -1087,24 +1088,6 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         else:
             return super(ExprOrAnd, cls).__new__(cls)
 
-    @cached_property
-    def arg_set(self):
-        """Return the argument set for a normal form term."""
-        return frozenset(self.args)
-
-    # From Function
-    def urestrict(self, upoint):
-        if self.usupport & (upoint[0] | upoint[1]):
-            # speed hack
-            if self.DOMINATOR in self.args:
-                return self.DOMINATOR
-            else:
-                args = {arg.urestrict(upoint) for arg in self.args}
-            return self.__class__(*args).simplify()
-        else:
-            return self.simplify()
-
-    # From Expression
     def __lt__(self, other):
         if isinstance(other, ExprConstant):
             return False
@@ -1128,6 +1111,19 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                     return False
         return id(self) < id(other)
 
+    # From Function
+    def urestrict(self, upoint):
+        if self.usupport & (upoint[0] | upoint[1]):
+            # speed hack
+            if self.DOMINATOR in self.args:
+                return self.DOMINATOR
+            else:
+                args = {arg.urestrict(upoint) for arg in self.args}
+            return self.__class__(*args).simplify()
+        else:
+            return self.simplify()
+
+    # From Expression
     def simplify(self):
         if self._simplified:
             return self
@@ -1229,6 +1225,11 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
             return op.get_dual()(*args).simplify()
 
     # FlattenedExpression
+    @cached_property
+    def arg_set(self):
+        """Return the argument set for a normal form term."""
+        return frozenset(self.args)
+
     def absorb(self):
         """Return the OR/AND expression after absorption.
 
