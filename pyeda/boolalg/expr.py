@@ -438,7 +438,7 @@ class Expression(boolfunc.Function):
         if self.is_cnf():
             if picosat.PICOSAT_IMPORTED:
                 cnf = DimacsCNF(self)
-                soln = picosat.satisfy_one(cnf)
+                soln = picosat.satisfy_one(cnf.nvars, cnf.clauses)
                 if soln is None:
                     return None
                 else:
@@ -455,7 +455,7 @@ class Expression(boolfunc.Function):
     def satisfy_all(self):
         if self.is_cnf() and picosat.PICOSAT_IMPORTED:
             cnf = DimacsCNF(self)
-            for soln in picosat.satisfy_all(cnf):
+            for soln in picosat.satisfy_all(cnf.nvars, cnf.clauses):
                 yield cnf.soln2point(soln)
         else:
             for upoint in sat.iter_backtrack(self):

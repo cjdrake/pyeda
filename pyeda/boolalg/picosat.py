@@ -33,15 +33,19 @@ else:
     # pylint: disable=C0103
     PicosatError = _picosat.PicosatError
 
-def satisfy_one(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
-                decision_limit=-1):
+def satisfy_one(nvars, clauses, verbosity=0, default_phase=2,
+                propagation_limit=-1, decision_limit=-1):
     """
     If the input CNF is satisfiable, return a satisfying input point.
     A contradiction will return None.
 
     Parameters
     ----------
-    cnf : DimacsCNF
+    nvars : posint
+        Number of variables in the CNF
+
+    clauses : iter of iter of posint
+        The CNF clauses
 
     verbosity : int, optional
         Set verbosity level. A verbosity level of 1 and above prints more and
@@ -69,18 +73,22 @@ def satisfy_one(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
          0 : dont-care
          1 : one
     """
-    return _picosat.satisfy_one(cnf.nvars, cnf.clauses,
+    return _picosat.satisfy_one(nvars, clauses,
                                 verbosity, default_phase, propagation_limit,
                                 decision_limit)
 
-def satisfy_all(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
-                decision_limit=-1):
+def satisfy_all(nvars, clauses, verbosity=0, default_phase=2,
+                propagation_limit=-1, decision_limit=-1):
     """
     Iterate through all satisfying input points.
 
     Parameters
     ----------
-    cnf : DimacsCNF
+    nvars : posint
+        Number of variables in the CNF
+
+    clauses : iter of iter of posint
+        The CNF clauses
 
     verbosity : int, optional
         Set verbosity level. A verbosity level of 1 and above prints more and
@@ -108,6 +116,6 @@ def satisfy_all(cnf, verbosity=0, default_phase=2, propagation_limit=-1,
          0 : dont-care
          1 : one
     """
-    return _picosat.satisfy_all(cnf.nvars, cnf.clauses,
+    return _picosat.satisfy_all(nvars, clauses,
                                 verbosity, default_phase, propagation_limit,
                                 decision_limit)
