@@ -226,17 +226,22 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
     // Python return value
     PyObject *pyret = NULL;
 
-    picosat = picosat_minit(NULL, py_malloc, py_realloc, py_free);
-    if (picosat == NULL) {
-        PyErr_SetString(PicosatError, "could not initialize PicoSAT");
-        goto SATISFY_ONE_RETURN;
-    }
-
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "iO|iiii:satisfy_one", keywords,
             &nvars, &clauses,
             &verbosity, &default_phase, &propagation_limit, &decision_limit)) {
-        goto SATISFY_ONE_RESET_PICOSAT;
+        goto SATISFY_ONE_RETURN;
+    }
+
+    if (default_phase < 0 || default_phase > 3) {
+        PyErr_Format(PyExc_ValueError, "expected default_phase in {0, 1, 2, 3}, got: %d", default_phase);
+        goto SATISFY_ONE_RETURN;
+    }
+
+    picosat = picosat_minit(NULL, py_malloc, py_realloc, py_free);
+    if (picosat == NULL) {
+        PyErr_SetString(PicosatError, "could not initialize PicoSAT");
+        goto SATISFY_ONE_RETURN;
     }
 
     picosat_set_verbosity(picosat, verbosity);
@@ -332,17 +337,22 @@ satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     // Python return value
     SatisfyAllState *state;
 
-    picosat = picosat_minit(NULL, py_malloc, py_realloc, py_free);
-    if (picosat == NULL) {
-        PyErr_SetString(PicosatError, "could not initialize PicoSAT");
-        goto SATISFY_ALL_ERROR;
-    }
-
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "iO|iiii:satisfy_all", keywords,
             &nvars, &clauses,
             &verbosity, &default_phase, &propagation_limit, &decision_limit)) {
-        goto SATISFY_ALL_RESET_PICOSAT;
+        goto SATISFY_ALL_ERROR;
+    }
+
+    if (default_phase < 0 || default_phase > 3) {
+        PyErr_Format(PyExc_ValueError, "expected default_phase in {0, 1, 2, 3}, got: %d", default_phase);
+        goto SATISFY_ALL_ERROR;
+    }
+
+    picosat = picosat_minit(NULL, py_malloc, py_realloc, py_free);
+    if (picosat == NULL) {
+        PyErr_SetString(PicosatError, "could not initialize PicoSAT");
+        goto SATISFY_ALL_ERROR;
     }
 
     picosat_set_verbosity(picosat, verbosity);
