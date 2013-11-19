@@ -1553,7 +1553,7 @@ class ExprNor(ExprNorNand):
             else:
                 parts.append(str(arg))
         # Downwards arrow - U2193
-        return self.args_str(" ↓ ")
+        return " ↓ ".join(parts)
 
 
 class ExprNand(ExprNorNand):
