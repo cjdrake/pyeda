@@ -44,7 +44,7 @@ def satisfy_one(nvars, clauses, verbosity=0, default_phase=2,
     nvars : posint
         Number of variables in the CNF
 
-    clauses : iter of iter of posint
+    clauses : iter of iter of (nonzero) int
         The CNF clauses
 
     verbosity : int, optional
@@ -87,7 +87,7 @@ def satisfy_all(nvars, clauses, verbosity=0, default_phase=2,
     nvars : posint
         Number of variables in the CNF
 
-    clauses : iter of iter of posint
+    clauses : iter of iter of (nonzero) int
         The CNF clauses
 
     verbosity : int, optional
