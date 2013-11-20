@@ -67,15 +67,16 @@ add_clauses(PicoSAT *picosat, PyObject *clauses) {
         }
         while ((pylit = PyIter_Next(pylits)) != 0) {
             if (!PyLong_Check(pylit)) {
-                PyErr_SetString(PyExc_TypeError,
-                                "expected integer clause literal");
+                PyErr_SetString(PyExc_TypeError, "expected integer literal");
                 goto ADD_LITS_DECREF_PYLITS;
             }
             lit = PyLong_AsLong(pylit);
             if (lit == 0 || abs(lit) > nvars) {
-                PyErr_Format(PyExc_ValueError,
-                             "expected clause literal in range (0, %d], got: %d",
-                             nvars, lit);
+                PyErr_Format(
+                    PyExc_ValueError,
+                    "expected literal in range [-%d, 0), (0, %d], got: %d",
+                    nvars, nvars, lit
+                );
                 goto ADD_LITS_DECREF_PYLITS;
             }
 
@@ -267,6 +268,10 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
         goto SATISFY_ONE_RETURN;
     }
 
+    if (nvars < 0) {
+        PyErr_Format(PyExc_ValueError, "expected nvars >= 0, got: %d", nvars);
+        goto SATISFY_ONE_RETURN;
+    }
     if (default_phase < 0 || default_phase > 3) {
         PyErr_Format(PyExc_ValueError, "expected default_phase in {0, 1, 2, 3}, got: %d", default_phase);
         goto SATISFY_ONE_RETURN;
@@ -413,6 +418,10 @@ satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
         goto SATISFY_ALL_ERROR;
     }
 
+    if (nvars < 0) {
+        PyErr_Format(PyExc_ValueError, "expected nvars >= 0, got: %d", nvars);
+        goto SATISFY_ALL_ERROR;
+    }
     if (default_phase < 0 || default_phase > 3) {
         PyErr_Format(PyExc_ValueError, "expected default_phase in {0, 1, 2, 3}, got: %d", default_phase);
         goto SATISFY_ALL_ERROR;
