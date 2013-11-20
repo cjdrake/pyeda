@@ -67,7 +67,7 @@ add_clauses(PicoSAT *picosat, PyObject *clauses) {
         }
         while ((pylit = PyIter_Next(pylits)) != 0) {
             if (!PyLong_Check(pylit)) {
-                PyErr_SetString(PyExc_TypeError, "expected integer clause literal");
+                PyErr_SetString(PyExc_TypeError, "expected int clause literal");
                 goto ADD_CLAUSES_DECREF_PYLITS;
             }
             lit = PyLong_AsLong(pylit);
@@ -140,7 +140,7 @@ add_assumptions(PicoSAT *picosat, PyObject *assumptions) {
     }
     while ((pylit = PyIter_Next(pylits)) != 0) {
         if (!PyLong_Check(pylit)) {
-            PyErr_SetString(PyExc_TypeError, "expected integer assumption literal");
+            PyErr_SetString(PyExc_TypeError, "expected int assumption literal");
             goto ADD_ASSUMPTIONS_DECREF_PYLITS;
         }
         lit = PyLong_AsLong(pylit);
