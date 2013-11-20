@@ -303,8 +303,7 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
 
     // Prepare Python return value
     if (result == PICOSAT_UNSATISFIABLE) {
-        Py_INCREF(Py_None);
-        pyret = Py_None;
+        Py_RETURN_NONE;
     }
     else if (result == PICOSAT_SATISFIABLE) {
         // Might be NULL
