@@ -58,26 +58,26 @@ add_clauses(PicoSAT *picosat, PyObject *clauses) {
 
     pyclauses = PyObject_GetIter(clauses);
     if (pyclauses == NULL) {
-        goto ADD_LITS_ERROR;
+        goto ADD_CLAUSES_ERROR;
     }
     while ((pyclause = PyIter_Next(pyclauses)) != 0) {
         pylits = PyObject_GetIter(pyclause);
         if (pylits == NULL) {
-            goto ADD_LITS_DECREF_PYCLAUSES;
+            goto ADD_CLAUSES_DECREF_PYCLAUSES;
         }
         while ((pylit = PyIter_Next(pylits)) != 0) {
             if (!PyLong_Check(pylit)) {
-                PyErr_SetString(PyExc_TypeError, "expected integer literal");
-                goto ADD_LITS_DECREF_PYLITS;
+                PyErr_SetString(PyExc_TypeError, "expected integer clause literal");
+                goto ADD_CLAUSES_DECREF_PYLITS;
             }
             lit = PyLong_AsLong(pylit);
             if (lit == 0 || abs(lit) > nvars) {
                 PyErr_Format(
                     PyExc_ValueError,
-                    "expected literal in range [-%d, 0), (0, %d], got: %d",
+                    "expected clause literal in range [-%d, 0), (0, %d], got: %d",
                     nvars, nvars, lit
                 );
-                goto ADD_LITS_DECREF_PYLITS;
+                goto ADD_CLAUSES_DECREF_PYLITS;
             }
 
             // Add clause literal
@@ -88,7 +88,7 @@ add_clauses(PicoSAT *picosat, PyObject *clauses) {
         Py_DECREF(pylits);
 
         if (PyErr_Occurred()) {
-            goto ADD_LITS_DECREF_PYCLAUSES;
+            goto ADD_CLAUSES_DECREF_PYCLAUSES;
         }
 
         // Terminate clause
@@ -99,21 +99,21 @@ add_clauses(PicoSAT *picosat, PyObject *clauses) {
     Py_DECREF(pyclauses);
 
     if (PyErr_Occurred()) {
-        goto ADD_LITS_ERROR;
+        goto ADD_CLAUSES_ERROR;
     }
 
     // Success!
     return 1;
 
-ADD_LITS_DECREF_PYLITS:
+ADD_CLAUSES_DECREF_PYLITS:
     Py_DECREF(pylit);
     Py_DECREF(pylits);
 
-ADD_LITS_DECREF_PYCLAUSES:
+ADD_CLAUSES_DECREF_PYCLAUSES:
     Py_DECREF(pyclause);
     Py_DECREF(pyclauses);
 
-ADD_LITS_ERROR:
+ADD_CLAUSES_ERROR:
     return 0;
 }
 
