@@ -193,12 +193,46 @@ block_soln(PicoSAT *picosat, signed char *soln)
 //             decision_limit=-1)
 //==============================================================================
 
-PyDoc_STRVAR(satisfy_one_docstring, "\
-Return a single solution to a CNF instance.\n\
+PyDoc_STRVAR(satisfy_one_docstring,
+    "\n\
+    If the input CNF is satisfiable, return a satisfying input point.\n\
+    A contradiction will return None.\n\
 \n\
-If the CNF is satisfiable, return a satisfying input point.\n\
-If the CNF is NOT satisfiable, return None.\n\
-If PicoSAT encounters an error, raise a PicosatError.");
+    Parameters\n\
+    ----------\n\
+    nvars : posint\n\
+        Number of variables in the CNF\n\
+\n\
+    clauses : iter of iter of (nonzero) int\n\
+        The CNF clauses\n\
+\n\
+    verbosity : int, optional\n\
+        Set verbosity level. A verbosity level of 1 and above prints more and\n\
+        more detailed progress reports to stdout.\n\
+\n\
+    default_phase : {0, 1, 2, 3}\n\
+        Set default initial phase:\n\
+            0 = false\n\
+            1 = true\n\
+            2 = Jeroslow-Wang (default)\n\
+            3 = random\n\
+\n\
+    progagation_limit : int\n\
+        Set a limit on the number of propagations. A negative value sets no\n\
+        propagation limit.\n\
+\n\
+    decision_limit : int\n\
+        Set a limit on the number of decisions. A negative value sets no\n\
+        decision limit.\n\
+\n\
+    Returns\n\
+    -------\n\
+    tuple of {-1, 0, 1}\n\
+        -1 : zero\n\
+         0 : dont-care\n\
+         1 : one\n\
+    "
+);
 
 static PyObject *
 satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
@@ -293,10 +327,45 @@ SATISFY_ONE_RETURN:
 //             decision_limit=-1)
 //==============================================================================
 
-PyDoc_STRVAR(satisfy_all_docstring, "\
-Iterate through all solutions to a CNF instance.\n\
+PyDoc_STRVAR(satisfy_all_docstring,
+    "\n\
+    Iterate through all satisfying input points.\n\
 \n\
-If PicoSAT encounters an error, raise a PicosatError.");
+    Parameters\n\
+    ----------\n\
+    nvars : posint\n\
+        Number of variables in the CNF\n\
+\n\
+    clauses : iter of iter of (nonzero) int\n\
+        The CNF clauses\n\
+\n\
+    verbosity : int, optional\n\
+        Set verbosity level. A verbosity level of 1 and above prints more and\n\
+        more detailed progress reports to stdout.\n\
+\n\
+    default_phase : {0, 1, 2, 3}\n\
+        Set default initial phase:\n\
+            0 = false\n\
+            1 = true\n\
+            2 = Jeroslow-Wang (default)\n\
+            3 = random\n\
+\n\
+    progagation_limit : int\n\
+        Set a limit on the number of propagations. A negative value sets no\n\
+        propagation limit.\n\
+\n\
+    decision_limit : int\n\
+        Set a limit on the number of decisions. A negative value sets no\n\
+        decision limit.\n\
+\n\
+    Returns\n\
+    -------\n\
+    iter of tuple of {-1, 0, 1}\n\
+        -1 : zero\n\
+         0 : dont-care\n\
+         1 : one\n\
+    "
+);
 
 //==============================================================================
 // Iterator state
@@ -498,7 +567,22 @@ SatisfyAllType = {
 // Module Definition
 //==============================================================================
 
-PyDoc_STRVAR(module_docstring, "Python bindings to PicoSAT");
+PyDoc_STRVAR(module_docstring,
+"\n\
+PicoSAT Interface\n\
+\n\
+Constants:\n\
+    PICOSAT_VERSION\n\
+    PICOSAT_COPYRIGHT\n\
+\n\
+Exceptions:\n\
+    PicosatError\n\
+\n\
+Interface Functions:\n\
+    satisfy_one\n\
+    satisfy_all\n\
+"
+);
 
 static PyMethodDef functions[] = {
     {"satisfy_one", (PyCFunction) satisfy_one, METH_VARARGS | METH_KEYWORDS, satisfy_one_docstring},

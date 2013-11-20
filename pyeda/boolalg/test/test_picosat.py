@@ -8,7 +8,6 @@ from pyeda.boolalg import picosat
 from nose.tools import assert_raises
 
 def test_basic():
-    assert _picosat.__doc__ == "Python bindings to PicoSAT"
     assert _picosat.PICOSAT_COPYRIGHT == "Copyright (c) 2006 - 2012 Armin Biere JKU Linz"
     assert _picosat.PICOSAT_VERSION == "957"
 
