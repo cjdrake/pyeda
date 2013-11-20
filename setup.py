@@ -86,7 +86,7 @@ PICOSAT = dict(
     ],
     sources = [
         os.path.join('extension', 'picosat', 'picosat.c'),
-        os.path.join('pyeda', 'boolalg', '_picosat.c'),
+        os.path.join('pyeda', 'boolalg', 'picosatmodule.c'),
     ],
 )
 
@@ -97,7 +97,7 @@ if sys.platform == 'win32':
     ]
 
 EXT_MODULES = [
-    Extension('pyeda.boolalg._picosat', **PICOSAT),
+    Extension('pyeda.boolalg.picosat', **PICOSAT),
 ]
 
 setup(

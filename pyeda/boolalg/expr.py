@@ -53,8 +53,15 @@ import collections
 import itertools
 
 import pyeda.parsing.boolexpr
-from pyeda.boolalg import boolfunc, picosat, sat
+from pyeda.boolalg import boolfunc, sat
 from pyeda.util import bit_on, parity, cached_property
+
+try:
+    from pyeda.boolalg import picosat
+except ImportError:
+    PICOSAT_IMPORTED = False
+else:
+    PICOSAT_IMPORTED = True
 
 
 EXPRVARIABLES = dict()
@@ -436,7 +443,7 @@ class Expression(boolfunc.Function):
 
     def satisfy_one(self):
         if self.is_cnf():
-            if picosat.PICOSAT_IMPORTED:
+            if PICOSAT_IMPORTED:
                 cnf = DimacsCNF(self)
                 soln = picosat.satisfy_one(cnf.nvars, cnf.clauses)
                 if soln is None:
@@ -453,7 +460,7 @@ class Expression(boolfunc.Function):
             return upoint2exprpoint(upoint)
 
     def satisfy_all(self):
-        if self.is_cnf() and picosat.PICOSAT_IMPORTED:
+        if self.is_cnf() and PICOSAT_IMPORTED:
             cnf = DimacsCNF(self)
             for soln in picosat.satisfy_all(cnf.nvars, cnf.clauses):
                 yield cnf.soln2point(soln)

@@ -1,4 +1,4 @@
-// Filename: _picosat.c
+// Filename: picosatmodule.c
 //
 // Constants
 //     PICOSAT_VERSION
@@ -594,14 +594,14 @@ static PyMethodDef functions[] = {
 static PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
 
-    "_picosat",         // m_name
+    "picosat",          // m_name
     module_docstring,   // m_doc
     -1,                 // m_size
     functions,          // m_methods
 };
 
 PyMODINIT_FUNC
-PyInit__picosat(void)
+PyInit_picosat(void)
 {
     PyObject *pymodule;
 
@@ -616,7 +616,7 @@ PyInit__picosat(void)
         goto INIT_PICOSAT_ERROR;
 
     // Define PicosatError
-    PicosatError = PyErr_NewExceptionWithDoc("_picosat.PicosatError",
+    PicosatError = PyErr_NewExceptionWithDoc("picosat.PicosatError",
                                              picosaterr_docstring, NULL, NULL);
     if (PicosatError == NULL) {
         goto INIT_PICOSAT_ERROR;
