@@ -118,6 +118,65 @@ ADD_CLAUSES_ERROR:
 }
 
 //==============================================================================
+// Add all assumptions to a PicoSAT instance.
+//
+// Returns:
+//     0 : Exception
+//     1 : Success
+//==============================================================================
+
+static int
+add_assumptions(PicoSAT *picosat, PyObject *assumptions) {
+
+    int nvars;
+    PyObject *pylits, *pylit;
+    int lit;
+
+    nvars = picosat_variables(picosat);
+
+    pylits = PyObject_GetIter(assumptions);
+    if (pylits == NULL) {
+        goto ADD_ASSUMPTIONS_ERROR;
+    }
+    while ((pylit = PyIter_Next(pylits)) != 0) {
+        if (!PyLong_Check(pylit)) {
+            PyErr_SetString(PyExc_TypeError, "expected integer assumption literal");
+            goto ADD_ASSUMPTIONS_DECREF_PYLITS;
+        }
+        lit = PyLong_AsLong(pylit);
+        if (lit == 0 || abs(lit) > nvars) {
+            PyErr_Format(
+                PyExc_ValueError,
+                "expected assumption literal in range [-%d, 0), (0, %d], got: %d",
+                nvars, nvars, lit
+            );
+            goto ADD_ASSUMPTIONS_DECREF_PYLITS;
+        }
+
+        // Add assumption literal
+        picosat_assume(picosat, lit);
+
+        Py_DECREF(pylit);
+    } // for pylit in pylits
+    Py_DECREF(pylits);
+
+    if (PyErr_Occurred()) {
+        goto ADD_ASSUMPTIONS_ERROR;
+    }
+
+    // Success!
+    return 1;
+
+ADD_ASSUMPTIONS_DECREF_PYLITS:
+    Py_DECREF(pylit);
+    Py_DECREF(pylits);
+
+ADD_ASSUMPTIONS_ERROR:
+    return 0;
+}
+
+
+//==============================================================================
 // Retrieve a solution from PicoSAT, and convert it to a Python tuple.
 // Return NULL if an error happens.
 //
@@ -226,6 +285,9 @@ PyDoc_STRVAR(satisfy_one_docstring,
         Set a limit on the number of decisions. A negative value sets no\n\
         decision limit.\n\
 \n\
+    assumptions : iter of (nonzero) int\n\
+        Add assumptions (unit clauses) to the CNF\n\
+\n\
     Returns\n\
     -------\n\
     tuple of {-1, 0, 1}\n\
@@ -241,6 +303,7 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
     static char *keywords[] = {
         "nvars", "clauses",
         "verbosity", "default_phase", "propagation_limit", "decision_limit",
+        "assumptions",
         NULL
     };
 
@@ -254,6 +317,7 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
     int default_phase = 2; // 0 = false, 1 = true, 2 = Jeroslow-Wang, 3 = random
     int propagation_limit = -1;
     int decision_limit = -1;
+    PyObject *assumptions = NULL;
 
     // PicoSAT return value
     int result;
@@ -262,9 +326,10 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
     PyObject *pyret = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "iO|iiii:satisfy_one", keywords,
+            args, kwargs, "iO|iiiiO:satisfy_one", keywords,
             &nvars, &clauses,
-            &verbosity, &default_phase, &propagation_limit, &decision_limit)) {
+            &verbosity, &default_phase, &propagation_limit, &decision_limit,
+            &assumptions)) {
         goto SATISFY_ONE_RETURN;
     }
 
@@ -292,8 +357,12 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
     if (!add_clauses(picosat, clauses)) {
         goto SATISFY_ONE_RESET_PICOSAT;
     }
+    if (assumptions != NULL && assumptions != Py_None) {
+        if (!add_assumptions(picosat, assumptions)) {
+            goto SATISFY_ONE_RESET_PICOSAT;
+        }
+    }
 
-    // picosat_assume(picosat, lit);
     // picosat_set_seed(picosat, seed);
 
     // Do the damn thing
@@ -362,6 +431,9 @@ PyDoc_STRVAR(satisfy_all_docstring,
         Set a limit on the number of decisions. A negative value sets no\n\
         decision limit.\n\
 \n\
+    assumptions : iter of (nonzero) int\n\
+        Add assumptions (unit clauses) to the CNF\n\
+\n\
     Returns\n\
     -------\n\
     iter of tuple of {-1, 0, 1}\n\
@@ -406,14 +478,16 @@ satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     int default_phase = 2; // 0 = false, 1 = true, 2 = Jeroslow-Wang, 3 = random
     int propagation_limit = -1;
     int decision_limit = -1;
+    PyObject *assumptions = NULL;
 
     // Python return value
     SatisfyAllState *state;
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "iO|iiii:satisfy_all", keywords,
+            args, kwargs, "iO|iiiiO:satisfy_all", keywords,
             &nvars, &clauses,
-            &verbosity, &default_phase, &propagation_limit, &decision_limit)) {
+            &verbosity, &default_phase, &propagation_limit, &decision_limit,
+            &assumptions)) {
         goto SATISFY_ALL_ERROR;
     }
 
@@ -441,8 +515,12 @@ satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     if (!add_clauses(picosat, clauses)) {
         goto SATISFY_ALL_RESET_PICOSAT;
     }
+    if (assumptions != NULL && assumptions != Py_None) {
+        if (!add_assumptions(picosat, assumptions)) {
+            goto SATISFY_ALL_RESET_PICOSAT;
+        }
+    }
 
-    // picosat_assume(picosat, lit);
     // picosat_set_seed(picosat, seed);
 
     state = (SatisfyAllState *) cls->tp_alloc(cls, 0);
