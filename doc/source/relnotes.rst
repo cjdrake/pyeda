@@ -7,6 +7,24 @@
 Version 0.16
 ============
 
+Release 0.16.3
+--------------
+
+Fixed bug: absorption algorithm not returning a fully simplified expression.
+
+Release 0.16.2
+--------------
+
+Significantly enhance the performance of the absorption algorithm
+
+Release 0.16.1
+--------------
+
+Fixed bug: PicoSAT module compilation busted on Windows
+
+Release 0.16.0
+--------------
+
 New stuff in this release:
 
 * Added Expression ``complete_sum`` method,
