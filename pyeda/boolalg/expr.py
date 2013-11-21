@@ -111,8 +111,7 @@ def expr(arg, simplify=True, factor=False):
             ex = ex.simplify()
         return ex
     else:
-        fstr = "argument cannot be converted to Expression: " + str(arg)
-        raise TypeError(fstr)
+        return CONSTANTS[bool(arg)]
 
 def ast2expr(ast):
     """Convert an abstract syntax tree to an Expression."""
@@ -521,8 +520,7 @@ class Expression(boolfunc.Function):
         elif type(arg) is str:
             return ast2expr(pyeda.parsing.boolexpr.parse(arg))
         else:
-            fstr = "argument cannot be converted to Expression: " + str(arg)
-            raise TypeError(fstr)
+            return CONSTANTS[bool(arg)]
 
     # Specific to Expression
     def invert(self):
@@ -787,6 +785,8 @@ class _ExprOne(ExprConstant):
 
 EXPRZERO = _ExprZero()
 EXPRONE = _ExprOne()
+
+CONSTANTS = [EXPRZERO, EXPRONE]
 
 
 class ExprLiteral(Expression, sat.DPLLInterface):
@@ -2201,11 +2201,6 @@ def _complete_sum(dnf):
 
 
 # Convenience dictionaries
-CONSTANTS = {
-    _ExprZero.VALUE : EXPRZERO,
-    _ExprOne.VALUE  : EXPRONE
-}
-
 ASTOPS = {
     ExprNot.ASTOP     : ExprNot,
     ExprOr.ASTOP      : ExprOr,

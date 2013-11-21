@@ -68,7 +68,7 @@ def test_box():
     assert Expression.box(1) is EXPRONE
     assert Expression.box('1') is EXPRONE
     assert Expression.box(a) is a
-    nose.tools.assert_raises(TypeError, Expression.box, 42)
+    assert Expression.box(42) is EXPRONE
 
 def test_nor():
     assert Nor() is EXPRONE

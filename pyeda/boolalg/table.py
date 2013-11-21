@@ -388,8 +388,7 @@ class TruthTable(boolfunc.Function):
         elif arg == 1 or arg == '1':
             return TTONE
         else:
-            fstr = "argument cannot be converted to a TruthTable: " + str(arg)
-            raise TypeError(fstr)
+            return CONSTANTS[bool(arg)]
 
     # Specific to TruthTable
     def _iter_restrict(self, zeros, ones):
@@ -453,6 +452,8 @@ class _TTOne(TTConstant):
 
 TTZERO = _TTZero()
 TTONE = _TTOne()
+
+CONSTANTS = [TTZERO, TTONE]
 
 
 class TTVariable(boolfunc.Variable, TruthTable):

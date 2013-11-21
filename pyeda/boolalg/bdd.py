@@ -239,8 +239,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         elif arg == 1 or arg == '1':
             return BDDONE
         else:
-            fstr = "argument cannot be converted to BDD: " + str(arg)
-            raise TypeError(fstr)
+            return CONSTANTS[bool(arg)]
 
     # Specific to BinaryDecisionDiagram
     def traverse(self):
@@ -291,6 +290,8 @@ class _BDDOne(BDDConstant):
 
 BDDZERO = BDDS[BDDNODEZERO] = _BDDZero()
 BDDONE = BDDS[BDDNODEONE] = _BDDOne()
+
+CONSTANTS = [BDDZERO, BDDONE]
 
 
 class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
