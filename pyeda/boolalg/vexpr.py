@@ -34,7 +34,8 @@ def bitvec(name, *slices):
             else:
                 sls.append(slice(sl[1], sl[0]))
         else:
-            raise ValueError("invalid argument")
+            fstr = "expected slice to be an int or (int, int), got {0.__name__}"
+            raise TypeError(fstr.format(type(sl)))
     return _bitvec(name, sls, tuple())
 
 def _bitvec(name, slices, indices):
@@ -57,14 +58,16 @@ def uint2vec(num, length=None):
     """Convert an unsigned integer to a BitVector."""
     assert num >= 0
 
+    _num = num
     items = list()
-    while num != 0:
-        items.append(num & 1)
-        num >>= 1
+    while _num != 0:
+        items.append(_num & 1)
+        _num >>= 1
 
     if length:
         if length < len(items):
-            raise ValueError("overflow: " + str(num))
+            fstr = "overflow: num = {} requires length >= {}, got length = {}"
+            raise ValueError(fstr.format(num, len(items), length))
         else:
             while len(items) < length:
                 items.append(0)
@@ -82,7 +85,8 @@ def int2vec(num, length=None):
 
     if length:
         if length < req_length:
-            raise ValueError("overflow: " + str(num))
+            fstr = "overflow: num = {} requires length >= {}, got length = {}"
+            raise ValueError(fstr.format(num, req_length, length))
         else:
             bv.sext(length - req_length)
 

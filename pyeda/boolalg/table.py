@@ -64,7 +64,8 @@ def truthtable(inputs, outputs):
             elif output in "-xX":
                 yield PC_DC
             else:
-                raise ValueError("invalid output: " + str(output))
+                fstr = "expected output in [01-xX], got {}"
+                raise ValueError(fstr.format(output))
     inputs = [ttvar(v.names, v.indices) for v in inputs]
     pcdata = PCData(items())
     assert len(pcdata) == (1 << len(inputs))

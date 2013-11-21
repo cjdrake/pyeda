@@ -36,10 +36,10 @@ def clog2(num):
     >>> clog2(0)
     Traceback (most recent call last):
         ...
-    ValueError: num must be >= 1
+    ValueError: expected num >= 1
     """
     if num < 1:
-        raise ValueError("num must be >= 1")
+        raise ValueError("expected num >= 1")
     accum, shifter = 0, 1
     while num > shifter:
         shifter <<= 1
@@ -54,10 +54,10 @@ def parity(num):
     >>> parity(-1)
     Traceback (most recent call last):
         ...
-    ValueError: num must be >= 0
+    ValueError: expected num >= 0
     """
     if num < 0:
-        raise ValueError("num must be >= 0")
+        raise ValueError("expected num >= 0")
     par = 0
     while num:
         par ^= (num & 1)
@@ -72,12 +72,12 @@ def boolify(arg):
     >>> boolify(42)
     Traceback (most recent call last):
         ...
-    ValueError: arg not in {0, 1}
+    ValueError: expected arg in {0, 1}
     """
     try:
         return BOOL_DICT[arg]
     except KeyError:
-        raise ValueError("arg not in {0, 1}")
+        raise ValueError("expected arg in {0, 1}")
 
 def cached_property(func):
     """Return a cached property calculated by the input function.

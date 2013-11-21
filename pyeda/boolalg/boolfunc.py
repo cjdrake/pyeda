@@ -632,7 +632,8 @@ class VectorFunction(Slicer):
             elif f.is_one():
                 num += 1 << i
             else:
-                raise ValueError("cannot convert to uint")
+                fstr = "expected all functions to be a constant (0 or 1) form"
+                raise ValueError(fstr)
         return num
 
     def to_int(self):

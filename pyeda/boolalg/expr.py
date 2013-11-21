@@ -129,7 +129,7 @@ def expr2dimacssat(expr):
         fstr = "expected expr to be an Expression, got {0.__name__}"
         raise TypeError(fstr.format(type(expr)))
     if not expr.simplified:
-        raise ValueError("input expression is not simplified")
+        raise ValueError("expected expr to be simplified")
 
     lit2idx = dict()
     idx2var = dict()
@@ -154,14 +154,14 @@ def _expr2sat(expr, lit2idx):
     """Convert an expression to a DIMACS SAT string."""
     if isinstance(expr, ExprLiteral):
         return str(lit2idx[expr])
+    elif isinstance(expr, ExprNot):
+        return "-(" + _expr2sat(expr.arg, lit2idx) + ")"
     elif isinstance(expr, ExprOr):
         return "+(" + " ".join(_expr2sat(arg, lit2idx)
                                for arg in expr.args) + ")"
     elif isinstance(expr, ExprAnd):
         return "*(" + " ".join(_expr2sat(arg, lit2idx)
                                for arg in expr.args) + ")"
-    elif isinstance(expr, ExprNot):
-        return "-(" + _expr2sat(expr.arg, lit2idx) + ")"
     elif isinstance(expr, ExprXor):
         return ("xor(" + " ".join(_expr2sat(arg, lit2idx)
                                   for arg in expr.args) + ")")
@@ -169,7 +169,9 @@ def _expr2sat(expr, lit2idx):
         return "=(" + " ".join(_expr2sat(arg, lit2idx)
                                for arg in expr.args) + ")"
     else:
-        raise ValueError("invalid expression")
+        fstr = ("expected expr to be a Literal or Not/Or/And/Xor/Equal op, "
+                "got {0.__name__}")
+        raise TypeError(fstr.format(type(expr)))
 
 def upoint2exprpoint(upoint):
     """Convert an untyped point to an Expression point."""
@@ -2086,7 +2088,7 @@ class DimacsCNF(object):
             fstr = "expected expr to be an Expression, got {0.__name__}"
             raise TypeError(fstr.format(type(expr)))
         if not expr.is_cnf():
-            raise ValueError("input is not a CNF")
+            raise ValueError("expected expr to be in conjunctive normal form")
 
         self.lit2idx = dict()
         self.idx2var = dict()
