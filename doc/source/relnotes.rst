@@ -4,6 +4,21 @@
   Release Notes
 *****************
 
+Version 0.17
+============
+
+New stuff in this release:
+
+* Added ``assumptions=None`` parameter to PicoSAT ``satisfy_one`` and
+  ``satisfy_all`` functions.
+  This produces a *very* nice speedup in some situations.
+* Got rid of extraneous ``picosat.py`` Python wrapper module.
+  Now the PicoSAT Python interface is implemented by ``picosatmodule.c``.
+* Updated Nor/Nand operators to secondary status.
+  That is, they now can be natively represented by symbolic expressions.
+* Added a Brent-Kung adder to logic.addition module
+* Lots of other miscellaneous cleanup and better error handling
+
 Version 0.16
 ============
 
