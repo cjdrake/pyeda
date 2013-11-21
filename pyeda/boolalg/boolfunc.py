@@ -525,10 +525,11 @@ class Function(object):
         elif isinstance(vs, Variable):
             return [vs]
         else:
-            assert isinstance(vs, collections.Iterable)
-            for v in vs:
-                assert isinstance(v, Variable)
-            return vs
+            if (isinstance(vs, collections.Iterable) and
+                all(isinstance(v, Variable) for v in vs)):
+                return vs
+            else:
+                raise TypeError("expected iter of Variable")
 
 
 class Slicer(object):
@@ -663,7 +664,10 @@ def _expand_vectors(vpoint):
     point = dict()
     for vf, vals in vpoint.items():
         if isinstance(vf, VectorFunction):
-            assert len(vf) == len(vals)
+            if len(vf) != len(vals):
+                fstr = ("invalid vector point: "
+                        "expected 1:1 mapping from VectorFunction => {0, 1}")
+                raise ValueError(fstr)
             for i, val in enumerate(vals):
                 point[vf.getifz(i)] = boolify(val)
         else:

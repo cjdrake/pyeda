@@ -56,7 +56,8 @@ def _bitvec(name, slices, indices):
 
 def uint2vec(num, length=None):
     """Convert an unsigned integer to a BitVector."""
-    assert num >= 0
+    if num < 0:
+        raise ValueError("expected num >= 0")
 
     _num = num
     items = list()
@@ -134,11 +135,13 @@ class BitVector(VectorFunction):
     # Shift operators
     def lsh(self, num, cin=None):
         """Return the vector left shifted by N places."""
-        assert 0 <= num <= len(self)
+        if num < 0 or num > self.__len__():
+            raise ValueError("expected 0 <= num <= {}".format(self.__len__()))
         if cin is None:
             cin = BitVector([0] * num)
         else:
-            assert len(cin) == num
+            if len(cin) != num:
+                raise ValueError("expected length of cin to be equal to num")
         if num == 0:
             return self, BitVector([])
         else:
@@ -147,11 +150,13 @@ class BitVector(VectorFunction):
 
     def rsh(self, num, cin=None):
         """Return the vector right shifted by N places."""
-        assert 0 <= num <= len(self)
+        if num < 0 or num > self.__len__():
+            raise ValueError("expected 0 <= num <= {}".format(self.__len__()))
         if cin is None:
             cin = BitVector([0] * num)
         else:
-            assert len(cin) == num
+            if len(cin) != num:
+                raise ValueError("expected length of cin to be equal to num")
         if num == 0:
             return self, BitVector([])
         else:
@@ -160,7 +165,8 @@ class BitVector(VectorFunction):
 
     def arsh(self, num):
         """Return the vector arithmetically right shifted by N places."""
-        assert 0 <= num <= len(self)
+        if num < 0 or num > self.__len__():
+            raise ValueError("expected 0 <= num <= {}".format(self.__len__()))
         if num == 0:
             return self, BitVector([])
         else:

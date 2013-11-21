@@ -68,7 +68,9 @@ def truthtable(inputs, outputs):
                 raise ValueError(fstr.format(output))
     inputs = [ttvar(v.names, v.indices) for v in inputs]
     pcdata = PCData(items())
-    assert len(pcdata) == (1 << len(inputs))
+    if len(pcdata) != (1 << len(inputs)):
+        fstr = "expected {} outputs, got {}"
+        raise ValueError(fstr.format(1 << len(inputs), len(pcdata)))
     return _truthtable(inputs, pcdata)
 
 def _truthtable(inputs, pcdata):
