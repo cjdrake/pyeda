@@ -2086,24 +2086,25 @@ class DimacsCNF(object):
         if not expr.is_cnf():
             raise ValueError("input is not a CNF")
 
-        lit2idx = dict()
+        self.lit2idx = dict()
         self.idx2var = dict()
         for i, v in enumerate(expr.inputs, start=1):
-            lit2idx[v] = i
-            lit2idx[-v] = -i
+            self.lit2idx[v] = i
+            self.lit2idx[-v] = -i
             self.idx2var[i] = v
 
         if expr is EXPRONE:
-            self.clauses = []
+            clauses = []
         elif isinstance(expr, ExprLiteral):
-            self.clauses = [[lit2idx[expr]]]
+            clauses = [[self.lit2idx[expr]]]
         elif isinstance(expr, ExprOr) and expr.depth == 1:
-            self.clauses = [[lit2idx[lit] for lit in expr.args]]
+            clauses = [[self.lit2idx[lit] for lit in expr.args]]
         elif isinstance(expr, ExprAnd) and expr.depth == 1:
-            self.clauses = [[lit2idx[lit]] for lit in expr.args]
+            clauses = [[self.lit2idx[lit]] for lit in expr.args]
         else:
-            self.clauses = [[lit2idx[lit] for lit in arg.arg_set]
-                            for arg in expr.args]
+            clauses = [[self.lit2idx[lit] for lit in arg.arg_set]
+                        for arg in expr.args]
+        self.clauses = {frozenset(clause) for clause in clauses}
 
     def __repr__(self):
         return self.__str__()
