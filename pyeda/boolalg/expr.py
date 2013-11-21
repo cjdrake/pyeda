@@ -126,7 +126,8 @@ def ast2expr(ast):
 def expr2dimacssat(expr):
     """Convert an expression into an equivalent DIMACS SAT string."""
     if not isinstance(expr, Expression):
-        raise TypeError("input is not an Expression")
+        fstr = "expected expr to be an Expression, got {0.__name__}"
+        raise TypeError(fstr.format(type(expr)))
     if not expr.simplified:
         raise ValueError("input expression is not simplified")
 
@@ -2082,7 +2083,8 @@ class DimacsCNF(object):
 
     def __init__(self, expr):
         if not isinstance(expr, Expression):
-            raise TypeError("input is not an Expression")
+            fstr = "expected expr to be an Expression, got {0.__name__}"
+            raise TypeError(fstr.format(type(expr)))
         if not expr.is_cnf():
             raise ValueError("input is not a CNF")
 
