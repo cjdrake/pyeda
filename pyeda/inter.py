@@ -33,6 +33,7 @@ from pyeda.boolalg.expr import (
     ExprNot, ExprOrAnd, ExprOr, ExprAnd, ExprNor, ExprNand,
     ExprExclusive, ExprXor, ExprXnor, ExprEqual, ExprUnequal,
     ExprImplies, ExprITE,
+    DimacsCNF,
 )
 
 from pyeda.boolalg.table import (
