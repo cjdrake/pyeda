@@ -431,9 +431,6 @@ PyDoc_STRVAR(satisfy_all_docstring,
         Set a limit on the number of decisions. A negative value sets no\n\
         decision limit.\n\
 \n\
-    assumptions : iter of (nonzero) int\n\
-        Add assumptions (unit clauses) to the CNF\n\
-\n\
     Returns\n\
     -------\n\
     iter of tuple of {-1, 0, 1}\n\
@@ -478,16 +475,14 @@ satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     int default_phase = 2; // 0 = false, 1 = true, 2 = Jeroslow-Wang, 3 = random
     int propagation_limit = -1;
     int decision_limit = -1;
-    PyObject *assumptions = NULL;
 
     // Python return value
     SatisfyAllState *state;
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "iO|iiiiO:satisfy_all", keywords,
+            args, kwargs, "iO|iiii:satisfy_all", keywords,
             &nvars, &clauses,
-            &verbosity, &default_phase, &propagation_limit, &decision_limit,
-            &assumptions)) {
+            &verbosity, &default_phase, &propagation_limit, &decision_limit)) {
         goto SATISFY_ALL_ERROR;
     }
 
@@ -514,11 +509,6 @@ satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
 
     if (!add_clauses(picosat, clauses)) {
         goto SATISFY_ALL_RESET_PICOSAT;
-    }
-    if (assumptions != NULL && assumptions != Py_None) {
-        if (!add_assumptions(picosat, assumptions)) {
-            goto SATISFY_ALL_RESET_PICOSAT;
-        }
     }
 
     // picosat_set_seed(picosat, seed);
