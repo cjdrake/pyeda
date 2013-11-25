@@ -7,6 +7,18 @@
 Version 0.17
 ============
 
+Release 0.17.1
+--------------
+
+Got rid of the ``assumptions`` parameter from ``boolalg.picosat.satisfy_all``
+function, because it had no effect.
+Read through ``picosat.h`` to figure out what happened,
+and you need to re-apply assumptions for every call to ``picosat_sat``.
+For now, the usage model seems a little dubious, so just got rid of it.
+
+Release 0.17.0
+--------------
+
 New stuff in this release:
 
 * Added ``assumptions=None`` parameter to PicoSAT ``satisfy_one`` and
