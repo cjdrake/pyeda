@@ -303,9 +303,47 @@ Here is how to give variables indices using the ``exprvar`` function::
 
 You can even give variables multiple indices by using a tuple::
 
-   >>> x_0_1_2_3 = var('x', (0, 1, 2 ,3))
+   >>> x_0_1_2_3 = exprvar('x', (0, 1, 2 ,3))
    >>> x_0_1_2_3
    x[0][1][2][3]
+
+Assigning individual variables names like this is a bit cumbersome.
+It is much easier to just use the ``bitvec`` factory function::
+
+   >>> X = bitvec('x', 8)
+   >>> X
+   [x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]]
+   >>> X[3]
+   x[3]
+   >>> X[2:5]
+   [x[2], x[3], x[4]]
+   >>> X[:5]
+   [x[0], x[1], x[2], x[3], x[4]]
+   >>> X[5:]
+   [x[5], x[6], x[7]]
+   >>> X[-1]
+   x[7]
+
+Similary for multi-dimensional bit vectors::
+
+   >>> X = bitvec('x', 4, 4)
+   >>> X.items
+   [[x[0][0], x[0][1], x[0][2], x[0][3]],
+    [x[1][0], x[1][1], x[1][2], x[1][3]],
+    [x[2][0], x[2][1], x[2][2], x[2][3]],
+    [x[3][0], x[3][1], x[3][2], x[3][3]]]
+   >>> X[2]
+   [x[2][0], x[2][1], x[2][2], x[2][3]]
+   >>> X[2][2]
+   x[2][2]
+   >>> X[1:3].items
+   [[x[1][0], x[1][1], x[1][2], x[1][3]], [x[2][0], x[2][1], x[2][2], x[2][3]]]
+   >>> X[1:3][2]
+   [x[2][0], x[2][1], x[2][2], x[2][3]]
+   >>> X[2][1:3]
+   [x[2][1], x[2][2]]
+   >>> X[-1][-1]
+   x[3][3]
 
 Points in Boolean Space
 =======================
