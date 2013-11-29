@@ -44,14 +44,14 @@ it is obvious that exactly one queen must be placed on each row,
 and each column.
 
 First, we write a constraint that says
-"exactly one queen must be placed on each row."
+"exactly one queen must be placed on each row".
 
 ::
 
    >>> R = And(*[OneHot(*[X[r][c] for c in range(8)]) for r in range(8)])
 
 Next, we write a constraint that says
-"exactly one queen must be placed on each column."
+"exactly one queen must be placed on each column".
 
 ::
 
