@@ -32,6 +32,7 @@ KEYWORDS = [
     "logic synthesis",
     "math",
     "mathematics",
+    "PicoSAT",
     "satisfiability",
     "SAT",
 ]
