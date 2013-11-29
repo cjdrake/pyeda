@@ -58,8 +58,8 @@ Installation from the repository::
 
    $ python setup.py install
 
-Getting Started With Logic Expressions
-======================================
+Logic Expressions
+=================
 
 Invoke your favorite Python terminal,
 and invoke an interactive ``pyeda`` session::
@@ -223,8 +223,8 @@ Convert between disjunctive and conjunctive normal forms::
    >>> h
    a' * b' * c + a' * b * c' + a * b' * c' + a * b * c
 
-Getting Started With Multi-Dimensional Bit Vectors
-==================================================
+Multi-Dimensional Bit Vectors
+=============================
 
 Create some four-bit vectors, and use slice operators::
 
