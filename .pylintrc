@@ -41,10 +41,11 @@ load-plugins=
 # --disable=W"
 # C0302 = Too many lines in module
 # W0142 = Used * or ** magic
+# W0212 = Access to a protected member of a client class
 # W0602 = Using global for ... but no assignment is done
 # R0903 = Too few public methods
 # R0904 = Too many public methods
-disable=similarities,C0302,W0142,W0223,W0602,R0903,R0904
+disable=similarities,C0302,W0142,W0212,W0223,W0602,R0903,R0904
 
 [REPORTS]
 

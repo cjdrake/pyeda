@@ -87,7 +87,6 @@ def cached_property(func):
     is particularly useful when the property involves some non-trivial
     computation.
     """
-    # pylint: disable=W0212
     def get(self):
         """Return the cached property."""
         try:
