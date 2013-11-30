@@ -583,10 +583,30 @@ class Expression(boolfunc.Function):
         else:
             return self
 
+    def _flatten(self, op):
+        """Return a factored, flattened expression."""
+        raise NotImplementedError()
+
+    def flatten(self, op):
+        """Return a factored, flattened expression.
+
+        Use the distributive law to flatten all nested expressions:
+        a + (b * c) = (a + b) * (a + c)
+        a * (b + c) = (a * b) + (a * c)
+
+        op : ExprOr or ExprAnd
+            The operator you want to flatten. For example, if you want to
+            produce an ExprOr expression, flatten all the nested ExprAnds.
+        """
+        if op is ExprOr or op is ExprAnd:
+            return self.factor()._flatten(op)
+        else:
+            raise ValueError("expected op to be ExprOr or ExprAnd")
+
     def to_dnf(self, flatten=True):
         """Return the expression in disjunctive normal form."""
         if flatten:
-            return self.factor().flatten(ExprAnd)
+            return self.factor()._flatten(ExprAnd)
         else:
             terms = list()
             for upnt in _iter_ones(self):
@@ -607,7 +627,7 @@ class Expression(boolfunc.Function):
     def to_cnf(self, flatten=True):
         """Return the expression in conjunctive normal form."""
         if flatten:
-            return self.factor().flatten(ExprOr)
+            return self.factor()._flatten(ExprOr)
         else:
             terms = list()
             for upnt in _iter_zeros(self):
@@ -710,8 +730,7 @@ class ExprConstant(Expression, sat.DPLLInterface):
         return (self.ASTOP, self.VALUE)
 
     # FactoredExpression
-    def flatten(self, op):
-        """Degenerate form of a flattened expression."""
+    def _flatten(self, op):
         return self
 
     def _absorb(self):
@@ -831,8 +850,7 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         return True
 
     # FactoredExpression
-    def flatten(self, op):
-        """Degenerate form of a flattened expression."""
+    def _flatten(self, op):
         return self
 
     # FlattenedExpression
@@ -1215,24 +1233,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         raise NotImplementedError()
 
     # FactoredExpression
-    def flatten(self, op):
-        """Return a flattened OR/AND expression.
-
-        Use the distributive law to flatten all nested expressions:
-        a + (b * c) = (a + b) * (a + c)
-        a * (b + c) = (a * b) + (a * c)
-
-        Parameters
-        ----------
-
-        op : ExprOr or ExprAnd
-            The operator you want to flatten. For example, if you want to
-            produce an ExprOr expression, flatten all the nested ExprAnds.
-
-        .. NOTE:: This method assumes the expression is already factored.
-                  Do NOT call this method directly.
-                  'to_cnf' methods instead.
-        """
+    def _flatten(self, op):
         if isinstance(self, op):
             self_dual = self.get_dual()
             for i, argi in enumerate(self.args):
@@ -1240,10 +1241,10 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                     others = self.args[:i] + self.args[i+1:]
                     args = [op(arg, *others) for arg in argi.args]
                     expr = op.get_dual()(*args).simplify()
-                    return expr.flatten(op)._absorb()
+                    return expr._flatten(op)._absorb()
             return self
         else:
-            args = [arg.flatten(op)._absorb() if arg.depth > 1 else arg
+            args = [arg._flatten(op)._absorb() if arg.depth > 1 else arg
                     for arg in self.args]
             return op.get_dual()(*args).simplify()
 
