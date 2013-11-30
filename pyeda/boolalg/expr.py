@@ -625,6 +625,21 @@ class Expression(boolfunc.Function):
         # pylint: disable=R0201
         return False
 
+    def _absorb(self):
+        """Return the DNF/CNF expression after absorption."""
+        raise NotImplementedError()
+
+    def absorb(self):
+        """Return the DNF/CNF expression after absorption.
+
+        a + (a * b) = a
+        a * (a + b) = a
+        """
+        if self.is_dnf() or self.is_cnf():
+            return self._absorb()
+        else:
+            raise ValueError("expected expression to be in normal form")
+
     def tseitin(self, auxvarname='aux'):
         """Convert the expression to Tseitin's encoding."""
         if self.is_cnf():
@@ -699,8 +714,7 @@ class ExprConstant(Expression, sat.DPLLInterface):
         """Degenerate form of a flattened expression."""
         return self
 
-    def absorb(self):
-        """Degenerate form of a flattened expression."""
+    def _absorb(self):
         return self
 
     def reduce(self):
@@ -827,8 +841,7 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         """Return the argument set for a normal form term."""
         return frozenset([self])
 
-    def absorb(self):
-        """Degenerate form of a flattened expression."""
+    def _absorb(self):
         return self
 
     def reduce(self):
@@ -1217,7 +1230,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
             produce an ExprOr expression, flatten all the nested ExprAnds.
 
         .. NOTE:: This method assumes the expression is already factored.
-                  Do NOT call this method directly -- use the 'to_dnf' or
+                  Do NOT call this method directly.
                   'to_cnf' methods instead.
         """
         if isinstance(self, op):
@@ -1227,10 +1240,10 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                     others = self.args[:i] + self.args[i+1:]
                     args = [op(arg, *others) for arg in argi.args]
                     expr = op.get_dual()(*args).simplify()
-                    return expr.flatten(op).absorb()
+                    return expr.flatten(op)._absorb()
             return self
         else:
-            args = [arg.flatten(op).absorb() if arg.depth > 1 else arg
+            args = [arg.flatten(op)._absorb() if arg.depth > 1 else arg
                     for arg in self.args]
             return op.get_dual()(*args).simplify()
 
@@ -1240,16 +1253,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         """Return the argument set for a normal form term."""
         return frozenset(self.args)
 
-    def absorb(self):
-        """Return the OR/AND expression after absorption.
-
-        a + (a * b) = a
-        a * (a + b) = a
-
-        .. NOTE:: This method assumes the expression is already factored and
-                  flattened. Do NOT call this method directly -- use the
-                  'to_dnf' or 'to_cnf' methods instead.
-        """
+    def _absorb(self):
         dual = self.get_dual()
 
         # Get rid of all equivalent terms
@@ -2201,7 +2205,7 @@ def _complete_sum(dnf):
         if isinstance(f, ExprAnd):
             f = Or(*[And(x, y) for x in f.args[0].arg_set
                                for y in f.args[1].arg_set])
-        return f.absorb()
+        return f._absorb()
 
 
 # Convenience dictionaries
