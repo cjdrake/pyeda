@@ -615,7 +615,7 @@ class Expression(boolfunc.Function):
         return self.to_dnf(flatten)._reduce()
 
     def is_dnf(self):
-        """Return whether this expression is in disjunctive normal form."""
+        """Return True if this expression is in disjunctive normal form."""
         # pylint: disable=R0201
         return False
 
@@ -636,7 +636,7 @@ class Expression(boolfunc.Function):
         return self.to_cnf(flatten)._reduce()
 
     def is_cnf(self):
-        """Return whether this expression is in conjunctive normal form."""
+        """Return True if this expression is in conjunctive normal form."""
         # pylint: disable=R0201
         return False
 
@@ -685,7 +685,7 @@ class Expression(boolfunc.Function):
         return _complete_sum(dnf)
 
     def equivalent(self, other):
-        """Return whether this expression is equivalent to another."""
+        """Return True if this expression is equivalent to other."""
         other = self.box(other)
         f = Xor(self, other)
         return f.satisfy_one() is None
