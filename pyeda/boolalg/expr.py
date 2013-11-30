@@ -617,7 +617,7 @@ class Expression(boolfunc.Function):
 
     def to_cdnf(self, flatten=True):
         """Return the expression in canonical disjunctive normal form."""
-        return self.to_dnf(flatten).reduce()
+        return self.to_dnf(flatten)._reduce()
 
     def is_dnf(self):
         """Return whether this expression is in disjunctive normal form."""
@@ -638,7 +638,7 @@ class Expression(boolfunc.Function):
 
     def to_ccnf(self, flatten=True):
         """Return the expression in canonical conjunctive normal form."""
-        return self.to_cnf(flatten).reduce()
+        return self.to_cnf(flatten)._reduce()
 
     def is_cnf(self):
         """Return whether this expression is in conjunctive normal form."""
@@ -657,6 +657,17 @@ class Expression(boolfunc.Function):
         """
         if self.is_dnf() or self.is_cnf():
             return self._absorb()
+        else:
+            raise ValueError("expected expression to be in normal form")
+
+    def _reduce(self):
+        """Reduce the DNF/CNF expression to a canonical form."""
+        raise NotImplementedError
+
+    def reduce(self):
+        """Reduce the DNF/CNF expression to a canonical form."""
+        if self.is_dnf() or self.is_cnf():
+            return self._reduce()
         else:
             raise ValueError("expected expression to be in normal form")
 
@@ -736,8 +747,7 @@ class ExprConstant(Expression, sat.DPLLInterface):
     def _absorb(self):
         return self
 
-    def reduce(self):
-        """Degenerate form of a reduced expression."""
+    def _reduce(self):
         return self
 
 
@@ -862,8 +872,7 @@ class ExprLiteral(Expression, sat.DPLLInterface):
     def _absorb(self):
         return self
 
-    def reduce(self):
-        """Degenerate form of a reduced expression."""
+    def _reduce(self):
         return self
 
     @cached_property
@@ -1281,12 +1290,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         obj.simplified = True
         return obj
 
-    def reduce(self):
-        """Reduce this expression to a canonical form.
-
-        .. NOTE:: This method assumes the expression is already in normal form.
-                  Do NOT call this method directly. Use 'to_cdnf' instead.
-        """
+    def _reduce(self):
         if self.depth == 1:
             return self
 
