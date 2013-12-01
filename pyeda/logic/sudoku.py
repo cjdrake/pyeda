@@ -5,7 +5,7 @@ Logic functions for Sudoku
 # Disable "invalid variable name"
 # pylint: disable=C0103
 
-from pyeda.boolalg.expr import And, OneHot, DimacsCNF
+from pyeda.boolalg.expr import And, OneHot, expr2dimacscnf
 from pyeda.boolalg.vexpr import bitvec
 from pyeda.boolalg.picosat import satisfy_one
 
@@ -35,7 +35,7 @@ class SudokuSolver(object):
                                for c in range(1, 4)])
                       for v in range(1, 10)])
                   for br in range(3) for bc in range(3)])
-        self.S = DimacsCNF(And(V, R, C, B))
+        self.S = expr2dimacscnf(And(V, R, C, B))
 
     def solve(self, grid):
         """Return a solution point for a Sudoku grid."""
@@ -52,7 +52,7 @@ class SudokuSolver(object):
         chars = [c for c in grid if c in DIGITS or c in "0."]
         if len(chars) != 9**2:
             raise ValueError("expected 9x9 grid")
-        return [self.S.lit2idx[self.X[i // 9 + 1][i % 9 + 1][int(c)]]
+        return [self.S.litmap[self.X[i // 9 + 1][i % 9 + 1][int(c)]]
                 for i, c in enumerate(chars) if c in DIGITS]
 
     def _soln2str(self, soln, fancy=False):

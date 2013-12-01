@@ -6,6 +6,7 @@ Interface Functions:
     exprcomp
     expr
     ast2expr
+    expr2dimacscnf
     expr2dimacssat
     upoint2exprpoint
 
@@ -43,7 +44,10 @@ Interface Classes:
         ExprImplies
         ExprITE
 
-    DimacsCNF
+    NormalForm
+        DisjNormalForm
+        ConjNormalForm
+            DimacsCNF
 """
 
 # Disable "redefining name from outer scope"
@@ -123,6 +127,10 @@ def ast2expr(ast):
         args = [ast2expr(arg) for arg in ast[1:]]
         return ASTOPS[ast[0]](*args)
 
+def expr2dimacscnf(expr):
+    """Convert an expression into an equivalent DIMACS CNF."""
+    return DimacsCNF(*expr.encode_cnf())
+
 def expr2dimacssat(expr):
     """Convert an expression into an equivalent DIMACS SAT string."""
     if not isinstance(expr, Expression):
@@ -131,14 +139,9 @@ def expr2dimacssat(expr):
     if not expr.simplified:
         raise ValueError("expected expr to be simplified")
 
-    lit2idx = dict()
-    idx2var = dict()
-    for i, v in enumerate(expr.inputs, start=1):
-        lit2idx[v] = i
-        lit2idx[-v] = -i
-        idx2var[i] = v
+    nvars, litmap = expr.encode_inputs()
 
-    formula = _expr2sat(expr, lit2idx)
+    formula = _expr2sat(expr, litmap)
     if 'xor' in formula:
         if '=' in formula:
             fmt = 'satex'
@@ -148,25 +151,26 @@ def expr2dimacssat(expr):
         fmt = 'sate'
     else:
         fmt = 'sat'
-    return "p {} {}\n{}".format(fmt, len(idx2var), formula)
 
-def _expr2sat(expr, lit2idx):
+    return "p {} {}\n{}".format(fmt, nvars, formula)
+
+def _expr2sat(expr, litmap):
     """Convert an expression to a DIMACS SAT string."""
     if isinstance(expr, ExprLiteral):
-        return str(lit2idx[expr])
+        return str(litmap[expr])
     elif isinstance(expr, ExprNot):
-        return "-(" + _expr2sat(expr.arg, lit2idx) + ")"
+        return "-(" + _expr2sat(expr.arg, litmap) + ")"
     elif isinstance(expr, ExprOr):
-        return "+(" + " ".join(_expr2sat(arg, lit2idx)
+        return "+(" + " ".join(_expr2sat(arg, litmap)
                                for arg in expr.args) + ")"
     elif isinstance(expr, ExprAnd):
-        return "*(" + " ".join(_expr2sat(arg, lit2idx)
+        return "*(" + " ".join(_expr2sat(arg, litmap)
                                for arg in expr.args) + ")"
     elif isinstance(expr, ExprXor):
-        return ("xor(" + " ".join(_expr2sat(arg, lit2idx)
+        return ("xor(" + " ".join(_expr2sat(arg, litmap)
                                   for arg in expr.args) + ")")
     elif isinstance(expr, ExprEqual):
-        return "=(" + " ".join(_expr2sat(arg, lit2idx)
+        return "=(" + " ".join(_expr2sat(arg, litmap)
                                for arg in expr.args) + ")"
     else:
         fstr = ("expected expr to be a Literal or Not/Or/And/Xor/Equal op, "
@@ -446,7 +450,7 @@ class Expression(boolfunc.Function):
     def satisfy_one(self):
         if self.is_cnf():
             if PICOSAT_IMPORTED:
-                cnf = DimacsCNF(self)
+                cnf = expr2dimacscnf(self)
                 soln = picosat.satisfy_one(cnf.nvars, cnf.clauses)
                 if soln is None:
                     return None
@@ -463,7 +467,7 @@ class Expression(boolfunc.Function):
 
     def satisfy_all(self):
         if self.is_cnf() and PICOSAT_IMPORTED:
-            cnf = DimacsCNF(self)
+            cnf = expr2dimacscnf(self)
             for soln in picosat.satisfy_all(cnf.nvars, cnf.clauses):
                 yield cnf.soln2point(soln)
         else:
@@ -666,6 +670,44 @@ class Expression(boolfunc.Function):
         else:
             raise ValueError("expected expression to be in normal form")
 
+    def encode_inputs(self):
+        """Return a compact encoding for input variables."""
+        litmap = dict()
+        nvars = 0
+        for i, v in enumerate(self.inputs, start=1):
+            litmap[v] = i
+            litmap[-v] = -i
+            litmap[i] = v
+            litmap[-i] = -v
+            nvars += 1
+        return nvars, litmap
+
+    def _encode_clause(self, litmap):
+        """Encode as a compact DNF/CNF clause."""
+        raise NotImplementedError()
+
+    def _encode_dnf(self):
+        """Encode as a compact DNF."""
+        raise NotImplementedError()
+
+    def _encode_cnf(self):
+        """Encode as a compact CNF."""
+        raise NotImplementedError()
+
+    def encode_dnf(self):
+        """Encode as a compact DNF."""
+        if self.is_dnf():
+            return self._encode_dnf()
+        else:
+            raise ValueError("expected a DNF expression")
+
+    def encode_cnf(self):
+        """Encode as a compact CNF."""
+        if self.is_cnf():
+            return self._encode_cnf()
+        else:
+            raise ValueError("expected a CNF expression")
+
     def tseitin(self, auxvarname='aux'):
         """Convert the expression to Tseitin's encoding."""
         if self.is_cnf():
@@ -771,6 +813,11 @@ class _ExprZero(ExprConstant):
     def is_dnf(self):
         return True
 
+    def _encode_dnf(self):
+        nvars, litmap = self.encode_inputs()
+        clauses = set()
+        return nvars, litmap, clauses
+
     @cached_property
     def mincover(self):
         """Return the minterm cover."""
@@ -810,6 +857,11 @@ class _ExprOne(ExprConstant):
 
     def is_cnf(self):
         return True
+
+    def _encode_cnf(self):
+        nvars, litmap = self.encode_inputs()
+        clauses = set()
+        return nvars, litmap, clauses
 
     @cached_property
     def mincover(self):
@@ -869,6 +921,19 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     def _reduce(self):
         return self
+
+    def _encode_clause(self, litmap):
+        return frozenset([litmap[self]])
+
+    def _encode_dnf(self):
+        nvars, litmap = self.encode_inputs()
+        clauses = {self._encode_clause(litmap)}
+        return nvars, litmap, clauses
+
+    def _encode_cnf(self):
+        nvars, litmap = self.encode_inputs()
+        clauses = {self._encode_clause(litmap)}
+        return nvars, litmap, clauses
 
     @cached_property
     def mincover(self):
@@ -1303,6 +1368,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         obj._simplified = True
         return obj
 
+    def _encode_clause(self, litmap):
+        return frozenset(litmap[arg] for arg in self.args)
+
     def _term_expand(self, term, vs):
         """Return a term expanded by a list of variables."""
         raise NotImplementedError()
@@ -1350,6 +1418,16 @@ class ExprOr(ExprOrAnd):
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
         else:
             return False
+
+    def _encode_dnf(self):
+        nvars, litmap = self.encode_inputs()
+        clauses = {arg._encode_clause(litmap) for arg in self.args}
+        return nvars, litmap, clauses
+
+    def _encode_cnf(self):
+        nvars, litmap = self.encode_inputs()
+        clauses = {self._encode_clause(litmap)}
+        return nvars, litmap, clauses
 
     # DPLL IF
     def bcp(self):
@@ -1436,6 +1514,16 @@ class ExprAnd(ExprOrAnd):
                    )
         else:
             return False
+
+    def _encode_dnf(self):
+        nvars, litmap = self.encode_inputs()
+        clauses = {self._encode_clause(litmap)}
+        return nvars, litmap, clauses
+
+    def _encode_cnf(self):
+        nvars, litmap = self.encode_inputs()
+        clauses = {arg._encode_clause(litmap) for arg in self.args}
+        return nvars, litmap, clauses
 
     # DPLL IF
     def bcp(self):
@@ -2084,61 +2172,82 @@ class ExprITE(_ArgumentContainer):
         return max(arg.depth + 2 for arg in self.args)
 
 
-class DimacsCNF(object):
-    """Wrapper class for a DIMACS CNF representation"""
+class NormalForm(object):
+    """Normal form expression"""
 
-    def __init__(self, expr):
-        if not isinstance(expr, Expression):
-            fstr = "expected expr to be an Expression, got {0.__name__}"
-            raise TypeError(fstr.format(type(expr)))
-        if not expr.is_cnf():
-            raise ValueError("expected expr to be in conjunctive normal form")
-
-        self.lit2idx = dict()
-        self.idx2var = dict()
-        for i, v in enumerate(expr.inputs, start=1):
-            self.lit2idx[v] = i
-            self.lit2idx[-v] = -i
-            self.idx2var[i] = v
-
-        if expr is EXPRONE:
-            clauses = []
-        elif isinstance(expr, ExprLiteral):
-            clauses = [[self.lit2idx[expr]]]
-        elif isinstance(expr, ExprOr) and expr.depth == 1:
-            clauses = [[self.lit2idx[lit] for lit in expr.args]]
-        elif isinstance(expr, ExprAnd) and expr.depth == 1:
-            clauses = [[self.lit2idx[lit]] for lit in expr.args]
-        else:
-            clauses = [[self.lit2idx[lit] for lit in arg.arg_set]
-                        for arg in expr.args]
-        self.clauses = {frozenset(clause) for clause in clauses}
+    def __init__(self, nvars, litmap, clauses):
+        self.nvars = nvars
+        self.litmap = litmap
+        self.clauses = clauses
 
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
-        return "p cnf {0.nvars} {0.nclauses}\n{0._formula}".format(self)
+        return "\n".join(" ".join(str(idx) for idx in clause) + " 0"
+                         for clause in self.clauses)
 
-    @property
-    def nvars(self):
-        """Return the count of variables in the CNF."""
-        return len(self.idx2var)
-
-    @property
+    @cached_property
     def nclauses(self):
         """Return the count of clauses in the CNF."""
         return len(self.clauses)
 
-    @property
-    def _formula(self):
-        """Return the formula string."""
-        return "\n".join(" ".join(str(lit) for lit in clause) + " 0"
-                         for clause in self.clauses)
+    def invert(self):
+        """Return the inverse normal form expression."""
+        raise NotImplementedError()
+
+    def reduce(self):
+        """Reduce to a canonical form."""
+        support = frozenset(range(1, self.nvars+1))
+        new_clauses = set()
+        for clause in self.clauses:
+            vs = list(support - {abs(uniqid) for uniqid in clause})
+            if vs:
+                for num in range(1 << len(vs)):
+                    new_part = { v if bit_on(num, i) else -v
+                                 for i, v in enumerate(vs) }
+                    new_clauses.add(clause | new_part)
+            else:
+                new_clauses.add(clause)
+        return self.__class__(self.nvars, self.litmap, new_clauses)
+
+
+class DisjNormalForm(NormalForm):
+    """Disjunctive normal form expression"""
+
+    def decode(self):
+        """Convert the DNF to an expression."""
+        return Or(*[And(*[self.litmap[idx] for idx in clause])
+                    for clause in self.clauses])
+
+    def invert(self):
+        clauses = {frozenset(-idx for idx in clause) for clause in self.clauses}
+        return ConjNormalForm(self.nvars, self.litmap, clauses)
+
+
+class ConjNormalForm(NormalForm):
+    """Conjunctive normal form expression"""
+
+    def decode(self):
+        """Convert the CNF to an expression."""
+        return And(*[Or(*[self.litmap[idx] for idx in clause])
+                     for clause in self.clauses])
+
+    def invert(self):
+        clauses = {frozenset(-idx for idx in clause) for clause in self.clauses}
+        return DisjNormalForm(self.nvars, self.litmap, clauses)
+
+
+class DimacsCNF(ConjNormalForm):
+    """Wrapper class for a DIMACS CNF representation"""
+
+    def __str__(self):
+        formula = super(DimacsCNF, self).__str__()
+        return "p cnf {0.nvars} {0.nclauses}\n{1}".format(self, formula)
 
     def soln2point(self, soln):
         """Convert a solution vector to a point."""
-        return { self.idx2var[i]: int(val > 0)
+        return { self.litmap[i]: int(val > 0)
                  for i, val in enumerate(soln, start=1) }
 
 
