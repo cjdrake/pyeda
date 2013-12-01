@@ -129,6 +129,9 @@ def ast2expr(ast):
 
 def expr2dimacscnf(expr):
     """Convert an expression into an equivalent DIMACS CNF."""
+    if not isinstance(expr, Expression):
+        fstr = "expected expr to be an Expression, got {0.__name__}"
+        raise TypeError(fstr.format(type(expr)))
     return DimacsCNF(*expr.encode_cnf())
 
 def expr2dimacssat(expr):
