@@ -17,7 +17,6 @@ Features:
   * Logic expressions
   * Truth tables, with three output states (0, 1, "don't care")
   * Reduced, ordered binary decision diagrams (ROBDDs)
-  * Fast, disjunctive/conjunctive normal form logic expressions
 
 * SAT solvers:
 

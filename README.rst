@@ -17,7 +17,6 @@ Features
   * Logic expressions
   * Truth tables, with three output states (0, 1, "don't care")
   * Reduced, ordered binary decision diagrams (ROBDDs)
-  * Fast, disjunctive/conjunctive normal form logic expressions
 
 * SAT solvers:
 
@@ -269,8 +268,8 @@ Create and test functions that implement non-trivial logic such as arithmetic::
 Other Function Representations
 ==============================
 
-Consult the `documentation <http://pyeda.rtfd.org>`_ for information on
-normal form expressions, truth tables, and binary decision diagrams.
+Consult the `documentation <http://pyeda.rtfd.org>`_ for information about
+truth tables, and binary decision diagrams.
 Each function representation has different trade-offs,
 so always use the right one for the job.
 
