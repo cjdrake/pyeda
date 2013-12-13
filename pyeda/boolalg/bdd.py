@@ -258,22 +258,22 @@ class BinaryDecisionDiagram(boolfunc.Function):
 class BDDConstant(BinaryDecisionDiagram):
     """Binary decision diagram constant"""
 
-    VAL = NotImplemented
+    VALUE = NotImplemented
 
     def __bool__(self):
-        return bool(self.VAL)
+        return bool(self.VALUE)
 
     def __int__(self):
-        return self.VAL
+        return self.VALUE
 
     def __str__(self):
-        return str(self.VAL)
+        return str(self.VALUE)
 
 
 class _BDDZero(BDDConstant):
     """Binary decision diagram zero"""
 
-    VAL = 0
+    VALUE = 0
 
     def __init__(self):
         super(_BDDZero, self).__init__(BDDNODEZERO)
@@ -282,7 +282,7 @@ class _BDDZero(BDDConstant):
 class _BDDOne(BDDConstant):
     """Binary decision diagram one"""
 
-    VAL = 1
+    VALUE = 1
 
     def __init__(self):
         super(_BDDOne, self).__init__(BDDNODEONE)
