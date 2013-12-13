@@ -254,6 +254,29 @@ class BinaryDecisionDiagram(boolfunc.Function):
         other = self.box(other)
         return self.node is other.node
 
+    def to_dot(self, name='BDD'):
+        """Convert to DOT language representation."""
+        parts = ['digraph', name, '{']
+        for node in self.traverse():
+            if node is BDDNODEZERO:
+                parts += ['n' + str(id(node)), '[label=0,shape=box];']
+            elif node is BDDNODEONE:
+                parts += ['n' + str(id(node)), '[label=1,shape=box];']
+            else:
+                v = BDDVARIABLES[node.root]
+                parts.append('n' + str(id(node)))
+                parts.append('[label="{}",shape=circle];'.format(v))
+        for node in self.traverse():
+            if node is not BDDNODEZERO and node is not BDDNODEONE:
+                parts += [ 'n' + str(id(node)), '->',
+                           'n' + str(id(node.low)),
+                           '[label=0,style=dashed];' ]
+                parts += [ 'n' + str(id(node)), '->',
+                           'n' + str(id(node.high)),
+                           '[label=1];' ]
+        parts.append('}')
+        return " ".join(parts)
+
 
 class BDDConstant(BinaryDecisionDiagram):
     """Binary decision diagram constant"""
