@@ -533,6 +533,15 @@ class Expression(boolfunc.Function):
             return CONSTANTS[bool(arg)]
 
     # Specific to Expression
+    def traverse(self):
+        """Iterate through all nodes in this expression in DFS order."""
+        for expr in self._traverse(set()):
+            yield expr
+
+    def _traverse(self, visited):
+        """Iterate through all nodes in this expression in DFS order."""
+        raise NotImplementedError()
+
     def invert(self):
         """Return an inverted expression."""
         raise NotImplementedError()
@@ -735,6 +744,46 @@ class Expression(boolfunc.Function):
         f = Xor(self, other)
         return f.satisfy_one() is None
 
+    def to_dot(self, name='EXPR', symbol=True):
+        """Convert to DOT language representation."""
+        parts = ['digraph', name, '{', 'rankdir=BT;']
+        for expr in self.traverse():
+            if expr is EXPRZERO:
+                parts += ['n' + str(id(expr)), '[label=0,shape=box]']
+            elif expr is EXPRONE:
+                parts += ['n' + str(id(expr)), '[label=1,shape=box]']
+            elif isinstance(expr, ExprLiteral):
+                parts += [ 'n' + str(id(expr)),
+                           '[label="{}",shape=box]'.format(expr) ]
+            else:
+                parts.append('n' + str(id(expr)))
+                if symbol:
+                    parts.append('[label="{0.SYMBOL}",shape=circle]'.format(expr))
+                else:
+                    parts.append("[label={0.ASTOP},shape=circle]".format(expr))
+        for expr in self.traverse():
+            if isinstance(expr, ExprNot):
+                parts += [ 'n' + str(id(expr.arg)), '->',
+                           'n' + str(id(expr)) ]
+            elif isinstance(expr, ExprImplies):
+                parts += [ 'n' + str(id(expr.args[0])), '->',
+                           'n' + str(id(expr)), '[label=p]' ]
+                parts += [ 'n' + str(id(expr.args[1])), '->',
+                           'n' + str(id(expr)), '[label=q]' ]
+            elif isinstance(expr, ExprITE):
+                parts += [ 'n' + str(id(expr.args[0])), '->',
+                           'n' + str(id(expr)), '[label=s]' ]
+                parts += [ 'n' + str(id(expr.args[1])), '->',
+                           'n' + str(id(expr)), '[label=d0]' ]
+                parts += [ 'n' + str(id(expr.args[2])), '->',
+                           'n' + str(id(expr)), '[label=d1]' ]
+            elif isinstance(expr, _ArgumentContainer):
+                for arg in expr.args:
+                    parts += [ 'n' + str(id(arg)), '->',
+                               'n' + str(id(expr)) ]
+        parts.append('}')
+        return " ".join(parts)
+
 
 class ExprConstant(Expression, sat.DPLLInterface):
     """Expression constant"""
@@ -767,6 +816,11 @@ class ExprConstant(Expression, sat.DPLLInterface):
         return self
 
     # From Expression
+    def _traverse(self, visited):
+        if self not in visited:
+            visited.add(self)
+            yield self
+
     def simplify(self):
         return self
 
@@ -893,6 +947,11 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         self._simplified = True
 
     # From Expression
+    def _traverse(self, visited):
+        if self not in visited:
+            visited.add(self)
+            yield self
+
     def simplify(self):
         return self
 
@@ -1078,6 +1137,8 @@ class ExprNot(Expression):
     """Expression NOT operator"""
 
     ASTOP = 'not'
+    # Logical NOT - U00AC
+    SYMBOL = '¬'
 
     def __new__(cls, arg):
         if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
@@ -1112,6 +1173,13 @@ class ExprNot(Expression):
             return self
 
     # From Expression
+    def _traverse(self, visited):
+        for expr in self.arg._traverse(visited):
+            yield expr
+        if self not in visited:
+            visited.add(self)
+            yield self
+
     def invert(self):
         return self.arg
 
@@ -1167,6 +1235,14 @@ class _ArgumentContainer(Expression):
             return self.simplify()
 
     # From Expression
+    def _traverse(self, visited):
+        for arg in self.args:
+            for expr in arg._traverse(visited):
+                yield expr
+        if self not in visited:
+            visited.add(self)
+            yield self
+
     def to_ast(self):
         return (self.ASTOP, ) + tuple(arg.to_ast() for arg in self.args)
 
@@ -1383,6 +1459,7 @@ class ExprOr(ExprOrAnd):
     """Expression OR operator"""
 
     ASTOP = 'or'
+    SYMBOL = '+'
     PRECEDENCE = 2
 
     def __str__(self):
@@ -1393,7 +1470,8 @@ class ExprOr(ExprOrAnd):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        return " + ".join(parts)
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -1479,6 +1557,8 @@ class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
 
     ASTOP = 'and'
+    # Logical AND - U2227
+    SYMBOL = '*'
     PRECEDENCE = 0
 
     def __str__(self):
@@ -1489,7 +1569,8 @@ class ExprAnd(ExprOrAnd):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        return " * ".join(parts)
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -1595,6 +1676,8 @@ class ExprNor(ExprNorNand):
     """Expression NOR operator"""
 
     ASTOP = 'nor'
+    # Downwards arrow - U2193
+    SYMBOL = "↓"
     PRECEDENCE = 2
 
     def __new__(cls, *args):
@@ -1662,14 +1745,16 @@ class ExprNor(ExprNorNand):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        # Downwards arrow - U2193
-        return " ↓ ".join(parts)
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
 
 
 class ExprNand(ExprNorNand):
     """Expression NAND operator"""
 
     ASTOP = 'nand'
+    # Upwards arrow - U2191
+    SYMBOL = '↑'
     PRECEDENCE = 0
 
     def __new__(cls, *args):
@@ -1737,8 +1822,8 @@ class ExprNand(ExprNorNand):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        # Upwards arrow - U2191
-        return " ↑ ".join(parts)
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
 
 
 class ExprExclusive(_ArgumentContainer):
@@ -1814,6 +1899,8 @@ class ExprXor(ExprExclusive):
     """Expression Exclusive OR (XOR) operator"""
 
     ASTOP = 'xor'
+    # Circled plus - U2295
+    SYMBOL = '⊕'
 
     def __new__(cls, *args):
         # Xor() = 0
@@ -1833,8 +1920,8 @@ class ExprXor(ExprExclusive):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        # Circled plus - U2295
-        return " ⊕ ".join(parts)
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -1850,6 +1937,8 @@ class ExprXnor(ExprExclusive):
     """Expression Exclusive NOR (XNOR) operator"""
 
     ASTOP = 'xnor'
+    # Circled dot - U2299
+    SYMBOL = '⊙'
 
     def __new__(cls, *args):
         # Xnor() = 1
@@ -1869,8 +1958,8 @@ class ExprXnor(ExprExclusive):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        # Circled dot - U2299
-        return " ⊙ ".join(parts)
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -1895,6 +1984,7 @@ class ExprEqual(ExprEqualBase):
     """Expression EQUAL operator"""
 
     ASTOP = 'equal'
+    SYMBOL = '='
 
     def __new__(cls, *args):
         # Equal(a) = Equal() = 1
@@ -1962,6 +2052,8 @@ class ExprUnequal(ExprEqualBase):
     """Expression UNEQUAL operator"""
 
     ASTOP = 'unequal'
+    # Not equal to - U2260
+    SYMBOL = '≠'
 
     def __new__(cls, *args):
         # Unequal(a) = Unequal() = 0
@@ -2029,6 +2121,8 @@ class ExprImplies(_ArgumentContainer):
     """Expression implication operator"""
 
     ASTOP = 'implies'
+    # Rightwards double arrow - 21D2
+    SYMBOL = '⇒'
     PRECEDENCE = 3
 
     def __init__(self, p, q):
@@ -2042,8 +2136,8 @@ class ExprImplies(_ArgumentContainer):
                 parts.append('(' + str(arg) + ')')
             else:
                 parts.append(str(arg))
-        # Rightwards double arrow - 21D2
-        return " ⇒ ".join(parts)
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -2091,6 +2185,7 @@ class ExprITE(_ArgumentContainer):
     """Expression if-then-else ternary operator"""
 
     ASTOP = 'ite'
+    SYMBOL = 'ite'
     PRECEDENCE = 4
 
     def __init__(self, s, d1, d0):
