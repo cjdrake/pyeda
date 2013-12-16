@@ -238,8 +238,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
     # Specific to BinaryDecisionDiagram
     def traverse(self):
         """Iterate through all nodes in this BDD in DFS order."""
-        for node in _dfs(self.node, set()):
-            yield node
+        yield from _dfs(self.node, set())
 
     def equivalent(self, other):
         """Return whether this BDD is equivalent to another."""
@@ -400,18 +399,15 @@ def _iter_all_paths(start, end, rand=False, path=tuple()):
             random.shuffle(nodes)
         for node in nodes:
             if node is not None:
-                for _path in _iter_all_paths(node, end, rand, path):
-                    yield _path
+                yield from _iter_all_paths(node, end, rand, path)
 
 def _dfs(node, visited):
     """Iterate through a depth-first traveral starting at node."""
     low, high = node.low, node.high
     if low is not None:
-        for _node in _dfs(low, visited):
-            yield _node
+        yield from _dfs(low, visited)
     if high is not None:
-        for _node in _dfs(high, visited):
-            yield _node
+        yield from _dfs(high, visited)
     if node not in visited:
         visited.add(node)
         yield node
