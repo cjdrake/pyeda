@@ -244,9 +244,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
     # Specific to BinaryDecisionDiagram
     def traverse(self):
         """Iterate through all nodes in this BDD in DFS order."""
-        visited = set()
-        for node in _dfs(self.node, visited):
-            visited.add(node)
+        for node in _dfs(self.node, set()):
             yield node
 
     def equivalent(self, other):
@@ -414,11 +412,12 @@ def _iter_all_paths(start, end, rand=False, path=tuple()):
 def _dfs(node, visited):
     """Iterate through a depth-first traveral starting at node."""
     low, high = node.low, node.high
-    if low not in visited and low is not None:
+    if low is not None:
         for _node in _dfs(low, visited):
             yield _node
-    if high not in visited and high is not None:
+    if high is not None:
         for _node in _dfs(high, visited):
             yield _node
     if node not in visited:
+        visited.add(node)
         yield node
