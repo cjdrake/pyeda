@@ -374,8 +374,7 @@ class Function(object):
 
     def iter_domain(self):
         """Iterate through all points in the domain."""
-        for point in iter_points(self.inputs):
-            yield point
+        yield from iter_points(self.inputs)
 
     def iter_image(self):
         """Iterate through all elements in the image."""
