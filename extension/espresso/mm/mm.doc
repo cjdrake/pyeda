@@ -1,0 +1,4 @@
+Memory Management Package
+
+Safe replacements for malloc, realloc, and free.
+

@@ -1,0 +1,22 @@
+RCS file: RCS/texpand.c,v
+retrieving revision 1.4
+diff -c -r1.4 texpand.c
+*** /tmp/,RCSt1a14637	Tue Jun 13 09:59:20 1989
+--- texpand.c	Tue Jun 13 09:59:12 1989
+***************
+*** 17,22
+      static int count = 0;
+      static st_table *table = NIL(st_table);
+      struct passwd *userRecord;
+      char *dir;
+      register int i, j;
+  
+
+--- 17,23 -----
+      static int count = 0;
+      static st_table *table = NIL(st_table);
+      struct passwd *userRecord;
++     extern struct passwd *getpwuid(), *getpwnam();
+      char *dir;
+      register int i, j;
+  

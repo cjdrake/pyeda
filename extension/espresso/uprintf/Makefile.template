@@ -1,0 +1,25 @@
+NAME: uprintf
+DESCRIPTION: portable scanf style parser
+TYPE: P
+PACKAGES: port
+MISC: utest.test
+
+SOURCES: uprintf.c
+HEADERS: uprintf.h
+OBJECTS: uprintf.o
+SYSLIBS:  -lm
+
+VERBATIMSTART
+test:: ${DRIVER}
+	@rm -f utest.out
+	@${DRIVER} > utest.out 2>&1
+	@cmp -s utest.out utest.test
+
+clean::
+	rm -f utest.out
+
+VERBATIMEND
+
+TESTNAME: $(NAME)-test
+TESTSOURCES: utest.c
+TESTOBJECTS: utest.o

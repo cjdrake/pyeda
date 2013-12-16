@@ -1,0 +1,56 @@
+NAME: mm
+DESCRIPTION: Safe memory manager
+TYPE: P
+PACKAGES: errtrap port
+INSTALL: ${CAD}/lib/lib${NAME}_p.a
+MISC: sample.out lsort.h mmleak.c whence.s calltest.c calltest.makefile check_pointer check_pointer.makefile sample.out
+SOURCES: mm.c
+HEADERS: mm.h trace.c mm_int.h
+OBJECTS: mm.o
+VERBATIMSTART
+test:: ${DRIVER}
+	@${DRIVER} | cmp -s - sample.out
+
+clean::
+	rm -f lib${NAME}_p.a lib${NAME}_t.a mmleak mmleak.o whence.o
+
+${CAD}/lib/lib${NAME}_p.a: lib${NAME}_p.a
+	@rm -f $@
+	${CP} lib${NAME}_p.a $@
+	ranlib $@
+
+lib${NAME}_p.a: ${SRC} ${HDR}
+	${CC} ${CFLAGS} -DMM_PARANOID -c ${SRC}
+	ar cr $@ ${OBJ}
+	ranlib $@
+	rm ${OBJ}
+
+# mmleak and libmm_t.a must be made explicitly, not installed by default
+${CADBIN}/mmleak: mmleak
+	@rm -f $@
+	${CP} mmleak $@
+	strip $@
+
+${CAD}/lib/lib${NAME}_t.a: lib${NAME}_t.a
+	@rm -f $@
+	${CP} lib${NAME}_t.a $@
+	ranlib $@
+
+mmleak: mmleak.o
+	${LINKER} ${COMPFLAG} -o mmleak mmleak.o
+
+lib${NAME}_t.a: ${SRC} ${HDR} whence.o
+	${CC} ${CFLAGS} -DMM_FILL -DMM_TRACE -c ${SRC}
+	ar cr $@ ${OBJ} whence.o
+	ranlib $@
+	rm ${OBJ}
+
+whence.o: whence.s
+	/lib/cpp < whence.s > whence.t
+	${AS} -o whence.o whence.t
+	rm whence.t
+
+VERBATIMEND
+TESTNAME: $(NAME)-test
+TESTSOURCES: looptest.c
+TESTOBJECTS: looptest.o

@@ -1,0 +1,59 @@
+User-defined printf like functions
+David Harrison
+University of California, Berkeley
+----------------------------------
+
+This package provides a routine that parses formats and variable
+argument lists like printf using the varargs(3) package.  This routine
+can be used to develop specific instances of routines similar to
+printf for error reporting or other purposes.
+
+
+char *uprintf(buf, fmt, ap)
+char *buf;			/* Buffer to write into   */
+char *fmt;			/* Format string          */
+va_list *ap;			/* Argument list to parse */
+
+	This routine parses the format string `fmt' and substitutes the
+	appropriate values taken from the argument list pointer `ap'
+	and writes the results in `buf'.  `ap' is assumed to be a
+	pointer to an argument list initialized using va_start().  All
+	standard printf-style directives are supported.  Any
+	directives the routine does not understand will be left
+	unchanged in the result string.  The argument pointer `ap'
+	will be left after the last argument required by the format
+	string.  A pointer to `buf' is returned by the routine.
+
+Example
+-------
+
+The following function is used to print out error messages:
+
+#include <stdio.h>
+#include <varargs.h>
+#include "uprintf.h"
+
+void error(va_alist)
+va_dcl
+/*
+ * error(func, file, line, format, ... )
+ */
+{
+    va_list ap;
+    char buf[1024];
+    char *func_name, *file_name, *format;
+    int line_num;
+
+    va_start(ap);
+
+    func_name = va_arg(ap, char *);
+    file_name = va_arg(ap, char *);
+    line_num = va_arg(ap, int);
+    format = va_arg(ap, char *);
+
+    fprintf(stderr, "Error: function %s, file %s, line %d:\n  %s\n",
+	    func_name, file_name, line_num,
+	    uprintf(buf, format, &ap));
+
+    va_end(ap);
+}

@@ -1,0 +1,49 @@
+RCS file: RCS/strstr.c,v
+retrieving revision 1.3
+diff -c -r1.3 strstr.c
+*** /tmp/,RCSt1a02182	Mon Jun 12 14:45:18 1989
+--- strstr.c	Mon Jun 12 14:45:04 1989
+***************
+*** 1,6
+  /*LINTLIBRARY*/
+  #include "port.h"
+- #ifdef LACK_SYS5
+  /*
+   * strstr - find first occurrence of wanted in s
+   */
+
+--- 1,5 -----
+  /*LINTLIBRARY*/
+  #include "port.h"
+  /*
+   * strstr - find first occurrence of wanted in s
+   */
+***************
+*** 13,19
+  	register CONST char *scan;
+  	register SIZET len;
+  	register char firstc;
+! 	extern int strcmp();
+  	extern SIZET strlen();
+  
+  	/*
+
+--- 12,18 -----
+  	register CONST char *scan;
+  	register SIZET len;
+  	register char firstc;
+! 	extern int strncmp();
+  	extern SIZET strlen();
+  
+  	/*
+***************
+*** 28,31
+  			return NULL;
+  	return scan;
+  }
+- #endif
+
+--- 27,29 -----
+  			return NULL;
+  	return scan;
+  }

@@ -1,0 +1,189 @@
+RCS file: RCS/texpand.c,v
+retrieving revision 1.3
+diff -c -r1.3 texpand.c
+*** /tmp/,RCSt1a14390	Fri Jun  9 08:44:26 1989
+--- texpand.c	Fri Jun  9 08:43:35 1989
+***************
+*** 39,44
+  
+  	if (table == NIL(st_table)) {
+  	    table = st_init_table(strcmp, st_strhash);
+  	}
+  
+  	/* check for '~/' */
+
+--- 39,49 -----
+  
+  	if (table == NIL(st_table)) {
+  	    table = st_init_table(strcmp, st_strhash);
++ 	     /* Get CADROOT directory from environment */
++ 	    dir = getenv("OCTTOOLS");
++ 	    if (dir) {
++ 		(void) st_add_direct(table, "octtools", dir);
++ 	    }
+  	}
+  
+  	if (!st_lookup(table, username, &dir)) {
+***************
+*** 41,56
+  	    table = st_init_table(strcmp, st_strhash);
+  	}
+  
+! 	/* check for '~/' */
+! 	if (username[0] == '\0') {
+! 	    if ((userRecord = getpwuid(getuid())) != 0) {
+! 		(void) strcpy(result[count], userRecord->pw_dir);
+! 	    } else {
+! 		i = 0;
+! 	    }
+! 	} else if (!st_lookup(table, username, &dir)) {
+! 	    /* ~user/ resolves to home directory of 'user' */
+! 	    if ((userRecord = getpwnam(username)) != 0) {
+  		(void) strcpy(result[count], userRecord->pw_dir);
+  		(void) st_add_direct(table, util_strsav(username),
+  				     util_strsav(userRecord->pw_dir));
+
+--- 46,62 -----
+  	    }
+  	}
+  
+! 	if (!st_lookup(table, username, &dir)) {
+! 	    /* ~/ resolves to the home directory of the current user */
+! 	    if (username[0] == '\0') {
+! 		if ((userRecord = getpwuid(getuid())) != 0) {
+! 		    (void) strcpy(result[count], userRecord->pw_dir);
+! 		    (void) st_add_direct(table, "", util_strsav(userRecord->pw_dir));
+! 		} else {
+! 		    i = 0;
+! 		}
+! 	    } else if ((userRecord = getpwnam(username)) != 0) {
+! 		/* ~user/ resolves to home directory of 'user' */
+  		(void) strcpy(result[count], userRecord->pw_dir);
+  		(void) st_add_direct(table, util_strsav(username),
+  				     util_strsav(userRecord->pw_dir));
+===================================================================
+RCS file: RCS/uttest.c,v
+retrieving revision 1.3
+diff -c -r1.3 uttest.c
+*** /tmp/,RCSt1a14390	Fri Jun  9 08:44:27 1989
+--- uttest.c	Fri Jun  9 08:38:15 1989
+***************
+*** 9,15
+  {
+      FILE *in, *out;
+      char results[8][4096];
+!     char *args[3];
+      char *file;
+      int dummy, i, j;
+      long time;
+
+--- 9,15 -----
+  {
+      FILE *in, *out;
+      char results[8][4096];
+!     char *args[8];
+      char *file;
+      int dummy, i, j;
+      long time;
+***************
+*** 39,44
+      /* verify that multiple calls can be made to util_tilde_expand */
+      j = 0;
+      (void) strcpy(results[j++], util_tilde_expand("~/fred"));
+      (void) strcpy(results[j++], util_tilde_expand("~octtools"));
+      (void) strcpy(results[j++], util_tilde_expand("~ricks/.login"));
+  
+
+--- 39,48 -----
+      /* verify that multiple calls can be made to util_tilde_expand */
+      j = 0;
+      (void) strcpy(results[j++], util_tilde_expand("~/fred"));
++     if (results[j-1][0] == '~') {
++ 	fprintf(stderr, "expansion of ~/fred failed\n");
++ 	exit(-1);
++     }
+      (void) strcpy(results[j++], util_tilde_expand("~octtools"));
+      if (results[j-1][0] == '~') {
+  	fprintf(stderr, "expansion of ~octtools failed\n");
+***************
+*** 40,45
+      j = 0;
+      (void) strcpy(results[j++], util_tilde_expand("~/fred"));
+      (void) strcpy(results[j++], util_tilde_expand("~octtools"));
+      (void) strcpy(results[j++], util_tilde_expand("~ricks/.login"));
+  
+      for (i = 0; i < j; i++) {
+
+--- 44,53 -----
+  	exit(-1);
+      }
+      (void) strcpy(results[j++], util_tilde_expand("~octtools"));
++     if (results[j-1][0] == '~') {
++ 	fprintf(stderr, "expansion of ~octtools failed\n");
++ 	exit(-1);
++     }
+      (void) strcpy(results[j++], util_tilde_expand("~ricks/.login"));
+  
+      for (i = 0; i < j; i++) {
+***************
+*** 69,75
+      args[2] = 0;
+  
+      if (util_pipefork(args, &in, &out) != 1) {
+! 	(void) fprintf(stderr, "bad return from pipe form\n");
+  	exit(-1);
+      }
+  
+
+--- 77,83 -----
+      args[2] = 0;
+  
+      if (util_pipefork(args, &in, &out) != 1) {
+! 	(void) fprintf(stderr, "bad return from util_pipefork\n");
+  	exit(-1);
+      }
+  
+***************
+*** 81,87
+      i = 0;
+      while (fscanf(out, "%d", &dummy) == 1) {
+  	if (i != dummy) {
+! 	    (void) fprintf(stderr, "utility pipefork sort failed\n");
+  	    exit(-1);
+  	}
+  	i++;
+
+--- 89,95 -----
+      i = 0;
+      while (fscanf(out, "%d", &dummy) == 1) {
+  	if (i != dummy) {
+! 	    (void) fprintf(stderr, "util_pipefork sort failed\n");
+  	    exit(-1);
+  	}
+  	i++;
+***************
+*** 87,93
+  	i++;
+      }
+      if (i != 21) {
+! 	(void) fprintf(stderr, "utility pipefork short count (%d)\n", i);
+  	exit(-1);
+      }
+  
+
+--- 95,109 -----
+  	i++;
+      }
+      if (i != 21) {
+! 	(void) fprintf(stderr, "util_pipefork short count (%d)\n", i);
+! 	exit(-1);
+!     }
+! 
+!     args[0] = util_strsav("betterNotExist");
+!     args[1] = 0;
+! 
+!     if (util_pipefork(args, &in, &out) == 1) {
+! 	(void) fprintf(stderr, "successfull return from util_pipefork, should have been a failure\n");
+  	exit(-1);
+      }
+  

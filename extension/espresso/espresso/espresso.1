@@ -1,0 +1,297 @@
+.TH ESPRESSO 1OCTTOOLS "31 January 1988"
+.SH NAME
+espresso \- Boolean Minimization
+.SH SYNOPSIS
+.B espresso
+[\fIoptions\fR] [\fIfile\fR]
+.SH DESCRIPTION
+.PP
+.I Espresso
+takes as input a two-level representation of a
+two-valued (or multiple-valued) Boolean function, and produces a
+minimal equivalent representation.  The algorithms used are new and
+represent an advance in both speed and optimality of solution in
+heuristic Boolean minimization.
+.PP
+.I Espresso
+reads the \fIfile\fR provided (or standard input if no files
+are specified), performs the minimization, and writes the minimized result to
+standard output.
+.I Espresso
+automatically verifies that the minimized function
+is equivalent to the original function.
+Options allow for using an exact minimization algorithm, for
+choosing an optimal phase assignment for the output functions, and
+for choosing an optimal assignment of the inputs to input decoders.
+.PP
+The default input and output file formats are compatible with the
+Berkeley standard format for the physical description of a \s-1PLA\s0.  The
+input format is described in detail in espresso(5).  Note that the
+input file is a \fIlogical\fR representation of
+a set of Boolean equations, and hence the input format differs
+slightly from that described in pla(5) (which provides for the \fIphysical\fR
+representation of a \s-1PLA\s0).
+The input and output formats
+have been expanded to allow for multiple-valued logic
+functions, and to allow for the specification of the
+don't-care set which will be used in the minimization.
+.PP
+A complete list of the command line options is given below.
+Be warned that many of the command line options are not intended
+for general use.
+.TP 10
+.B -d
+Enables debugging.
+Useful only for those familiar with the algorithms used.
+.TP 10
+.B -Dcheck
+Checks that the function is a partition of the
+entire space (i.e., that the \s-1ON\s0-set, \s-1OFF\s0-set
+and \s-1DC\s0-set are
+pairwise disjoint, and that their union is the Universe).
+.ne 4
+.TP 10
+.B -Dd1merge
+Performs a quick distance-1 merge on the input
+file.  This is useful when the input file
+is very large (e.g., a truth table with more than 1000 terms) because
+distance-1 merge is O(n log n) rather than the \s-1EXPAND\s0
+step of Espresso which is
+O(n * n).  The output should then be run through
+Espresso to complete the minimization.  A range of variables to
+be merged can also be specified using
+.B -rn-m
+(the default is to merge over all variables).
+.ne 4
+.TP 10
+.B -Decho
+Echoes the function to standard output.
+This can be used to get the complement of a function when
+combined with \fB-o\fP.
+.ne 4
+.TP 10
+.B -Dequiv
+Identify output variables which are equivalent.  Takes into account
+the don't-care set and checks for equivalence of both the \s-1ON\s0-set
+and \s-1OFF\s0-set.
+.TP 10
+.B -Dexact
+Exact minimization algorithm (guarantees minimum number of
+product terms, and heuristically minimizes number of literals).
+Potentially expensive.
+.ne 4
+.TP 10
+.B -Dsignature
+Signature Cubes based Exact minimization algorithm 
+(guarantees minimum number of product terms, and heuristically 
+minimizes number of literals).  On an average faster than -Dexact
+and solves problems on which -Dexact fails.
+.ne 4
+.TP 10
+.B -Dmany
+Reads and minimizes PLA's until end-of-file is detected.  PLA's in
+the same file are separated by \fI.e\fP.
+.ne 4
+.TP 10
+.B -Dmap
+Draw the Karnaugh maps for a binary-valued function.
+.ne 4
+.TP 10
+.B -Dmapdc
+Derive from the binary-valued variable \fIDONT_\|CARE\fP a don't-care set,
+and then delete this variable.
+All input conditions for which an output changes when \fIDONT_\|CARE\fP
+changes define the don't-care conditions for that output.
+This is a hack to support don't-cares from high-level languages without
+a notion of don't-cares.
+.ne 4
+.TP 10
+.B -Dopo
+Perform output phase optimization (i.e., determine which
+functions to complement to reduce the number of
+terms needed to implement the function).  After choosing an
+assignment of phases for the outputs, the function is minimized.
+A simple algorithm is used which may become very expensive for
+a large number of outputs (e.g., more than 40).
+.TP 10
+.B -Dopoall
+Minimize the function with all possible phase assignments.
+A range of outputs to cycle through can be given with
+.B -rn-m
+(the default is to use all outputs).
+The option
+.B -S1
+will perform an exact minimization for each phase assignment.
+Be warned that opoall requires an exponential number of minimizations !
+.TP 10
+.B -Dpair
+Choose an assignment of the inputs to two-bit decoders, and
+minimize the function.  The function MUST be minimized first to
+achieve good results.  There are actually 4 different algorithms,
+of increasing cost, which may be selected with
+.BR -S1 ,
+.BR -S2 ,
+or
+.BR -S3 .
+The default is
+.B -S0
+which seems to give the best results for the cost.
+.TP 10
+.B -Dpairall
+Minimize the function with all possible assignments of inputs to
+two-bit decoders.
+The option
+.B -S1
+will perform an exact minimization for each assignment of inputs
+to decoders, and the option
+.B -S2
+will perform an output-phase assignment for each assignment of
+inputs to decoders.
+Be warned that pairall requires an exponential number of minimizations !
+.TP 10
+.B -Dseparate
+Remove the don't-care set from the \s-1ON\s0-set of the function.
+.TP 10
+.B -Dso
+Minimize each function one at a time as a single-output function.
+Terms will not be shared among the functions.
+The option
+.B -S1
+will perform an exact minimization for each single-output function.
+.TP 10
+.B -Dso_both
+Minimize each function one at a time as a single-output function, but
+choose the function or its complement based on which has fewer terms.
+The option
+.B -S1
+will perform an exact minimization for each single-output function and
+its complement to determine which has fewer terms.
+.TP 10
+.B -Dstats
+Provide simple statistics on the size of the function.
+.TP 10
+.B -Dverify
+Checks for Boolean equivalence of two PLA's.  Reads two filenames
+from the command line, each containing a single PLA.
+.TP 10
+.B -DPLAverify
+Checks for Boolean equivalence of two PLA's by first permuting the
+columns based on the user supplied variable names.  Reads two
+filenames from the command line.
+.TP 10
+.B -eeat
+Normally comments are echoed from the input file to the output file.
+This options discards any comments in the input file.
+.TP 10
+.B -efast
+Stop after the first \s-1EXPAND\s0 and \s-1IRREDUNDANT\s0 operations
+(i.e., do not iterate over the solution).
+.TP 10
+.B -ekiss
+Sets up a \fIkiss\fR-style minimization problem.  This is a hack.
+.TP 10
+.B -eness
+Essential primes will not be detected.
+.TP 10
+.B -enirr
+The result will not necessarily be made irredundant in the final step
+which removes redundant literals.
+.TP 10
+.B -enunwrap
+The \s-1ON\s0-set will not be unwrapped before beginning the minimization.
+.TP 10
+.B -eonset
+Recompute the \s-1ON\s0-set before the minimization.  Useful when the
+\s-1PLA\s0 has a large number of product terms (e.g., an exhaustive
+list of minterms).
+.TP 10
+.B -epos
+Swaps the \s-1ON\s0-set and \s-1OFF\s0-set of the function after
+reading the function.  This can be used to minimize the \s-1OFF\s0-set
+of a function.  \fI.phase\fR (see espresso(5))
+in the input file can also specify an arbitrary choice of output phases.
+.TP 10
+.B -estrong
+Uses the alternate strategy \s-1SUPER_\|GASP\s0 (as a replacement
+for \s-1LAST_\ GASP\s0) which is
+more expensive, but occasionally provides better results.
+.TP 10
+.B -o[type]
+Selects the output format.  By default, only the \s-1ON\s0-set (i.e.,
+type f) is output after the minimization.  [type] can be one of \fBf\fR,
+\fBd\fR, \fBr\fR, \fBfd\fR, \fBdr\fR, \fBfr\fR, or \fBfdr\fR to select
+any combination of the \s-1ON\s0-set (f), the \s-1OFF\s0-set (r) or the
+\s-1DC\s0-set (d).  [type] may also be \fBeqntott\fR to output algebraic
+equations acceptable to 
+.IR eqntott (1OCTTOOLS), 
+or \fBpleasure\fR to output an
+unmerged \s-1PLA\s0 (with the \fI.label\fR and \fI.group\fR keywords)
+acceptable to 
+.IR pleasure (1OCTTOOLS).
+.TP 10
+.B -s
+Will provide a short summary of the execution of the program including
+the initial cost of the function, the final cost, and the computer
+resources used.
+.TP 10
+.B -t
+Will produce a trace showing the execution of the program.  After each
+main step of the algorithm, a single line is printed which reports the
+processor time used, and the current cost of the function.
+.TP 10
+.B -x
+Suppress printing of the solution.
+.TP 10
+.B -v [type]
+Specifies verbose debugging detail.  Not generally useful.
+.SH DIAGNOSTICS
+Espresso will issue a warning message
+if a product term spans more than one line.  Usually this is an
+indication that the number of inputs or outputs of the function
+is specified incorrectly.
+.SH "SEE ALSO"
+kiss(1OCTTOOLS), pleasure(1OCTTOOLS), pla(5OCTTOOLS), espresso(5OCTTOOLS)
+.LP
+R. Brayton, G. Hachtel, C. McMullen, and A. Sangiovanni-Vincentelli,
+\fILogic Minimization Algorithms for VLSI Synthesis\fR,
+Kluwer Academic Publishers, 1984.
+.LP
+P. McGeer, J. Sanghavi, R. Brayton, and A. Sangiovanni-Vincentelli,
+"Espresso-Signature: A New Exact Minimizer for Logic Functions,"
+\fIDesign Automation Conf.\fR, Dallas, Jun 1993.
+.LP
+R. Rudell, A. Sangiovanni-Vincentelli,
+"Espresso-MV: Algorithms for Multiple-Valued Logic Minimization,"
+\fIProc. Cust. Int. Circ. Conf.\fR, Portland, May 1985.
+.LP
+R. Rudell, "Multiple-Valued Minimization for PLA Synthesis,"
+Master's Report, University of California, Berkeley, June 1986.
+.LP
+R. Rudell, A. Sangiovanni-Vincentelli,
+"Exact Minimization of Multiple-Valued Functions for PLA Optimization",
+\fIInt. Conf. Comp. Aid. Des.\fP, Santa Clara, November 1986.
+.LP
+J. Sanghavi, "Espresso-Signature: A New Exact Minimizer for Logic Functions,"
+Master's Report, University of California, Berkeley, May 1993.
+.SH AUTHOR
+Please direct any questions or comments to:
+.nf
+Richard Rudell
+205 Cory Hall
+Dept. of EECS
+University of California
+Berkeley, California  94720
+.fi
+.LP
+Arpanet mail address is rudell@ic.Berkeley.EDU.
+.SH COMMENTS
+Default is to pass comments and unrecognized options from the input file
+to standard output (sometimes this isn't what you want).
+.LP
+It is no longer possible to specify the type on the command line.
+.LP
+There are a lot of options, but typical use doesn't need them.
+.LP
+This manual page refers to Version 2.4 of Espresso.  The major change from
+Version 2.3 to Version 2.4 is the addition of a new exact minimizer based
+on signature cubes (-D signature subcommand).

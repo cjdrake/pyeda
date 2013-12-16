@@ -1,0 +1,16 @@
+NAME: st
+DESCRIPTION: Symbol Table Package
+TYPE: P
+PACKAGES: errtrap mm port
+MISC: test_input test_output
+SOURCES: st.c
+HEADERS: st.h
+OBJECTS: st.o
+VERBATIMSTART
+test:: ${DRIVER}
+	@(${DRIVER} < test_input | cmp -s - test_output)
+VERBATIMEND
+TESTNAME: $(NAME)-test
+TESTSOURCES:  st_test.c
+TESTOBJECTS:  st_test.o
+SYSLIBS: -lm

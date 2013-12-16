@@ -1,0 +1,460 @@
+.TH ESPRESSO 5OCTTOOLS "22 August 1986"
+.SH NAME
+espresso \- input file format for espresso(1OCTTOOLS)
+.SH DESCRIPTION
+\fIEspresso\fR accepts as input a two-level description of a Boolean
+function.  This is described as a character matrix with keywords
+embedded in the input to specify the size of the matrix and
+the logical format of the input function.
+Programs exist to translate a set of equations into
+this format (e.g., eqntott(1OCTTOOLS), bdsyn(1OCTTOOLS), eqntopla(1OCTTOOLS)).
+This manual page refers to Version 2.3 of \fIEspresso\fP.
+.PP
+Comments are allowed within the input by placing a
+pound sign (#) as the first character on a line.
+Comments and unrecognized keywords are passed
+directly from the input file to standard output.  Any white-space
+(blanks, tabs, etc.), except when used as a delimiter in an embedded
+command, is ignored.  It is generally assumed that the \s-1PLA\s0 is specified
+such that each row of the \s-1PLA\s0 fits on a single line in the input file.
+.SH KEYWORDS
+The following keywords are recognized by \fIespresso\fR.
+The list shows
+the probable order of the keywords in a \s-1PLA\s0 description.
+[d] denotes a decimal number and [s] denotes a
+text string.  The minimum required set of 
+keywords is \fB.i\fP and \fB.o\fP for binary-valued 
+functions, or \fB.mv\fP for multiple-valued functions.
+.TP 12
+.B .i [d]
+Specifies the number of input variables.
+.TP 12
+.B .o [d]
+Specifies the number of output functions.
+.TP 12
+.B ".mv [num_\|var] [num_\|binary_\|var] [d1] . . . [dn]"
+Specifies the number of variables (num_\|var), the number of binary variables
+(num_\|binary_\|var),
+and the size of each of the multiple-valued variables (d1 through dn).
+.TP 12
+.B ".ilb [s1] [s2] . . . [sn]"
+Gives the names of the binary valued variables.
+This must come after \fB.i\fP and \fB.o\fP (or after \fB.mv\fP).
+There must be as many tokens following the keyword as there
+are input variables.
+.TP 12
+.B ".ob [s1] [s2] . . . [sn]"
+Gives the names of the output functions.
+This must come after \fB.i\fP and \fB.o\fP (or after \fB.mv\fP).
+There must be as many tokens following the keyword as there
+are output variables.
+.TP 12
+.B .label var=[d] [s1] [s2] ...
+Specifies the names of the parts of a multiple-valued variable.
+This must come after \fB.mv\fP.
+There must be as many tokens following the keyword as there
+are parts for this variable.  Note that the variables are numbered
+starting from 0.
+.TP 12
+.B .type [s]
+Sets the logical interpretation of the character matrix as
+described below under "Logical Description of a \s-1PLA\s0".  This keyword
+must come before any product terms.
+[s] is one of f, r, fd, fr, dr, or fdr.
+.TP 12
+.B .phase [s]
+[s] is a string of as many 0's or 1's as there are output
+functions.  It specifies which polarity of each output function
+should be used for the minimization (a 1 specifies that the
+\s-1ON\s0-set of the corresponding output function should be used, and
+a 0 specifies that the \s-1OFF\s0-set of the corresponding output function
+should be minimized).
+.TP 12
+.B .pair [d]
+Specifies the number of pairs of variables which will be paired together
+using two-bit decoders.
+The rest of the
+line contains pairs of numbers which specify the binary variables
+of the \s-1PLA\s0 which
+will be paired together.  The binary variables are numbered
+starting with 0.  The \s-1PLA\s0 will be reshaped so that any unpaired binary
+variables occupy the leftmost part of the array, then the paired
+multiple-valued columns, and finally any multiple-valued variables.
+If the labels have been specified using \fB.ilb\fP, then the variable
+names may be used instead of the column number.
+.TP 12
+.B ".symbolic [s0] [s1] . . . [sn] ; [t0] [t1]  . . . [tm] ;"
+Specifies that the binary-valued variables named [s0] thru [sn] are to be
+considered as a single multiple-valued variable.
+Variable [s0] is considered the most significant bit, [s1] the next
+most significant, and [sn] is the least significant bit.
+This creates a variable
+with 2**n parts corresponding to the decodes of the binary-valued variables.
+The keywords [t0] thru [tm] provide the labels for each decode of
+[s0] thru [sn].  ([t0] corresponds to a value of 00...00,
+[t1] is the value 00...01, etc.).
+The binary-variables may be
+identified by column number, or by variable name when \fB.ilb\fP is used.
+The binary-variables are removed from the function after the
+multiple-valued variable is created.
+.TP 12
+.B ".symbolic-output [s0] [s1] . . . [sn] ; [t0] [t1] . . . [tm] ;"
+Specifies that the output functions [s0] ... [sn] are to be considered
+as a single symbolic output.  This creates 2**n more output variables
+corresponding to the possible values of the outputs.
+The outputs may be identified by number (starting from 0),
+or by variable name when \fB.ob\fP is used.
+The outputs are removed from the function after the new
+set of outputs is created.
+.TP 12
+.B .kiss
+Sets up for a \fIkiss\fR-style minimization.
+.TP 12
+.B .p [d]
+Specifies the number of product terms.  The product terms (one per line)
+follow immediately after this keyword.  Actually, this line is ignored,
+and the ".e", ".end",
+or the end of the file indicate the end of the input description.
+.TP 12
+.B .e (.end)
+Optionally marks the end of the \s-1PLA\s0 description.
+.sp 2
+.SH "LOGICAL DESCRIPTION OF A PLA"
+When we speak of the \s-1ON\s0-set of a
+Boolean function, we mean those minterms which
+imply the function value is a 1.
+Likewise, the \s-1OFF\s0-set are those terms
+which imply the function is a 0, and the \s-1DC\s0-set (don't care set)
+are those terms for which the function is unspecified.
+A function is
+completely described by providing
+its \s-1ON\s0-set, \s-1OFF\s0-set and \s-1DC\s0-set.
+Note that all minterms lie in the union of the \s-1ON\s0-set, \s-1OFF\s0-set
+and \s-1DC\s0-set, and
+that the \s-1ON\s0-set, \s-1OFF\s0-set and \s-1DC\s0-set share no minterms.
+.PP
+The purpose of the
+.I espresso
+minimization program is to find a logically
+equivalent set of product-terms to
+represent the \s-1ON\s0-set and optionally minterms
+which lie in the \s-1DC\s0-set, without containing any minterms of the \s-1OFF\s0-set.
+.PP
+A Boolean function
+can be described in one of the
+following ways:
+.IP 1)
+By providing the \s-1ON\s0-set.  In this case,
+.I espresso
+computes the \s-1OFF\s0-set as the complement of the \s-1ON\s0-set and the \s-1DC\s0-set is empty.
+This is indicated with the keyword \fB.type f\fR
+in the input file.
+.IP 2)
+By providing the \s-1ON\s0-set and \s-1DC\s0-set.  In this case,
+.I espresso
+computes the \s-1OFF\s0-set as the complement of the union
+of the \s-1ON\s0-set and the \s-1DC\s0-set.  If any minterm belongs to both the
+\s-1ON\s0-set and \s-1DC\s0-set, then it is considered a don't care and may be removed
+from the \s-1ON\s0-set during the minimization process.
+This is indicated with the keyword \fB.type fd\fR
+in the input file.
+.IP 3)
+By providing the \s-1ON\s0-set and \s-1OFF\s0-set.  In this case,
+.I espresso
+computes the \s-1DC\s0-set as the complement of the union
+of the \s-1ON\s0-set and the \s-1OFF\s0-set.  It is an error for
+any minterm to belong to both the \s-1ON\s0-set and \s-1OFF\s0-set.
+This error may not be detected during the
+minimization, but it can be checked
+with the subprogram "-Dcheck" which will
+check the consistency of a function.
+This is indicated with the keyword \fB.type fr\fR in the input file.
+.IP 4)
+By providing the \s-1ON\s0-set, \s-1OFF\s0-set and \s-1DC\s0-set.
+This is indicated with the keyword \fB.type fdr\fR
+in the input file.
+.PP
+If at all possible,
+.I espresso
+should be given the \s-1DC\s0-set (either
+implicitly or explicitly) in order to improve the results of the
+minimization.
+.PP
+A term is represented by a "cube" which can be considered either
+a compact representation of an algebraic product term which implies
+the function value is a 1,
+or as a representation of a row in a \s-1PLA\s0 which
+implements the term.
+A cube has an input part which corresponds to the input plane of
+a \s-1PLA\s0, and an output part which corresponds to the output plane
+of a \s-1PLA\s0 (for the multiple-valued case, see below).
+.sp 1
+.SH "SYMBOLS IN THE PLA MATRIX AND THEIR INTERPRETATION"
+.PP
+Each position in the input plane corresponds to an input variable
+where a 0 implies the corresponding input literal appears
+complemented in the product term, a 1 implies the input literal
+appears uncomplemented in the product term, and -
+implies the input literal does not appear in the product term.
+.PP
+With type \fIf\fR, for each output,
+a \fB1\fR means this product term belongs to the \s-1ON\s0-set, and
+a \fB0\fR or \fB\-\fR means this product term has no meaning for the value
+of this function.
+This type corresponds to an actual \s-1PLA\s0 where 
+only the \s-1ON\s0-set is actually implemented.
+.PP
+With type \fIfd\fR (the default), for each output,
+a \fB1\fR means this product term belongs to the \s-1ON\s0-set,
+a \fB0\fR means this product term
+has no meaning for the value of this function,
+and a \fB\-\fR implies this product term belongs to the \s-1DC\s0-set.
+.PP
+With type \fIfr\fR, for each output,
+a \fB1\fR means this product term belongs to the \s-1ON\s0-set,
+a \fB0\fR means this product term belongs to the \s-1OFF\s0-set,
+and a \fB\-\fR means this product term has no meaning for the value
+of this function.
+.PP
+With type \fIfdr\fR, for each output,
+a \fB1\fR means this product term belongs to the \s-1ON\s0-set,
+a \fB0\fR means this product term belongs to the \s-1OFF\s0-set,
+a \fB\-\fR means this product term belongs to the \s-1DC\s0-set,
+and a \fB~\fR implies this product term has no meaning for the value of this
+function.
+.PP
+Note that regardless of the type of \s-1PLA\s0,
+a \fB~\fR implies the product term has no meaning for the value of this
+function.  \fB2\fR is allowed as a synonym for \fB\-\fR, \fB4\fR is allowed
+for \fB1\fR,  and \fB3\fR is allowed for \fB~\fR.
+.PP
+.SH "MULTIPLE-VALUED FUNCTIONS"
+Espresso will also minimize multiple-valued Boolean functions.  There
+can be an arbitrary number of multiple-valued variables, and each can be
+of a different size.  If there are also binary-valued variables, they
+should be given as the first variables on the line (for ease of description).
+Of course, it is always possible to place them anywhere on the
+line as a two-valued multiple-valued variable.
+The function size is described by the 
+embedded option \fB.mv\fR rather than \fB.i\fR and \fB.o\fR.
+.PP
+A multiple-output binary function with \fIni\fR 
+inputs and \fIno\fR outputs would be specified as \fB.mv\fP \fIni+1 ni no\fP.
+.B .mv
+cannot be used with
+either \fB.i\fP or \fB.o\fP \- use one or the other 
+to specify the function size.
+.PP
+The binary variables are given as described above.  Each of the
+multiple-valued variables are given as a bit-vector of \fB0\fR and \fB1\fR
+which have their usual meaning for multiple-valued functions.
+The last multiple-valued variable (also called the output)
+is interpreted as described above for the output (to split the
+function into an \s-1ON\s0-set, \s-1OFF\s0-set and \s-1DC\s0-set).
+A vertical bar \fB|\fR may be used to separate the multiple-valued
+fields in the input file.
+.PP
+If the size of the multiple-valued field is less than zero, than
+a symbolic field is interpreted from the input file.  The absolute value
+of the size specifies the maximum number of unique symbolic labels which
+are expected in this column.  The symbolic labels are white-space
+delimited strings of characters.
+.PP
+To perform a \fIkiss\fR-style encoding problem, the keyword \fB.kiss\fR
+should be included in the file.
+The third to last variable on the
+input file must be the symbolic "present state", and the second to last
+variable
+must be the "next state".  As always, the last variable is the output.
+The symbolic "next state" will be hacked to be actually part of the output.
+.bp
+.SH EXAMPLE #1
+A two-bit adder which takes in two 2-bit operands and produces a 3-bit
+result can be described completely in minterms as:
+.sp
+.nf
+.cs R 22
+          # 2-bit by 2-bit binary adder (with no carry input)
+          .i 4
+          .o 3
+          0000  000
+          0001  001
+          0010  010
+          0011  011
+          0100  001
+          0101  010
+          0110  011
+          0111  100
+          1000  010
+          1001  011
+          1010  100
+          1011  101
+          1100  011
+          1101  100
+          1110  101
+          1111  110
+.cs R
+.fi
+.sp
+.LP
+It is also possible to specify some extra options, such as:
+.sp
+.cs R 22
+.nf
+          # 2-bit by 2-bit binary adder (with no carry input)
+          .i 4
+          .o 3
+	  .ilb a1 a0 b1 b0
+	  .ob s2 s1 s0
+          .pair 2 (a1 b1) (a0 b0)
+          .phase 011
+          0000  000
+          0001  001
+          0010  010
+		.
+		.
+		.
+          1111  110
+	  .e
+.fi
+.cs R
+.sp
+.LP
+The option \fI.pair\fR indicates that the first binary-valued
+variable should be paired with the third binary-valued variable, and
+that the second variable should be paired with the fourth variable.
+The function will then be mapped into an equivalent multiple-valued
+minimization problem.
+.sp
+The option \fI.phase\fR indicates that the positive-phase
+should be used for the second and third outputs, and that
+the negative phase should be used for the first output.
+.bp
+.SH EXAMPLE #2
+This example shows a description of a multiple-valued function
+with 5 binary variables and 3 multiple-valued variables
+(8 variables total)
+where the multiple-valued variables have sizes of 4 27 and 10
+(note that the last multiple-valued variable is the "output"
+and also encodes the \s-1ON\s0-set, \s-1DC\s0-set and \s-1OFF\s0-set information).
+.sp 1
+.cs R 22
+.nf
+	.mv 8 5 4 27 10
+	.ilb in1 in2 in3 in4 in5
+	.label var=5 part1 part2 part3 part4
+	.label var=6 a b c d e f g h i j k l m n 
+	    o p q r s t u v w x y z a1
+   	.label var=7 out1 out2 out3 out4 out5 out6 
+	    out7 out8 out9 out10
+	0-010|1000|100000000000000000000000000|0010000000
+	10-10|1000|010000000000000000000000000|1000000000
+	0-111|1000|001000000000000000000000000|0001000000
+	0-10-|1000|000100000000000000000000000|0001000000
+	00000|1000|000010000000000000000000000|1000000000
+	00010|1000|000001000000000000000000000|0010000000
+	01001|1000|000000100000000000000000000|0000000010
+	0101-|1000|000000010000000000000000000|0000000000
+	0-0-0|1000|000000001000000000000000000|1000000000
+	10000|1000|000000000100000000000000000|0000000000
+	11100|1000|000000000010000000000000000|0010000000
+	10-10|1000|000000000001000000000000000|0000000000
+	11111|1000|000000000000100000000000000|0010000000
+					.
+				    	.
+					.
+	11111|0001|000000000000000000000000001|0000000000
+.cs R
+.bp
+.SH EXAMPLE #3
+This example shows a description of a multiple-valued function setup
+for \fIkiss\fR-style minimization.
+There are
+5 binary variables, 2 symbolic variables (the present-state and
+the next-state of the FSM) and the output (8 variables total).
+.sp 1
+.cs R 22
+.nf
+	.mv 8 5 -10 -10 6
+	.ilb io1 io0 init swr mack
+	.ob wait minit mrd sack mwr dli
+	.type fr
+	.kiss
+	--1--     -        init0     110000
+	--1--     init0    init0     110000
+	--0--     init0    init1     110000
+	--00-     init1    init1     110000
+	--01-     init1    init2     110001
+	--0--     init2    init4     110100
+	--01-     init4    init4     110100
+	--00-     init4    iowait    000000
+	0000-     iowait   iowait    000000
+	1000-     iowait   init1     110000
+	01000     iowait   read0     101000
+	11000     iowait   write0    100010
+	01001     iowait   rmack     100000
+	11001     iowait   wmack     100000
+	--01-     iowait   init2     110001
+	--0-0     rmack    rmack     100000
+	--0-1     rmack    read0     101000
+	--0-0     wmack    wmack     100000
+	--0-1     wmack    write0    100010
+	--0--     read0    read1     101001
+	--0--     read1    iowait    000000
+	--0--     write0   iowait    000000
+.cs R
+.bp
+.SH EXAMPLE 4
+This example shows the use of the \fB.symbolic\fP keyword to
+setup a multiple-valued minimization problem.
+.sp 1
+.cs R 26
+.nf
+	.i 15
+	.o 4
+	.ilb SeqActive<0> CacheOp<6> CacheOp<5> CacheOp<4>
+		CacheOp<3> CacheOp<2> CacheOp<1> CacheOp<0> 
+		userKernel<0> Protection<1> Protection<0> 
+		cacheState<1> cacheState<0> PageDirty<0> 
+		WriteCycleIn<0>
+
+	.ob CacheBusy<0> dataMayBeValid<0> dataIsValid<0>
+		WriteCycleOut<0>
+
+	.symbolic CacheOp<6> CacheOp<5> CacheOp<4> CacheOp<3>
+		CacheOp<2> CacheOp<1> CacheOp<0> ;  
+		FET NA PHY_FET PR32 PRE_FET PW32 RA32 RD32 
+		RD64 RDCACHE RFO32 RFO64 TS32 WR32 WR64 WRCACHE ;
+
+	.symbolic Protection<1> Protection<0> ;
+		PROT_KRO_UNA PROT_KRW_UNA PROT_KRW_URO PROT_KRW_URW ;
+
+	.symbolic cacheState<1> cacheState<0> ;
+		CS_Invalid CS_OwnPrivate CS_OwnShared CS_UnOwned ;
+
+	.p 22
+	0000001--010110 0001
+	0000001-1-00110 0001
+	00001011-01011- 0100
+	000010111-0011- 0100
+	0000--001--01-- 0100
+	0000-10--0-1--- 0100
+	0000-10-1--1--- 0100
+	00000-0--0-1--- 0100
+	00000-0-1--1--- 0100
+	0000-10--0--1-- 0100
+	0000-10-1---1-- 0100
+	00000-0--0--1-- 0100
+	00000-0-1---1-- 0100
+	---1----------- 1000
+	--1------------ 1000
+	-1------------- 1000
+	1-------------- 1000
+	-------0------- 1000
+	----1---------- 1000
+	-----0--------- 1000
+	------0-------- 1000
+	--------------1 1110
+	.e
+.fi
+.cs R

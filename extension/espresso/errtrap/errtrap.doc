@@ -1,0 +1,144 @@
+errtrap - package for handling severe errors
+Tom Laidig
+University of California, Berkeley
+
+Include in source files:
+    "errtrap.h"
+
+Link with:
+    liberrtrap.a libuprintf.a
+
+
+NOTES:
+
+	This package implements a stack for error handler functions.
+	When an error is detected, the detecting routine calls
+	`errRaise' with a description of the error.  `errRaise' then
+	calls the top function on the handler stack.  The handler can
+	abort, exit, longjump, or pass the message on to the next
+	handler function (by returning, which causes the next handler
+	to be called with the same arguments; or by calling `errPass',
+	which allows the message to be changed).  If the handler stack
+	is empty, or the last handler passes the error on, a default
+	handler will be called.  This handler prints the message to
+	standard error and exits (possibly producing a core dump -- see
+	the description of the function `errCore').  In no case will
+	`errRaise' ever return.
+
+	The first arguments to `errRaise' are the name of the package or
+	program which detected the error, and an integer code that can
+	be used to distinguish the error among different errors from
+	the same package/program.  For a package, the package name
+	should be accessable to the user as the value of xxx_PKG_NAME
+	defined in that package's header file.  For example, if the
+	`harpoon' package used this error mechanism, it would have
+
+	#define HAR_PKG_NAME	"harpoon"
+
+	in its header file.  All error codes that a package uses (if
+	any) should also be defined in its header file.  This allows a
+	handler to do special things with errors from some packages,
+	while passing on errors it doesn't understand.
+
+	The default message handler uses the name of the program in
+	its error message.  To tell it the name of the function, call
+	`errProgramName'.  Note that the `rpc' and `options' packages
+	do this for you.
+
+CONSISTENCY ISSUES:
+
+	A consistent `feel' of error messages will result if everyone
+	uses similar formats for them.  Some suggestions are included
+	in this section.
+
+	Don't terminate the message with a new-line.  The default
+	handler adds a new-line.  The suggestion is that the final
+	error handler always be the one responsible for a final
+	new-line, if needed.
+
+	If desired, a package writer may register an error-wrapping
+	handler for the duration of a call to one of the functions in
+	the package.  This handler typically will add information at
+	the beginning of the message, to produce a crude backtrace of
+	some of the major functions that led to the error.  The
+	suggested format is
+
+	    "in <function>: <any useful info you have>\n\t<old message>"
+
+
+void
+errProgramName(name)
+char *name;
+
+	Tell the error trapping package that the program's name is `name'.
+	This should normally be the value of `argv[0]'.  Note that the
+	`options' and `rpc' packages do this for you, so you don't need
+	to call this function.
+
+
+void
+errCore(coreFlag)
+int coreFlag;
+
+	Arranges for the default error handler to produce a core dump if
+	`coreFlag' is nonzero, and not produce a core dump if `coreflag'
+	is zero.  The default is not to core dump.
+
+
+void
+errPushHandler(handler)
+void (*handler)( /* char *pkgName, int code, char *message */ );
+
+	Push `handler' onto the top of the list of error handling functions.
+
+
+void
+errPopHandler()
+
+	Pop off the top function on the list of error handlers.
+
+
+void
+errRaise(pkgName, code, messageFormat, ...)
+char *pkgName;
+int code;
+char *messageFormat;
+
+	This function formats a message from `messageFormat' (a
+	printf-style format string) and all trailing arguments, then
+	passes `pkgName', `code', and the resulting message to the top
+	function on the error handler list.  If the handler returns,
+	the next handler in the list is called with the same
+	arguments.  If there are no more functions on the handler list,
+	a default handler (which aborts) is called.  Thus, this
+	function never returns.
+
+
+void
+errPass(messageFormat, ...)
+char *messageFormat;
+
+	This function should only be called within a message handler.
+	It causes the next error handler on the stack to be called with
+	a newly formatted message.  This function never returns.
+
+
+ERR_IGNORE(expr)		/* MACRO */
+
+	This macro causes `expr' to be evaluated for its side effects
+	with error handling inhibited:  an error will silently
+	terminate the evaluation of `expr'.  `expr' can be of any type,
+	including void.
+
+
+int
+errStatus(&pkgName, &code, &message)
+char *pkgName;
+int code;
+char *messagePtr;
+
+	This function is used to retrieve the information from an error
+	that occurred inside the last  call to `ERR_IGNORE'.  It returns
+	0 if no error occurred, otherwise, it returns  1 and sets `pkgName',
+	`code',	and `messagePtr' to what would have been passed to the
+	error handler if errors had not been ignored.

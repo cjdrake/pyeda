@@ -1,0 +1,29 @@
+NAME: errtrap
+DESCRIPTION: error handling package
+TYPE: P
+PACKAGES: uprintf port
+MISC: sample.out
+
+EXTRAFLAGS: 
+
+SOURCES: errtrap.c
+HEADERS: errtrap.h
+OBJECTS: errtrap.o
+SYSLIBS:  -lm
+
+VERBATIMSTART
+printout:
+	psgrind -2r ${HDR} ${SRC}
+
+.saberinit: Makefile
+	echo source ~/.saberinit-header > .saberinit
+	echo load ${INCLUDE} ${SRC} ${DRVRSRC} >> .saberinit
+	echo load ${LIBS} ${LDFLAGS} >> .saberinit
+
+test:: ${DRIVER}
+	@${DRIVER} 2>&1 | cmp - sample.out
+VERBATIMEND
+
+TESTNAME: $(NAME)-test
+TESTSOURCES: errtrap-test.c 
+TESTOBJECTS: errtrap-test.o 

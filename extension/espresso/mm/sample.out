@@ -1,0 +1,10 @@
+MAXITER 25000 MAXOBJS 5000 BIGOBJ 20000, TINYOBJ 256, nbig/ntiny 1/100
+Memory use at start: 65536 bytes
+Starting the test...
+0 iterations
+5000 iterations
+10000 iterations
+15000 iterations
+20000 iterations
+Did 25000 iterations: 24945 mallocs, 55 reallocs
+Memory use at end: 2162688 bytes
