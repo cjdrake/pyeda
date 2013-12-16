@@ -579,8 +579,7 @@ class Expression(boolfunc.Function):
 
     def traverse(self):
         """Iterate through all nodes in this expression in DFS order."""
-        for expr in self._traverse(set()):
-            yield expr
+        yield from self._traverse(set())
 
     def _traverse(self, visited):
         """Iterate through all nodes in this expression in DFS order."""
@@ -1236,8 +1235,7 @@ class ExprNot(Expression):
 
     # From Expression
     def _traverse(self, visited):
-        for expr in self.arg._traverse(visited):
-            yield expr
+        yield from self.arg._traverse(visited)
         if self not in visited:
             visited.add(self)
             yield self
@@ -1299,8 +1297,7 @@ class _ArgumentContainer(Expression):
     # From Expression
     def _traverse(self, visited):
         for arg in self.args:
-            for expr in arg._traverse(visited):
-                yield expr
+            yield from arg._traverse(visited)
         if self not in visited:
             visited.add(self)
             yield self
