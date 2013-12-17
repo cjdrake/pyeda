@@ -4,6 +4,38 @@
   Release Notes
 *****************
 
+Version 0.18
+============
+
+New stuff in this release:
+
+* Unified the ``Expression`` and ``Normalform`` expression types,
+  getting rid of the need for the ``nfexpr`` module.
+* Added ``to_dot`` methods to both ``Expression`` and ``BinaryDecisionDiagram``
+  data types.
+
+Mostly incremental changes this time around.
+My apologies to anybody who was using the ``nfexpr`` module.
+Lately, ``Expression`` has gotten quite fast, especially with the addition
+of the PicoSAT C extension.
+The normal form data type as ``set(frozenset(int))`` was not a proper
+implementation of the ``Function`` class,
+so finally did away with it in favor of the new "encoded" representation that
+matches the Dimacs CNF convention of mapping an index 1..N to each variable,
+and having the negative index correspond to the complement.
+So far this is only useful for CNF SAT-solving,
+but may also come in handy for any future, fast operations on 2-level covers.
+
+Also, somewhat awesome is the addition of the ``to_dot`` methods.
+I was playing around with IPython extensions,
+and eventually hacked up a neat solution for drawing BDDs into the notebook.
+The magic functions are published
+`here <https://github.com/cjdrake/ipython-magic>`_.
+See the usage notes
+`here <https://github.com/ipython/ipython/wiki/Extensions-Index#graphviz-extensions>`_.
+Using ``subprocess`` is probably not the best way to interface with Graphviz,
+but it works well enough without any dependencies.
+
 Version 0.17
 ============
 
