@@ -774,9 +774,9 @@ class Expression(boolfunc.Function):
                 parts += [ 'n' + str(id(expr.args[0])), '->',
                            'n' + str(id(expr)), '[label=s]' ]
                 parts += [ 'n' + str(id(expr.args[1])), '->',
-                           'n' + str(id(expr)), '[label=d0]' ]
-                parts += [ 'n' + str(id(expr.args[2])), '->',
                            'n' + str(id(expr)), '[label=d1]' ]
+                parts += [ 'n' + str(id(expr.args[2])), '->',
+                           'n' + str(id(expr)), '[label=d0]' ]
             elif isinstance(expr, _ArgumentContainer):
                 for arg in expr.args:
                     parts += [ 'n' + str(id(arg)), '->',
