@@ -146,3 +146,4 @@ def test_satisfy():
     assert ff.satisfy_one() == {aa: 0, bb: 1, cc: 1}
     assert expr2bdd(EXPRZERO).satisfy_one() is None
     assert expr2bdd(EXPRONE).satisfy_one() == {}
+

@@ -69,3 +69,4 @@ def brent_kung_add(A, B, cin=0):
     # sum logic
     s = [Xor(A[i], B[i], (cin if i == 0 else g[i-1])) for i in range(N)]
     return BitVector(s), BitVector(g)
+

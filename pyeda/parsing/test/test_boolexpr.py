@@ -50,3 +50,4 @@ def test_misc():
     assert expr("a + (b * c)").equivalent(a + b * c)
     assert expr("Or()").is_zero()
     assert expr("a[0] + b[0]").equivalent(a0 + b0)
+

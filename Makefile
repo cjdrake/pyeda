@@ -27,3 +27,4 @@ test:
 .PHONY: cover
 cover:
 	@$(PYTHON) setup.py nosetests --with-doctest --with-coverage --cover-html
+

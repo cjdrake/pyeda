@@ -17,3 +17,4 @@ def test_gray2bin():
     gnums = [0, 1, 3, 2, 6, 7, 5, 4, 12, 13, 15, 14, 10, 11, 9, 8]
     bnums = [B.vrestrict({G: uint2vec(i, 4)}).to_uint() for i in gnums]
     assert bnums == list(range(16))
+

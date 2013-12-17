@@ -75,3 +75,4 @@ class SudokuSolver(object):
             if soln[self.X[r][c][v]]:
                 return DIGITS[v-1]
         return "X"
+

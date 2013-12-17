@@ -204,3 +204,4 @@ class BitVector(VectorFunction):
                          for j, f in enumerate(self) ])
                   for i in range(2 ** len(self)) ]
         return self.__class__(items)
+

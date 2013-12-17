@@ -320,3 +320,4 @@ def _zom_formulas(lex, fmt, varname, nvars):
         fs.append(_sat_formula(lex, fmt, varname, nvars))
         tok = _expect_token(lex, types)
     return tuple(fs)
+

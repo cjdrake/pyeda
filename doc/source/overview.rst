@@ -62,3 +62,4 @@ View the PyEDA source code on
 
 .. [#f1] `Wikipedia: Intel 4004 <http://en.wikipedia.org/wiki/Intel_4004>`_
 .. [#f2] `The Story of the Intel 4004 <http://www.intel.com/content/www/us/en/history/museum-story-of-intel-4004.html>`_
+

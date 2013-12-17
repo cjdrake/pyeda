@@ -99,3 +99,4 @@ def cached_property(func):
             prop = self._property_cache[func] = func(self)
             return prop
     return property(get)
+

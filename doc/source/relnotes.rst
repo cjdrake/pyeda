@@ -314,3 +314,4 @@ Release 0.11.0
 * Expressions gained an ``expand`` method, to implement Shannon expansion.
 * New if-then-else (ITE) expression type.
 * NormalForm expressions now both support ``-``, ``+``, and ``*`` operators.
+

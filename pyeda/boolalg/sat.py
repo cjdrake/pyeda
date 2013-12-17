@@ -120,3 +120,4 @@ def dpll(cnf):
                         # Backtrack found a contradiction
                         ret = None
     return ret
+

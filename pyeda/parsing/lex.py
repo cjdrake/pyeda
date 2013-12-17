@@ -164,3 +164,4 @@ def action(toktype):
             lexer.tokens.append(toktype(value, lexer.lineno, lexer.offset))
         return inner
     return outer
+

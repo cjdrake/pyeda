@@ -118,3 +118,4 @@ setup(
 
     test_suite='nose.collector',
 )
+

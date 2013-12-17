@@ -95,3 +95,4 @@ you must have the excellent `Nose`_ unit testing framework installed.
    Ran 72 tests in 15.123s
 
    OK
+

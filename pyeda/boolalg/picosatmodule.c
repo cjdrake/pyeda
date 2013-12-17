@@ -723,3 +723,4 @@ PyInit_picosat(void)
 INIT_PICOSAT_ERROR:
     return NULL;
 }
+

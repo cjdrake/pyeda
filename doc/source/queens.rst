@@ -185,3 +185,4 @@ It is easy to verify that there are exactly 92 distinct solutions to the puzzle:
 
    >>> len(list(S.satisfy_all()))
    92
+

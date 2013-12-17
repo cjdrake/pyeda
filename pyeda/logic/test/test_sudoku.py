@@ -20,3 +20,4 @@ with open(top95_solns_txt) as fin:
 def test_sudoku():
     for i, grid in enumerate(GRIDS):
         assert SOLVER.display_solve(grid) == SOLNS[i]
+

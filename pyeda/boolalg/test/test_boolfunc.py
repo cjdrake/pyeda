@@ -136,3 +136,4 @@ def test_point2term():
     assert sorted(point2term({a: 1, b: 0, c: 1, d: 1}, conj=True)) == [-a,  b, -c, -d]
     assert sorted(point2term({a: 0, b: 1, c: 1, d: 1}, conj=True)) == [ a, -b, -c, -d]
     assert sorted(point2term({a: 1, b: 1, c: 1, d: 1}, conj=True)) == [-a, -b, -c, -d]
+

@@ -485,3 +485,4 @@ def _bin_zfill(num, width=None):
     """
     s = bin(num)[2:]
     return s if width is None else s.zfill(width)
+

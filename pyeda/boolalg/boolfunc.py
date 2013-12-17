@@ -673,3 +673,4 @@ def _expand_vectors(vpoint):
         else:
             point[vf] = boolify(vals)
     return point
+

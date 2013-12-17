@@ -728,3 +728,4 @@ def test_complete_sum():
     f = -v*x*y*z + -v*-w*x + -v*-x*-z + -v*w*x*z + -w*y*-z + v*-w*z + v*w*-x*z
     cs = -v*-w*x + v*-w*y + -v*-w*-z + v*-w*z + -v*-x*-z + -v*x*z + v*-x*z + -w*x*y + -w*x*z + -w*y*-z
     assert str(f.complete_sum()) == str(cs)
+

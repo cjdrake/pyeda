@@ -74,3 +74,4 @@ def test_signed_add():
         # -65 + -64, overflow
         R = C.vrestrict({A: int2vec(-65, 8), B: int2vec(-64, 8)})
         assert R[7] != R[6]
+

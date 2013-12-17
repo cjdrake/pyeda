@@ -768,3 +768,4 @@ Note that this is the same as the following::
 
    >>> Xor(S1[6], S2[6]).satisfy_one() is None
    True
+

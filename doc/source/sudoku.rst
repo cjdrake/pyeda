@@ -359,3 +359,4 @@ solver handles a few harder puzzles.
    917|253|684
    243|168|975
    658|947|132
+

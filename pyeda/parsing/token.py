@@ -27,3 +27,4 @@ class IntegerToken(NumberToken): pass
 class FloatToken(NumberToken): pass
 class OperatorToken(Token): pass
 class PunctuationToken(Token): pass
+

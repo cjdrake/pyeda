@@ -417,3 +417,4 @@ def _variable(lex):
         indices = tuple()
     names = tuple(reversed(name.split('.')))
     return ('var', names, indices)
+

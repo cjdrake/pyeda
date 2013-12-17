@@ -50,3 +50,4 @@ def test_parse_sat():
     assert parse_sat("p satx 2\nxor(-1 2)") == ('xor', ('not', ('var', ('x', ), (1, ))), ('var', ('x', ), (2, )))
     assert parse_sat("p sate 2\n=(-1 2)") == ('equal', ('not', ('var', ('x', ), (1, ))), ('var', ('x', ), (2, )))
     assert parse_sat("p satex 2\n+(xor(-1 2) =(1 -2))") == ('or', ('xor', ('not', ('var', ('x', ), (1, ))), ('var', ('x', ), (2, ))), ('equal', ('var', ('x', ), (1, )), ('not', ('var', ('x', ), (2, )))))
+

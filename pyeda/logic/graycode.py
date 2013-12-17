@@ -22,3 +22,4 @@ def gray2bin(G):
     """Convert a gray-coded vector into a binary-coded vector."""
     items = [G[i:].uxor() for i, _ in enumerate(G, G.start)]
     return BitVector(items, G.start)
+

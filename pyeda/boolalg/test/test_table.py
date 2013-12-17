@@ -136,3 +136,4 @@ def test_ops():
     assert str(f - g) == "inputs: c b a\n000 1\n001 0\n010 -\n011 1\n100 1\n101 -\n110 1\n111 1\n"
     assert str(f * g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 1\n100 -\n101 -\n110 0\n111 0\n"
     assert str(f.xor(g)) == "inputs: c b a\n000 0\n001 1\n010 -\n011 0\n100 -\n101 -\n110 0\n111 0\n"
+
