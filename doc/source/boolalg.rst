@@ -410,20 +410,170 @@ The observant reader will notice that this is equivalent to:
 Boolean Functions
 =================
 
-A Boolean function is a rule that maps every point in an :math:`N`-dimensional
+A Boolean function is a rule that maps points in an :math:`N`-dimensional
 Boolean space to an element in :math:`\{0, 1\}`.
+In formal mathematical lingo, :math:`f: B^N \Rightarrow B`,
+where :math:`B^N` means the Cartesian product of :math:`N` Boolean variables,
+:math:`v \in \{0, 1\}`.
+For example, if you have three input variables, :math:`a, b, c`,
+then :math:`B^3 = a \times b \times c = \{(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)\}`.
+:math:`B^3` is the **domain** of the function (the input part),
+and :math:`B = \{0, 1\}` is the **range** of the function (the output part).
 
-Boolean Function Interface
---------------------------
+In the relevant literature,
+you might see a Boolean function described as a type of **relation**,
+or geometrically as a **cube**.
+These are valid descriptions,
+but we will use a familiar analogy for better understanding.
+
+A Boolean function is somewhat like a game,
+where the player takes :math:`N` binary input turns (eg heads/tails),
+and there is a binary result (eg win/loss).
+Let's revisit the coin-flipping example.
+One possible game is that we will flip the coin three times,
+and it will be considered a "win" if heads comes up all three.
+
+Summarize the game using a **truth table**.
+
+.. csv-table::
+   :header: :math:`x_0`, :math:`x_1`, :math:`x_2`, :math:`f`
+   :stub-columns: 3
+
+   0, 0, 0, 0
+   0, 0, 1, 0
+   0, 1, 0, 0
+   0, 1, 1, 0
+   1, 0, 0, 0
+   1, 0, 1, 0
+   1, 1, 0, 0
+   1, 1, 1, 1
+
+You can create the equivalent truth table with PyEDA like so::
+
+   >>> X = bitvec('x', 3)
+   >>> f = truthtable(X, "00000001")
+   >>> f
+   inputs: x[2] x[1] x[0]
+   000 0
+   001 0
+   010 0
+   011 0
+   100 0
+   101 0
+   110 0
+   111 1
+
+Don't be alarmed that the inputs are displayed most-significant-bit first.
+That can actually come in handy sometimes.
+
+The game from the previous example can be expressed as the expression
+:math:`f(x_0, x_1, x_2) = x_0 \cdot x_1 \cdot x_2`.
+It is generally not convenient to list all the input variables,
+so we will normally shorten that statement to just
+:math:`f = x_0 \cdot x_1 \cdot x_2`.
+
+::
+
+   >>> truthtable2expr(f)
+   x[0] * x[1] * x[2]
+
+Let's define another game with a slightly more interesting rule:
+"you win if the majority of flips come up heads".
+
+.. csv-table::
+   :header: :math:`x_0`, :math:`x_1`, :math:`x_2`, :math:`f`
+   :stub-columns: 3
+
+   0, 0, 0, 0
+   0, 0, 1, 0
+   0, 1, 0, 0
+   0, 1, 1, 1
+   1, 0, 0, 0
+   1, 0, 1, 1
+   1, 1, 0, 1
+   1, 1, 1, 1
+
+This is a three-variable form of the "majority" function.
+You can express it as a truth table::
+
+   >>> f = truthtable(X, "00010111")
+   >>> f
+   inputs: x[2] x[1] x[0]
+   000 0
+   001 0
+   010 0
+   011 1
+   100 0
+   101 1
+   110 1
+   111 1
+
+or as an expression::
+
+   >>> truthtable2expr(f)
+   x[0]' * x[1] * x[2] + x[0] * x[1]' * x[2] + x[0] * x[1] * x[2]' + x[0] * x[1] * x[2]
+
+PyEDA Variable/Function Base Classes
+====================================
+
+Now that we have a better understanding of Boolean variables and functions,
+we will dive into how PyEDA models them.
+
+We have already seen a glance of the type of data structure used to represent
+Boolean functions (tables and expressions).
+There are actually several of these representations,
+including (but not limited to):
+
+* Truth tables
+* Implicant tables
+* Logic expressions
+* Decision diagrams, including:
+
+  * Binary decision diagrams (BDD)
+  * Reduced, ordered binary decisions diagrams (ROBDD)
+  * Zero-suppressed decision diagrams (ZDD)
+
+* And inverter graphs (AIG)
+
+Each data type has strengths and weaknesses.
+For example, ROBDDs are a canonical form,
+which make proofs of formal equivalence very cheap.
+On the other hand, ROBDDs can be exponential in size in many cases,
+which makes them memory-constrained.
+
+The following sections show the abstract base classes for Boolean variables
+and functions defined in ``pyeda.boolalg.boolfunc``.
+
+Boolean Variables
+-----------------
+
+In order to easily support algebraic operations on Boolean functions,
+each function representation has a corresponding variable representation.
+For example, truth table variables are instances of ``TruthTableVariable``,
+and expression variables are instances of ``ExpressionVariable``,
+both of which inherit from ``Variable``.
+
+.. autoclass:: pyeda.boolalg.boolfunc.Variable
+   :members: __lt__, name, qualname
+   :member-order: bysource
+
+Boolean Functions
+-----------------
+
+This is the abstract base class for Boolean function representations.
+
+In addition to the methods and properties listed below,
+classes inheriting from ``Function`` should also overload the
+``__neg__``, ``__add__``, ``__sub__``, and ``__mul__`` magic methods.
+This makes it possible to perform symbolic, algebraic manipulations using
+a Python interpreter.
 
 .. autoclass:: pyeda.boolalg.boolfunc.Function
-   :members: __neg__, __add__, __mul__, xor,
-             support, usupport, inputs, top, degree, cardinality,
+   :members: support, usupport, inputs, top, degree, cardinality,
              iter_domain, iter_image, iter_relation,
              restrict, vrestrict, compose,
              satisfy_one, satisfy_all, satisfy_count,
              iter_cofactors, cofactors,
-             is_neg_unate, is_pos_unate, is_binate,
              smoothing, consensus, derivative,
              is_zero, is_one,
              box, unbox
