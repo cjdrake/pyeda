@@ -9,12 +9,12 @@ from pyeda.boolalg.expr import (
     exprvar,
     Expression,
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
-    OneHot0, OneHot, Majority,
+    OneHot0, OneHot, Majority, AchillesHeel,
     EXPRZERO, EXPRONE,
 )
 from pyeda.boolalg.vexpr import bitvec
 
-import nose
+from nose.tools import assert_raises
 
 a, b, c, d, e, p, q, s = map(exprvar, 'abcdepqs')
 
@@ -142,6 +142,11 @@ def test_majority():
     assert Majority(1, 1, 0) is EXPRONE
     assert Majority(1, 1, 1) is EXPRONE
     assert Majority(a, b, c).equivalent(a * b + a * c + b * c)
+
+def test_achilles_heel():
+    assert AchillesHeel(a, b).equivalent(a + b)
+    assert AchillesHeel(a, b, c, d).equivalent((a + b) * (c + d))
+    assert_raises(ValueError, AchillesHeel, a, b, c)
 
 def test_ops():
     # __sub__, __rsub__

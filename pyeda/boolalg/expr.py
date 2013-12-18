@@ -367,6 +367,23 @@ def Majority(*args, simplify=True, factor=False, conj=False):
         expr = expr.simplify()
     return expr
 
+def AchillesHeel(*args, simplify=True, factor=False):
+    """
+    Return the Achille's Heel function, defined as the product from i=0..n/2-1
+    of (X[2*i] + X[2*i+1]).
+    """
+    N = len(args)
+    if N % 2 != 0:
+        fstr = "expected an even number of arguments, got {}"
+        raise ValueError(fstr.format(N))
+    expr = And(*[Or(args[2*i], args[2*i+1], simplify=False)
+                 for i in range(N // 2)], simplify=False)
+    if factor:
+        expr = expr.factor()
+    elif simplify:
+        expr = expr.simplify()
+    return expr
+
 def ForAll(vs, expr):
     """
     Return an expression that means:
