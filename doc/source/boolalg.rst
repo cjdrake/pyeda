@@ -370,9 +370,9 @@ Create a variable :math:`x` to represent the result of the first flip,
 and a variable :math:`y` to represent the result of the second flip.
 Use zero (0) to represent "tails", and one (1) to represent "heads".
 
-The number of variables you use is called the "dimension".
-All the possible outcomes of this experiment is called the "space".
-Each possible outcome is called a "point".
+The number of variables you use is called the **dimension**.
+All the possible outcomes of this experiment is called the **space**.
+Each possible outcome is called a **point**.
 
 If you flip the coin twice, and the result is (heads, tails),
 that result is point :math:`(1, 0)` in a 2-dimensional Boolean space.
@@ -428,7 +428,7 @@ but we will use a familiar analogy for better understanding.
 
 A Boolean function is somewhat like a game,
 where the player takes :math:`N` binary input turns (eg heads/tails),
-and there is a binary result (eg win/loss).
+and there is a binary result determined by a rule (eg win/loss).
 Let's revisit the coin-flipping example.
 One possible game is that we will flip the coin three times,
 and it will be considered a "win" if heads comes up all three.
