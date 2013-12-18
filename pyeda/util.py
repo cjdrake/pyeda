@@ -88,7 +88,6 @@ def cached_property(func):
     computation.
     """
     def get(self):
-        """Return the cached property."""
         try:
             return self._property_cache[func]
         except AttributeError:
@@ -98,5 +97,6 @@ def cached_property(func):
         except KeyError:
             prop = self._property_cache[func] = func(self)
             return prop
+    get.__doc__ = func.__doc__
     return property(get)
 
