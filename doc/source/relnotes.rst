@@ -29,10 +29,10 @@ but may also come in handy for any future, fast operations on 2-level covers.
 Also, somewhat awesome is the addition of the ``to_dot`` methods.
 I was playing around with IPython extensions,
 and eventually hacked up a neat solution for drawing BDDs into the notebook.
-The magic functions are published
-`here <https://github.com/cjdrake/ipython-magic>`_.
-See the usage notes
-`here <https://github.com/ipython/ipython/wiki/Extensions-Index#graphviz-extensions>`_.
+The magic functions are published in my
+`ipython-magic repo <https://github.com/cjdrake/ipython-magic>`_.
+See the
+`usage notes <https://github.com/ipython/ipython/wiki/Extensions-Index#graphviz-extensions>`_.
 Using ``subprocess`` is probably not the best way to interface with Graphviz,
 but it works well enough without any dependencies.
 
