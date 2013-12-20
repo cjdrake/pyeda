@@ -7,6 +7,18 @@
 Version 0.18
 ============
 
+Release 0.18.1
+--------------
+
+Three minor tweaks in this release:
+
+* ``expr``/``bdd`` ``to_dot`` methods now return undirected graphs.
+* Added ``AchillesHeel`` factory function to ``expr``.
+* Fixed a few obscure bugs with simplification of ``Implies`` and ``ITE``.
+
+Release 0.18.0
+--------------
+
 New stuff in this release:
 
 * Unified the ``Expression`` and ``Normalform`` expression types,
