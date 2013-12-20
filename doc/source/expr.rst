@@ -422,6 +422,14 @@ primary and/or secondary operators.
    Return an expression that evaluates to :math:`1` if and only if the majority
    of inputs equal :math:`1`.
 
+.. function:: AchillesHeel(\*args, simplify=True, factor=False)
+
+   Return the Achille's Heel function, defined as
+   :math:`\prod_{i=0}^{N-1}{(x_{i/2} + x_{i/2+1})}`.
+
+   This function has :math:`N` literals in its CNF form,
+   but :math:`N/2 \times 2^{N/2}` literals in its DNF form.
+
 The full adder circuit has a much more dense representation when you
 use both the ``Xor`` and ``Majority`` operators::
 
