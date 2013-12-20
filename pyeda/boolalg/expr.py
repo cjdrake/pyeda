@@ -763,7 +763,7 @@ class Expression(boolfunc.Function):
 
     def to_dot(self, name='EXPR', symbol=True):
         """Convert to DOT language representation."""
-        parts = ['digraph', name, '{', 'rankdir=BT;']
+        parts = ['graph', name, '{', 'rankdir=BT;']
         for expr in self.traverse():
             if expr is EXPRZERO:
                 parts += ['n' + str(id(expr)), '[label=0,shape=box]']
@@ -781,23 +781,23 @@ class Expression(boolfunc.Function):
                     parts.append("[label={0.ASTOP},shape=circle]".format(expr))
         for expr in self.traverse():
             if isinstance(expr, ExprNot):
-                parts += [ 'n' + str(id(expr.arg)), '->',
+                parts += [ 'n' + str(id(expr.arg)), '--',
                            'n' + str(id(expr)) ]
             elif isinstance(expr, ExprImplies):
-                parts += [ 'n' + str(id(expr.args[0])), '->',
+                parts += [ 'n' + str(id(expr.args[0])), '--',
                            'n' + str(id(expr)), '[label=p]' ]
-                parts += [ 'n' + str(id(expr.args[1])), '->',
+                parts += [ 'n' + str(id(expr.args[1])), '--',
                            'n' + str(id(expr)), '[label=q]' ]
             elif isinstance(expr, ExprITE):
-                parts += [ 'n' + str(id(expr.args[0])), '->',
+                parts += [ 'n' + str(id(expr.args[0])), '--',
                            'n' + str(id(expr)), '[label=s]' ]
-                parts += [ 'n' + str(id(expr.args[1])), '->',
+                parts += [ 'n' + str(id(expr.args[1])), '--',
                            'n' + str(id(expr)), '[label=d1]' ]
-                parts += [ 'n' + str(id(expr.args[2])), '->',
+                parts += [ 'n' + str(id(expr.args[2])), '--',
                            'n' + str(id(expr)), '[label=d0]' ]
             elif isinstance(expr, _ArgumentContainer):
                 for arg in expr.args:
-                    parts += [ 'n' + str(id(arg)), '->',
+                    parts += [ 'n' + str(id(arg)), '--',
                                'n' + str(id(expr)) ]
         parts.append('}')
         return " ".join(parts)

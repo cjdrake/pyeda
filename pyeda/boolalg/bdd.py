@@ -254,7 +254,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     def to_dot(self, name='BDD'):
         """Convert to DOT language representation."""
-        parts = ['digraph', name, '{']
+        parts = ['graph', name, '{']
         for node in self.traverse():
             if node is BDDNODEZERO:
                 parts += ['n' + str(id(node)), '[label=0,shape=box];']
@@ -266,10 +266,10 @@ class BinaryDecisionDiagram(boolfunc.Function):
                 parts.append('[label="{}",shape=circle];'.format(v))
         for node in self.traverse():
             if node is not BDDNODEZERO and node is not BDDNODEONE:
-                parts += [ 'n' + str(id(node)), '->',
+                parts += [ 'n' + str(id(node)), '--',
                            'n' + str(id(node.low)),
                            '[label=0,style=dashed];' ]
-                parts += [ 'n' + str(id(node)), '->',
+                parts += [ 'n' + str(id(node)), '--',
                            'n' + str(id(node.high)),
                            '[label=1];' ]
         parts.append('}')
