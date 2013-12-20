@@ -88,6 +88,7 @@ def cached_property(func):
     computation.
     """
     def get(self):
+        """this docstring will be over-written by func.__doc__"""
         try:
             return self._property_cache[func]
         except AttributeError:

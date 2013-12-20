@@ -372,12 +372,12 @@ def AchillesHeel(*args, simplify=True, factor=False):
     Return the Achille's Heel function, defined as the product from i=0..n/2-1
     of (X[2*i] + X[2*i+1]).
     """
-    N = len(args)
-    if N % 2 != 0:
+    nargs = len(args)
+    if nargs & 1:
         fstr = "expected an even number of arguments, got {}"
-        raise ValueError(fstr.format(N))
+        raise ValueError(fstr.format(nargs))
     expr = And(*[Or(args[2*i], args[2*i+1], simplify=False)
-                 for i in range(N // 2)], simplify=False)
+                 for i in range(nargs // 2)], simplify=False)
     if factor:
         expr = expr.factor()
     elif simplify:
@@ -775,7 +775,8 @@ class Expression(boolfunc.Function):
             else:
                 parts.append('n' + str(id(expr)))
                 if symbol:
-                    parts.append('[label="{0.SYMBOL}",shape=circle]'.format(expr))
+                    fstr = '[label="{0.SYMBOL}",shape=circle]'
+                    parts.append(fstr.format(expr))
                 else:
                     parts.append("[label={0.ASTOP},shape=circle]".format(expr))
         for expr in self.traverse():
