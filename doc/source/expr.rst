@@ -357,19 +357,23 @@ use the ``Xor`` operator::
 .. function:: Implies(p, q, simplify=True, factor=False)
 
    Return an expression that implements Boolean implication
-   (:math:`p \rightarrow q`).
+   (:math:`p \implies q`).
 
-+-----------+-----------+-------------------------+
-| :math:`f` | :math:`g` | :math:`f \rightarrow g` |
-+===========+===========+=========================+
-|         0 |         0 |                       1 |
-+-----------+-----------+-------------------------+
-|         0 |         1 |                       1 |
-+-----------+-----------+-------------------------+
-|         1 |         0 |                       0 |
-+-----------+-----------+-------------------------+
-|         1 |         1 |                       1 |
-+-----------+-----------+-------------------------+
++-----------+-----------+----------------------+
+| :math:`p` | :math:`q` | :math:`p \implies q` |
++===========+===========+======================+
+|         0 |         0 |                    1 |
++-----------+-----------+----------------------+
+|         0 |         1 |                    1 |
++-----------+-----------+----------------------+
+|         1 |         0 |                    0 |
++-----------+-----------+----------------------+
+|         1 |         1 |                    1 |
++-----------+-----------+----------------------+
+
+Note that this truth table is equivalent to :math:`p \leq q`,
+but Boolean implication is by far the more common form due to its use in
+`propositional logic <http://en.wikipedia.org/wiki/Propositional_calculus>`_.
 
 .. function:: ITE(s, d1, d0, simplify=True, factor=False)
 
@@ -422,19 +426,28 @@ primary and/or secondary operators.
    Return an expression that evaluates to :math:`1` if and only if the majority
    of inputs equal :math:`1`.
 
-.. function:: AchillesHeel(\*args, simplify=True, factor=False)
-
-   Return the Achille's Heel function, defined as
-   :math:`\prod_{i=0}^{N-1}{(x_{i/2} + x_{i/2+1})}`.
-
-   This function has :math:`N` literals in its CNF form,
-   but :math:`N/2 \times 2^{N/2}` literals in its DNF form.
-
 The full adder circuit has a much more dense representation when you
 use both the ``Xor`` and ``Majority`` operators::
 
    >>> s = Xor('a', 'b', 'ci')
    >>> co = Majority('a', 'b', 'ci')
+
+.. function:: AchillesHeel(\*args, simplify=True, factor=False)
+
+   Return the Achille's Heel function, defined as
+   :math:`\prod_{i=0}^{N-1}{(x_{i/2} + x_{i/2+1})}`.
+
+The ``AchillesHeel`` function has :math:`N` literals in its CNF form,
+but :math:`N/2 \times 2^{N/2}` literals in its DNF form.
+It is an interesting demonstration of tradeoffs when choosing an expression
+representation.
+For example::
+
+   >>> f =  AchillesHeel('a', 'b', 'c', 'd', 'w', 'x', 'y', 'z')
+   >>> f
+   (a + b) * (c + d) * (w + x) * (y + z)
+   >>> f.to_dnf()
+   a * c * w * y + a * c * w * z + a * c * x * y + a * c * x * z + a * d * w * y + a * d * w * z + a * d * x * y + a * d * x * z + b * c * w * y + b * c * w * z + b * c * x * y + b * c * x * z + b * d * w * y + b * d * w * z + b * d * x * y + b * d * x * z
 
 From the ``expr`` Function
 --------------------------
