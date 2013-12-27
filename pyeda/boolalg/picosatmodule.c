@@ -24,17 +24,20 @@ PyDoc_STRVAR(picosaterr_docstring, "PicoSAT Error");
 //==============================================================================
 
 inline static void *
-py_malloc(void *pmgr, size_t nbytes) {
+py_malloc(void *pmgr, size_t nbytes)
+{
     return PyMem_Malloc(nbytes);
 }
 
 inline static void *
-py_realloc(void *pmgr, void *p, size_t old, size_t new) {
+py_realloc(void *pmgr, void *p, size_t old, size_t new)
+{
     return PyMem_Realloc(p, new);
 }
 
 inline static void
-py_free(void *pmgr, void *p, size_t nbytes) {
+py_free(void *pmgr, void *p, size_t nbytes)
+{
     PyMem_Free(p);
 }
 
@@ -47,8 +50,8 @@ py_free(void *pmgr, void *p, size_t nbytes) {
 //==============================================================================
 
 static int
-add_clauses(PicoSAT *picosat, PyObject *clauses) {
-
+add_clauses(PicoSAT *picosat, PyObject *clauses)
+{
     int nvars;
     PyObject *pyclauses, *pyclause;
     PyObject *pylits, *pylit;
@@ -126,8 +129,8 @@ ADD_CLAUSES_ERROR:
 //==============================================================================
 
 static int
-add_assumptions(PicoSAT *picosat, PyObject *assumptions) {
-
+add_assumptions(PicoSAT *picosat, PyObject *assumptions)
+{
     int nvars;
     PyObject *pylits, *pylit;
     int lit;
@@ -175,7 +178,6 @@ ADD_ASSUMPTIONS_ERROR:
     return 0;
 }
 
-
 //==============================================================================
 // Retrieve a solution from PicoSAT, and convert it to a Python tuple.
 // Return NULL if an error happens.
@@ -187,8 +189,8 @@ ADD_ASSUMPTIONS_ERROR:
 //==============================================================================
 
 static PyObject *
-get_soln(PicoSAT *picosat) {
-
+get_soln(PicoSAT *picosat)
+{
     int i;
     int nvars;
     PyObject *pytuple, *pyitem;
@@ -298,8 +300,8 @@ PyDoc_STRVAR(satisfy_one_docstring,
 );
 
 static PyObject *
-satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs) {
-
+satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
+{
     static char *keywords[] = {
         "nvars", "clauses",
         "verbosity", "default_phase", "propagation_limit", "decision_limit",
