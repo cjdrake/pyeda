@@ -73,7 +73,7 @@ In both cases, we need to write a constraint that says
 
 ::
 
-   >>> starts = [(i, 0) for i in range(6, 0, -1)] + [(0, i) for i in range(7)]
+   >>> starts = [(i, 0) for i in range(8-2, 0, -1)] + [(0, i) for i in range(8-1)]
    >>> lrdiags = []
    >>> for r, c in starts:
    ...     lrdiags.append([])
@@ -87,7 +87,7 @@ In both cases, we need to write a constraint that says
 
 ::
 
-   >>> starts = [(i, 7) for i in range(6, -1, -1)] + [(0, i) for i in range(6, 0, -1)]
+   >>> starts = [(i, 8-1) for i in range(8-2, -1, -1)] + [(0, i) for i in range(8-2, 0, -1)]
    >>> rldiags = []
    >>> for r, c in starts:
    ...     rldiags.append([])
@@ -183,6 +183,8 @@ Use the `satisfy_all` method to iterate through all solutions::
 
 It is easy to verify that there are exactly 92 distinct solutions to the puzzle::
 
+   >>> S.satisfy_count()
+   92
    >>> len(list(S.satisfy_all()))
    92
 
