@@ -145,8 +145,8 @@ class BitVector(VectorFunction):
         if num == 0:
             return self, BitVector([])
         else:
-            return ( BitVector(cin.items + self.items[:-num], self.start),
-                     BitVector(self.items[-num:]) )
+            return (BitVector(cin.items + self.items[:-num], self.start),
+                    BitVector(self.items[-num:]))
 
     def rsh(self, num, cin=None):
         """Return the vector right shifted by N places."""
@@ -160,8 +160,8 @@ class BitVector(VectorFunction):
         if num == 0:
             return self, BitVector([])
         else:
-            return ( BitVector(self.items[num:] + cin.items, self.start),
-                     BitVector(self.items[:num]) )
+            return (BitVector(self.items[num:] + cin.items, self.start),
+                    BitVector(self.items[:num]))
 
     def arsh(self, num):
         """Return the vector arithmetically right shifted by N places."""
@@ -171,8 +171,8 @@ class BitVector(VectorFunction):
             return self, BitVector([])
         else:
             sign = self.items[-1]
-            return ( BitVector(self.items[num:] + [sign] * num, self.start),
-                     BitVector(self.items[:num]) )
+            return (BitVector(self.items[num:] + [sign] * num, self.start),
+                    BitVector(self.items[:num]))
 
     # Other logic
     def decode(self):
@@ -200,8 +200,8 @@ class BitVector(VectorFunction):
         >>> d.vrestrict({A: "11"})
         [0, 0, 0, 1]
         """
-        items = [ And(*[ f if bit_on(i, j) else -f
-                         for j, f in enumerate(self) ])
-                  for i in range(2 ** len(self)) ]
+        items = [And(*[f if bit_on(i, j) else -f
+                       for j, f in enumerate(self)])
+                 for i in range(2 ** len(self))]
         return self.__class__(items)
 

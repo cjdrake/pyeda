@@ -266,12 +266,12 @@ class BinaryDecisionDiagram(boolfunc.Function):
                 parts.append('[label="{}",shape=circle];'.format(v))
         for node in self.traverse():
             if node is not BDDNODEZERO and node is not BDDNODEONE:
-                parts += [ 'n' + str(id(node)), '--',
-                           'n' + str(id(node.low)),
-                           '[label=0,style=dashed];' ]
-                parts += [ 'n' + str(id(node)), '--',
-                           'n' + str(id(node.high)),
-                           '[label=1];' ]
+                parts += ['n' + str(id(node)), '--',
+                          'n' + str(id(node.low)),
+                          '[label=0,style=dashed];']
+                parts += ['n' + str(id(node)), '--',
+                          'n' + str(id(node.high)),
+                          '[label=1];']
         parts.append('}')
         return " ".join(parts)
 

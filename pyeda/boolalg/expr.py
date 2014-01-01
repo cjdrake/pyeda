@@ -770,8 +770,8 @@ class Expression(boolfunc.Function):
             elif expr is EXPRONE:
                 parts += ['n' + str(id(expr)), '[label=1,shape=box]']
             elif isinstance(expr, ExprLiteral):
-                parts += [ 'n' + str(id(expr)),
-                           '[label="{}",shape=box]'.format(expr) ]
+                parts += ['n' + str(id(expr)),
+                          '[label="{}",shape=box]'.format(expr)]
             else:
                 parts.append('n' + str(id(expr)))
                 if symbol:
@@ -781,24 +781,23 @@ class Expression(boolfunc.Function):
                     parts.append("[label={0.ASTOP},shape=circle]".format(expr))
         for expr in self.traverse():
             if isinstance(expr, ExprNot):
-                parts += [ 'n' + str(id(expr.arg)), '--',
-                           'n' + str(id(expr)) ]
+                parts += ['n' + str(id(expr.arg)), '--',
+                          'n' + str(id(expr))]
             elif isinstance(expr, ExprImplies):
-                parts += [ 'n' + str(id(expr.args[0])), '--',
-                           'n' + str(id(expr)), '[label=p]' ]
-                parts += [ 'n' + str(id(expr.args[1])), '--',
-                           'n' + str(id(expr)), '[label=q]' ]
+                parts += ['n' + str(id(expr.args[0])), '--',
+                          'n' + str(id(expr)), '[label=p]']
+                parts += ['n' + str(id(expr.args[1])), '--',
+                          'n' + str(id(expr)), '[label=q]']
             elif isinstance(expr, ExprITE):
-                parts += [ 'n' + str(id(expr.args[0])), '--',
-                           'n' + str(id(expr)), '[label=s]' ]
-                parts += [ 'n' + str(id(expr.args[1])), '--',
-                           'n' + str(id(expr)), '[label=d1]' ]
-                parts += [ 'n' + str(id(expr.args[2])), '--',
-                           'n' + str(id(expr)), '[label=d0]' ]
+                parts += ['n' + str(id(expr.args[0])), '--',
+                          'n' + str(id(expr)), '[label=s]']
+                parts += ['n' + str(id(expr.args[1])), '--',
+                          'n' + str(id(expr)), '[label=d1]']
+                parts += ['n' + str(id(expr.args[2])), '--',
+                          'n' + str(id(expr)), '[label=d0]']
             elif isinstance(expr, _ArgumentContainer):
                 for arg in expr.args:
-                    parts += [ 'n' + str(id(arg)), '--',
-                               'n' + str(id(expr)) ]
+                    parts += ['n' + str(id(arg)), '--', 'n' + str(id(expr))]
         parts.append('}')
         return " ".join(parts)
 
@@ -1100,9 +1099,9 @@ class ExprComplement(ExprLiteral):
         if isinstance(other, ExprConstant):
             return False
         if isinstance(other, ExprVariable):
-            return ( self.exprvar.names < other.names or
-                     self.exprvar.names == other.names and
-                     self.exprvar.indices <= other.indices )
+            return (self.exprvar.names < other.names or
+                    self.exprvar.names == other.names and
+                    self.exprvar.indices <= other.indices)
         if isinstance(other, ExprComplement):
             return boolfunc.Variable.__lt__(self.exprvar, other.exprvar)
         if isinstance(other, Expression):
@@ -2320,8 +2319,8 @@ class NormalForm(object):
             vs = list(support - {abs(uniqid) for uniqid in clause})
             if vs:
                 for num in range(1 << len(vs)):
-                    new_part = { v if bit_on(num, i) else -v
-                                 for i, v in enumerate(vs) }
+                    new_part = {v if bit_on(num, i) else -v
+                                for i, v in enumerate(vs)}
                     new_clauses.add(clause | new_part)
             else:
                 new_clauses.add(clause)
@@ -2363,8 +2362,8 @@ class DimacsCNF(ConjNormalForm):
 
     def soln2point(self, soln):
         """Convert a solution vector to a point."""
-        return { self.litmap[i]: int(val > 0)
-                 for i, val in enumerate(soln, start=1) }
+        return {self.litmap[i]: int(val > 0)
+                for i, val in enumerate(soln, start=1)}
 
 
 def _iter_zeros(expr):
