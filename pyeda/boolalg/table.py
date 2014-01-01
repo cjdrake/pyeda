@@ -19,8 +19,12 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import exprvar, Or, And
 from pyeda.util import cached_property
 
-# Positional Cube Notation
-PC_VOID, PC_ONE, PC_ZERO, PC_DC = range(4)
+# Binary-valued positional cube (msb:lsb):
+# 00 : void
+# 01 : 0
+# 10 : 1
+# 11 : don't care
+PC_VOID, PC_ZERO, PC_ONE, PC_DC = range(4)
 
 # existing TTVariable references
 TTVARIABLES = dict()
@@ -105,7 +109,7 @@ def truthtable2expr(tt, conj=False):
 
 class PCData(object):
     """
-    Positional cube data.
+    Binary-valued positional cube data.
 
     This class packs PC data items into a Python stdlib array.
     The 2^N indices cover a Boolean space of dimension N.
@@ -150,7 +154,7 @@ class PCData(object):
         """Return a mask to determine whether an array chunk has any zeros."""
         accum = 0
         for i in range(self.data.itemsize):
-            accum += (0xAA << (i << 3))
+            accum += (0x55 << (i << 3))
         return accum
 
     @cached_property
@@ -158,7 +162,7 @@ class PCData(object):
         """Return a mask to determine whether an array chunk has any ones."""
         accum = 0
         for i in range(self.data.itemsize):
-            accum += (0x55 << (i << 3))
+            accum += (0xAA << (i << 3))
         return accum
 
     def iter_zeros(self):
@@ -170,7 +174,7 @@ class PCData(object):
                 remainder = 0
                 while remainder < self.width and num < self._len:
                     item = (chunk >> remainder) & 3
-                    if item & 2:
+                    if item & PC_ZERO:
                         yield num
                     remainder += 2
                     num += 1
@@ -190,7 +194,7 @@ class PCData(object):
                 remainder = 0
                 while remainder < self.width and num < self._len:
                     item = (chunk >> remainder) & 3
-                    if item & 1:
+                    if item & PC_ONE:
                         return num
                     remainder += 2
                     num += 1
@@ -208,7 +212,7 @@ class PCData(object):
                 remainder = 0
                 while remainder < self.width and num < self._len:
                     item = (chunk >> remainder) & 3
-                    if item & 1:
+                    if item & PC_ONE:
                         yield num
                     remainder += 2
                     num += 1
@@ -253,8 +257,8 @@ class TruthTable(boolfunc.Function):
             for upoint in boolfunc.iter_upoints(inputs):
                 ab = self.urestrict(upoint).pcdata[0]
                 cd = other.urestrict(upoint).pcdata[0]
-                # a * c, b + d
-                yield ((ab & cd) & 2) | ((ab | cd) & 1)
+                # a + c, b * d
+                yield ((ab | cd) & 2) | ((ab & cd) & 1)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
@@ -270,8 +274,8 @@ class TruthTable(boolfunc.Function):
             for upoint in boolfunc.iter_upoints(inputs):
                 ab = self.urestrict(upoint).pcdata[0]
                 cd = other.urestrict(upoint).pcdata[0]
-                # a + c, b * d
-                yield ((ab | cd) & 2) | ((ab & cd) & 1)
+                # a * c, b + d
+                yield ((ab & cd) & 2) | ((ab | cd) & 1)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
@@ -284,9 +288,9 @@ class TruthTable(boolfunc.Function):
             for upoint in boolfunc.iter_upoints(inputs):
                 ab = self.urestrict(upoint).pcdata[0]
                 cd = other.urestrict(upoint).pcdata[0]
-                # a * c + b * d, a * d + b * c
+                # a * d + b * c, a * c + b * d
                 a, b, c, d = ab >> 1, ab & 1, cd >> 1, cd & 1
-                yield ((a & c | b & d) << 1) | (a & d | b & c)
+                yield ((a & d | b & c) << 1) | (a & c | b & d)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
@@ -359,7 +363,7 @@ class TruthTable(boolfunc.Function):
         # Test whether table entries are monotonically decreasing
         for cf in self.iter_cofactors(vs):
             for i, item in enumerate(cf.pcdata):
-                if not (maxcov[i] & 1) | (item >> 1):
+                if maxcov[i] == PC_ZERO and item == PC_ONE:
                     return False
                 maxcov[i] = item
         return True
@@ -371,7 +375,7 @@ class TruthTable(boolfunc.Function):
         # Test whether table entries are monotonically increasing
         for cf in self.iter_cofactors(vs):
             for i, item in enumerate(cf.pcdata):
-                if not (mincov[i] >> 1) | (item & 1):
+                if mincov[i] == PC_ONE and item == PC_ZERO:
                     return False
                 mincov[i] = item
         return True
