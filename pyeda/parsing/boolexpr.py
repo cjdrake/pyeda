@@ -8,84 +8,140 @@ Interface Functions:
     parse
 """
 
+# pylint: disable=C0103
+
 from pyeda.parsing.lex import RegexLexer, action
 from pyeda.parsing.token import (
     KeywordToken, NameToken, IntegerToken, OperatorToken, PunctuationToken,
 )
 
 class BoolExprParseError(Exception):
+    """An error happened during parsing a Boolean expression."""
     def __init__(self, msg):
         super(BoolExprParseError, self).__init__(msg)
 
+
 # Keywords
 class KW_or(KeywordToken):
+    """Expression 'Or' keyword"""
     ASTOP = 'or'
+
 class KW_and(KeywordToken):
+    """Expression 'And' keyword"""
     ASTOP = 'and'
+
 class KW_xor(KeywordToken):
+    """Expression 'Xor' keyword"""
     ASTOP = 'xor'
+
 class KW_xnor(KeywordToken):
+    """Expression 'Xnor' keyword"""
     ASTOP = 'xnor'
+
 class KW_equal(KeywordToken):
+    """Expression 'Equal' keyword"""
     ASTOP = 'equal'
+
 class KW_unequal(KeywordToken):
+    """Expression 'Unequal' keyword"""
     ASTOP = 'unequal'
+
 class KW_nor(KeywordToken):
+    """Expression 'Nor' keyword"""
     ASTOP = 'nor'
+
 class KW_nand(KeywordToken):
+    """Expression 'Nand' keyword"""
     ASTOP = 'nand'
+
 class KW_onehot0(KeywordToken):
+    """Expression 'OneHot0' keyword"""
     ASTOP = 'onehot0'
+
 class KW_onehot(KeywordToken):
+    """Expression 'OneHot' keyword"""
     ASTOP = 'onehot'
+
 class KW_majority(KeywordToken):
+    """Expression 'Majority' keyword"""
     ASTOP = 'majority'
+
 class KW_ite(KeywordToken):
+    """Expression 'ITE' keyword"""
     ASTOP = 'ite'
+
 class KW_implies(KeywordToken):
+    """Expression 'Implies' keyword"""
     ASTOP = 'implies'
+
 class KW_not(KeywordToken):
+    """Expression 'Not' keyword"""
     ASTOP = 'not'
 
+
 # Operators
-class OP_rarrow(OperatorToken): pass
-class OP_lrarrow(OperatorToken): pass
-class OP_question(OperatorToken): pass
-class OP_colon(OperatorToken): pass
-class OP_not(OperatorToken): pass
-class OP_or(OperatorToken): pass
-class OP_and(OperatorToken): pass
+class OP_rarrow(OperatorToken):
+    """Expression '=>' operator"""
+
+class OP_lrarrow(OperatorToken):
+    """Expression '<=>' operator"""
+
+class OP_question(OperatorToken):
+    """Expression '?' operator"""
+
+class OP_colon(OperatorToken):
+    """Expression ':' operator"""
+
+class OP_not(OperatorToken):
+    """Expression '-' operator"""
+
+class OP_or(OperatorToken):
+    """Expression '+' operator"""
+
+class OP_and(OperatorToken):
+    """Expression '*' operator"""
+
 
 # Punctuation
-class LPAREN(PunctuationToken): pass
-class RPAREN(PunctuationToken): pass
-class COMMA(PunctuationToken): pass
+class LPAREN(PunctuationToken):
+    """Expression '(' token"""
+
+class RPAREN(PunctuationToken):
+    """Expression ')' token"""
+
+class COMMA(PunctuationToken):
+    """Expression ',' token"""
 
 
 class BoolExprLexer(RegexLexer):
     """Lexical analysis of SAT strings"""
 
     def ignore(self, text):
-        pass
+        """Ignore this text."""
 
     def keyword(self, text):
+        """Push a keyword onto the token queue."""
         cls = self.KEYWORDS[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
     def operator(self, text):
+        """Push an operator onto the token queue."""
         cls = self.OPERATORS[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
     def punct(self, text):
+        """Push punctuation onto the token queue."""
         cls = self.PUNCTUATION[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
     @action(NameToken)
     def name(self, text):
+        """Push a variable name onto the token queue."""
         return text
 
     @action(IntegerToken)
-    def num(self, text):
+    def integer(self, text):
+        """Push an integer onto the token queue."""
         return int(text)
 
     RULES = {
@@ -109,7 +165,7 @@ class BoolExprLexer(RegexLexer):
             (r"\bNot\b", keyword),
 
             (r"[a-zA-Z][a-zA-Z_]*(?:\.[a-zA-Z][a-zA-Z_]*)*(?:\[\d+\])*", name),
-            (r"\b[01]\b", num),
+            (r"\b[01]\b", integer),
 
             (r"=>", operator),
             (r"<=>", operator),
@@ -253,9 +309,11 @@ def _expect_token(lex, types):
         raise BoolExprParseError("unexpected token: " + str(tok))
 
 def _expr(lex):
+    """Return an expression."""
     return _ite(lex)
 
 def _ite(lex):
+    """Return an ITE expression."""
     s = _impl(lex)
     try:
         tok = next(lex)
@@ -272,6 +330,7 @@ def _ite(lex):
         return s
 
 def _impl(lex):
+    """Return an Implies expression."""
     p = _sum(lex)
     try:
         tok = next(lex)
@@ -289,6 +348,7 @@ def _impl(lex):
         return p
 
 def _sum(lex):
+    """Return a sum expresssion."""
     term = _term(lex)
     expr_prime = _sum_prime(lex)
     if expr_prime is None:
@@ -297,6 +357,7 @@ def _sum(lex):
         return ('or', term, expr_prime)
 
 def _sum_prime(lex):
+    """Return a sum' expression, eliminates sum left recursion."""
     try:
         tok = next(lex)
     except StopIteration:
@@ -316,6 +377,7 @@ def _sum_prime(lex):
         return None
 
 def _term(lex):
+    """Return a term expression."""
     factor = _factor(lex)
     term_prime = _term_prime(lex)
     if term_prime is None:
@@ -324,6 +386,7 @@ def _term(lex):
         return ('and', factor, term_prime)
 
 def _term_prime(lex):
+    """Return a term' expression, eliminates term left recursion."""
     try:
         tok = next(lex)
     except StopIteration:
@@ -343,6 +406,7 @@ def _term_prime(lex):
         return None
 
 def _factor(lex):
+    """Return a factor expression."""
     tok = _expect_token(lex, FACTOR_TOKS)
     # '-' F
     toktype = type(tok)
@@ -392,6 +456,7 @@ def _factor(lex):
         return ('const', tok.value)
 
 def _args(lex):
+    """Return a (potentially empty) list of arguments."""
     tok = next(lex)
     if type(tok) is RPAREN:
         lex.unpop_token(tok)
@@ -407,6 +472,7 @@ def _args(lex):
             return args
 
 def _variable(lex):
+    """Return a variable expression."""
     tok = _expect_token(lex, {NameToken})
     try:
         idx = tok.value.index('[')

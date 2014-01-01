@@ -55,6 +55,7 @@ class RegexLexer(object):
 
         self.gtoks = None
 
+        self._rules = dict()
         self._compile_rules()
 
     def __iter__(self):
@@ -74,22 +75,21 @@ class RegexLexer(object):
 
     def _compile_rules(self):
         """Compile the rules into the internal lexer state."""
-        self._rules = dict()
         for state, table in self.RULES.items():
             patterns = list()
             actions = list()
             nextstates = list()
             for i, row in enumerate(table):
                 if len(row) == 2:
-                    pattern, action = row
+                    pattern, _action = row
                     nextstate = None
                 elif len(row) == 3:
-                    pattern, action, nextstate = row
+                    pattern, _action, nextstate = row
                 else:
                     fstr = "invalid RULES: state {}, row {}"
                     raise LexCompileError(fstr.format(state, i))
                 patterns.append(pattern)
-                actions.append(action)
+                actions.append(_action)
                 nextstates.append(nextstate)
             reobj = re.compile('|'.join("(" + p + ")" for p in patterns))
             self._rules[state] = (reobj, actions, nextstates)
@@ -101,11 +101,10 @@ class RegexLexer(object):
         while mobj is not None:
             text = mobj.group(0)
             idx = mobj.lastindex - 1
-            action = actions[idx]
             nextstate = nextstates[idx]
 
             # Take action
-            action(self, text)
+            actions[idx](self, text)
             while self.tokens:
                 yield self.pop_token()
             if nextstate and nextstate != self.states[-1]:
@@ -158,8 +157,11 @@ class RegexLexer(object):
 
 
 def action(toktype):
+    """Return a parser action property."""
     def outer(func):
+        """Return a function that pushes a token onto the token queue."""
         def inner(lexer, text):
+            """Push a token onto the token queue."""
             value = func(lexer, text)
             lexer.tokens.append(toktype(value, lexer.lineno, lexer.offset))
         return inner

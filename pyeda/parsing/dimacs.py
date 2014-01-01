@@ -16,56 +16,88 @@ Interface Functions:
     parse_sat
 """
 
+# pylint: disable=C0103
+
 from pyeda.parsing.lex import RegexLexer, action
 from pyeda.parsing.token import (
     KeywordToken, IntegerToken, OperatorToken, PunctuationToken,
 )
 
 class DIMACSError(Exception):
+    """An error happened during parsing a DIMACS file"""
     def __init__(self, msg):
         super(DIMACSError, self).__init__(msg)
 
+
 # Keywords
-class KW_p(KeywordToken): pass
-class KW_cnf(KeywordToken): pass
-class KW_sat(KeywordToken): pass
-class KW_satx(KeywordToken): pass
-class KW_sate(KeywordToken): pass
-class KW_satex(KeywordToken): pass
+class KW_p(KeywordToken):
+    """DIMACS 'p' preamble token"""
+
+class KW_cnf(KeywordToken):
+    """DIMACS 'cnf' token"""
+
+class KW_sat(KeywordToken):
+    """DIMACS 'sat' token"""
+
+class KW_satx(KeywordToken):
+    """DIMACS 'satx' token"""
+
+class KW_sate(KeywordToken):
+    """DIMACS 'sate' token"""
+
+class KW_satex(KeywordToken):
+    """DIMACS 'satex' token"""
+
 
 # Operators
 class OP_not(OperatorToken):
+    """DIMACS '-' operator"""
     ASTOP = 'not'
+
 class OP_or(OperatorToken):
+    """DIMACS '+' operator"""
     ASTOP = 'or'
+
 class OP_and(OperatorToken):
+    """DIMACS '*' operator"""
     ASTOP = 'and'
+
 class OP_xor(OperatorToken):
+    """DIMACS 'xor' operator"""
     ASTOP = 'xor'
+
 class OP_equal(OperatorToken):
+    """DIMACS '=' operator"""
     ASTOP = 'equal'
 
+
 # Punctuation
-class LPAREN(PunctuationToken): pass
-class RPAREN(PunctuationToken): pass
+class LPAREN(PunctuationToken):
+    """DIMACS '(' token"""
+
+class RPAREN(PunctuationToken):
+    """DIMACS ')' token"""
 
 
 class CNFLexer(RegexLexer):
     """Lexical analysis of CNF strings"""
 
     def ignore(self, text):
-        pass
+        """Ignore this text."""
 
     def keyword(self, text):
+        """Push a keyword onto the token queue."""
         cls = self.KEYWORDS[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
     def operator(self, text):
+        """Push an operator onto the token queue."""
         cls = self.OPERATORS[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
     @action(IntegerToken)
     def integer(self, text):
+        """Push an integer onto the token queue."""
         return int(text)
 
     RULES = {
@@ -119,6 +151,7 @@ def parse_cnf(s, varname='x'):
     return _cnf_formula(lex, varname, nvars, nclauses)
 
 def _cnf_formula(lex, varname, nvars, nclauses):
+    """Return a DIMACS CNF formula."""
     clauses = list()
     while True:
         try:
@@ -138,6 +171,7 @@ def _cnf_formula(lex, varname, nvars, nclauses):
     return ('and', ) + tuple(clauses)
 
 def _cnf_clause(lex, varname, nvars):
+    """Return a DIMACS CNF clause."""
     clause = list()
     tok = _expect_token(lex, {OP_not, IntegerToken})
     while not (type(tok) is IntegerToken and tok.value == 0):
@@ -167,22 +201,26 @@ class SATLexer(RegexLexer):
     """Lexical analysis of SAT strings"""
 
     def ignore(self, text):
-        pass
+        """Ignore this text."""
 
     def keyword(self, text):
+        """Push a keyword onto the token queue."""
         cls = self.KEYWORDS[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
     def operator(self, text):
+        """Push an operator onto the token queue."""
         cls = self.OPERATORS[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
     def punct(self, text):
+        """Push punctuation onto the token queue."""
         cls = self.PUNCTUATION[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
     @action(IntegerToken)
     def integer(self, text):
+        """Push an integer onto the token queue."""
         return int(text)
 
     RULES = {
@@ -281,6 +319,7 @@ def parse_sat(s, varname='x'):
         raise DIMACSError("incomplete formula")
 
 def _sat_formula(lex, fmt, varname, nvars):
+    """Return a DIMACS SAT formula."""
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
     tok = _expect_token(lex, types)
     if type(tok) is IntegerToken:
@@ -307,11 +346,13 @@ def _sat_formula(lex, fmt, varname, nvars):
         return (tok.ASTOP, ) + _zom_formulas(lex, fmt, varname, nvars)
 
 def _one_formula(lex, fmt, varname, nvars):
+    """Return one DIMACS SAT formula."""
     f = _sat_formula(lex, fmt, varname, nvars)
     _expect_token(lex, {RPAREN})
     return f
 
 def _zom_formulas(lex, fmt, varname, nvars):
+    """Return zero or more DIMACS SAT formulas."""
     fs = list()
     types = {IntegerToken, LPAREN, RPAREN} | _SAT_TOKS[fmt]
     tok = _expect_token(lex, types)
