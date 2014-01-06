@@ -2,6 +2,7 @@
 
 import os
 import sys
+from os.path import join as pjoin
 
 import pyeda
 
@@ -74,7 +75,7 @@ TEST_PKGS = [
 
 PACKAGES = PYEDA_PKGS + TEST_PKGS
 
-with open(os.path.join('extension', 'picosat', 'VERSION')) as fin:
+with open(pjoin('extension', 'picosat', 'VERSION')) as fin:
     PICOSAT_VERSION = '"' + fin.read().strip() + '"'
 
 # PicoSAT extension
@@ -83,11 +84,11 @@ PICOSAT = dict(
         ('NDEBUG', None),
     ],
     include_dirs = [
-        os.path.join('extension', 'picosat'),
+        pjoin('extension', 'picosat'),
     ],
     sources = [
-        os.path.join('extension', 'picosat', 'picosat.c'),
-        os.path.join('pyeda', 'boolalg', 'picosatmodule.c'),
+        pjoin('extension', 'picosat', 'picosat.c'),
+        pjoin('pyeda', 'boolalg', 'picosatmodule.c'),
     ],
 )
 
