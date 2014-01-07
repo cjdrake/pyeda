@@ -761,7 +761,7 @@ class Expression(boolfunc.Function):
         f = Xor(self, other)
         return f.satisfy_one() is None
 
-    def to_dot(self, name='EXPR', symbol=True):
+    def to_dot(self, name='EXPR'):
         """Convert to DOT language representation."""
         parts = ['graph', name, '{', 'rankdir=BT;']
         for expr in self.traverse():
@@ -774,11 +774,7 @@ class Expression(boolfunc.Function):
                           '[label="{}",shape=box]'.format(expr)]
             else:
                 parts.append('n' + str(id(expr)))
-                if symbol:
-                    fstr = '[label="{0.SYMBOL}",shape=circle]'
-                    parts.append(fstr.format(expr))
-                else:
-                    parts.append("[label={0.ASTOP},shape=circle]".format(expr))
+                parts.append("[label={0.ASTOP},shape=circle]".format(expr))
         for expr in self.traverse():
             if isinstance(expr, ExprNot):
                 parts += ['n' + str(id(expr.arg)), '--',
@@ -1093,7 +1089,7 @@ class ExprComplement(ExprLiteral):
         self.uniqid = -exprvar.uniqid
 
     def __str__(self):
-        return str(self.exprvar) + "'"
+        return '-' + str(self.exprvar)
 
     def __lt__(self, other):
         if isinstance(other, ExprConstant):
@@ -1480,15 +1476,7 @@ class ExprOr(ExprOrAnd):
     PRECEDENCE = 2
 
     def __str__(self):
-        parts = list()
-        for arg in sorted(self.args):
-            # lower precedence: =>, ?:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
+        return "Or(" + self.args_str(", ") + ")"
 
     # From Expression
     def invert(self):
@@ -1579,15 +1567,7 @@ class ExprAnd(ExprOrAnd):
     PRECEDENCE = 0
 
     def __str__(self):
-        parts = list()
-        for arg in sorted(self.args):
-            # lower precedence: +, xor/xnor, =>, ?:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
+        return "And(" + self.args_str(", ") + ")"
 
     # From Expression
     def invert(self):
@@ -1708,15 +1688,7 @@ class ExprNor(ExprNorNand):
             return super(ExprNor, cls).__new__(cls)
 
     def __str__(self):
-        parts = list()
-        for arg in sorted(self.args):
-            # lower precedence:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
+        return "Nor(" + self.args_str(", ") + ")"
 
     # From Function
     def urestrict(self, upoint):
@@ -1785,15 +1757,7 @@ class ExprNand(ExprNorNand):
             return super(ExprNand, cls).__new__(cls)
 
     def __str__(self):
-        parts = list()
-        for arg in sorted(self.args):
-            # lower precedence: +, xor/xnor, =>, ?:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
+        return "Nand(" + self.args_str(", ") + ")"
 
     # From Function
     def urestrict(self, upoint):
@@ -1930,15 +1894,7 @@ class ExprXor(ExprExclusive):
             return super(ExprXor, cls).__new__(cls)
 
     def __str__(self):
-        parts = list()
-        for arg in sorted(self.args):
-            # lower precedence: +, xnor, =>, ?:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
+        return "Xor(" + self.args_str(", ") + ")"
 
     # From Expression
     def invert(self):
@@ -1968,15 +1924,7 @@ class ExprXnor(ExprExclusive):
             return super(ExprXnor, cls).__new__(cls)
 
     def __str__(self):
-        parts = list()
-        for arg in sorted(self.args):
-            # lower precedence: +, xor, =>, ?:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
+        return "Xnor(" + self.args_str(", ") + ")"
 
     # From Expression
     def invert(self):
@@ -2146,15 +2094,7 @@ class ExprImplies(_ArgumentContainer):
         super(ExprImplies, self).__init__(p, q)
 
     def __str__(self):
-        parts = list()
-        for arg in self.args:
-            # lower precedence: ?:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
+        return "Implies({0[0]}, {0[1]})".format(self.args)
 
     # From Expression
     def invert(self):
@@ -2209,14 +2149,7 @@ class ExprITE(_ArgumentContainer):
         super(ExprITE, self).__init__(s, d1, d0)
 
     def __str__(self):
-        parts = list()
-        for arg in self.args:
-            # lower precedence:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        return "{} ? {} : {}".format(*parts)
+        return "ITE({0[0]}, {0[1]}, {0[2]})".format(self.args)
 
     # From Expression
     def invert(self):

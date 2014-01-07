@@ -333,17 +333,17 @@ def test_or():
     assert (1 + a + b) is EXPRONE
     assert (a + b + 1) is EXPRONE
 
-    assert str(Or(a, 0, simplify=False)) == "0 + a"
+    assert str(Or(a, 0, simplify=False)) == "Or(0, a)"
 
     # associative
-    assert str((a + b) + c + d) == "a + b + c + d"
-    assert str(a + (b + c) + d) == "a + b + c + d"
-    assert str(a + b + (c + d)) == "a + b + c + d"
-    assert str((a + b) + (c + d)) == "a + b + c + d"
-    assert str((a + b + c) + d) == "a + b + c + d"
-    assert str(a + (b + c + d)) == "a + b + c + d"
-    assert str(a + (b + (c + d))) == "a + b + c + d"
-    assert str(((a + b) + c) + d) == "a + b + c + d"
+    assert str((a + b) + c + d) == "Or(a, b, c, d)"
+    assert str(a + (b + c) + d) == "Or(a, b, c, d)"
+    assert str(a + b + (c + d)) == "Or(a, b, c, d)"
+    assert str((a + b) + (c + d)) == "Or(a, b, c, d)"
+    assert str((a + b + c) + d) == "Or(a, b, c, d)"
+    assert str(a + (b + c + d)) == "Or(a, b, c, d)"
+    assert str(a + (b + (c + d))) == "Or(a, b, c, d)"
+    assert str(((a + b) + c) + d) == "Or(a, b, c, d)"
 
     # idempotent
     assert a + a == a
@@ -396,17 +396,17 @@ def test_and():
     assert (1 * a * b).equivalent(a * b)
     assert (a * b * 1).equivalent(a * b)
 
-    assert str(And(a, 1, simplify=False)) == "1 * a"
+    assert str(And(a, 1, simplify=False)) == "And(1, a)"
 
     # associative
-    assert str((a * b) * c * d) == "a * b * c * d"
-    assert str(a * (b * c) * d) == "a * b * c * d"
-    assert str(a * b * (c * d)) == "a * b * c * d"
-    assert str((a * b) * (c * d)) == "a * b * c * d"
-    assert str((a * b * c) * d) == "a * b * c * d"
-    assert str(a * (b * c * d)) == "a * b * c * d"
-    assert str(a * (b * (c * d))) == "a * b * c * d"
-    assert str(((a * b) * c) * d) == "a * b * c * d"
+    assert str((a * b) * c * d) == "And(a, b, c, d)"
+    assert str(a * (b * c) * d) == "And(a, b, c, d)"
+    assert str(a * b * (c * d)) == "And(a, b, c, d)"
+    assert str((a * b) * (c * d)) == "And(a, b, c, d)"
+    assert str((a * b * c) * d) == "And(a, b, c, d)"
+    assert str(a * (b * c * d)) == "And(a, b, c, d)"
+    assert str(a * (b * (c * d))) == "And(a, b, c, d)"
+    assert str(((a * b) * c) * d) == "And(a, b, c, d)"
 
     # idempotent
     assert a * a == a
@@ -449,7 +449,7 @@ def test_xor():
     assert Xor(a, -a) is EXPRONE
     assert Xor(-a, a) is EXPRONE
 
-    assert str(Xor(a, 0, simplify=False)) == "0 \u2295 a"
+    assert str(Xor(a, 0, simplify=False)) == "Xor(0, a)"
 
 def test_xnor():
     # Function
@@ -482,7 +482,7 @@ def test_xnor():
     assert Xnor(a, -a) is EXPRZERO
     assert Xnor(-a, a) is EXPRZERO
 
-    assert str(Xnor(a, 0, simplify=False)) == "0 \u2299 a"
+    assert str(Xnor(a, 0, simplify=False)) == "Xnor(0, a)"
 
 def test_equal():
     # Function
@@ -571,8 +571,8 @@ def test_implies():
     assert Implies(p, -p) == -p
     assert Implies(-p, p) == p
 
-    assert str(p >> q) == "p \u21D2 q"
-    assert str((a * b) >> (c + d)) == "a * b \u21D2 c + d"
+    assert str(p >> q) == "Implies(p, q)"
+    assert str((a * b) >> (c + d)) == "Implies(And(a, b), Or(c, d))"
 
     assert (p >> q).restrict({p: 0}) is EXPRONE
     assert (p >> q).compose({q: a}).equivalent(p >> a)
@@ -580,7 +580,7 @@ def test_implies():
     assert ((a * b) >> (c + d)).depth == 2
 
     f = Implies(p, 1, simplify=False)
-    assert str(f) == "p \u21D2 1"
+    assert str(f) == "Implies(p, 1)"
 
 def test_ite():
     # Function
@@ -617,15 +617,15 @@ def test_ite():
     assert ITE(s, -a, -a) == -a
     assert ITE(s, a, a) == a
 
-    assert str(ITE(s, a, b)) == "s ? a : b"
-    assert str(ITE(s, a * b, c + d)) == "s ? a * b : c + d"
+    assert str(ITE(s, a, b)) == "ITE(s, a, b)"
+    assert str(ITE(s, a * b, c + d)) == "ITE(s, And(a, b), Or(c, d))"
 
     assert ITE(s, a, b).restrict({a: 1, b: 1}) is EXPRONE
     assert ITE(s, a, b).compose({a: b, b: a}).equivalent(s * b + -s * a)
     assert ITE(s, a * b, c + d).depth == 3
 
     f = ITE(s, 1, 1, simplify=False)
-    assert str(f) == "s ? 1 : 1"
+    assert str(f) == "ITE(s, 1, 1)"
 
 def test_absorb():
     assert (a * b + a * b).absorb().equivalent(a * b)
@@ -711,11 +711,11 @@ def test_nf():
     f = Xor(a, b, c)
     g = a * b + a * c + b * c
 
-    assert str(f.to_dnf()) == "a' * b' * c + a' * b * c' + a * b' * c' + a * b * c"
-    assert str(f.to_cnf()) == "(a + b + c) * (a + b' + c') * (a' + b + c') * (a' + b' + c)"
+    assert str(f.to_dnf()) == "Or(And(-a, -b, c), And(-a, b, -c), And(a, -b, -c), And(a, b, c))"
+    assert str(f.to_cnf()) == "And(Or(a, b, c), Or(a, -b, -c), Or(-a, b, -c), Or(-a, -b, c))"
 
-    assert str(g.to_cdnf()) == "a' * b * c + a * b' * c + a * b * c' + a * b * c"
-    assert str(g.to_ccnf()) == "(a + b + c) * (a + b + c') * (a + b' + c) * (a' + b + c)"
+    assert str(g.to_cdnf()) == "Or(And(-a, b, c), And(a, -b, c), And(a, b, -c), And(a, b, c))"
+    assert str(g.to_ccnf()) == "And(Or(a, b, c), Or(a, b, -c), Or(a, -b, c), Or(-a, b, c))"
 
 def test_is_nf():
     assert (a * b * c).is_cnf()
