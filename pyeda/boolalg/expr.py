@@ -1027,6 +1027,13 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
         boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         ExprLiteral.__init__(self)
 
+    def to_unicode(self):
+        return self.__str__()
+
+    def to_latex(self):
+        suffix = ", ".join(str(idx) for idx in self.indices)
+        return self.qualname + "_{" + suffix + "}"
+
     def __lt__(self, other):
         if isinstance(other, ExprConstant):
             return False
@@ -1083,6 +1090,9 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
 class ExprComplement(ExprLiteral):
     """Expression complement"""
 
+    # Prime - U2032
+    SYMBOL = '′'
+
     def __init__(self, exprvar):
         super(ExprComplement, self).__init__()
         self.exprvar = exprvar
@@ -1090,6 +1100,12 @@ class ExprComplement(ExprLiteral):
 
     def __str__(self):
         return '-' + str(self.exprvar)
+
+    def to_unicode(self):
+        return str(self.exprvar) + self.SYMBOL
+
+    def to_latex(self):
+        return "\\bar{" + self.exprvar.to_latex() + "}"
 
     def __lt__(self, other):
         if isinstance(other, ExprConstant):
@@ -1165,6 +1181,12 @@ class ExprNot(Expression):
 
     def __str__(self):
         return "Not(" + str(self.arg) + ")"
+
+    def to_unicode(self):
+        return self.SYMBOL + "(" + str(self.arg) + ")"
+
+    def to_latex(self):
+        return "\\overline{" + self.arg.to_latex() + "}"
 
     # From Function
     @property
@@ -1473,10 +1495,33 @@ class ExprOr(ExprOrAnd):
 
     ASTOP = 'or'
     SYMBOL = '+'
+    LATEX_SYMBOL = '+'
     PRECEDENCE = 2
 
     def __str__(self):
         return "Or(" + self.args_str(", ") + ")"
+
+    def to_unicode(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: implies, equal
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_unicode() + ')')
+            else:
+                parts.append(arg.to_unicode())
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
+
+    def to_latex(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: implies, equal
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_latex() + ')')
+            else:
+                parts.append(arg.to_latex())
+        sep = " " + self.LATEX_SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -1562,12 +1607,35 @@ class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
 
     ASTOP = 'and'
-    # Logical AND - U2227
-    SYMBOL = '*'
+    # Middle dot - U00B7
+    SYMBOL = '·'
+    LATEX_SYMBOL = '\\cdot'
     PRECEDENCE = 0
 
     def __str__(self):
         return "And(" + self.args_str(", ") + ")"
+
+    def to_unicode(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: or, xor, implies, equal
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_unicode() + ')')
+            else:
+                parts.append(arg.to_unicode())
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
+
+    def to_latex(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: or, xor, implies, equal
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_latex() + ')')
+            else:
+                parts.append(arg.to_latex())
+        sep = " " + self.LATEX_SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -1673,9 +1741,6 @@ class ExprNor(ExprNorNand):
     """Expression NOR operator"""
 
     ASTOP = 'nor'
-    # Downwards arrow - U2193
-    SYMBOL = "↓"
-    PRECEDENCE = 2
 
     def __new__(cls, *args):
         # Nor() = 1
@@ -1689,6 +1754,12 @@ class ExprNor(ExprNorNand):
 
     def __str__(self):
         return "Nor(" + self.args_str(", ") + ")"
+
+    def to_unicode(self):
+        return ExprNot.SYMBOL + "(" + ExprOr(*self.args).to_unicode() + ")"
+
+    def to_latex(self):
+        return "\\overline{" + ExprOr(*self.args).to_latex() + "}"
 
     # From Function
     def urestrict(self, upoint):
@@ -1742,9 +1813,6 @@ class ExprNand(ExprNorNand):
     """Expression NAND operator"""
 
     ASTOP = 'nand'
-    # Upwards arrow - U2191
-    SYMBOL = '↑'
-    PRECEDENCE = 0
 
     def __new__(cls, *args):
         # Nand() = 0
@@ -1758,6 +1826,12 @@ class ExprNand(ExprNorNand):
 
     def __str__(self):
         return "Nand(" + self.args_str(", ") + ")"
+
+    def to_unicode(self):
+        return ExprNot.SYMBOL + "(" + ExprAnd(*self.args).to_unicode() + ")"
+
+    def to_latex(self):
+        return "\\overline{" + ExprAnd(*self.args).to_latex() + "}"
 
     # From Function
     def urestrict(self, upoint):
@@ -1809,8 +1883,6 @@ class ExprNand(ExprNorNand):
 
 class ExprExclusive(_ArgumentContainer):
     """Expression exclusive (XOR, XNOR) operator"""
-
-    PRECEDENCE = 1
 
     # From Expression
     def simplify(self):
@@ -1882,6 +1954,8 @@ class ExprXor(ExprExclusive):
     ASTOP = 'xor'
     # Circled plus - U2295
     SYMBOL = '⊕'
+    LATEX_SYMBOL = '\\oplus'
+    PRECEDENCE = 1
 
     def __new__(cls, *args):
         # Xor() = 0
@@ -1895,6 +1969,28 @@ class ExprXor(ExprExclusive):
 
     def __str__(self):
         return "Xor(" + self.args_str(", ") + ")"
+
+    def to_unicode(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: or, implies, equal
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_unicode() + ')')
+            else:
+                parts.append(arg.to_unicode())
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
+
+    def to_latex(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: or, implies, equal
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_latex() + ')')
+            else:
+                parts.append(arg.to_latex())
+        sep = " " + self.LATEX_SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -1910,8 +2006,6 @@ class ExprXnor(ExprExclusive):
     """Expression Exclusive NOR (XNOR) operator"""
 
     ASTOP = 'xnor'
-    # Circled dot - U2299
-    SYMBOL = '⊙'
 
     def __new__(cls, *args):
         # Xnor() = 1
@@ -1925,6 +2019,12 @@ class ExprXnor(ExprExclusive):
 
     def __str__(self):
         return "Xnor(" + self.args_str(", ") + ")"
+
+    def to_unicode(self):
+        return ExprNot.SYMBOL + "(" + ExprXor(*self.args).to_unicode() + ")"
+
+    def to_latex(self):
+        return "\\overline{" + ExprXor(*self.args).to_latex() + "}"
 
     # From Expression
     def invert(self):
@@ -1949,7 +2049,10 @@ class ExprEqual(ExprEqualBase):
     """Expression EQUAL operator"""
 
     ASTOP = 'equal'
-    SYMBOL = '='
+    # Left right double arrow - 21D4
+    SYMBOL = '⇔'
+    LATEX_SYMBOL = '\\Leftrightarrow'
+    PRECEDENCE = 4
 
     def __new__(cls, *args):
         # Equal(a) = Equal() = 1
@@ -1960,6 +2063,28 @@ class ExprEqual(ExprEqualBase):
 
     def __str__(self):
         return "Equal(" + self.args_str(", ") + ")"
+
+    def to_unicode(self):
+        parts = list()
+        for arg in self.args:
+            # lower precedence:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_unicode() + ')')
+            else:
+                parts.append(arg.to_unicode())
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
+
+    def to_latex(self):
+        parts = list()
+        for arg in self.args:
+            # lower precedence:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_latex() + ')')
+            else:
+                parts.append(arg.to_latex())
+        sep = " " + self.LATEX_SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -2017,8 +2142,6 @@ class ExprUnequal(ExprEqualBase):
     """Expression UNEQUAL operator"""
 
     ASTOP = 'unequal'
-    # Not equal to - U2260
-    SYMBOL = '≠'
 
     def __new__(cls, *args):
         # Unequal(a) = Unequal() = 0
@@ -2029,6 +2152,12 @@ class ExprUnequal(ExprEqualBase):
 
     def __str__(self):
         return "Unequal(" + self.args_str(", ") + ")"
+
+    def to_unicode(self):
+        return ExprNot.SYMBOL + "(" + ExprEqual(*self.args).to_unicode() + ")"
+
+    def to_latex(self):
+        return "\\overline{" + ExprEqual(*self.args).to_latex() + "}"
 
     # From Expression
     def invert(self):
@@ -2088,6 +2217,7 @@ class ExprImplies(_ArgumentContainer):
     ASTOP = 'implies'
     # Rightwards double arrow - 21D2
     SYMBOL = '⇒'
+    LATEX_SYMBOL = '\\Rightarrow'
     PRECEDENCE = 3
 
     def __init__(self, p, q):
@@ -2095,6 +2225,28 @@ class ExprImplies(_ArgumentContainer):
 
     def __str__(self):
         return "Implies({0[0]}, {0[1]})".format(self.args)
+
+    def to_unicode(self):
+        parts = list()
+        for arg in self.args:
+            # lower precedence: equal
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_unicode() + ')')
+            else:
+                parts.append(arg.to_unicode())
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
+
+    def to_latex(self):
+        parts = list()
+        for arg in self.args:
+            # lower precedence: equal
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + arg.to_latex() + ')')
+            else:
+                parts.append(arg.to_latex())
+        sep = " " + self.LATEX_SYMBOL + " "
+        return sep.join(parts)
 
     # From Expression
     def invert(self):
@@ -2142,14 +2294,20 @@ class ExprITE(_ArgumentContainer):
     """Expression if-then-else ternary operator"""
 
     ASTOP = 'ite'
-    SYMBOL = 'ite'
-    PRECEDENCE = 4
 
     def __init__(self, s, d1, d0):
         super(ExprITE, self).__init__(s, d1, d0)
 
     def __str__(self):
         return "ITE({0[0]}, {0[1]}, {0[2]})".format(self.args)
+
+    def to_unicode(self):
+        unicode_args = [arg.to_unicode() for arg in self.args]
+        return "ite({}, {}, {})".format(*unicode_args)
+
+    def to_latex(self):
+        latex_args = [arg.to_latex() for arg in self.args]
+        return "ite({}, {}, {})".format(*latex_args)
 
     # From Expression
     def invert(self):
