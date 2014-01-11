@@ -414,6 +414,14 @@ class Expression(boolfunc.Function):
     def __lt__(self, other):
         return id(self) < id(other)
 
+    def to_unicode(self):
+        """Return a string representation using Unicode symbols."""
+        raise NotImplementedError()
+
+    def to_latex(self):
+        """Return a string representation using Latex."""
+        raise NotImplementedError()
+
     # Operators
     def __neg__(self):
         return Not(self)
