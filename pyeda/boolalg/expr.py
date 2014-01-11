@@ -1707,6 +1707,17 @@ class ExprNor(ExprNorNand):
         else:
             return super(ExprNor, cls).__new__(cls)
 
+    def __str__(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
+            else:
+                parts.append(str(arg))
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
+
     # From Function
     def urestrict(self, upoint):
         if self.usupport & (upoint[0] | upoint[1]):
@@ -1754,17 +1765,6 @@ class ExprNor(ExprNorNand):
         args = [arg.invert().factor() for arg in self.args]
         return ExprAnd(*args).simplify()
 
-    def __str__(self):
-        parts = list()
-        for arg in sorted(self.args):
-            # lower precedence:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
-
 
 class ExprNand(ExprNorNand):
     """Expression NAND operator"""
@@ -1783,6 +1783,17 @@ class ExprNand(ExprNorNand):
             return Not(args[0])
         else:
             return super(ExprNand, cls).__new__(cls)
+
+    def __str__(self):
+        parts = list()
+        for arg in sorted(self.args):
+            # lower precedence: +, xor/xnor, =>, ?:
+            if arg.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + str(arg) + ')')
+            else:
+                parts.append(str(arg))
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
 
     # From Function
     def urestrict(self, upoint):
@@ -1830,17 +1841,6 @@ class ExprNand(ExprNorNand):
     def factor(self, conj=False):
         args = [arg.invert().factor() for arg in self.args]
         return ExprOr(*args).simplify()
-
-    def __str__(self):
-        parts = list()
-        for arg in sorted(self.args):
-            # lower precedence: +, xor/xnor, =>, ?:
-            if arg.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + str(arg) + ')')
-            else:
-                parts.append(str(arg))
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
 
 
 class ExprExclusive(_ArgumentContainer):
