@@ -30,12 +30,14 @@ KEYWORDS = [
     "EDA",
     "electronic design automation",
     "logic",
+    "logic minimization",
     "logic synthesis",
     "math",
     "mathematics",
     "PicoSAT",
     "satisfiability",
     "SAT",
+    "Espresso",
 ]
 
 with open('README.rst') as fin:
@@ -98,8 +100,54 @@ if sys.platform == 'win32':
         ('inline', '__inline'),
     ]
 
+ESPRESSO = dict(
+    define_macros = [],
+    include_dirs = [
+        pjoin('extension', 'espresso', 'src'),
+    ],
+    sources = [
+        pjoin('extension', 'espresso', 'src', 'cofactor.c'),
+        pjoin('extension', 'espresso', 'src', 'cols.c'),
+        pjoin('extension', 'espresso', 'src', 'compl.c'),
+        pjoin('extension', 'espresso', 'src', 'contain.c'),
+        pjoin('extension', 'espresso', 'src', 'cubestr.c'),
+        pjoin('extension', 'espresso', 'src', 'cvrin.c'),
+        pjoin('extension', 'espresso', 'src', 'cvrm.c'),
+        pjoin('extension', 'espresso', 'src', 'cvrmisc.c'),
+        pjoin('extension', 'espresso', 'src', 'cvrout.c'),
+        pjoin('extension', 'espresso', 'src', 'dominate.c'),
+        pjoin('extension', 'espresso', 'src', 'espresso.c'),
+        pjoin('extension', 'espresso', 'src', 'essen.c'),
+        pjoin('extension', 'espresso', 'src', 'exact.c'),
+        pjoin('extension', 'espresso', 'src', 'expand.c'),
+        pjoin('extension', 'espresso', 'src', 'gasp.c'),
+        pjoin('extension', 'espresso', 'src', 'gimpel.c'),
+        pjoin('extension', 'espresso', 'src', 'globals.c'),
+        pjoin('extension', 'espresso', 'src', 'hack.c'),
+        pjoin('extension', 'espresso', 'src', 'indep.c'),
+        pjoin('extension', 'espresso', 'src', 'irred.c'),
+        pjoin('extension', 'espresso', 'src', 'matrix.c'),
+        pjoin('extension', 'espresso', 'src', 'mincov.c'),
+        pjoin('extension', 'espresso', 'src', 'opo.c'),
+        pjoin('extension', 'espresso', 'src', 'pair.c'),
+        pjoin('extension', 'espresso', 'src', 'part.c'),
+        pjoin('extension', 'espresso', 'src', 'primes.c'),
+        pjoin('extension', 'espresso', 'src', 'reduce.c'),
+        pjoin('extension', 'espresso', 'src', 'rows.c'),
+        pjoin('extension', 'espresso', 'src', 'set.c'),
+        pjoin('extension', 'espresso', 'src', 'setc.c'),
+        pjoin('extension', 'espresso', 'src', 'sharp.c'),
+        pjoin('extension', 'espresso', 'src', 'sminterf.c'),
+        pjoin('extension', 'espresso', 'src', 'solution.c'),
+        pjoin('extension', 'espresso', 'src', 'sparse.c'),
+        pjoin('extension', 'espresso', 'src', 'unate.c'),
+        pjoin('extension', 'espresso', 'src', 'verify.c'),
+    ],
+)
+
 EXT_MODULES = [
     Extension('pyeda.boolalg.picosat', **PICOSAT),
+    Extension('pyeda.boolalg.espresso', **ESPRESSO),
 ]
 
 setup(
