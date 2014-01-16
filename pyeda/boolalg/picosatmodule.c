@@ -20,9 +20,12 @@
 
 #include "picosat.h"
 
-static PyObject *PicosatError;
+/*
+** Python exception definition: picosat.PicosatError
+*/
+PyDoc_STRVAR(_picosat_error_docstring, "PicoSAT Error");
 
-PyDoc_STRVAR(_picosaterr_docstring, "PicoSAT Error");
+static PyObject *_picosat_error;
 
 /* Pass these functions to picosat_minit to use Python's memory manager. */
 inline static void *
@@ -342,7 +345,7 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
 
     picosat = picosat_minit(NULL, _pymalloc, _pyrealloc, _pyfree);
     if (picosat == NULL) {
-        PyErr_SetString(PicosatError, "could not initialize PicoSAT");
+        PyErr_SetString(_picosat_error, "could not initialize PicoSAT");
         goto done;
     }
 
@@ -377,10 +380,10 @@ satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
         pyret = _get_soln(picosat);
     }
     else if (result == PICOSAT_UNKNOWN) {
-        PyErr_SetString(PicosatError, "PicoSAT returned UNKNOWN");
+        PyErr_SetString(_picosat_error, "PicoSAT returned UNKNOWN");
     }
     else {
-        PyErr_Format(PicosatError, "PicoSAT returned: %d", result);
+        PyErr_Format(_picosat_error, "PicoSAT returned: %d", result);
     }
 
 reset_picosat:
@@ -484,7 +487,7 @@ _satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
 
     picosat = picosat_minit(NULL, _pymalloc, _pyrealloc, _pyfree);
     if (picosat == NULL) {
-        PyErr_SetString(PicosatError, "could not initialize PicoSAT");
+        PyErr_SetString(_picosat_error, "could not initialize PicoSAT");
         goto error;
     }
 
@@ -566,7 +569,7 @@ _satisfy_all_next(_satisfy_all_state *state)
         /* No more solutions */
     }
     else {
-        PyErr_Format(PicosatError, "PicoSAT returned: %d", result);
+        PyErr_Format(_picosat_error, "PicoSAT returned: %d", result);
     }
 
     return pyret;
@@ -669,14 +672,15 @@ PyInit_picosat(void)
         goto error;
 
     /* Create PicosatError */
-    PicosatError = PyErr_NewExceptionWithDoc("picosat.PicosatError",
-                                             _picosaterr_docstring, NULL, NULL);
-    if (PicosatError == NULL) {
+    _picosat_error = PyErr_NewExceptionWithDoc("picosat.PicosatError",
+                                               _picosat_error_docstring,
+                                               NULL, NULL);
+    if (_picosat_error == NULL) {
         goto error;
     }
-    Py_INCREF(PicosatError);
-    if (PyModule_AddObject(pymodule, "PicosatError", PicosatError) < 0) {
-        Py_DECREF(PicosatError);
+    Py_INCREF(_picosat_error);
+    if (PyModule_AddObject(pymodule, "PicosatError", _picosat_error) < 0) {
+        Py_DECREF(_picosat_error);
         goto error;
     }
 
