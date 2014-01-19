@@ -1,0 +1,194 @@
+Content-type: text/html
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PLA</TITLE>
+</HEAD><BODY>
+<H1>PLA</H1>
+Section: Misc. Reference Manual Pages (5OCTTOOLS)<BR>Updated: 8/23/81<BR><A HREF="#index">Index</A>
+<A HREF="/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+pla - Format for physical description of Programmable Logic Arrays.
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>pla</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+This format is used by programs which manipulate
+plas to describe the physical implementation.
+Lines beginning with a `<B>#</B>' are comments and are ignored.
+Lines beginning with a `<B>.</B>' contain control
+information about the pla.
+Currently, the control information is given in the following order:
+<PRE>
+        <B>.i</B>  &lt;number of inputs&gt;
+        <B>.o</B>  &lt;number of outputs&gt;
+        <B>.p</B>  &lt;number of product terms (pterms)&gt;
+        and optionally,
+        <B>.na</B>&lt;name&gt; (the name to be used for the pla)
+</PRE>
+
+<P>
+
+What follows then is a description of the AND and OR planes
+of the pla with one line per product term.
+Connections in the AND plane are represented with a `<B>1</B>' for
+connection to the non-inverted input line and a <B>`0</B>' for
+connection to the inverted input line.
+No connection to an input line is indicated 
+with '<B>x</B>', '<B>X</B>', or '<B>-</B>' with '<B>-</B>' being preferred.
+Connections in the OR plane are indicated by a '<B>1</B>' with no
+connection being indicated 
+with '<B>x</B>', '<B>X</B>', '<B>0</B>', or '<B>-</B>' with '<B>-</B>' being 
+preferred.  Spaces or tabs may be used freely and are ignored.
+<P>
+
+The end of the pla description is indicated with:
+<BR>
+
+<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><B>.e</B><BR>
+<P>
+
+Programs capable of handling split and folded arrays
+employ the following format:
+<DL COMPACT><DT><DD>
+<PRE>
+
+
+<B>AND PLANE</B>
+<DL COMPACT><DT><DD>
+Column (1) Contact to input  (2) No contact to input
+
+(1)     (2)
+ 1       -      Normal contacts, no splits or folds 
+ !       _              Split below
+ ;       ,              Fold to right
+ :       .              Split below and fold to right
+
+</DL>
+<B>OR PLANE</B>
+<DL COMPACT><DT><DD>
+Column (1) Contact to output  (2) No contact to output
+
+(1)     (2)
+ I       ~              Normal contacts, no splits or folds
+ i       =      Split below
+ |       '              Fold to right
+ j       &quot;              Split below and fold to right
+
+</DL>
+<B>ADDITIONAL ELEMENTS</B>
+<DL COMPACT><DT><DD>
+ *              Input buffer
+ +              Output buffer
+ D              Depletion load associated with product term
+ N              No depletion load associated with product term
+
+</DL>
+</PRE>
+
+</DL>
+
+<P>
+
+Note that
+the decoding function of the AND plane is separated
+from the specification of its connectivity.
+This makes the AND and OR plane specifications identical.
+<P>
+
+These programs handle the following more general set of&nbsp;.parameters:
+<PRE>
+
+        <B>.il</B>  &lt;number of left-AND plane inputs&gt;
+        <B>.ir</B>  &lt;number of right-AND plane inputs&gt;
+        <B>.ol</B>  &lt;number of left-OR plane inputs&gt;
+        <B>.or</B>  &lt;number of right-OR plane inputs&gt;
+        <B>.p</B>  &lt;number of product terms&gt;
+
+        <B>.ilt</B>  &lt;labels left-top-AND plane&gt;
+        <B>.ilb</B>  &lt;labels left-bottom-AND plane&gt;
+        <B>.irt</B>  &lt;labels right-top-AND plane&gt;
+        <B>.irb</B>  &lt;labels right-bottom-AND plane&gt;
+        <B>.olb</B>  &lt;labels left-bottom-OR plane&gt;
+        <B>.olt</B>  &lt;labels left-top-OR plane&gt;
+        <B>.orb</B>  &lt;labels right-bottom-Or plane&gt;
+        <B>.ort</B>  &lt;labels right-top-Or plane&gt;
+        <B>.pl</B>  &lt;labels left product terms&gt;
+        <B>.pr</B>  &lt;labels right product terms&gt;
+
+</PRE>
+
+The first group of parameters must precede the second group.
+If there is only one AND or OR plane it is assumed
+to be the left one and the companion&nbsp;.parameters may be shortened by dropping their (left,right)
+designation character.
+<P>
+
+In order to better deal with folded and split PLAs, the
+following&nbsp;.parameters are proposed:
+<PRE>
+
+        <B>.ig</B>  &lt;input group&gt;
+        <B>.og</B>  &lt;output group&gt;
+        <B>.ins</B>  &lt;inputs excluded from splitting&gt;
+        <B>.inf</B>  &lt;inputs excluded from folding&gt;
+        <B>.ons</B>  &lt;outputs excluded from splitting&gt;
+        <B>.onf</B>  &lt;outputs excluded from folding&gt;
+
+</PRE>
+
+<P>
+
+In order to build finite state machines, the following&nbsp;.parameters are proposed:
+<PRE>
+
+        <B>.iltf</B>  &lt;left-top-AND feedback terms&gt;
+        <B>.ilbf</B>  &lt;left-bottom-AND feedback terms&gt;
+        <B>.irtf</B>  &lt;right-top-AND feedback terms&gt;
+        <B>.irbf</B>  &lt;right-bottom-AND feedback terms&gt;
+        <B>.oltf</B>  &lt;left-top-OR feedback terms&gt;
+        <B>.olbf</B>  &lt;left-bottom-OR feedback terms&gt;
+        <B>.ortf</B>  &lt;right-top-OR feedback terms&gt;
+        <B>.orbf</B>  &lt;right-bottom-OR feedback terms&gt;
+
+        <B>.ilr</B>  &lt;left re-ordered inputs&gt;
+        <B>.irr</B>  &lt;right re-ordered inputs&gt;
+        <B>.olrf</B>  &lt;left re-ordered outputs&gt;
+        <B>.orrf</B>  &lt;right re-ordered outputs&gt;
+
+</PRE>
+
+The&nbsp;.XXXf parameters must occur in pairs, with
+the&nbsp;.oXXf line first.
+Input and output terms must occur on the same side (top, bottom)
+of the PLA.
+Feedback terms must be given in ascending order.
+The re-order&nbsp;.parameters simplify feedback routing.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+espresso(1OCTTOOLS), espresso(5OCTTOOLS), misII(1OCTTOOLS)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 17:31:43 GMT, December 19, 2013
+</BODY>
+</HTML>
