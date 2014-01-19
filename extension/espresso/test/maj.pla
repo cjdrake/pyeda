@@ -1,0 +1,16 @@
+# Filename: maj.pla
+
+# Majority function
+.i 3
+.o 1
+.type fr
+000 0
+001 0
+010 0
+011 1
+100 0
+101 1
+110 1
+111 1
+.e
+

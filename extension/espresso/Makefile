@@ -1,10 +1,24 @@
-all: 
-	-mkdir lib include doc
-	(cd utility; make ../include/utility.h CAD=..)
-	for i in port uprintf errtrap st mm utility; do \
-		(cd $$i; make install CAD=..); done
-	(cd espresso; make CAD=..)
+# Makefile
 
+VPATH := src utility
+
+CC := clang
+CFLAGS :=
+
+# espresso
+OBJS := cofactor cols compl contain cubestr cvrin cvrm cvrmisc cvrout dominate espresso essen exact expand gasp gimpel globals hack indep irred main matrix mincov opo pair part primes reduce rows set setc sharp sminterf solution sparse unate verify
+
+espresso: $(addsuffix .o,$(OBJS))
+	$(CC) -o $@ $^
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $<
+
+.PHONY: test
+test: espresso
+	@./test.py
+
+.PHONY: clean
 clean:
-	for i in port uprintf errtrap st mm utility espresso; do \
-		(cd $$i; make clean CAD=..); done
+	rm -f *.o
+	rm -f espresso
