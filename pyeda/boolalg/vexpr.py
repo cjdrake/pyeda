@@ -3,7 +3,7 @@ Boolean Vector Logic Expressions
 
 Interface Functions:
     bitvec
-    uint2vec
+    uint2bv
     int2vec
 
 Interface Classes:
@@ -54,7 +54,7 @@ def _bitvec(name, slices, indices):
               for i in range(fst.start, fst.stop)]
         return BitVector(vs, fst.start)
 
-def uint2vec(num, length=None):
+def uint2bv(num, length=None):
     """Convert an unsigned integer to a BitVector."""
     if num < 0:
         raise ValueError("expected num >= 0")
@@ -79,10 +79,10 @@ def int2vec(num, length=None):
     """Convert a signed integer to a BitVector."""
     if num < 0:
         req_length = clog2(abs(num)) + 1
-        bv = uint2vec(2 ** req_length + num)
+        bv = uint2bv(2 ** req_length + num)
     else:
         req_length = clog2(num + 1) + 1
-        bv = uint2vec(num, req_length)
+        bv = uint2bv(num, req_length)
 
     if length:
         if length < req_length:

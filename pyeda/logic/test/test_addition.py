@@ -9,13 +9,13 @@ from pyeda.logic.addition import (
     kogge_stone_add as ksa,
     brent_kung_add as bka,
 )
-from pyeda.boolalg.vexpr import bitvec, uint2vec, int2vec
+from pyeda.boolalg.vexpr import bitvec, uint2bv, int2vec
 
 NVECS = 100
 
 def uadd(S, A, B, aval, bval):
     N = len(A)
-    R = S.vrestrict({A: uint2vec(aval, N), B: uint2vec(bval, N)})
+    R = S.vrestrict({A: uint2bv(aval, N), B: uint2bv(bval, N)})
     return R.to_uint()
 
 def sadd(S, A, B, aval, bval):
