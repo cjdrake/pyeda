@@ -4,7 +4,7 @@ Boolean Vector Logic Expressions
 Interface Functions:
     bitvec
     uint2bv
-    int2vec
+    int2bv
 
 Interface Classes:
     BitVector
@@ -75,7 +75,7 @@ def uint2bv(num, length=None):
 
     return BitVector(items)
 
-def int2vec(num, length=None):
+def int2bv(num, length=None):
     """Convert a signed integer to a BitVector."""
     if num < 0:
         req_length = clog2(abs(num)) + 1

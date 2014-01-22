@@ -9,7 +9,7 @@ from pyeda.logic.addition import (
     kogge_stone_add as ksa,
     brent_kung_add as bka,
 )
-from pyeda.boolalg.vexpr import bitvec, uint2bv, int2vec
+from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv
 
 NVECS = 100
 
@@ -20,7 +20,7 @@ def uadd(S, A, B, aval, bval):
 
 def sadd(S, A, B, aval, bval):
     N = len(A)
-    R = S.vrestrict({A: int2vec(aval, N), B: int2vec(bval, N)})
+    R = S.vrestrict({A: int2bv(aval, N), B: int2bv(bval, N)})
     return R.to_int()
 
 def test_unsigned_add():
@@ -69,9 +69,9 @@ def test_signed_add():
             assert sadd(S, A, B, ra, rb) == ra + rb
 
         # 64 + 64, overflow
-        R = C.vrestrict({A: int2vec(64, 8), B: int2vec(64, 8)})
+        R = C.vrestrict({A: int2bv(64, 8), B: int2bv(64, 8)})
         assert R[7] != R[6]
         # -65 + -64, overflow
-        R = C.vrestrict({A: int2vec(-65, 8), B: int2vec(-64, 8)})
+        R = C.vrestrict({A: int2bv(-65, 8), B: int2bv(-64, 8)})
         assert R[7] != R[6]
 

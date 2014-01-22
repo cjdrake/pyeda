@@ -42,7 +42,7 @@ from pyeda.boolalg.table import (
     TruthTable, TTConstant, TTVariable,
 )
 
-from pyeda.boolalg.vexpr import bitvec, uint2bv, int2vec, BitVector
+from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv, BitVector
 
 from pyeda.parsing.lex import LexRunError
 
