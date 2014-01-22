@@ -475,7 +475,7 @@ so we will normally shorten that statement to just
 ::
 
    >>> truthtable2expr(f)
-   x[0] * x[1] * x[2]
+   And(x[0], x[1], x[2])
 
 Let's define another game with a slightly more interesting rule:
 "you win if the majority of flips come up heads".
@@ -511,7 +511,7 @@ You can express it as a truth table::
 or as an expression::
 
    >>> truthtable2expr(f)
-   x[0]' * x[1] * x[2] + x[0] * x[1]' * x[2] + x[0] * x[1] * x[2]' + x[0] * x[1] * x[2]
+   Or(And(~x[0], x[1], x[2]), And(x[0], ~x[1], x[2]), And(x[0], x[1], ~x[2]), And(x[0], x[1], x[2]))
 
 PyEDA Variable/Function Base Classes
 ====================================

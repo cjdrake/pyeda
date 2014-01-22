@@ -81,9 +81,9 @@ For example, here is a sneak peak of Shannon expansions::
 
    >>> a, b = map(exprvar, 'ab')
    >>> zero.expand([a, b], conj=True)
-   (a + b) * (a + b') * (a' + b) * (a' + b')
+   And(Or(a, b), Or(a, ~b), Or(~a, b), Or(~a, ~b))
    >>> one.expand([a, b])
-   a' * b' + a' * b + a * b' + a * b
+   Or(And(~a, ~b), And(~a, b), And(a, ~b), And(a, b))
 
 Expression Literals
 ===================
@@ -184,15 +184,15 @@ apply Python's ``-`` unary negate operator.
 For example, let's create a variable and its complement::
 
    >>> a = exprvar('a')
-   >>> -a
-   a'
-   >>> type(-a)
+   >>> ~a
+   ~a
+   >>> type(~a)
    pyeda.boolalg.expr.ExprComplement
 
 All complements created from the same variable instance are not just identical,
 they all refer to the same object::
 
-   >>> id(-a) == id(-a)
+   >>> id(~a) == id(~a)
    True
 
 Constructing Expressions
@@ -208,18 +208,24 @@ we will learn how to construct more interesting expressions.
 From Constants, Variables, and Python Operators
 -----------------------------------------------
 
-PyEDA overloads Python's ``-``, ``+`` and ``*`` operators with NOT, OR, and AND,
-respectively.
+PyEDA overloads Python's ``~``, ``|``, ``^``, and ``&`` operators with
+NOT, OR, XOR, and AND, respectively.
 
-.. note:: `Sympy <http://sympy.org>`_ overloads ``~``, ``|``, and ``&``
-   for NOT, OR, and AND.
-   PyEDA uses these operators for bit vectors instead.
+.. note:: Version 0.18 of PyEDA used ``-``, ``+``, and ``*`` for
+   NOT, OR, and AND.
+   This is currently maintained for backwards-compatibility,
+   but will go away in some future release.
+   See `issue #53 <https://github.com/cjdrake/pyeda/issues/53>`_ for details.
 
 Let's jump in by creating a full adder::
 
    >>> a, b, ci = map(exprvar, "a b ci".split())
-   >>> s = -a * -b * ci + -a * b * -ci + a * -b * -ci + a * b * ci
-   >>> co = a * b + a * ci + b * ci
+   >>> s = ~a & ~b & ci | ~a & b & ~ci | a & ~b & ~ci | a & b & ci
+   >>> co = a & b | a & ci | b & ci
+
+Using XOR looks a lot nicer for the sum output::
+
+   >>> s = a ^ b ^ ci
 
 You can use the ``expr2truthtable`` function to do a quick check that the
 sum logic is correct::
@@ -274,13 +280,13 @@ and PyEDA will automatically parse and convert them to variables.
 For example, the following two statements are equivalent::
 
    >>> Not('a[0]')
-   a[0]'
+   ~a[0]
 
 and::
 
    >>> a0 = exprvar('a', 0)
    >>> Not(a0)
-   a[0]'
+   ~a[0]
 
 Primary Operators
 ^^^^^^^^^^^^^^^^^
@@ -332,6 +338,11 @@ primary operators.
 
    Return an expression that evaluates to :math:`1` if and only if the input
    parity is odd.
+
+The word **parity** in this context refers to whether the number of ones in the
+input is even (divisible by two).
+For example, the input string "0101" has *even* parity (2 ones),
+and the input string "0001" has *odd* parity (1 ones).
 
 The full adder circuit has a more dense representation when you
 use the ``Xor`` operator::
@@ -445,9 +456,9 @@ For example::
 
    >>> f =  AchillesHeel('a', 'b', 'c', 'd', 'w', 'x', 'y', 'z')
    >>> f
-   (a + b) * (c + d) * (w + x) * (y + z)
+   And(Or(a, b), Or(c, d), Or(w, x), Or(y, z))
    >>> f.to_dnf()
-   a * c * w * y + a * c * w * z + a * c * x * y + a * c * x * z + a * d * w * y + a * d * w * z + a * d * x * y + a * d * x * z + b * c * w * y + b * c * w * z + b * c * x * y + b * c * x * z + b * d * w * y + b * d * w * z + b * d * x * y + b * d * x * z
+   Or(And(a, c, w, y), And(a, c, w, z), And(a, c, x, y), And(a, c, x, z), And(a, d, w, y), And(a, d, w, z), And(a, d, x, y), And(a, d, x, z), And(b, c, w, y), And(b, c, w, z), And(b, c, x, y), And(b, c, x, z), And(b, d, w, y), And(b, d, w, z), And(b, d, x, y), And(b, d, x, z))
 
 From the ``expr`` Function
 --------------------------
@@ -473,18 +484,20 @@ string and return an expression.
 
 Examples of input expressions::
 
-   >>> expr("-a * b + -c * d")
-   a' * b + c' * d
+   >>> expr("~a & b | ~c & d")
+   Or(And(~a, b), And(~c, d))
+   >>> expr("a | b ^ c & d")
+   Or(a, Xor(b, And(c, d)))
    >>> expr("p => q")
-   p => q
+   Implies(p, q)
    >>> expr("p <=> q")
    Equal(p, q)
    >>> expr("s ? d[1] : d[0]")
-   s ? d[1] : d[0]
+   ITE(s, d[1], d[0])
    >>> expr("Or(a, b, Not(c))")
-   a + b + c'
+   Or(a, b, ~c)
    >>> expr("Majority(a, b, c)")
-   a * b + a * c + b * c
+   Or(And(a, b), And(a, c), And(b, c))
 
 Operator Precedence Table (lowest to highest):
 
@@ -496,11 +509,13 @@ Operator Precedence Table (lowest to highest):
 | ``=>``                               | Binary Implies,                       |
 | ``<=>``                              | Binary Equal                          |
 +--------------------------------------+---------------------------------------+
-| ``+``                                | Binary OR                             |
+| ``|``                                | Binary OR                             |
 +--------------------------------------+---------------------------------------+
-| ``*``                                | Binary AND                            |
+| ``^``                                | Binary XOR                            |
 +--------------------------------------+---------------------------------------+
-| ``-x``                               | Unary NOT                             |
+| ``&``                                | Binary AND                            |
++--------------------------------------+---------------------------------------+
+| ``~x``                               | Unary NOT                             |
 +--------------------------------------+---------------------------------------+
 | ``(expr ...)``                       | Parenthesis,                          |
 | ``OP(expr ...)``                     | Explicit operators                    |
@@ -534,7 +549,7 @@ Unsimplified
 An unsimplified expression consists of the following components:
 
 * Constants
-* Expressions that can *easily* be converted to constants (eg :math:`x + -x = 1`)
+* Expressions that can *easily* be converted to constants (eg :math:`x + x' = 1`)
 * Literals
 * Primary operators: ``Not``, ``Or``, ``And``
 * Secondary operators
@@ -546,7 +561,7 @@ The depth of the unsimplified expression is two::
 
    >>> f = Or('a', Or('b', 'c'), simplify=False)
    >>> f.args
-   frozenset({a, b + c})
+   (a, Or(b, c))
    >>> f.depth
    2
 
@@ -554,7 +569,7 @@ The depth of the simplified expression is one::
 
    >>> g = f.simplify()
    >>> g.args
-   frozenset({a, b, c})
+   (b, a, c)
    >>> g.depth
    1
 
@@ -575,24 +590,24 @@ and all sub-expressions that can be easily converted to constants.
 All expressions constructed using overloaded operatiors are automatically
 simplified::
 
-   >>> a + 0
+   >>> a | 0
    a
-   >>> a + 1
+   >>> a | 1
    1
-   >>> a + b * -b
+   >>> a | b & ~b
    a
 
 Unsimplified expressions are not very useful,
 so the factory functions also simplify by default::
 
-   >>> Or(a, And(b, -b))
+   >>> Or(a, And(b, ~b))
    a
 
 To simplify an expression, use the ``simplify`` method::
 
    >>> f = Or(a, 0, simplify=False)
    >>> f
-   0 + a
+   Or(0, a)
    >>> g = f.simplify()
    >>> g
    a
@@ -620,21 +635,21 @@ and uses DeMorgan's transform to eliminate ``Not`` operators.
 You can factor all secondary operators::
 
    >>> Xor(a, b, c).factor()
-   a' * b' * c + a' * b * c' + a * b' * c' + a * b * c
+   Or(And(~a, ~b, c), And(~a, b, ~c), And(a, ~b, ~c), And(a, b, c))
    >>> Implies(p, q).factor()
-   p' + q
+   Or(~p, q)
    >>> Equal(a, b, c).factor()
-   a' * b' * c' + a * b * c
+   Or(And(~a, ~b, ~c), And(a, b, c))
    >>> ITE(s, a, b).factor()
-   a * s + b * s'
+   Or(And(b, Or(a, b, ~ci), Or(a, ~b, ci)), And(a, Or(And(~a, ~b, ci), And(~a, b, ~ci))))
 
 Factoring also eliminates all ``Not`` operators,
 by using DeMorgan's law::
 
-   >>> Not(a + b).factor()
-   a' * b'
-   >>> Not(a * b).factor()
-   a' + b'
+   >>> Not(a | b).factor()
+   And(~a, ~b)
+   >>> Not(a & b).factor()
+   Or(~a, ~b)
 
 Normal Form
 -----------
@@ -654,9 +669,9 @@ The preferred method for creating normal form expressions is to use the
 
    >>> f = Xor(a, Implies(b, c))
    >>> f.to_dnf()
-   a' * b' + a' * c + a * b * c'
+   Or(And(~a, ~b), And(~a, c), And(a, b, ~c))
    >>> f.to_cnf()
-   (a' + b) * (a' + c') * (a + b' + c)
+   And(Or(~a, b), Or(~a, ~c), Or(a, ~b, c))
 
 Canonical Normal Form
 ---------------------
@@ -675,9 +690,9 @@ Using the same function from the previous section as an example::
 
    >>> f = Xor(a, Implies(b, c))
    >>> f.to_cdnf()
-   a' * b' * c' + a' * b' * c + a' * b * c + a * b * c'
+   Or(And(~a, ~b, ~c), And(~a, ~b, c), And(~a, b, c), And(a, b, ~c))
    >>> f.to_ccnf()
-   (a + b' + c) * (a' + b + c) * (a' + b + c') * (a' + b' + c')
+   And(Or(a, ~b, c), Or(~a, b, c), Or(~a, b, ~c), Or(~a, ~b, ~c))
 
 Satisfiability
 ==============
@@ -732,7 +747,7 @@ To convert an expression to Tseitin's encoding, use the ``tseitin`` method::
    >>> f = Xor('a', Implies('b', 'c'))
    >>> tf = f.tseitin()
    >>> tf
-   (a + aux[0]') * (a' + aux[0] + b' + c) * (a' + aux[2]') * (a + aux[1]' + aux[2]) * (aux[0] + aux[2]) * (aux[0]' + b) * (aux[0]' + c') * (aux[1] + aux[2]') * (aux[1] + b) * (aux[1] + c') * (aux[1]' + b' + c)
+   And(Or(a, ~aux[0]), Or(~a, aux[0], ~b, c), Or(~a, ~aux[2]), Or(a, ~aux[1], aux[2]), Or(aux[0], aux[2]), Or(~aux[0], b), Or(~aux[0], ~c), Or(aux[1], ~aux[2]), Or(aux[1], b), Or(aux[1], ~c), Or(~aux[1], ~b, c))
 
 As you can see, Tseitin's encoding introduces several "auxiliary" variables
 into the expression.
@@ -742,7 +757,7 @@ parameter::
 
    >>> f = Xor('a', Implies('b', 'c'))
    >>> f.tseitin(auxvarname='z')
-   (a + z[0]') * (a' + b' + c + z[0]) * (a' + z[2]') * (z[1] + z[2]') * (a + z[1]' + z[2]) * (b + z[1]) * (c' + z[1]) * (b' + c + z[1]') * (b + z[0]') * (c' + z[0]') * (z[0] + z[2])
+   And(Or(a, ~z[0]), Or(~a, ~b, c, z[0]), Or(~a, ~z[2]), Or(a, ~z[1], z[2]), Or(b, z[1]), Or(~b, c, ~z[1]), Or(b, ~z[0]), Or(~c, ~z[0]), Or(~c, z[1]), Or(z[0], z[2]), Or(z[1], ~z[2]))
 
 You will see the auxiliary variables in the satisfying points::
 
