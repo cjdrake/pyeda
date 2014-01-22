@@ -109,7 +109,7 @@ because all constraints must simultaneously be valid.
 
 ::
 
-   >>> S = R * C * DLR * DRL
+   >>> S = R & C & DLR & DRL
 
 Verify the formula is in CNF form, and show how large it is::
 

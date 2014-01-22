@@ -125,12 +125,12 @@ and at least one must be true".
 ::
 
    >>> f
-   (a' + b') * (a' + c') * (b' + c') * (a + b + c)
+   And(Or(~a, ~b), Or(~a, ~c), Or(~b, ~c), Or(a, b, c))
 
 In disjunctive normal (sum-of-products) form, the function looks like this::
 
    >>> f.to_dnf()
-   a' * b' * c + a' * b * c' + a * b' * c'
+   Or(And(~a, ~b, c), And(~a, b, ~c), And(a, ~b, ~c))
 
 Value Constraints
 -----------------
@@ -287,7 +287,7 @@ let's use the `PicoSAT <http://fmv.jku.at/picosat>`_ fast SAT solver to crunch t
 
    >>> def solve(grid):
    ...     I = parse_grid(grid)
-   ...     cnf = I * S
+   ...     cnf = I & S
    ...     return cnf.satisfy_one()
 
 Here is the solution to the :ref:`Example_grid`::
