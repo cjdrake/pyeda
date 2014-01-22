@@ -218,12 +218,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
 
-    def is_neg_unate(self, vs=None):
-        return bdd2expr(self).is_neg_unate(vs)
-
-    def is_pos_unate(self, vs=None):
-        return bdd2expr(self).is_pos_unate(vs)
-
     def is_zero(self):
         return self.node is BDDNODEZERO
 
