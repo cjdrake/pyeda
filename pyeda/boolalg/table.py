@@ -356,30 +356,6 @@ class TruthTable(boolfunc.Function):
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
 
-    def is_neg_unate(self, vs=None):
-        vs = self._expect_vars(vs)
-        basis = self.support - set(vs)
-        maxcov = [PC_ONE] * (1 << len(basis))
-        # Test whether table entries are monotonically decreasing
-        for cf in self.iter_cofactors(vs):
-            for i, item in enumerate(cf.pcdata):
-                if maxcov[i] == PC_ZERO and item == PC_ONE:
-                    return False
-                maxcov[i] = item
-        return True
-
-    def is_pos_unate(self, vs=None):
-        vs = self._expect_vars(vs)
-        basis = self.support - set(vs)
-        mincov = [PC_ZERO] * (1 << len(basis))
-        # Test whether table entries are monotonically increasing
-        for cf in self.iter_cofactors(vs):
-            for i, item in enumerate(cf.pcdata):
-                if mincov[i] == PC_ONE and item == PC_ZERO:
-                    return False
-                mincov[i] = item
-        return True
-
     def is_zero(self):
         return not self._inputs and self.pcdata[0] == PC_ZERO
 
@@ -398,6 +374,49 @@ class TruthTable(boolfunc.Function):
             return CONSTANTS[bool(arg)]
 
     # Specific to TruthTable
+    def is_neg_unate(self, vs=None):
+        r"""Return whether a function is negative unate.
+
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
+        in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
+        """
+        vs = self._expect_vars(vs)
+        basis = self.support - set(vs)
+        maxcov = [PC_ONE] * (1 << len(basis))
+        # Test whether table entries are monotonically decreasing
+        for cf in self.iter_cofactors(vs):
+            for i, item in enumerate(cf.pcdata):
+                if maxcov[i] == PC_ZERO and item == PC_ONE:
+                    return False
+                maxcov[i] = item
+        return True
+
+    def is_pos_unate(self, vs=None):
+        r"""Return whether a function is positive unate.
+
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
+        in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
+        """
+        vs = self._expect_vars(vs)
+        basis = self.support - set(vs)
+        mincov = [PC_ZERO] * (1 << len(basis))
+        # Test whether table entries are monotonically increasing
+        for cf in self.iter_cofactors(vs):
+            for i, item in enumerate(cf.pcdata):
+                if mincov[i] == PC_ONE and item == PC_ZERO:
+                    return False
+                mincov[i] = item
+        return True
+
+    def is_binate(self, vs=None):
+        """Return whether a function is binate.
+
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
+        variable :math:`x_i` if it is neither negative nor positive unate in
+        :math:`x_i`.
+        """
+        return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
+
     def _iter_restrict(self, zeros, ones):
         """Iterate through indices of all table entries that vary."""
         inputs = list(self.inputs)

@@ -437,31 +437,6 @@ class Function(object):
         """
         return tuple(cf for cf in self.iter_cofactors(vs))
 
-    def is_neg_unate(self, vs=None):
-        r"""Return whether a function is negative unate.
-
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
-        in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
-        """
-        raise NotImplementedError()
-
-    def is_pos_unate(self, vs=None):
-        r"""Return whether a function is positive unate.
-
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
-        in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
-        """
-        raise NotImplementedError()
-
-    def is_binate(self, vs=None):
-        """Return whether a function is binate.
-
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
-        variable :math:`x_i` if it is neither negative nor positive unate in
-        :math:`x_i`.
-        """
-        return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
-
     def smoothing(self, vs=None):
         """Return the smoothing of a function.
 

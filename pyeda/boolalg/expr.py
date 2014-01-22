@@ -505,32 +505,6 @@ class Expression(boolfunc.Function):
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
 
-    def is_neg_unate(self, vs=None):
-        vs = self._expect_vars(vs)
-        basis = self.support - set(vs)
-        cov = EXPRONE.expand(basis).mincover
-        for cf in self.iter_cofactors(vs):
-            cf = cf.expand(basis - cf.support)
-            if not cf.is_dnf():
-                cf = cf.to_dnf()
-            if not cf.mincover <= cov:
-                return False
-            cov = cf.mincover
-        return True
-
-    def is_pos_unate(self, vs=None):
-        vs = self._expect_vars(vs)
-        basis = self.support - set(vs)
-        cov = EXPRZERO.mincover
-        for cf in self.iter_cofactors(vs):
-            cf = cf.expand(basis - cf.support)
-            if not cf.is_dnf():
-                cf = cf.to_dnf()
-            if not cf.mincover >= cov:
-                return False
-            cov = cf.mincover
-        return True
-
     def smoothing(self, vs=None):
         return Or(*self.cofactors(vs))
 
@@ -558,6 +532,51 @@ class Expression(boolfunc.Function):
             return CONSTANTS[bool(arg)]
 
     # Specific to Expression
+    def is_neg_unate(self, vs=None):
+        r"""Return whether a function is negative unate.
+
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
+        in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
+        """
+        vs = self._expect_vars(vs)
+        basis = self.support - set(vs)
+        cov = EXPRONE.expand(basis).mincover
+        for cf in self.iter_cofactors(vs):
+            cf = cf.expand(basis - cf.support)
+            if not cf.is_dnf():
+                cf = cf.to_dnf()
+            if not cf.mincover <= cov:
+                return False
+            cov = cf.mincover
+        return True
+
+    def is_pos_unate(self, vs=None):
+        r"""Return whether a function is positive unate.
+
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
+        in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
+        """
+        vs = self._expect_vars(vs)
+        basis = self.support - set(vs)
+        cov = EXPRZERO.mincover
+        for cf in self.iter_cofactors(vs):
+            cf = cf.expand(basis - cf.support)
+            if not cf.is_dnf():
+                cf = cf.to_dnf()
+            if not cf.mincover >= cov:
+                return False
+            cov = cf.mincover
+        return True
+
+    def is_binate(self, vs=None):
+        """Return whether a function is binate.
+
+        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
+        variable :math:`x_i` if it is neither negative nor positive unate in
+        :math:`x_i`.
+        """
+        return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
+
     def traverse(self):
         """Iterate through all nodes in this expression in DFS order."""
         for expr in self._traverse(set()):
