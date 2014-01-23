@@ -142,6 +142,7 @@ ESPRESSO = dict(
         pjoin('extension', 'espresso', 'src', 'sparse.c'),
         pjoin('extension', 'espresso', 'src', 'unate.c'),
         pjoin('extension', 'espresso', 'src', 'verify.c'),
+        pjoin('pyeda', 'boolalg', 'espressomodule.c'),
     ],
 )
 
