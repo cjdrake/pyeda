@@ -268,8 +268,8 @@ class Function(object):
     def __rsub__(self, other):
         return self.__invert__().__or__(other)
 
-    def __mul__(self, other):
-        r"""Boolean conjunction (multiplication, AND) operator
+    def __and__(self, other):
+        r"""Boolean conjunction (product, AND) operator
 
         +-----------+-----------+-------------------+
         | :math:`f` | :math:`g` | :math:`f \cdot g` |
@@ -285,8 +285,8 @@ class Function(object):
         """
         raise NotImplementedError()
 
-    def __rmul__(self, other):
-        return self.__mul__(other)
+    def __rand__(self, other):
+        return self.__and__(other)
 
     def xor(self, other):
         r"""Boolean exclusive or (XOR) operator
@@ -316,6 +316,13 @@ class Function(object):
 
     def __radd__(self, other):
         return self.__or__(other)
+
+    def __mul__(self, other):
+        """Deprecated: Use a & b instead of a * b"""
+        return self.__and__(other)
+
+    def __rmul__(self, other):
+        return self.__and__(other)
 
     @property
     def support(self):
@@ -463,7 +470,7 @@ class Function(object):
         The *consensus* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
         to variable :math:`x_i` is :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`.
         """
-        return functools.reduce(self.__class__.__mul__, self.iter_cofactors(vs))
+        return functools.reduce(self.__class__.__and__, self.iter_cofactors(vs))
 
     def derivative(self, vs=None):
         r"""Return the derivative of a function.

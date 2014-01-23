@@ -432,7 +432,7 @@ class Expression(boolfunc.Function):
     def __sub__(self, other):
         return Or(self, Not(other))
 
-    def __mul__(self, other):
+    def __and__(self, other):
         return And(self, other)
 
     def __rshift__(self, other):
@@ -646,8 +646,8 @@ class Expression(boolfunc.Function):
         """Return a factored, flattened expression.
 
         Use the distributive law to flatten all nested expressions:
-        a | (b * c) = (a | b) * (a | c)
-        a * (b | c) = (a * b) | (a * c)
+        a | (b & c) = (a | b) & (a | c)
+        a & (b | c) = (a & b) | (a & c)
 
         op : ExprOr or ExprAnd
             The operator you want to flatten. For example, if you want to
@@ -707,8 +707,8 @@ class Expression(boolfunc.Function):
     def absorb(self):
         """Return the DNF/CNF expression after absorption.
 
-        a | (a * b) = a
-        a * (a | b) = a
+        a | (a & b) = a
+        a & (a | b) = a
         """
         if self.is_dnf() or self.is_cnf():
             return self._absorb()
@@ -1431,9 +1431,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         +--------------+-------+
         | term         | index |
         +==============+=======+
-        | ~a * ~b * ~c | 000   |
-        |  a *  b * ~c | 110   |
-        |  a *  b *  c | 111   |
+        | ~a & ~b & ~c | 000   |
+        |  a &  b & ~c | 110   |
+        |  a &  b &  c | 111   |
         +--------------+-------+
         | ~a | ~b | ~c | 111   |
         |  a |  b | ~c | 001   |
@@ -1560,7 +1560,7 @@ class ExprOr(ExprOrAnd):
         # a | b
         if self.depth == 1:
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
-        # a | b * c
+        # a | b & c
         elif self.depth == 2:
             return all(
                        isinstance(arg, ExprLiteral) or
@@ -1571,7 +1571,7 @@ class ExprOr(ExprOrAnd):
             return False
 
     def is_cnf(self):
-        # a * b
+        # a & b
         if self.depth == 1:
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
         else:
@@ -1671,17 +1671,17 @@ class ExprAnd(ExprOrAnd):
         return obj
 
     def is_dnf(self):
-        # a * b
+        # a & b
         if self.depth == 1:
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
         else:
             return False
 
     def is_cnf(self):
-        # a * b
+        # a & b
         if self.depth == 1:
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
-        # a * (b | c)
+        # a & (b | c)
         elif self.depth == 2:
             return all(
                        isinstance(arg, ExprLiteral) or
@@ -2361,7 +2361,7 @@ class ExprITE(_ArgumentContainer):
             # s ? 0 : 1 = ~s
             elif d0 is EXPRONE:
                 return ExprNot(s).simplify()
-            # s ? 0 : d0 = ~s * d0
+            # s ? 0 : d0 = ~s & d0
             else:
                 return ExprAnd(ExprNot(s), d0).simplify()
         elif d1 is EXPRONE:
@@ -2374,7 +2374,7 @@ class ExprITE(_ArgumentContainer):
             # s ? 1 : d0 = s | d0
             else:
                 return ExprOr(s, d0).simplify()
-        # s ? d1 : 0 = s * d1
+        # s ? d1 : 0 = s & d1
         elif d0 is EXPRZERO:
             return ExprAnd(s, d1).simplify()
         # s ? d1 : 1 = ~s | d1
@@ -2536,7 +2536,7 @@ def _complete_sum(dnf):
     """
     Recursive complete_sum function implementation.
 
-    CS(f) = ABS([x1 | CS(0, x2, ..., xn)] * [~x1 | CS(1, x2, ..., xn)])
+    CS(f) = ABS([x1 | CS(0, x2, ..., xn)] & [~x1 | CS(1, x2, ..., xn)])
     """
     if dnf.depth <= 1:
         return dnf

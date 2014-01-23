@@ -266,7 +266,7 @@ class TruthTable(boolfunc.Function):
         other = self.box(other)
         return self.__or__(other.__invert__())
 
-    def __mul__(self, other):
+    def __and__(self, other):
         other = self.box(other)
         inputs = sorted(self.support | other.support)
         def items():
