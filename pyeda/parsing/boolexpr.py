@@ -171,9 +171,9 @@ class BoolExprLexer(RegexLexer):
             (r"<=>", operator),
             (r"\?", operator),
             (r":", operator),
-            (r"\~", operator),
-            (r"\|", operator),
-            (r"\&", operator),
+            (r"(?:\~|\-)", operator),
+            (r"(?:\||\+)", operator),
+            (r"(?:\&|\*)", operator),
 
             (r"\(", punct),
             (r"\)", punct),
@@ -205,8 +205,11 @@ class BoolExprLexer(RegexLexer):
         '?'   : OP_question,
         ':'   : OP_colon,
         '~'   : OP_not,
+        '-'   : OP_not,
         '|'   : OP_or,
+        '+'   : OP_or,
         '&'   : OP_and,
+        '*'   : OP_and,
     }
 
     PUNCTUATION = {
