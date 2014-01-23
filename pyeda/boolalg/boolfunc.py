@@ -110,9 +110,9 @@ def num2term(num, vs, conj=False):
     +-------+----------+----------+
     """
     if conj:
-        return tuple(-v if bit_on(num, i) else v for i, v in enumerate(vs))
+        return tuple(~v if bit_on(num, i) else v for i, v in enumerate(vs))
     else:
-        return tuple(v if bit_on(num, i) else -v for i, v in enumerate(vs))
+        return tuple(v if bit_on(num, i) else ~v for i, v in enumerate(vs))
 
 def point2upoint(point):
     """Convert a point into an untyped point.
@@ -136,9 +136,9 @@ def point2term(point, conj=False):
     point : {Variable: int}
     """
     if conj:
-        return tuple(-v if val else v for v, val in point.items())
+        return tuple(~v if val else v for v, val in point.items())
     else:
-        return tuple(v if val else -v for v, val in point.items())
+        return tuple(v if val else ~v for v, val in point.items())
 
 def iter_points(vs):
     """Iterate through all points in an N-dimensional space.
@@ -228,11 +228,11 @@ class Function(object):
     """
 
     # Operators
-    def __neg__(self):
+    def __invert__(self):
         """Boolean negation operator
 
         +-----------+------------+
-        | :math:`f` | :math:`-f` |
+        | :math:`f` | :math:`f'` |
         +===========+============+
         |         0 |          1 |
         +-----------+------------+
@@ -266,7 +266,7 @@ class Function(object):
         raise NotImplementedError()
 
     def __rsub__(self, other):
-        return self.__neg__().__add__(other)
+        return self.__invert__().__add__(other)
 
     def __mul__(self, other):
         r"""Boolean conjunction (multiplication, AND) operator
@@ -304,6 +304,11 @@ class Function(object):
         +-----------+-----------+--------------------+
         """
         raise NotImplementedError()
+
+    # Deprecated operators
+    def __neg__(self):
+        """Deprecated: Use ~a instead of -a"""
+        return self.__invert__()
 
     @property
     def support(self):

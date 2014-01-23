@@ -59,7 +59,7 @@ Complement Operator
 The complement operator is a *unary* operator,
 which means it acts on a single Boolean input: :math:`x`.
 The Boolean complement of :math:`x` is usually written as
-:math:`x^{\prime}`, :math:`\overline{x}`, or :math:`\lnot x`.
+:math:`x'`, :math:`\overline{x}`, or :math:`\lnot x`.
 
 The output of the Boolean complement is defined by:
 
@@ -564,7 +564,7 @@ This is the abstract base class for Boolean function representations.
 
 In addition to the methods and properties listed below,
 classes inheriting from ``Function`` should also overload the
-``__neg__``, ``__add__``, ``__sub__``, and ``__mul__`` magic methods.
+``__invert__``, ``__add__``, ``__sub__``, and ``__mul__`` magic methods.
 This makes it possible to perform symbolic, algebraic manipulations using
 a Python interpreter.
 

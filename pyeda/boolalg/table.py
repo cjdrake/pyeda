@@ -240,7 +240,7 @@ class TruthTable(boolfunc.Function):
         return self.__str__()
 
     # Operators
-    def __neg__(self):
+    def __invert__(self):
         def items():
             """Iterate through negated items."""
             sub = {PC_ZERO: PC_ONE, PC_ONE: PC_ZERO, PC_DC: PC_DC}
@@ -264,7 +264,7 @@ class TruthTable(boolfunc.Function):
 
     def __sub__(self, other):
         other = self.box(other)
-        return self.__add__(other.__neg__())
+        return self.__add__(other.__invert__())
 
     def __mul__(self, other):
         other = self.box(other)

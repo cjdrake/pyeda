@@ -156,7 +156,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return str(self)
 
     # Operators
-    def __neg__(self):
+    def __invert__(self):
         return bdd(_neg(self.node))
 
     def __add__(self, other):
@@ -166,7 +166,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     def __sub__(self, other):
         other_node = self.box(other).node
-        # x - y <=> ITE(x, 1, y')
+        # x - y <=> ITE(x, 1, ~y)
         return bdd(_ite(self.node, BDDNODEONE, _neg(other_node)))
 
     def __mul__(self, other):
@@ -176,7 +176,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     def xor(self, other):
         other_node = self.box(other).node
-        # x (xor) y <=> ITE(x, y', y)
+        # x (xor) y <=> ITE(x, ~y, y)
         return bdd(_ite(self.node, _neg(other_node), other_node))
 
     # From Function
@@ -332,7 +332,7 @@ def _ite(f, g, h):
     # ITE(f, 1, 0) = f
     if g is BDDNODEONE and h is BDDNODEZERO:
         return f
-    # ITE(f, 0, 1) = -f
+    # ITE(f, 0, 1) = ~f
     elif g is BDDNODEZERO and h is BDDNODEONE:
         return _neg(f)
     # ITE(1, g, h) = g

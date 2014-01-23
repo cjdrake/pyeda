@@ -27,8 +27,8 @@ def test_bddvar():
 def test_expr2bdd():
     assert expr2bdd(a) == aa
 
-    assert expr2bdd(-a * -b + a * -b + -a * b + a * b).node is BDDNODEONE
-    assert expr2bdd(-(-a * -b + a * -b + -a * b + a * b)).node is BDDNODEZERO
+    assert expr2bdd(~a * ~b + a * ~b + ~a * b + a * b).node is BDDNODEONE
+    assert expr2bdd(~(~a * ~b + a * ~b + ~a * b + a * b)).node is BDDNODEZERO
 
     ff = expr2bdd(a * b + a * c + b * c)
     gg = expr2bdd(a * b + a * c + b * c)
@@ -64,8 +64,8 @@ def test_traverse():
     assert path == [-2, -1, c.uniqid, b.uniqid, b.uniqid, a.uniqid]
 
 def test_equivalent():
-    ff = expr2bdd(a * -b + -a * b)
-    gg = expr2bdd((-a + -b) * (a + b))
+    ff = expr2bdd(a * ~b + ~a * b)
+    gg = expr2bdd((~a + ~b) * (a + b))
     assert ff.equivalent(ff)
     assert gg.equivalent(ff)
 
@@ -113,7 +113,7 @@ def test_compose():
 def test_negate():
     f = a * b + a * c + b * c
     ff = expr2bdd(f)
-    assert bdd2expr(-ff).equivalent(-f)
+    assert bdd2expr(~ff).equivalent(~f)
 
 def test_ops():
     assert aa + 0 == aa
@@ -123,7 +123,7 @@ def test_ops():
 
     assert aa - 0 is BDDONE
     assert aa - 1 == aa
-    assert 0 - aa == -aa
+    assert 0 - aa == ~aa
     assert 1 - aa is BDDONE
 
     assert aa * 0 is BDDZERO
@@ -132,9 +132,9 @@ def test_ops():
     assert 1 * aa == aa
 
     assert aa.xor(0) == aa
-    assert aa.xor(1) == -aa
+    assert aa.xor(1) == ~aa
 
-    assert bdd2expr(-aa * bb + aa * -bb).equivalent(-a * b + a * -b)
+    assert bdd2expr(~aa * bb + aa * ~bb).equivalent(~a * b + a * ~b)
     assert bdd2expr(aa - bb).equivalent(a - b)
     assert bdd2expr(aa.xor(bb)).equivalent(Xor(a, b))
 

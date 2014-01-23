@@ -200,7 +200,7 @@ class BitVector(VectorFunction):
         >>> d.vrestrict({A: "11"})
         [0, 0, 0, 1]
         """
-        items = [And(*[f if bit_on(i, j) else -f
+        items = [And(*[f if bit_on(i, j) else ~f
                        for j, f in enumerate(self)])
                  for i in range(2 ** len(self))]
         return self.__class__(items)

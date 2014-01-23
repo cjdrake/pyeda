@@ -21,10 +21,10 @@ def test_expr_error():
 
 def test_basic():
     a, b, c, p, q, s = map(exprvar, 'abcpqs')
-    assert expr("a * -b + b * -c").equivalent(a * -b + b * -c)
-    assert expr("p => q").equivalent(-p + q)
-    assert expr("a <=> b").equivalent(-a * -b + a * b)
-    assert expr("s ? a : b").equivalent(s * a + -s * b)
+    assert expr("a * -b + b * -c").equivalent(a * ~b + b * ~c)
+    assert expr("p => q").equivalent(~p + q)
+    assert expr("a <=> b").equivalent(~a * ~b + a * b)
+    assert expr("s ? a : b").equivalent(s * a + ~s * b)
     assert expr("Not(a)").equivalent(Not(a))
     assert expr("Or(a, b, c)").equivalent(Or(a, b, c))
     assert expr("And(a, b, c)").equivalent(And(a, b, c))

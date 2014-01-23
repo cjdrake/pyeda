@@ -31,7 +31,7 @@ XOR_STR = \
 """
 
 def test_unate():
-    # c' * (a' + b')
+    # ~c * (~a + ~b)
     f = truthtable([aa, bb, cc], "11100000")
     assert f.is_neg_unate([aa, bb, cc])
     assert f.is_neg_unate([aa, bb])
@@ -101,7 +101,7 @@ def test_table():
 def test_ops():
     f = truthtable([aa, bb], "0001")
     assert str(f) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(-f) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
+    assert str(~f) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
 
     assert str(f + 0) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
     assert str(f + 1) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
@@ -122,7 +122,7 @@ def test_ops():
     assert str(f.xor(1)) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
 
     f = truthtable([aa, bb], "01-0")
-    assert str(-f) == "inputs: b a\n00 1\n01 0\n10 -\n11 1\n"
+    assert str(~f) == "inputs: b a\n00 1\n01 0\n10 -\n11 1\n"
 
     f = truthtable([aa, bb], "0011")
     g = truthtable([aa, bb], "0101")

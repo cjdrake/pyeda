@@ -93,7 +93,7 @@ def exprvar(name, index=None):
 
 def exprcomp(exprvar):
     """Return an Expression Complement."""
-    uniqid = -exprvar.uniqid
+    uniqid = ~exprvar.uniqid
     try:
         comp = EXPRCOMPLEMENTS[uniqid]
     except KeyError:
@@ -423,7 +423,7 @@ class Expression(boolfunc.Function):
         raise NotImplementedError()
 
     # Operators
-    def __neg__(self):
+    def __invert__(self):
         return Not(self)
 
     def __add__(self, other):
@@ -665,7 +665,7 @@ class Expression(boolfunc.Function):
         else:
             terms = list()
             for upnt in _iter_ones(self):
-                lits = [-EXPRVARIABLES[uniqid] for uniqid in upnt[0]]
+                lits = [~EXPRVARIABLES[uniqid] for uniqid in upnt[0]]
                 lits += [EXPRVARIABLES[uniqid] for uniqid in upnt[1]]
                 terms.append(And(*lits))
             return Or(*terms)
@@ -687,7 +687,7 @@ class Expression(boolfunc.Function):
             terms = list()
             for upnt in _iter_zeros(self):
                 lits = [EXPRVARIABLES[uniqid] for uniqid in upnt[0]]
-                lits += [-EXPRVARIABLES[uniqid] for uniqid in upnt[1]]
+                lits += [~EXPRVARIABLES[uniqid] for uniqid in upnt[1]]
                 terms.append(Or(*lits))
             return And(*terms)
 
@@ -732,9 +732,9 @@ class Expression(boolfunc.Function):
         nvars = 0
         for i, v in enumerate(self.inputs, start=1):
             litmap[v] = i
-            litmap[-v] = -i
+            litmap[~v] = -i
             litmap[i] = v
-            litmap[-i] = -v
+            litmap[-i] = ~v
             nvars += 1
         return nvars, litmap
 
@@ -1126,7 +1126,7 @@ class ExprComplement(ExprLiteral):
         self.uniqid = -exprvar.uniqid
 
     def __str__(self):
-        return '-' + str(self.exprvar)
+        return '~' + str(self.exprvar)
 
     def to_unicode(self):
         return str(self.exprvar) + self.SYMBOL
@@ -1391,7 +1391,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
             elif isinstance(arg, self.__class__):
                 temps.update(arg.args)
             # complement
-            elif isinstance(arg, ExprLiteral) and -arg in args:
+            elif isinstance(arg, ExprLiteral) and ~arg in args:
                 return self.DOMINATOR
             else:
                 args.add(arg)
@@ -1431,13 +1431,13 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         +--------------+-------+
         | term         | index |
         +==============+=======+
-        | a' * b' * c' | 000   |
-        | a  * b  * c' | 110   |
-        | a  * b  * c  | 111   |
+        | ~a * ~b * ~c | 000   |
+        |  a *  b * ~c | 110   |
+        |  a *  b *  c | 111   |
         +--------------+-------+
-        | a' + b' + c' | 111   |
-        | a  + b  + c' | 001   |
-        | a  + b  + c  | 000   |
+        | ~a + ~b + ~c | 111   |
+        |  a +  b + ~c | 001   |
+        |  a +  b +  c | 000   |
         +==============+=======+
         """
         raise NotImplementedError()
@@ -1617,7 +1617,7 @@ class ExprOr(ExprOrAnd):
         num = self.degree - 1
         index = 0
         for i, v in enumerate(self.inputs):
-            if -v in self.args:
+            if ~v in self.args:
                 index |= 1 << (num - i)
         return index
 
@@ -1773,7 +1773,7 @@ class ExprNor(ExprNorNand):
         # Nor() = 1
         if len(args) == 0:
             return EXPRONE
-        # Nor(a) = -a
+        # Nor(a) = ~a
         elif len(args) == 1:
             return Not(args[0])
         else:
@@ -1822,7 +1822,7 @@ class ExprNor(ExprNorNand):
             elif isinstance(arg, ExprOr):
                 temps.update(arg.args)
             # complement
-            elif isinstance(arg, ExprLiteral) and -arg in args:
+            elif isinstance(arg, ExprLiteral) and ~arg in args:
                 return EXPRZERO
             else:
                 args.add(arg)
@@ -1845,7 +1845,7 @@ class ExprNand(ExprNorNand):
         # Nand() = 0
         if len(args) == 0:
             return EXPRZERO
-        # Nand(a) = -a
+        # Nand(a) = ~a
         elif len(args) == 1:
             return Not(args[0])
         else:
@@ -1894,7 +1894,7 @@ class ExprNand(ExprNorNand):
             elif isinstance(arg, ExprAnd):
                 temps.update(arg.args)
             # complement
-            elif isinstance(arg, ExprLiteral) and -arg in args:
+            elif isinstance(arg, ExprLiteral) and ~arg in args:
                 return EXPRONE
             else:
                 args.add(arg)
@@ -1926,9 +1926,9 @@ class ExprExclusive(_ArgumentContainer):
             # associative
             elif isinstance(arg, self.__class__):
                 temps.extend(arg.args)
-            # Xor(a, a') = 1
-            elif isinstance(arg, ExprLiteral) and -arg in args:
-                args.remove(-arg)
+            # Xor(a, ~a) = 1
+            elif isinstance(arg, ExprLiteral) and ~arg in args:
+                args.remove(~arg)
                 par ^= 1
             # Xor(a, a) = 0
             elif arg in args:
@@ -2038,7 +2038,7 @@ class ExprXnor(ExprExclusive):
         # Xnor() = 1
         if len(args) == 0:
             return EXPRONE
-        # Xnor(a) = a'
+        # Xnor(a) = ~a
         elif len(args) == 1:
             return ExprNot(args[0]).simplify()
         else:
@@ -2142,8 +2142,8 @@ class ExprEqual(ExprEqualBase):
         temps, args = args, set()
         while temps:
             arg = temps.pop()
-            # Equal(a, -a) = 0
-            if isinstance(arg, ExprLiteral) and -arg in args:
+            # Equal(a, ~a) = 0
+            if isinstance(arg, ExprLiteral) and ~arg in args:
                 return EXPRZERO
             else:
                 args.add(arg)
@@ -2215,8 +2215,8 @@ class ExprUnequal(ExprEqualBase):
         temps, args = args, set()
         while temps:
             arg = temps.pop()
-            # Unequal(a, -a) = 1
-            if isinstance(arg, ExprLiteral) and -arg in args:
+            # Unequal(a, ~a) = 1
+            if isinstance(arg, ExprLiteral) and ~arg in args:
                 return EXPRONE
             else:
                 args.add(arg)
@@ -2290,14 +2290,14 @@ class ExprImplies(_ArgumentContainer):
         # 1 => q = q
         elif p is EXPRONE:
             return q.simplify()
-        # p => 0 = p'
+        # p => 0 = ~p
         elif q is EXPRZERO:
             return ExprNot(p).simplify()
         # p => p = 1
         elif p == q:
             return EXPRONE
-        # -p => p = p
-        elif isinstance(p, ExprLiteral) and -p == q:
+        # ~p => p = p
+        elif isinstance(p, ExprLiteral) and ~p == q:
             return q.simplify()
 
         obj = self.__class__(p, q)
@@ -2358,10 +2358,10 @@ class ExprITE(_ArgumentContainer):
             # s ? 0 : 0 = 0
             if d0 is EXPRZERO:
                 return EXPRZERO
-            # s ? 0 : 1 = s'
+            # s ? 0 : 1 = ~s
             elif d0 is EXPRONE:
                 return ExprNot(s).simplify()
-            # s ? 0 : d0 = s' * d0
+            # s ? 0 : d0 = ~s * d0
             else:
                 return ExprAnd(ExprNot(s), d0).simplify()
         elif d1 is EXPRONE:
@@ -2377,7 +2377,7 @@ class ExprITE(_ArgumentContainer):
         # s ? d1 : 0 = s * d1
         elif d0 is EXPRZERO:
             return ExprAnd(s, d1).simplify()
-        # s ? d1 : 1 = s' + d1
+        # s ? d1 : 1 = ~s + d1
         elif d0 is EXPRONE:
             return ExprOr(ExprNot(s), d1).simplify()
         # s ? d1 : d1 = d1
@@ -2437,7 +2437,7 @@ class NormalForm(object):
             vs = list(support - {abs(uniqid) for uniqid in clause})
             if vs:
                 for num in range(1 << len(vs)):
-                    new_part = {v if bit_on(num, i) else -v
+                    new_part = {v if bit_on(num, i) else ~v
                                 for i, v in enumerate(vs)}
                     new_clauses.add(clause | new_part)
             else:
@@ -2536,14 +2536,14 @@ def _complete_sum(dnf):
     """
     Recursive complete_sum function implementation.
 
-    CS(f) = ABS([x1 + CS(0, x2, ..., xn)] * [-x1 + CS(1, x2, ..., xn)])
+    CS(f) = ABS([x1 + CS(0, x2, ..., xn)] * [~x1 + CS(1, x2, ..., xn)])
     """
     if dnf.depth <= 1:
         return dnf
     else:
         v = dnf.splitvar
         fv0, fv1 = dnf.cofactors(v)
-        f = And(Or(v, _complete_sum(fv0)), Or(-v, _complete_sum(fv1)))
+        f = And(Or(v, _complete_sum(fv0)), Or(~v, _complete_sum(fv1)))
         if isinstance(f, ExprAnd):
             f = Or(*[And(x, y) for x in f.args[0].arg_set
                                for y in f.args[1].arg_set])
