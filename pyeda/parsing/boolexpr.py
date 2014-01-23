@@ -96,7 +96,7 @@ class OP_not(OperatorToken):
     """Expression '~' operator"""
 
 class OP_or(OperatorToken):
-    """Expression '+' operator"""
+    """Expression '|' operator"""
 
 class OP_and(OperatorToken):
     """Expression '*' operator"""
@@ -172,7 +172,7 @@ class BoolExprLexer(RegexLexer):
             (r"\?", operator),
             (r":", operator),
             (r"\~", operator),
-            (r"\+", operator),
+            (r"\|", operator),
             (r"\*", operator),
 
             (r"\(", punct),
@@ -205,7 +205,7 @@ class BoolExprLexer(RegexLexer):
         '?'   : OP_question,
         ':'   : OP_colon,
         '~'   : OP_not,
-        '+'   : OP_or,
+        '|'   : OP_or,
         '*'   : OP_and,
     }
 
@@ -229,7 +229,7 @@ class BoolExprLexer(RegexLexer):
 #
 # SUM := TERM SUM'
 #
-# SUM' := '+' TERM SUM'
+# SUM' := '|' TERM SUM'
 #       | null
 #
 # TERM := FACTOR TERM'
@@ -362,7 +362,7 @@ def _sum_prime(lex):
         tok = next(lex)
     except StopIteration:
         return None
-    # '+' T E'
+    # '|' T E'
     toktype = type(tok)
     if toktype is OP_or:
         term = _term(lex)
