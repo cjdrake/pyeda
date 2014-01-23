@@ -99,7 +99,7 @@ class OP_or(OperatorToken):
     """Expression '|' operator"""
 
 class OP_and(OperatorToken):
-    """Expression '*' operator"""
+    """Expression '&' operator"""
 
 
 # Punctuation
@@ -173,7 +173,7 @@ class BoolExprLexer(RegexLexer):
             (r":", operator),
             (r"\~", operator),
             (r"\|", operator),
-            (r"\*", operator),
+            (r"\&", operator),
 
             (r"\(", punct),
             (r"\)", punct),
@@ -206,7 +206,7 @@ class BoolExprLexer(RegexLexer):
         ':'   : OP_colon,
         '~'   : OP_not,
         '|'   : OP_or,
-        '*'   : OP_and,
+        '&'   : OP_and,
     }
 
     PUNCTUATION = {
@@ -234,7 +234,7 @@ class BoolExprLexer(RegexLexer):
 #
 # TERM := FACTOR TERM'
 #
-# TERM' := '*' FACTOR TERM'
+# TERM' := '&' FACTOR TERM'
 #        | null
 #
 # FACTOR := '~' FACTOR
@@ -391,7 +391,7 @@ def _term_prime(lex):
         tok = next(lex)
     except StopIteration:
         return None
-    # '*' F T'
+    # '&' F T'
     toktype = type(tok)
     if toktype is OP_and:
         factor = _factor(lex)

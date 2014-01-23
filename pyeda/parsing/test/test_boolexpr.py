@@ -13,7 +13,7 @@ import nose
 
 def test_expr_error():
     # incomplete expression
-    nose.tools.assert_raises(BoolExprParseError, expr, "a *")
+    nose.tools.assert_raises(BoolExprParseError, expr, "a &")
     # unexpected token
     nose.tools.assert_raises(BoolExprParseError, expr, "a ,")
     nose.tools.assert_raises(BoolExprParseError, expr, "a a")
@@ -21,7 +21,7 @@ def test_expr_error():
 
 def test_basic():
     a, b, c, p, q, s = map(exprvar, 'abcpqs')
-    assert expr("a * ~b | b * ~c").equivalent(a & ~b | b & ~c)
+    assert expr("a & ~b | b & ~c").equivalent(a & ~b | b & ~c)
     assert expr("p => q").equivalent(~p | q)
     assert expr("a <=> b").equivalent(~a & ~b | a & b)
     assert expr("s ? a : b").equivalent(s & a | ~s & b)
@@ -44,10 +44,10 @@ def test_misc():
     a, b, c = map(exprvar, 'abc')
     a0 = exprvar('a', 0)
     b0 = exprvar('b', 0)
-    assert expr("a * b * c").equivalent(a & b & c)
+    assert expr("a & b & c").equivalent(a & b & c)
     assert expr("a | b | c").equivalent(a | b | c)
-    assert expr("a * (b | c)").equivalent(a & (b | c))
-    assert expr("a | (b * c)").equivalent(a | b & c)
+    assert expr("a & (b | c)").equivalent(a & (b | c))
+    assert expr("a | (b & c)").equivalent(a | b & c)
     assert expr("Or()").is_zero()
     assert expr("a[0] | b[0]").equivalent(a0 | b0)
 
