@@ -161,22 +161,22 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     def __or__(self, other):
         other_node = self.box(other).node
-        # x | y <=> ITE(x, 1, y)
+        # f | g <=> ITE(f, 1, g)
         return bdd(_ite(self.node, BDDNODEONE, other_node))
 
     def __and__(self, other):
         other_node = self.box(other).node
-        # x & y <=> ITE(x, y, 0)
+        # f & g <=> ITE(f, g, 0)
         return bdd(_ite(self.node, other_node, BDDNODEZERO))
 
     def __xor__(self, other):
         other_node = self.box(other).node
-        # x ^ y <=> ITE(x, ~y, y)
+        # f ^ g <=> ITE(f, g', g)
         return bdd(_ite(self.node, _neg(other_node), other_node))
 
     def __sub__(self, other):
         other_node = self.box(other).node
-        # x - y <=> ITE(x, 1, ~y)
+        # f - g <=> ITE(f, 1, g')
         return bdd(_ite(self.node, BDDNODEONE, _neg(other_node)))
 
     # From Function
@@ -332,7 +332,7 @@ def _ite(f, g, h):
     # ITE(f, 1, 0) = f
     if g is BDDNODEONE and h is BDDNODEZERO:
         return f
-    # ITE(f, 0, 1) = ~f
+    # ITE(f, 0, 1) = f'
     elif g is BDDNODEZERO and h is BDDNODEONE:
         return _neg(f)
     # ITE(1, g, h) = g

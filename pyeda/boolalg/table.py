@@ -257,7 +257,7 @@ class TruthTable(boolfunc.Function):
             for upoint in boolfunc.iter_upoints(inputs):
                 ab = self.urestrict(upoint).pcdata[0]
                 cd = other.urestrict(upoint).pcdata[0]
-                # a + c, b * d
+                # a | c, b & d
                 yield ((ab | cd) & 2) | ((ab & cd) & 1)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
@@ -270,7 +270,7 @@ class TruthTable(boolfunc.Function):
             for upoint in boolfunc.iter_upoints(inputs):
                 ab = self.urestrict(upoint).pcdata[0]
                 cd = other.urestrict(upoint).pcdata[0]
-                # a * c, b + d
+                # a & c, b | d
                 yield ((ab & cd) & 2) | ((ab | cd) & 1)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
@@ -284,7 +284,7 @@ class TruthTable(boolfunc.Function):
             for upoint in boolfunc.iter_upoints(inputs):
                 ab = self.urestrict(upoint).pcdata[0]
                 cd = other.urestrict(upoint).pcdata[0]
-                # a * d + b * c, a * c + b * d
+                # a & d | b & c, a & c | b & d
                 a, b, c, d = ab >> 1, ab & 1, cd >> 1, cd & 1
                 yield ((a & d | b & c) << 1) | (a & c | b & d)
         pcdata = PCData(items())

@@ -439,7 +439,7 @@ class Expression(boolfunc.Function):
         """Boolean implication
 
         +---+---+--------+
-        | f | g | f -> g |
+        | f | g | f => g |
         +---+---+--------+
         | 0 | 0 |    1   |
         | 0 | 1 |    1   |
@@ -453,7 +453,7 @@ class Expression(boolfunc.Function):
         """Reverse Boolean implication
 
         +---+---+--------+
-        | f | g | f <- g |
+        | f | g | f <= g |
         +---+---+--------+
         | 0 | 0 |    1   |
         | 0 | 1 |    0   |
