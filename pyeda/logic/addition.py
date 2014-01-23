@@ -38,7 +38,7 @@ def kogge_stone_add(A, B, cin=0):
     for i in range(clog2(N)):
         start = 1 << i
         for j in range(start, N):
-            g[j] = g[j] + p[j] * g[j-start]
+            g[j] = g[j] | p[j] * g[j-start]
             p[j] = p[j] * p[j-start]
     # sum logic
     s = [Xor(A[i], B[i], (cin if i == 0 else g[i-1])) for i in range(N)]
@@ -56,14 +56,14 @@ def brent_kung_add(A, B, cin=0):
     for i in range(floor(log(N, 2))):
         step = 2**i
         for start in range(2**(i+1)-1, N, 2**(i+1)):
-            g[start] = g[start] + p[start] * g[start-step]
+            g[start] = g[start] | p[start] * g[start-step]
             p[start] = p[start] * p[start-step]
     # inverse carry tree
     for i in range(floor(log(N, 2))-2, -1, -1):
         start = 2**(i+1)-1
         step = 2**i
         while start + step < N:
-            g[start+step] = g[start+step] + p[start+step] * g[start]
+            g[start+step] = g[start+step] | p[start+step] * g[start]
             p[start+step] = p[start+step] * p[start]
             start += step
     # sum logic

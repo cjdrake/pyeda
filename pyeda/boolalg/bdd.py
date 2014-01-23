@@ -159,9 +159,9 @@ class BinaryDecisionDiagram(boolfunc.Function):
     def __invert__(self):
         return bdd(_neg(self.node))
 
-    def __add__(self, other):
+    def __or__(self, other):
         other_node = self.box(other).node
-        # x + y <=> ITE(x, 1, y)
+        # x | y <=> ITE(x, 1, y)
         return bdd(_ite(self.node, BDDNODEONE, other_node))
 
     def __sub__(self, other):

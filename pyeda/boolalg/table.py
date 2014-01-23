@@ -249,7 +249,7 @@ class TruthTable(boolfunc.Function):
         pcdata = PCData(items())
         return _truthtable(self._inputs, pcdata)
 
-    def __add__(self, other):
+    def __or__(self, other):
         other = self.box(other)
         inputs = sorted(self.support | other.support)
         def items():
@@ -264,7 +264,7 @@ class TruthTable(boolfunc.Function):
 
     def __sub__(self, other):
         other = self.box(other)
-        return self.__add__(other.__invert__())
+        return self.__or__(other.__invert__())
 
     def __mul__(self, other):
         other = self.box(other)

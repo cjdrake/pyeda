@@ -31,7 +31,7 @@ XOR_STR = \
 """
 
 def test_unate():
-    # ~c * (~a + ~b)
+    # ~c * (~a | ~b)
     f = truthtable([aa, bb, cc], "11100000")
     assert f.is_neg_unate([aa, bb, cc])
     assert f.is_neg_unate([aa, bb])
@@ -42,7 +42,7 @@ def test_unate():
     assert f.is_neg_unate(cc)
     assert f.is_neg_unate()
 
-    # c * (a + b)
+    # c * (a | b)
     f = truthtable([a, b, c], "00000111")
     assert f.is_pos_unate([aa, bb, cc])
     assert f.is_pos_unate([aa, bb])
@@ -103,10 +103,10 @@ def test_ops():
     assert str(f) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
     assert str(~f) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
 
-    assert str(f + 0) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(f + 1) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
-    assert str(0 + f) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(1 + f) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
+    assert str(f | 0) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
+    assert str(f | 1) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
+    assert str(0 | f) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
+    assert str(1 | f) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
 
     assert str(f * 0) == "inputs: b a\n00 0\n01 0\n10 0\n11 0\n"
     assert str(f * 1) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
@@ -126,13 +126,13 @@ def test_ops():
 
     f = truthtable([aa, bb], "0011")
     g = truthtable([aa, bb], "0101")
-    assert str(f + g) == "inputs: b a\n00 0\n01 1\n10 1\n11 1\n"
+    assert str(f | g) == "inputs: b a\n00 0\n01 1\n10 1\n11 1\n"
     assert str(f * g) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
     assert str(f.xor(g)) == "inputs: b a\n00 0\n01 1\n10 1\n11 0\n"
 
     f = truthtable([a, b, c], "00011-00")
     g = truthtable([a, b, c], "01-1--00")
-    assert str(f + g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 -\n110 0\n111 0\n"
+    assert str(f | g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 -\n110 0\n111 0\n"
     assert str(f - g) == "inputs: c b a\n000 1\n001 0\n010 -\n011 1\n100 1\n101 -\n110 1\n111 1\n"
     assert str(f * g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 1\n100 -\n101 -\n110 0\n111 0\n"
     assert str(f.xor(g)) == "inputs: c b a\n000 0\n001 1\n010 -\n011 0\n100 -\n101 -\n110 0\n111 0\n"

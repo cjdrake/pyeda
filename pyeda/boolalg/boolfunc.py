@@ -241,8 +241,8 @@ class Function(object):
         """
         raise NotImplementedError()
 
-    def __add__(self, other):
-        """Boolean disjunction (addition, OR) operator
+    def __or__(self, other):
+        """Boolean disjunction (sum, OR) operator
 
         +-----------+-----------+---------------+
         | :math:`f` | :math:`g` | :math:`f + g` |
@@ -258,15 +258,15 @@ class Function(object):
         """
         raise NotImplementedError()
 
-    def __radd__(self, other):
-        return self.__add__(other)
+    def __ror__(self, other):
+        return self.__or__(other)
 
     def __sub__(self, other):
         """Alias: a - b <=> a + -b"""
         raise NotImplementedError()
 
     def __rsub__(self, other):
-        return self.__invert__().__add__(other)
+        return self.__invert__().__or__(other)
 
     def __mul__(self, other):
         r"""Boolean conjunction (multiplication, AND) operator
@@ -309,6 +309,13 @@ class Function(object):
     def __neg__(self):
         """Deprecated: Use ~a instead of -a"""
         return self.__invert__()
+
+    def __add__(self, other):
+        """Deprecated: Use a | b instead of a + b"""
+        return self.__or__(other)
+
+    def __radd__(self, other):
+        return self.__or__(other)
 
     @property
     def support(self):
@@ -448,7 +455,7 @@ class Function(object):
         The *smoothing* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
         to variable :math:`x_i` is :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`.
         """
-        return functools.reduce(self.__class__.__add__, self.iter_cofactors(vs))
+        return functools.reduce(self.__class__.__or__, self.iter_cofactors(vs))
 
     def consensus(self, vs=None):
         r"""Return the consensus of a function.

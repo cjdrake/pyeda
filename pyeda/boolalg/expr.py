@@ -370,7 +370,7 @@ def Majority(*args, simplify=True, factor=False, conj=False):
 def AchillesHeel(*args, simplify=True, factor=False):
     """
     Return the Achille's Heel function, defined as the product from i=0..n/2-1
-    of (X[2*i] + X[2*i+1]).
+    of (X[2*i] | X[2*i+1]).
     """
     nargs = len(args)
     if nargs & 1:
@@ -426,7 +426,7 @@ class Expression(boolfunc.Function):
     def __invert__(self):
         return Not(self)
 
-    def __add__(self, other):
+    def __or__(self, other):
         return Or(self, other)
 
     def __sub__(self, other):
@@ -646,8 +646,8 @@ class Expression(boolfunc.Function):
         """Return a factored, flattened expression.
 
         Use the distributive law to flatten all nested expressions:
-        a + (b * c) = (a + b) * (a + c)
-        a * (b + c) = (a * b) + (a * c)
+        a | (b * c) = (a | b) * (a | c)
+        a * (b | c) = (a * b) | (a * c)
 
         op : ExprOr or ExprAnd
             The operator you want to flatten. For example, if you want to
@@ -707,8 +707,8 @@ class Expression(boolfunc.Function):
     def absorb(self):
         """Return the DNF/CNF expression after absorption.
 
-        a + (a * b) = a
-        a * (a + b) = a
+        a | (a * b) = a
+        a * (a | b) = a
         """
         if self.is_dnf() or self.is_cnf():
             return self._absorb()
@@ -1435,9 +1435,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         |  a *  b * ~c | 110   |
         |  a *  b *  c | 111   |
         +--------------+-------+
-        | ~a + ~b + ~c | 111   |
-        |  a +  b + ~c | 001   |
-        |  a +  b +  c | 000   |
+        | ~a | ~b | ~c | 111   |
+        |  a |  b | ~c | 001   |
+        |  a |  b |  c | 000   |
         +==============+=======+
         """
         raise NotImplementedError()
@@ -1557,10 +1557,10 @@ class ExprOr(ExprOrAnd):
         return obj
 
     def is_dnf(self):
-        # a + b
+        # a | b
         if self.depth == 1:
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
-        # a + b * c
+        # a | b * c
         elif self.depth == 2:
             return all(
                        isinstance(arg, ExprLiteral) or
@@ -1681,7 +1681,7 @@ class ExprAnd(ExprOrAnd):
         # a * b
         if self.depth == 1:
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
-        # a * (b + c)
+        # a * (b | c)
         elif self.depth == 2:
             return all(
                        isinstance(arg, ExprLiteral) or
@@ -2371,13 +2371,13 @@ class ExprITE(_ArgumentContainer):
             # s ? 1 : 1 = 1
             elif d0 is EXPRONE:
                 return EXPRONE
-            # s ? 1 : d0 = s + d0
+            # s ? 1 : d0 = s | d0
             else:
                 return ExprOr(s, d0).simplify()
         # s ? d1 : 0 = s * d1
         elif d0 is EXPRZERO:
             return ExprAnd(s, d1).simplify()
-        # s ? d1 : 1 = ~s + d1
+        # s ? d1 : 1 = ~s | d1
         elif d0 is EXPRONE:
             return ExprOr(ExprNot(s), d1).simplify()
         # s ? d1 : d1 = d1
@@ -2536,7 +2536,7 @@ def _complete_sum(dnf):
     """
     Recursive complete_sum function implementation.
 
-    CS(f) = ABS([x1 + CS(0, x2, ..., xn)] * [~x1 + CS(1, x2, ..., xn)])
+    CS(f) = ABS([x1 | CS(0, x2, ..., xn)] * [~x1 | CS(1, x2, ..., xn)])
     """
     if dnf.depth <= 1:
         return dnf
