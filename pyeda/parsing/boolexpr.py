@@ -93,7 +93,7 @@ class OP_colon(OperatorToken):
     """Expression ':' operator"""
 
 class OP_not(OperatorToken):
-    """Expression '-' operator"""
+    """Expression '~' operator"""
 
 class OP_or(OperatorToken):
     """Expression '+' operator"""
@@ -171,7 +171,7 @@ class BoolExprLexer(RegexLexer):
             (r"<=>", operator),
             (r"\?", operator),
             (r":", operator),
-            (r"\-", operator),
+            (r"\~", operator),
             (r"\+", operator),
             (r"\*", operator),
 
@@ -204,7 +204,7 @@ class BoolExprLexer(RegexLexer):
         '<=>' : OP_lrarrow,
         '?'   : OP_question,
         ':'   : OP_colon,
-        '-'   : OP_not,
+        '~'   : OP_not,
         '+'   : OP_or,
         '*'   : OP_and,
     }
@@ -237,7 +237,7 @@ class BoolExprLexer(RegexLexer):
 # TERM' := '*' FACTOR TERM'
 #        | null
 #
-# FACTOR := '-' FACTOR
+# FACTOR := '~' FACTOR
 #         | '(' EXPR ')'
 #         | OPN '(' ARGS ')'
 #         | 'ITE' '(' EXPR ',' EXPR ',' EXPR ')'
@@ -408,7 +408,7 @@ def _term_prime(lex):
 def _factor(lex):
     """Return a factor expression."""
     tok = _expect_token(lex, FACTOR_TOKS)
-    # '-' F
+    # '~' F
     toktype = type(tok)
     if toktype is OP_not:
         return ('not', _factor(lex))
