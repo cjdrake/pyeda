@@ -435,6 +435,9 @@ class Expression(boolfunc.Function):
     def __and__(self, other):
         return And(self, other)
 
+    def __xor__(self, other):
+        return Xor(self, other)
+
     def __rshift__(self, other):
         """Boolean implication
 
@@ -462,9 +465,6 @@ class Expression(boolfunc.Function):
         +---+---+--------+
         """
         return Implies(other, self)
-
-    def xor(self, other):
-        return Xor(self, other)
 
     def ite(self, d1, d0):
         """If-then-else operator"""

@@ -288,7 +288,7 @@ class Function(object):
     def __rand__(self, other):
         return self.__and__(other)
 
-    def xor(self, other):
+    def __xor__(self, other):
         r"""Boolean exclusive or (XOR) operator
 
         +-----------+-----------+--------------------+
@@ -479,7 +479,7 @@ class Function(object):
         to variable :math:`x_i` is
         :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`.
         """
-        return functools.reduce(self.__class__.xor, self.iter_cofactors(vs))
+        return functools.reduce(self.__class__.__xor__, self.iter_cofactors(vs))
 
     def is_zero(self):
         """Return whether this function is zero.

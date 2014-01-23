@@ -17,7 +17,7 @@ def test_misc():
 
     assert ff.smoothing(aa).equivalent(bb | cc)
     assert ff.consensus(aa).equivalent(bb & cc)
-    assert ff.derivative(aa).equivalent(bb.xor(cc))
+    assert ff.derivative(aa).equivalent(bb ^ cc)
 
 def test_bddvar():
     assert aa.name == 'a'
@@ -131,12 +131,12 @@ def test_ops():
     assert 0 & aa is BDDZERO
     assert 1 & aa == aa
 
-    assert aa.xor(0) == aa
-    assert aa.xor(1) == ~aa
+    assert aa ^ 0 == aa
+    assert aa ^ 1 == ~aa
 
     assert bdd2expr(~aa & bb | aa & ~bb).equivalent(~a & b | a & ~b)
     assert bdd2expr(aa - bb).equivalent(a - b)
-    assert bdd2expr(aa.xor(bb)).equivalent(Xor(a, b))
+    assert bdd2expr(aa ^ bb).equivalent(Xor(a, b))
 
 def test_satisfy():
     f = a & b | a & c | b & c

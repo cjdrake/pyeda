@@ -279,7 +279,7 @@ class TruthTable(boolfunc.Function):
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
-    def xor(self, other):
+    def __xor__(self, other):
         other = self.box(other)
         inputs = sorted(self.support | other.support)
         def items():

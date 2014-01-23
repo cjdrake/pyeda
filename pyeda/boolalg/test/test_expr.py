@@ -155,8 +155,8 @@ def test_ops():
     assert (a - 1) == a
     assert (1 - a) is EXPRONE
     assert (a - b).equivalent(a | ~b)
-    # xor
-    assert a.xor(b).equivalent(a & ~b | ~a & b)
+    # __xor__
+    assert (a ^ b).equivalent(a & ~b | ~a & b)
     # ite
     assert a >> 0 == ~a
     assert 0 >> a is EXPRONE
@@ -708,7 +708,7 @@ def test_depth():
     assert ITE(s, a | b, Xor(a, b)).depth == 4
 
 def test_nf():
-    f = Xor(a, b, c)
+    f = a ^ b ^ c
     g = a & b | a & c | b & c
 
     assert str(f.to_dnf()) == "Or(And(~a, ~b, c), And(~a, b, ~c), And(a, ~b, ~c), And(a, b, c))"

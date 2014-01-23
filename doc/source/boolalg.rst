@@ -564,7 +564,7 @@ This is the abstract base class for Boolean function representations.
 
 In addition to the methods and properties listed below,
 classes inheriting from ``Function`` should also overload the
-``__invert__``, ``__or__``, ``__sub__``, and ``__and__`` magic methods.
+``__invert__``, ``__or__``, ``__sub__``, ``__and__``, and ``__xor__`` magic methods.
 This makes it possible to perform symbolic, algebraic manipulations using
 a Python interpreter.
 

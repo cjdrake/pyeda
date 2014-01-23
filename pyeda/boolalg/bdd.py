@@ -174,9 +174,9 @@ class BinaryDecisionDiagram(boolfunc.Function):
         # x & y <=> ITE(x, y, 0)
         return bdd(_ite(self.node, other_node, BDDNODEZERO))
 
-    def xor(self, other):
+    def __xor__(self, other):
         other_node = self.box(other).node
-        # x (xor) y <=> ITE(x, ~y, y)
+        # x ^ y <=> ITE(x, ~y, y)
         return bdd(_ite(self.node, _neg(other_node), other_node))
 
     # From Function
