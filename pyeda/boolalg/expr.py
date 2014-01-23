@@ -429,9 +429,6 @@ class Expression(boolfunc.Function):
     def __or__(self, other):
         return Or(self, other)
 
-    def __sub__(self, other):
-        return Or(self, Not(other))
-
     def __and__(self, other):
         return And(self, other)
 
@@ -469,6 +466,9 @@ class Expression(boolfunc.Function):
     def ite(self, d1, d0):
         """If-then-else operator"""
         return ITE(self, d1, d0)
+
+    def __sub__(self, other):
+        return Or(self, Not(other))
 
     # From Function
     @cached_property

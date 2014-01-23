@@ -262,10 +262,6 @@ class TruthTable(boolfunc.Function):
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
-    def __sub__(self, other):
-        other = self.box(other)
-        return self.__or__(other.__invert__())
-
     def __and__(self, other):
         other = self.box(other)
         inputs = sorted(self.support | other.support)
@@ -293,6 +289,10 @@ class TruthTable(boolfunc.Function):
                 yield ((a & d | b & c) << 1) | (a & c | b & d)
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
+
+    def __sub__(self, other):
+        other = self.box(other)
+        return self.__or__(other.__invert__())
 
     # From Function
     @cached_property

@@ -261,13 +261,6 @@ class Function(object):
     def __ror__(self, other):
         return self.__or__(other)
 
-    def __sub__(self, other):
-        """Alias: a - b <=> a + -b"""
-        raise NotImplementedError()
-
-    def __rsub__(self, other):
-        return self.__invert__().__or__(other)
-
     def __and__(self, other):
         r"""Boolean conjunction (product, AND) operator
 
@@ -323,6 +316,13 @@ class Function(object):
 
     def __rmul__(self, other):
         return self.__and__(other)
+
+    def __sub__(self, other):
+        """Alias: a - b <=> a + -b"""
+        raise NotImplementedError()
+
+    def __rsub__(self, other):
+        return self.__invert__().__or__(other)
 
     @property
     def support(self):

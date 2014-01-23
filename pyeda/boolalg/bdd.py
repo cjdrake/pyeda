@@ -164,11 +164,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
         # x | y <=> ITE(x, 1, y)
         return bdd(_ite(self.node, BDDNODEONE, other_node))
 
-    def __sub__(self, other):
-        other_node = self.box(other).node
-        # x - y <=> ITE(x, 1, ~y)
-        return bdd(_ite(self.node, BDDNODEONE, _neg(other_node)))
-
     def __and__(self, other):
         other_node = self.box(other).node
         # x & y <=> ITE(x, y, 0)
@@ -178,6 +173,11 @@ class BinaryDecisionDiagram(boolfunc.Function):
         other_node = self.box(other).node
         # x ^ y <=> ITE(x, ~y, y)
         return bdd(_ite(self.node, _neg(other_node), other_node))
+
+    def __sub__(self, other):
+        other_node = self.box(other).node
+        # x - y <=> ITE(x, 1, ~y)
+        return bdd(_ite(self.node, BDDNODEONE, _neg(other_node)))
 
     # From Function
     @cached_property
