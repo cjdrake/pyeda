@@ -22,6 +22,7 @@ Interface Classes:
 
 import collections
 import functools
+from warnings import warn
 
 from pyeda.util import bit_on, boolify, cached_property
 
@@ -300,18 +301,18 @@ class Function(object):
 
     # Deprecated operators
     def __neg__(self):
-        """Deprecated: Use ~a instead of -a"""
+        warn("-a deprecated, use ~a instead")
         return self.__invert__()
 
     def __add__(self, other):
-        """Deprecated: Use a | b instead of a + b"""
+        warn("a + b deprecated, use a | b instead")
         return self.__or__(other)
 
     def __radd__(self, other):
         return self.__or__(other)
 
     def __mul__(self, other):
-        """Deprecated: Use a & b instead of a * b"""
+        warn("a * b deprecated, use a & b instead")
         return self.__and__(other)
 
     def __rmul__(self, other):
