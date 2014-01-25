@@ -98,6 +98,9 @@ class OP_not(OperatorToken):
 class OP_or(OperatorToken):
     """Expression '|' operator"""
 
+class OP_xor(OperatorToken):
+    """Expression '^' operator"""
+
 class OP_and(OperatorToken):
     """Expression '&' operator"""
 
@@ -173,6 +176,7 @@ class BoolExprLexer(RegexLexer):
             (r":", operator),
             (r"(?:\~|\-)", operator),
             (r"(?:\||\+)", operator),
+            (r"\^", operator),
             (r"(?:\&|\*)", operator),
 
             (r"\(", punct),
@@ -208,6 +212,7 @@ class BoolExprLexer(RegexLexer):
         '-'   : OP_not,
         '|'   : OP_or,
         '+'   : OP_or,
+        '^'   : OP_xor,
         '&'   : OP_and,
         '*'   : OP_and,
     }
@@ -226,19 +231,23 @@ class BoolExprLexer(RegexLexer):
 # ITE := IMPL '?' ITE ':' ITE
 #      | IMPL
 #
-# IMPL := SUM '=>' IMPL
-#       | SUM '<=>' IMPL
-#       | SUM
+# IMPL := SUMTERM '=>' IMPL
+#       | SUMTERM '<=>' IMPL
+#       | SUMTERM
 #
-# SUM := TERM SUM'
+# SUMTERM := XORTERM SUMTERM'
 #
-# SUM' := '|' TERM SUM'
-#       | null
+# SUMTERM' := '|' XORTERM SUMTERM'
+#           | null
 #
-# TERM := FACTOR TERM'
+# XORTERM := PRODTERM XORTERM'
 #
-# TERM' := '&' FACTOR TERM'
-#        | null
+# XORTERM' := '^' PRODTERM XORTERM'
+#
+# PRODTERM := FACTOR PRODTERM'
+#
+# PRODTERM' := '&' FACTOR PRODTERM'
+#            | null
 #
 # FACTOR := '~' FACTOR
 #         | '(' EXPR ')'
@@ -334,7 +343,7 @@ def _ite(lex):
 
 def _impl(lex):
     """Return an Implies expression."""
-    p = _sum(lex)
+    p = _sumterm(lex)
     try:
         tok = next(lex)
     except StopIteration:
@@ -350,17 +359,17 @@ def _impl(lex):
         lex.unpop_token(tok)
         return p
 
-def _sum(lex):
-    """Return a sum expresssion."""
-    term = _term(lex)
-    expr_prime = _sum_prime(lex)
+def _sumterm(lex):
+    """Return a sum term expresssion."""
+    xorterm = _xorterm(lex)
+    expr_prime = _sumterm_prime(lex)
     if expr_prime is None:
-        return term
+        return xorterm
     else:
-        return ('or', term, expr_prime)
+        return ('or', xorterm, expr_prime)
 
-def _sum_prime(lex):
-    """Return a sum' expression, eliminates sum left recursion."""
+def _sumterm_prime(lex):
+    """Return a sum term' expression, eliminates left recursion."""
     try:
         tok = next(lex)
     except StopIteration:
@@ -368,28 +377,57 @@ def _sum_prime(lex):
     # '|' T E'
     toktype = type(tok)
     if toktype is OP_or:
-        term = _term(lex)
-        expr_prime = _sum_prime(lex)
+        xorterm = _xorterm(lex)
+        expr_prime = _sumterm_prime(lex)
         if expr_prime is None:
-            return term
+            return xorterm
         else:
-            return ('or', term, expr_prime)
+            return ('or', xorterm, expr_prime)
     # null
     else:
         lex.unpop_token(tok)
         return None
 
-def _term(lex):
-    """Return a term expression."""
+def _xorterm(lex):
+    """Return an xor term expresssion."""
+    prodterm = _prodterm(lex)
+    expr_prime = _xorterm_prime(lex)
+    if expr_prime is None:
+        return prodterm
+    else:
+        return ('xor', prodterm, expr_prime)
+
+def _xorterm_prime(lex):
+    """Return an xor term' expression, eliminates left recursion."""
+    try:
+        tok = next(lex)
+    except StopIteration:
+        return None
+    # '|' T E'
+    toktype = type(tok)
+    if toktype is OP_xor:
+        prodterm = _prodterm(lex)
+        expr_prime = _xorterm_prime(lex)
+        if expr_prime is None:
+            return prodterm
+        else:
+            return ('xor', prodterm, expr_prime)
+    # null
+    else:
+        lex.unpop_token(tok)
+        return None
+
+def _prodterm(lex):
+    """Return a product term expression."""
     factor = _factor(lex)
-    term_prime = _term_prime(lex)
-    if term_prime is None:
+    prodterm_prime = _prodterm_prime(lex)
+    if prodterm_prime is None:
         return factor
     else:
-        return ('and', factor, term_prime)
+        return ('and', factor, prodterm_prime)
 
-def _term_prime(lex):
-    """Return a term' expression, eliminates term left recursion."""
+def _prodterm_prime(lex):
+    """Return a product term' expression, eliminates left recursion."""
     try:
         tok = next(lex)
     except StopIteration:
@@ -398,11 +436,11 @@ def _term_prime(lex):
     toktype = type(tok)
     if toktype is OP_and:
         factor = _factor(lex)
-        term_prime = _term_prime(lex)
-        if term_prime is None:
+        prodterm_prime = _prodterm_prime(lex)
+        if prodterm_prime is None:
             return factor
         else:
-            return ('and', factor, term_prime)
+            return ('and', factor, prodterm_prime)
     # null
     else:
         lex.unpop_token(tok)

@@ -45,6 +45,7 @@ def test_misc():
     a0 = exprvar('a', 0)
     b0 = exprvar('b', 0)
     assert expr("a & b & c").equivalent(a & b & c)
+    assert expr("a ^ b ^ c").equivalent(a ^ b ^ c)
     assert expr("a | b | c").equivalent(a | b | c)
     assert expr("a & (b | c)").equivalent(a & (b | c))
     assert expr("a | (b & c)").equivalent(a | b & c)
