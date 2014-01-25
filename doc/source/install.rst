@@ -48,13 +48,18 @@ Distutils / Virtualenv
 The latest PyEDA release is hosted on
 `PyPI <http://pypi.python.org/pypi/pyeda>`_.
 
+To get PyEDA with `pip`_ (recommended)::
+
+   $ pip3 install pyeda
+
+.. note::
+   If you are using the Linux system distribution of pip,
+   most likely ``pip`` will be part of Python-2.x, which won't work.
+   It's safer to always use ``pip3``.
+
 To get PyEDA with `easy_install`_ (not recommended)::
 
    $ easy_install pyeda
-
-To get PyEDA with `pip`_ (recommended)::
-
-   $ pip install pyeda
 
 We *strongly* recommend that you also install an excellent Python tool called
 `IPython`_.
