@@ -174,9 +174,9 @@ A complement is defined as the inverse of a variable.
 That is:
 
 .. math::
-   a + \overline{a} = 1
+   a + a' = 1
 
-   a \cdot \overline{a} = 0
+   a \cdot a' = 0
 
 One way to create a complement from a pre-existing variable is to simply
 apply Python's ``-`` unary negate operator.
