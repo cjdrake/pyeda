@@ -10,6 +10,8 @@ Interface Functions:
 
 # pylint: disable=C0103
 
+from warnings import warn
+
 from pyeda.parsing.lex import RegexLexer, action
 from pyeda.parsing.token import (
     KeywordToken, NameToken, IntegerToken, OperatorToken, PunctuationToken,
@@ -98,11 +100,11 @@ class OP_not(OperatorToken):
 class OP_or(OperatorToken):
     """Expression '|' operator"""
 
-class OP_xor(OperatorToken):
-    """Expression '^' operator"""
-
 class OP_and(OperatorToken):
     """Expression '&' operator"""
+
+class OP_xor(OperatorToken):
+    """Expression '^' operator"""
 
 
 # Punctuation
@@ -212,9 +214,9 @@ class BoolExprLexer(RegexLexer):
         '-'   : OP_not,
         '|'   : OP_or,
         '+'   : OP_or,
-        '^'   : OP_xor,
         '&'   : OP_and,
         '*'   : OP_and,
+        '^'   : OP_xor,
     }
 
     PUNCTUATION = {
@@ -377,6 +379,8 @@ def _sumterm_prime(lex):
     # '|' T E'
     toktype = type(tok)
     if toktype is OP_or:
+        if tok.value == '+':
+            warn("a + b deprecated, use a | b instead")
         xorterm = _xorterm(lex)
         expr_prime = _sumterm_prime(lex)
         if expr_prime is None:
@@ -435,6 +439,8 @@ def _prodterm_prime(lex):
     # '&' F T'
     toktype = type(tok)
     if toktype is OP_and:
+        if tok.value == '*':
+            warn("a * b deprecated, use a & b instead")
         factor = _factor(lex)
         prodterm_prime = _prodterm_prime(lex)
         if prodterm_prime is None:
@@ -452,6 +458,8 @@ def _factor(lex):
     # '~' F
     toktype = type(tok)
     if toktype is OP_not:
+        if tok.value == '-':
+            warn("-a deprecated, use ~a instead")
         return ('not', _factor(lex))
     # '(' EXPR ')'
     elif toktype is LPAREN:
