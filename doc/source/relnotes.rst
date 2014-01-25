@@ -102,15 +102,6 @@ New stuff in this release:
   to generate a normal form expression that contains all prime implicants.
 * Unicode expression symbols, because it's awesome
 
-::
-
-   >>> Xor(a, b)
-   a ⊕ b
-   >>> Xnor(a, b)
-   a ⊙ b
-   >>> Implies(p, q)
-   p ⇒ q
-
 * Added new Expression ForEach, Exists factory functions.
 * Changed ``frozenset`` implementation of ``OrAnd`` and ``EqualBase`` arguments
   back to ``tuple``.
