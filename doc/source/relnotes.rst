@@ -101,7 +101,6 @@ New stuff in this release:
 * Added Expression ``complete_sum`` method,
   to generate a normal form expression that contains all prime implicants.
 * Unicode expression symbols, because it's awesome
-
 * Added new Expression ForEach, Exists factory functions.
 * Changed ``frozenset`` implementation of ``OrAnd`` and ``EqualBase`` arguments
   back to ``tuple``.

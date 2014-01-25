@@ -124,7 +124,7 @@ Other Binary Operators
 For reference, here is a table of all binary Boolean operators:
 
 .. csv-table::
-   :header: :math:`f`, :math:`g`, 0, :math:`f \\downarrow g`, :math:`f \\lt g`, :math:`\\overline{f}`, :math:`f \\gt g`, :math:`\\overline{g}`, :math:`f \\ne g`, :math:`f \\uparrow g`, :math:`f \\cdot g`, :math:`f = g`, :math:`g`, :math:`f \\le g`, :math:`f`, :math:`f \\ge g`, :math:`f + g`, 1
+   :header: :math:`f`, :math:`g`, 0, :math:`f \\downarrow g`, :math:`f < g`, :math:`\\overline{f}`, :math:`f > g`, :math:`\\overline{g}`, :math:`f \\ne g`, :math:`f \\uparrow g`, :math:`f \\cdot g`, :math:`f = g`, :math:`g`, :math:`f \\le g`, :math:`f`, :math:`f \\ge g`, :math:`f + g`, 1
    :widths: 4, 4, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
    :stub-columns: 2
 
