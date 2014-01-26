@@ -11,6 +11,8 @@ from pyeda.logic.addition import (
 )
 from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv
 
+from nose.tools import assert_raises
+
 NVECS = 100
 
 def uadd(S, A, B, aval, bval):
@@ -22,6 +24,13 @@ def sadd(S, A, B, aval, bval):
     N = len(A)
     R = S.vrestrict({A: int2bv(aval, N), B: int2bv(bval, N)})
     return R.to_int()
+
+def test_errors():
+    A = bitvec('A', 7)
+    B = bitvec('B', 9)
+
+    for adder in (rca, ksa, bka):
+        assert_raises(ValueError, adder, A, B)
 
 def test_unsigned_add():
     N = 9
