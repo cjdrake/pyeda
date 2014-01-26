@@ -4,7 +4,7 @@ Test expression Boolean functions
 
 from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import (
-    exprvar,
+    exprvar, expr,
     Expression,
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
     OneHot0, OneHot, Majority, AchillesHeel,
@@ -25,6 +25,21 @@ def test_misc():
     assert f.smoothing(a).equivalent(b | c)
     assert f.consensus(a).equivalent(b & c)
     assert f.derivative(a).equivalent(b & ~c | ~b & c)
+
+def test_expr():
+    assert expr(a) is a
+    f = a & ~b | c ^ ~d
+    assert expr(f) is f
+    assert expr(False) is EXPRZERO
+    assert expr(0) is EXPRZERO
+    assert expr('0') is EXPRZERO
+    assert expr([]) is EXPRZERO
+    assert expr(True) is EXPRONE
+    assert expr(1) is EXPRONE
+    assert expr('1') is EXPRONE
+    assert expr(['foo', 'bar']) is EXPRONE
+    assert str(expr("a ^ b", factor=True)) == "Or(And(~a, b), And(a, ~b))"
+    assert str(expr("a ^ 0", simplify=False)) == "Xor(0, a)"
 
 def test_unate():
     # ~c & (~a | ~b)
