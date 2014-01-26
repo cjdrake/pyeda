@@ -2,8 +2,6 @@
 Test expression Boolean functions
 """
 
-import sys
-
 from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import (
     exprvar,
@@ -17,9 +15,6 @@ from pyeda.boolalg.vexpr import bitvec
 from nose.tools import assert_raises
 
 a, b, c, d, e, p, q, s = map(exprvar, 'abcdepqs')
-
-MAJOR = sys.version_info.major
-MINOR = sys.version_info.minor
 
 X = bitvec('x', 16)
 Y = bitvec('y', 16, 16, 16)
@@ -166,9 +161,8 @@ def test_ops():
     assert s.ite(a, b).equivalent(s & a | ~s & b)
 
 def test_const():
-    if MAJOR >= 3:
-        assert bool(EXPRZERO) is False
-        assert bool(EXPRONE) is True
+    assert bool(EXPRZERO) is False
+    assert bool(EXPRONE) is True
     assert int(EXPRZERO) == 0
     assert int(EXPRONE) == 1
     assert str(EXPRZERO) == '0'
