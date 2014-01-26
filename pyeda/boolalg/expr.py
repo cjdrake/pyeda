@@ -105,7 +105,8 @@ def expr(arg, simplify=True, factor=False):
     """Return an Expression."""
     if isinstance(arg, Expression):
         return arg
-    elif arg in {0, 1}:
+    # False, True, 0, 1
+    elif isinstance(arg, int) and arg in {0, 1}:
         return CONSTANTS[arg]
     elif type(arg) is str:
         ex = ast2expr(pyeda.parsing.boolexpr.parse(arg))
