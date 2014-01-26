@@ -179,7 +179,7 @@ def _expr2sat(expr, litmap):
     else:
         fstr = ("expected expr to be a Literal or Not/Or/And/Xor/Equal op, "
                 "got {0.__name__}")
-        raise TypeError(fstr.format(type(expr)))
+        raise ValueError(fstr.format(type(expr)))
 
 def upoint2exprpoint(upoint):
     """Convert an untyped point to an Expression point."""

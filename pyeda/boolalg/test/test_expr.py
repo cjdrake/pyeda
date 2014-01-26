@@ -5,6 +5,7 @@ Test expression Boolean functions
 from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import (
     exprvar, expr,
+    expr2dimacscnf, expr2dimacssat,
     Expression,
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
     OneHot0, OneHot, Majority, AchillesHeel,
@@ -26,6 +27,8 @@ def test_misc():
     assert f.consensus(a).equivalent(b & c)
     assert f.derivative(a).equivalent(b & ~c | ~b & c)
 
+    assert_raises(TypeError, expr2dimacscnf, 'foo')
+
 def test_expr():
     assert expr(a) is a
     f = a & ~b | c ^ ~d
@@ -40,6 +43,24 @@ def test_expr():
     assert expr(['foo', 'bar']) is EXPRONE
     assert str(expr("a ^ b", factor=True)) == "Or(And(~a, b), And(a, ~b))"
     assert str(expr("a ^ 0", simplify=False)) == "Xor(0, a)"
+
+def test_expr2dimacssat():
+    assert_raises(TypeError, expr2dimacssat, 'foo')
+    assert_raises(ValueError, expr2dimacssat, Xor(0, a, simplify=False))
+    assert_raises(ValueError, expr2dimacssat, Nor(a, ~b))
+    ret = expr2dimacssat(a ^ ~b)
+    assert ret in {'p satx 2\nxor(-2 1)', 'p satx 2\nxor(1 -2)'}
+    ret = expr2dimacssat(a ^ Equal(b, ~c))
+    assert ret in {'p satex 3\nxor(=(2 -3) 1)', 'p satex 3\nxor(1 =(2 -3))',
+                   'p satex 3\nxor(=(-3 2) 1)', 'p satex 3\nxor(1 =(-3 2))'}
+    ret = expr2dimacssat(Equal(a, ~b))
+    assert ret in {'p sate 2\n=(1 -2)', 'p sate 2\n=(-2 1)'}
+    ret = expr2dimacssat(a & ~b)
+    assert ret in {'p sat 2\n*(1 -2)', 'p sat 2\n*(-2 1)'}
+    ret = expr2dimacssat(a | ~b)
+    assert ret in {'p sat 2\n+(1 -2)', 'p sat 2\n+(-2 1)'}
+    ret = expr2dimacssat(Not(a | ~b))
+    assert ret in {'p sat 2\n-(+(1 -2))', 'p sat 2\n-(+(-2 1))'}
 
 def test_unate():
     # ~c & (~a | ~b)
