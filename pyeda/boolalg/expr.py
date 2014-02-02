@@ -1015,9 +1015,14 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     # FlattenedExpression
     @cached_property
-    def arg_set(self):
-        """Return the argument set for a normal form term."""
+    def cube(self):
+        """Return the cube representation."""
         return frozenset([self])
+
+    @cached_property
+    def cover(self):
+        """Return the cover representation."""
+        return {self.cube}
 
     def _absorb(self):
         return self
@@ -1461,15 +1466,20 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
 
     # FlattenedExpression
     @cached_property
-    def arg_set(self):
-        """Return the argument set for a normal form term."""
+    def cube(self):
+        """Return the cube representation."""
         return frozenset(self.args)
+
+    @cached_property
+    def cover(self):
+        """Return the cover representation."""
+        return {arg.cube for arg in self.args}
 
     def _absorb(self):
         dual = self.get_dual()
 
         # Get rid of all equivalent terms
-        temps = {arg.arg_set for arg in self.args}
+        temps = self.cover.copy()
         args = list()
 
         # Drop all terms that are a superset of other terms
@@ -2546,8 +2556,8 @@ def _complete_sum(dnf):
         fv0, fv1 = dnf.cofactors(v)
         f = And(Or(v, _complete_sum(fv0)), Or(~v, _complete_sum(fv1)))
         if isinstance(f, ExprAnd):
-            f = Or(*[And(x, y) for x in f.args[0].arg_set
-                               for y in f.args[1].arg_set])
+            f = Or(*[And(x, y) for x in f.args[0].cube
+                               for y in f.args[1].cube])
         return f._absorb()
 
 
