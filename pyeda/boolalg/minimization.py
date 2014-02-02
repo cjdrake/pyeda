@@ -11,7 +11,7 @@ from pyeda.boolalg.espresso import (
 )
 from pyeda.boolalg.expr import Expression, Or, And
 
-def espresso_exprs(exprs):
+def espresso_exprs(*exprs):
     """Return a list of expressions optimized using Espresso."""
     support = frozenset.union(*[f.support for f in exprs])
     inputs = sorted(support)
@@ -63,5 +63,5 @@ def espresso_exprs(exprs):
                 terms.append(term)
         fs.append(Or(*[And(*term) for term in terms]))
 
-    return fs
+    return tuple(fs)
 

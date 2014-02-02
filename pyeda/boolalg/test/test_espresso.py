@@ -10,8 +10,8 @@ def test_espresso():
     A = bitvec('a', 16)
     B = bitvec('b', 16)
     S, C = ripple_carry_add(A, B)
-    s0, s1, s2, s3 = espresso_exprs([S[0].to_dnf(), S[1].to_dnf(),
-                                     S[2].to_dnf(), S[3].to_dnf()])
+    s0, s1, s2, s3 = espresso_exprs(S[0].to_dnf(), S[1].to_dnf(),
+                                    S[2].to_dnf(), S[3].to_dnf())
 
     assert s0.equivalent(S[0])
     assert s1.equivalent(S[1])
