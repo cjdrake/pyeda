@@ -69,8 +69,36 @@ _get_soln(set_family_t *F, int num_inputs, int num_outputs)
 */
 PyDoc_STRVAR(_espresso_docstring,
     "\n\
+    Return a logically equivalent, (near) minimal cost set of product-terms\n\
+    to represent the ON-set and optionally minterms that lie in the DC-set,\n\
+    without containing any minterms of the OFF-set.\n\
 \n\
+    Parameters\n\
+    ----------\n\
+    num_inputs : posint\n\
+        Number of inputs in the implicant in-part vector.\n\
 \n\
+    num_outputs : posint\n\
+        Number of outputs in the implicant out-part vector.\n\
+\n\
+    implicants : iter(((int), (int)))\n\
+        The iterator over multi-output implicants.\n\
+        A multi-output implicant is a pair of row vectors of dimension\n\
+        *num_inputs*, and *num_outputs*, respectively.\n\
+        The input part contains integers in positional cube notation,\n\
+        and the output part contains entries in {0, 1, 2}.\n\
+\n\
+        '0' means 0 for R-type covers, otherwise has no meaning.\n\
+        '1' means 1 for F-type covers, otherwise has no meaning.\n\
+        '2' means \"don't care\" for D-type covers, otherwise has no meaning.\n\
+\n\
+    intype : int\n\
+        A flag field that indicates the type of the input cover.\n\
+        F-type = 1, D-type = 2, R-type = 4\n\
+\n\
+    Returns\n\
+    -------\n\
+    set of implicants in the same format as the input implicants\n\
     "
 );
 
@@ -235,6 +263,9 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
         Py_DECREF(pyrow);
     } /* for pyrow in pyrows */
     Py_DECREF(pyrows);
+
+    if (PyErr_Occurred())
+        goto error;
 
     if (intype == F_type || intype == FD_type) {
         sf_free(R);
