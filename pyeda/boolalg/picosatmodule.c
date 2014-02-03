@@ -193,7 +193,7 @@ _get_soln(PicoSAT *picosat)
 {
     int i;
     int nvars;
-    PyObject *pytuple, *pyitem;
+    PyObject *pytuple, *pylong;
 
     nvars = picosat_variables(picosat);
 
@@ -202,19 +202,18 @@ _get_soln(PicoSAT *picosat)
         goto error;
 
     for (i = 1; i <= nvars; i++) {
-        pyitem = PyLong_FromLong((long) picosat_deref(picosat, i));
-        if (pyitem == NULL)
+        pylong = PyLong_FromLong((long) picosat_deref(picosat, i));
+        if (pylong == NULL)
             goto decref_pytuple;
-
-        if (PyTuple_SetItem(pytuple, i - 1, pyitem) < 0)
-            goto decref_pyitem;
+        if (PyTuple_SetItem(pytuple, i - 1, pylong) < 0)
+            goto decref_pylong;
     }
 
     /* Success! */
     return pytuple;
 
-decref_pyitem:
-    Py_DECREF(pyitem);
+decref_pylong:
+    Py_DECREF(pylong);
 
 decref_pytuple:
     Py_DECREF(pytuple);
