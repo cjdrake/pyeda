@@ -44,6 +44,11 @@ from pyeda.boolalg.table import (
 
 from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv, BitVector
 
+try:
+    from pyeda.boolalg.minimization import espresso_exprs
+except ImportError:
+    pass
+
 from pyeda.parsing.lex import LexRunError
 
 from pyeda.parsing.boolexpr import BoolExprParseError
