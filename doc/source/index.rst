@@ -38,6 +38,7 @@ Contents:
    install.rst
    boolalg.rst
    expr.rst
+   2llm.rst
    sudoku.rst
    queens.rst
    relnotes.rst
