@@ -12,8 +12,6 @@
 **     espresso
 */
 
-/* FIXME: Add better error handling */
-
 #include <Python.h>
 
 #include "espresso.h"
@@ -26,42 +24,82 @@ PyDoc_STRVAR(_espresso_error_docstring, "Espresso Error");
 static PyObject *_espresso_error;
 
 /*
-**
+** Convert an Espresso cover to a Python set(((int), (int)))
 */
 static PyObject *
-_get_soln(set_family_t *F, int num_inputs, int num_outputs)
+_espcov2pycov(int num_inputs, int num_outputs, set_family_t *F)
 {
     int i;
 
-    PyObject *pyret;
-    PyObject *pylong, *pyins, *pyouts, *pyimpl;
+    PyObject *pyset, *pyimpl, *pyins, *pyouts, *pylong;
 
     set *last, *p;
 
-    pyret = PySet_New(0);
+    pyset = PySet_New(0);
+    if (pyset == NULL)
+        goto error;
 
     foreach_set(F, last, p) {
         pyins = PyTuple_New(num_inputs);
-        pyouts = PyTuple_New(num_outputs);
-        pyimpl = PyTuple_New(2);
+        if (pyins == NULL)
+            goto decref_pyset;
 
         for (i = 0; i < num_inputs; i++) {
             pylong = PyLong_FromLong((long) GETINPUT(p, i));
-            PyTuple_SetItem(pyins, i, pylong);
+            if (PyTuple_SetItem(pyins, i, pylong) < 0) {
+                Py_DECREF(pylong);
+                Py_DECREF(pyins);
+                goto decref_pyset;
+            }
+        }
+
+        pyouts = PyTuple_New(num_outputs);
+        if (pyouts == NULL) {
+            Py_DECREF(pyins);
+            goto decref_pyset;
         }
 
         for (i = 0; i < num_outputs; i++) {
             pylong = PyLong_FromLong((long) GETOUTPUT(p, i));
-            PyTuple_SetItem(pyouts, i, pylong);
+            if (PyTuple_SetItem(pyouts, i, pylong) < 0) {
+                Py_DECREF(pylong);
+                Py_DECREF(pyins);
+                Py_DECREF(pyouts);
+                goto decref_pyset;
+            }
         }
 
-        PyTuple_SetItem(pyimpl, 0, pyins);
-        PyTuple_SetItem(pyimpl, 1, pyouts);
-
-        PySet_Add(pyret, pyimpl);
+        pyimpl = PyTuple_New(2);
+        if (pyimpl == NULL) {
+            Py_DECREF(pyins);
+            Py_DECREF(pyouts);
+            goto decref_pyset;
+        }
+        if (PyTuple_SetItem(pyimpl, 0, pyins) < 0) {
+            Py_DECREF(pyimpl);
+            Py_DECREF(pyins);
+            Py_DECREF(pyouts);
+            goto decref_pyset;
+        }
+        if (PyTuple_SetItem(pyimpl, 1, pyouts) < 0) {
+            Py_DECREF(pyimpl);
+            Py_DECREF(pyouts);
+            goto decref_pyset;
+        }
+        if (PySet_Add(pyset, pyimpl) < 0) {
+            Py_DECREF(pyimpl);
+            goto decref_pyset;
+        }
     }
 
-    return pyret;
+    /* Success! */
+    return pyset;
+
+decref_pyset:
+    Py_DECREF(pyset);
+
+error:
+    return NULL;
 }
 
 /*
@@ -119,9 +157,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     PyObject *implicants;
     int intype = F_type | D_type;
 
-    PyObject *pyrows, *pyrow, *pyins, *pyouts, *pyitem;
-
-    /* Python return value */
+    PyObject *pyrows, *pyrow, *pyins, *pyouts, *pylong;
     PyObject *pyret = NULL;
 
     set *cf, *cd, *cr;
@@ -169,31 +205,41 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
         val = PySequence_Length(pyrow);
         if (val != 2) {
             PyErr_Format(PyExc_ValueError, "expected row vector with length 2, got %d", val);
-            goto decref_pyrows;
+            Py_DECREF(pyrow);
+            Py_DECREF(pyrows);
+            goto free_espresso;
         }
         pyins = PySequence_GetItem(pyrow, 0);
         val = PySequence_Length(pyins);
         if (val != num_inputs) {
             PyErr_Format(PyExc_ValueError, "expected %d inputs, got %d", num_inputs, val);
             Py_DECREF(pyins);
-            goto decref_pyrows;
+            Py_DECREF(pyrow);
+            Py_DECREF(pyrows);
+            goto free_espresso;
         }
         set_clear(cf, CUBE.size);
         index = 0;
         for (i = 0; i < num_inputs; i++) {
-            pyitem = PySequence_GetItem(pyins, i);
-            if (!PyLong_Check(pyitem)) {
+            pylong = PySequence_GetItem(pyins, i);
+            if (!PyLong_Check(pylong)) {
                 PyErr_SetString(PyExc_TypeError, "expected input to be an int");
+                Py_DECREF(pylong);
                 Py_DECREF(pyins);
-                goto decref_pyitem;
+                Py_DECREF(pyrow);
+                Py_DECREF(pyrows);
+                goto free_espresso;
             }
 
-            val = PyLong_AsLong(pyitem);
+            val = PyLong_AsLong(pylong);
             maxval = (1 << CUBE.part_size[i]) - 1;
             if (val < 0 || val > maxval) {
                 PyErr_Format(PyExc_ValueError, "expected input in range [0, %d], got: %d", maxval, val);
+                Py_DECREF(pylong);
                 Py_DECREF(pyins);
-                goto decref_pyitem;
+                Py_DECREF(pyrow);
+                Py_DECREF(pyrows);
+                goto free_espresso;
             }
 
             for (j = 0; j < CUBE.part_size[i]; j++, index++) {
@@ -201,7 +247,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
                     set_insert(cf, index);
             }
 
-            Py_DECREF(pyitem);
+            Py_DECREF(pylong);
         } /* for (i = 0; i < num_inputs; i++) */
         Py_DECREF(pyins);
 
@@ -212,18 +258,23 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
         val = PySequence_Length(pyouts);
         if (val != num_outputs) {
             PyErr_Format(PyExc_ValueError, "expected %d outputs, got %d", num_outputs, val);
-            goto decref_pyrows;
+            Py_DECREF(pyrow);
+            Py_DECREF(pyrows);
+            goto free_espresso;
         }
 
         savef = saved = saver = 0;
         for (i = 0; i < num_outputs; i++, index++) {
-            pyitem = PySequence_GetItem(pyouts, i);
-            if (!PyLong_Check(pyitem)) {
+            pylong = PySequence_GetItem(pyouts, i);
+            if (!PyLong_Check(pylong)) {
                 PyErr_SetString(PyExc_TypeError, "expected output to be an int");
+                Py_DECREF(pylong);
                 Py_DECREF(pyouts);
-                goto decref_pyitem;
+                Py_DECREF(pyrow);
+                Py_DECREF(pyrows);
+                goto free_espresso;
             }
-            val = PyLong_AsLong(pyitem);
+            val = PyLong_AsLong(pylong);
             switch (val) {
             /* on */
             case 1:
@@ -248,11 +299,14 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
                 break;
             default:
                 PyErr_Format(PyExc_ValueError, "expected output in {0, 1, 2}, got %d", val);
+                Py_DECREF(pylong);
                 Py_DECREF(pyouts);
-                goto decref_pyitem;
+                Py_DECREF(pyrow);
+                Py_DECREF(pyrows);
+                goto free_espresso;
             }
 
-            Py_DECREF(pyitem);
+            Py_DECREF(pylong);
         } /* for (i = 0; i < num_outputs; i++) */
         Py_DECREF(pyouts);
 
@@ -265,7 +319,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     Py_DECREF(pyrows);
 
     if (PyErr_Occurred())
-        goto error;
+        goto free_espresso;
 
     if (intype == F_type || intype == FD_type) {
         sf_free(R);
@@ -290,17 +344,8 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     }
     sf_free(Fsave);
 
-    /* Prepare return value */
-    pyret = _get_soln(F, num_inputs, num_outputs);
-
-    return pyret;
-
-decref_pyitem:
-    Py_DECREF(pyitem);
-
-decref_pyrows:
-    Py_DECREF(pyrow);
-    Py_DECREF(pyrows);
+    /* Might return NULL */
+    pyret = _espcov2pycov(num_inputs, num_outputs, F);
 
 free_espresso:
     sf_free(F);
@@ -312,7 +357,7 @@ free_espresso:
     free(CUBE.part_size);
 
 error:
-    return NULL;
+    return pyret;
 }
 
 /*
