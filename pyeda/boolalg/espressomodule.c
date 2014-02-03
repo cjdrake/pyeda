@@ -15,7 +15,6 @@
 /* FIXME: Add better error handling */
 
 #include <Python.h>
-#include <stdbool.h>
 
 #include "espresso.h"
 
@@ -101,7 +100,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     set_family_t *F, *Fsave;
     set_family_t *D;
     set_family_t *R;
-    bool savef, saved, saver;
+    int savef, saved, saver;
 
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "iiO|i:espresso", keywords,
@@ -188,7 +187,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
             goto decref_pyrows;
         }
 
-        savef = saved = saver = false;
+        savef = saved = saver = 0;
         for (i = 0; i < num_outputs; i++, index++) {
             pyitem = PySequence_GetItem(pyouts, i);
             if (!PyLong_Check(pyitem)) {
@@ -202,21 +201,21 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
             case 1:
                 if (intype & F_type) {
                     set_insert(cf, index);
-                    savef = true;
+                    savef = 1;
                 }
                 break;
             /* don't care */
             case 2:
                 if (intype & D_type) {
                     set_insert(cd, index);
-                    saved = true;
+                    saved = 1;
                 }
                 break;
             /* off */
             case 0:
                 if (intype & R_type) {
                     set_insert(cr, index);
-                    saver = true;
+                    saver = 1;
                 }
                 break;
             default:
