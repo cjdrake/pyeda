@@ -4,6 +4,37 @@
   Release Notes
 *****************
 
+Version 0.19
+============
+
+This is a very exciting release!
+After much hard work, PyEDA now has a C extension to the famous Espresso logic
+minimization software from Berkeley!
+See the new chapter on two-level logic minimization for usage information.
+
+Also, after some feedback from users, it became increasingly obvious that
+using the ``-+*`` operators for NOT, OR, AND was a limitation.
+Now, just like Sympy, PyEDA uses the ``~|&^`` operators for symbolic algebra.
+For convenience, the legacy operators will issue deprecation warnings for now.
+In some upcoming release, they will no longer work.
+
+After other feedback from users, I changed the way ``Expression`` string
+representation works.
+Now, the ``__str__`` method uses ``Or``, ``And``, etc, instead of ascii
+characters.
+The idea is that the string representation now returns valid Python that can
+be parsed by the ``expr`` function (or the Python interpreter).
+To provide support for fancy formatting in IPython notebook,
+I added the new ``to_unicode`` and ``to_latex`` methods.
+These methods also return fancy string representations.
+
+For consistency, the ``uint2vec`` and ``int2vec`` functions have been renamed
+to ``uint2bv`` and ``int2bv``, respectively.
+
+Since ``is_pos_unate``, ``is_neg_unate``, and ``is_binate`` didn't seem like
+fundamental operations,
+I remove them from the ``Function`` base class.
+
 Version 0.18
 ============
 
