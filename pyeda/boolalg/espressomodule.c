@@ -119,7 +119,7 @@ PyDoc_STRVAR(_espresso_docstring,
     num_outputs : posint\n\
         Number of outputs in the implicant out-part vector.\n\
 \n\
-    implicants : iter(((int), (int)))\n\
+    cover : iter(((int), (int)))\n\
         The iterator over multi-output implicants.\n\
         A multi-output implicant is a pair of row vectors of dimension\n\
         *num_inputs*, and *num_outputs*, respectively.\n\
@@ -136,7 +136,7 @@ PyDoc_STRVAR(_espresso_docstring,
 \n\
     Returns\n\
     -------\n\
-    set of implicants in the same format as the input implicants\n\
+    set of implicants in the same format as the input cover\n\
     "
 );
 
@@ -144,7 +144,7 @@ static PyObject *
 _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *keywords[] = {
-        "num_inputs", "num_outputs", "implicants", "intype",
+        "num_inputs", "num_outputs", "cover", "intype",
         NULL
     };
 
@@ -154,7 +154,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     int err;
 
     int num_inputs, num_outputs;
-    PyObject *implicants;
+    PyObject *cover;
     int intype = F_type | D_type;
 
     PyObject *pyrows, *pyrow, *pyins, *pyouts, *pylong;
@@ -168,7 +168,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
 
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "iiO|i:espresso", keywords,
-            &num_inputs, &num_outputs, &implicants, &intype))
+            &num_inputs, &num_outputs, &cover, &intype))
         goto error;
 
     if (num_inputs <= 0) {
@@ -197,7 +197,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     cd = CUBE.temp[1];
     cr = CUBE.temp[2];
 
-    pyrows = PyObject_GetIter(implicants);
+    pyrows = PyObject_GetIter(cover);
     if (pyrows == NULL)
         goto free_espresso;
 

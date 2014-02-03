@@ -26,7 +26,7 @@ def espresso_exprs(*exprs):
     num_inputs = len(inputs)
     num_outputs = len(exprs)
 
-    implicants = set()
+    cover = set()
     for fscube in fscover:
         invec = list()
         for v in inputs:
@@ -45,14 +45,14 @@ def espresso_exprs(*exprs):
             else:
                 outvec.append(0)
 
-        implicants.add((tuple(invec), tuple(outvec)))
+        cover.add((tuple(invec), tuple(outvec)))
 
-    implicants = espresso(num_inputs, num_outputs, implicants, intype=FTYPE)
+    cover = espresso(num_inputs, num_outputs, cover, intype=FTYPE)
 
     fs = list()
     for i in range(num_outputs):
         terms = list()
-        for invec, outvec in implicants:
+        for invec, outvec in cover:
             if outvec[i]:
                 term = list()
                 for j, v in enumerate(inputs):
