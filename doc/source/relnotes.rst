@@ -7,6 +7,17 @@
 Version 0.19
 ============
 
+Release 0.19.1
+--------------
+
+Fixed a bone-headed mistake: leaving ``espresso.h`` out of the source
+distribution.
+One of these days I will remember to test the source distribution for all the
+necessary files before releasing it.
+
+Release 0.19.0
+--------------
+
 This is a very exciting release!
 After much hard work, PyEDA now has a C extension to the famous Espresso logic
 minimization software from Berkeley!
