@@ -174,7 +174,7 @@ class PCData(object):
                 remainder = 0
                 while remainder < self.width and num < self._len:
                     item = (chunk >> remainder) & 3
-                    if item & PC_ZERO:
+                    if item == PC_ZERO:
                         yield num
                     remainder += 2
                     num += 1
@@ -194,7 +194,7 @@ class PCData(object):
                 remainder = 0
                 while remainder < self.width and num < self._len:
                     item = (chunk >> remainder) & 3
-                    if item & PC_ONE:
+                    if item == PC_ONE:
                         return num
                     remainder += 2
                     num += 1
@@ -212,7 +212,7 @@ class PCData(object):
                 remainder = 0
                 while remainder < self.width and num < self._len:
                     item = (chunk >> remainder) & 3
-                    if item & PC_ONE:
+                    if item == PC_ONE:
                         yield num
                     remainder += 2
                     num += 1
