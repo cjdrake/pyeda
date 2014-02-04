@@ -7,6 +7,7 @@ include doc/Makefile
 include doc/source/*
 
 include extension/picosat/*
+include extension/espresso/src/*
 
 include pyeda/logic/test/top95.txt
 include pyeda/logic/test/top95_solns.txt
