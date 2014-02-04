@@ -22,22 +22,31 @@ AUTHOR_EMAIL = "cjdrake AT gmail DOT com"
 DESCRIPTION = "Python Electronic Design Automation"
 
 KEYWORDS = [
+    "binary decision diagram",
     "Boolean algebra",
     "Boolean satisfiability",
+    "combinational logic",
+    "combinatorial logic",
     "computer arithmetic",
     "digital arithmetic",
     "digital logic",
     "EDA",
     "electronic design automation",
+    "Espresso",
+    "Espresso-exact",
+    "Espresso-signature",
     "logic",
     "logic minimization",
+    "logic optimization",
     "logic synthesis",
     "math",
     "mathematics",
     "PicoSAT",
-    "satisfiability",
     "SAT",
-    "Espresso",
+    "satisfiability",
+    "truth table",
+    "Two-level logic minimization",
+    "Two-level logic optimization",
 ]
 
 with open('README.rst') as fin:
