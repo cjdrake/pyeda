@@ -5,14 +5,16 @@ Interface Functions:
     espresso_exprs
 """
 
+from pyeda.boolalg import boolfunc
 from pyeda.boolalg.espresso import (
     FTYPE, DTYPE, RTYPE,
     espresso,
 )
-from pyeda.boolalg.expr import Expression, Or, And
+from pyeda.boolalg.expr import exprvar, Expression, Or, And
+from pyeda.boolalg.table import PC_ZERO, PC_ONE, PC_DC
 
 def espresso_exprs(*exprs):
-    """Return a list of expressions optimized using Espresso."""
+    """Return a tuple of expressions optimized using Espresso."""
     support = frozenset.union(*[f.support for f in exprs])
     inputs = sorted(support)
 
@@ -48,7 +50,38 @@ def espresso_exprs(*exprs):
         cover.add((tuple(invec), tuple(outvec)))
 
     cover = espresso(num_inputs, num_outputs, cover, intype=FTYPE)
+    return _cover2exprs(inputs, num_outputs, cover)
 
+def espresso_tts(*tts):
+    """Return a tuple of expressions optimized using Espresso."""
+    support = frozenset.union(*[f.support for f in tts])
+    inputs = sorted(support)
+
+    num_inputs = len(inputs)
+    num_outputs = len(tts)
+
+    cover = set()
+    for i, point in enumerate(boolfunc.iter_points(inputs)):
+        invec = [2 if point[v] else 1 for v in inputs]
+        outvec = list()
+        for f in tts:
+            val = f.pcdata[i]
+            if val == PC_ZERO:
+                outvec.append(0)
+            elif val == PC_ONE:
+                outvec.append(1)
+            elif val == PC_DC:
+                outvec.append(2)
+            else:
+                raise ValueError("expected truth table entry in {0, 1, -}")
+        cover.add((tuple(invec), tuple(outvec)))
+
+    cover = espresso(num_inputs, num_outputs, cover, intype=FTYPE|DTYPE|RTYPE)
+    inputs = [exprvar(v.names, v.indices) for v in inputs]
+    return _cover2exprs(inputs, num_outputs, cover)
+
+def _cover2exprs(inputs, num_outputs, cover):
+    """Convert a cover to a tuple of Expression instances."""
     fs = list()
     for i in range(num_outputs):
         terms = list()
