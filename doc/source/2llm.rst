@@ -73,26 +73,26 @@ Boolean expression.
 Consider the following truth table with four inputs and two outputs:
 
 ==== ==== ==== ====  ==== ====
-       Inputs         Outputs
+Inputs               Outputs
 -------------------  ---------
  x3   x2   x1   x0    f1   f2
 ==== ==== ==== ====  ==== ====
-  0    0    0   0      0    0
-  0    0    0   1      0    0
-  0    0    1   0      0    0
-  0    0    1   1      0    1
-  0    1    0   0      0    1
-  0    1    0   1      1    1
-  0    1    1   0      1    1
-  0    1    1   1      1    1
-  1    0    0   0      1    0
-  1    0    0   1      1    0
-  1    0    1   0      X    X
-  1    0    1   1      X    X
-  1    1    0   0      X    X
-  1    1    0   1      X    X
-  1    1    1   0      X    X
-  1    1    1   1      X    X
+0    0    0    0     0    0
+0    0    0    1     0    0
+0    0    1    0     0    0
+0    0    1    1     0    1
+0    1    0    0     0    1
+0    1    0    1     1    1
+0    1    1    0     1    1
+0    1    1    1     1    1
+1    0    0    0     1    0
+1    0    0    1     1    0
+1    0    1    0     X    X
+1    0    1    1     X    X
+1    1    0    0     X    X
+1    1    0    1     X    X
+1    1    1    0     X    X
+1    1    1    1     X    X
 ==== ==== ==== ====  ==== ====
 
 The ``espresso_tts`` function takes a sequence of input truth table functions,
