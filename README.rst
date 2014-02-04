@@ -295,6 +295,22 @@ For more interesting examples, see the following documentation chapters:
 * `Solving Sudoku <http://pyeda.readthedocs.org/en/latest/sudoku.html>`_
 * `All Solutions to the Eight Queens Puzzle <http://pyeda.readthedocs.org/en/latest/queens.html>`_
 
+Espresso Logic Minimization C Extension
+=======================================
+
+PyEDA includes an extension to the famous Espresso library for the minimization
+of two-level covers of Boolean functions.
+
+Use the ``espresso_expr`` function to minimize multiple input expressions::
+
+   >>> f1 = ~a & ~b & ~c | ~a & ~b & c | a & ~b & c | a & b & c | a & b & ~c
+   >>> f2 = ~a & ~b & c | a & ~b & c
+   >>> f1m, f2m = espresso_exprs(f1, f2)
+   >>> f1m
+   Or(And(~a, ~b), And(a, b), And(~b, c))
+   >>> f2m
+   And(~b, c)
+
 Execute Unit Test Suite
 =======================
 
