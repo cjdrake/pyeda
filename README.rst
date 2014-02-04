@@ -301,7 +301,7 @@ Espresso Logic Minimization C Extension
 PyEDA includes an extension to the famous Espresso library for the minimization
 of two-level covers of Boolean functions.
 
-Use the ``espresso_expr`` function to minimize multiple input expressions::
+Use the ``espresso_exprs`` function to minimize multiple expressions::
 
    >>> f1 = ~a & ~b & ~c | ~a & ~b & c | a & ~b & c | a & b & c | a & b & ~c
    >>> f2 = ~a & ~b & c | a & ~b & c
@@ -310,6 +310,17 @@ Use the ``espresso_expr`` function to minimize multiple input expressions::
    Or(And(~a, ~b), And(a, b), And(~b, c))
    >>> f2m
    And(~b, c)
+
+Use the ``espresso_tts`` function to minimize multiple truth tables::
+
+   >>> X = bitvec('x', 4)
+   >>> f1 = truthtable(X, "0000011111------")
+   >>> f2 = truthtable(X, "0001111100------")
+   >>> f1m, f2m = espresso_tts(f)
+   >>> f1m
+   Or(x[3], And(x[0], x[2]), And(x[1], x[2]))
+   >>> f2m
+   Or(x[2], And(x[0], x[1]))
 
 Execute Unit Test Suite
 =======================
