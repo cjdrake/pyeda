@@ -322,6 +322,10 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
         PyErr_Format(PyExc_ValueError, "expected num_outputs > 0, got: %d", num_outputs);
         goto error;
     }
+    if (!(intype & FR_type)) {
+        PyErr_SetString(PyExc_ValueError, "expected intype in {f, r, fd, fr, dr, fdr}");
+        goto error;
+    }
 
     /* Initialize global CUBE dimensions */
     CUBE.num_binary_vars = num_inputs;
