@@ -432,11 +432,11 @@ class Function(object):
         """Iterate through the cofactors of N variables.
 
         The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
-        with respect to variable :math:`x_i` is
+        with respect to variable :math:`x_i` is:
         :math:`f_{x_i} = f(x_1, x_2, ..., 1, ..., x_n)`
 
         The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
-        with respect to variable :math:`x_i'` is
+        with respect to variable :math:`x_i'` is:
         :math:`f_{x_i'} = f(x_1, x_2, ..., 0, ..., x_n)`
         """
         vs = self._expect_vars(vs)
@@ -447,11 +447,11 @@ class Function(object):
         """Return a tuple of cofactors of N variables.
 
         The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
-        with respect to variable :math:`x_i` is
+        with respect to variable :math:`x_i` is:
         :math:`f_{x_i} = f(x_1, x_2, ..., 1, ..., x_n)`
 
         The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
-        with respect to variable :math:`x_i'` is
+        with respect to variable :math:`x_i'` is:
         :math:`f_{x_i'} = f(x_1, x_2, ..., 0, ..., x_n)`
         """
         return tuple(cf for cf in self.iter_cofactors(vs))
@@ -460,7 +460,8 @@ class Function(object):
         """Return the smoothing of a function.
 
         The *smoothing* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
-        to variable :math:`x_i` is :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`.
+        to variable :math:`x_i` is:
+        :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`
         """
         return functools.reduce(self.__class__.__or__, self.iter_cofactors(vs))
 
@@ -468,7 +469,8 @@ class Function(object):
         r"""Return the consensus of a function.
 
         The *consensus* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
-        to variable :math:`x_i` is :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`.
+        to variable :math:`x_i` is:
+        :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`
         """
         return functools.reduce(self.__class__.__and__, self.iter_cofactors(vs))
 
@@ -476,8 +478,8 @@ class Function(object):
         r"""Return the derivative of a function.
 
         The *derivative* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
-        to variable :math:`x_i` is
-        :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`.
+        to variable :math:`x_i` is:
+        :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`
         """
         return functools.reduce(self.__class__.__xor__, self.iter_cofactors(vs))
 
