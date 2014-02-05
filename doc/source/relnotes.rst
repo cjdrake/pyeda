@@ -7,6 +7,12 @@
 Version 0.19
 ============
 
+Release 0.19.2
+--------------
+
+Added the ``espresso_tts`` function,
+which allows you to run Espresso on one or more ``TruthTable`` instances.
+
 Release 0.19.1
 --------------
 
