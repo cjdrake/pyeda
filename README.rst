@@ -316,7 +316,7 @@ Use the ``espresso_tts`` function to minimize multiple truth tables::
    >>> X = bitvec('x', 4)
    >>> f1 = truthtable(X, "0000011111------")
    >>> f2 = truthtable(X, "0001111100------")
-   >>> f1m, f2m = espresso_tts(f)
+   >>> f1m, f2m = espresso_tts(f1, f2)
    >>> f1m
    Or(x[3], And(x[0], x[2]), And(x[1], x[2]))
    >>> f2m
