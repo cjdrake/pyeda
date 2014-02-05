@@ -295,7 +295,7 @@ PyDoc_STRVAR(_satisfy_one_docstring,
 );
 
 static PyObject *
-satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
+_satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *keywords[] = {
         "nvars", "clauses",
@@ -632,7 +632,7 @@ Interface Functions:\n\
 );
 
 static PyMethodDef _module_methods[] = {
-    {"satisfy_one", (PyCFunction) satisfy_one, METH_VARARGS | METH_KEYWORDS, _satisfy_one_docstring},
+    {"satisfy_one", (PyCFunction) _satisfy_one, METH_VARARGS | METH_KEYWORDS, _satisfy_one_docstring},
 
     /* sentinel */
     {NULL, NULL, 0, NULL}
