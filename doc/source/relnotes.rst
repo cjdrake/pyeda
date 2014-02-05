@@ -7,6 +7,11 @@
 Version 0.19
 ============
 
+Release 0.19.3
+--------------
+
+Enhanced error handling in the Espresso C extension.
+
 Release 0.19.2
 --------------
 
