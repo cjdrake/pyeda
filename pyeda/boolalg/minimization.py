@@ -11,18 +11,20 @@ from pyeda.boolalg.espresso import (
     espresso,
 )
 from pyeda.boolalg.expr import exprvar, Expression, Or, And
-from pyeda.boolalg.table import PC_ZERO, PC_ONE, PC_DC
+from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC
 
 def espresso_exprs(*exprs):
     """Return a tuple of expressions optimized using Espresso."""
+    for f in exprs:
+        if not (isinstance(f, Expression) and f.is_dnf()):
+            raise ValueError("expected a DNF expression")
+
     support = frozenset.union(*[f.support for f in exprs])
     inputs = sorted(support)
 
     # Gather all cubes in the cover of input functions
     fscover = set()
     for f in exprs:
-        if not (isinstance(f, Expression) and f.is_dnf()):
-            raise ValueError("expected a DNF expression, got " + str(f))
         fscover |= f.cover
 
     num_inputs = len(inputs)
@@ -54,6 +56,10 @@ def espresso_exprs(*exprs):
 
 def espresso_tts(*tts):
     """Return a tuple of expressions optimized using Espresso."""
+    for f in tts:
+        if not isinstance(f, TruthTable):
+            raise ValueError("expected a TruthTable instance")
+
     support = frozenset.union(*[f.support for f in tts])
     inputs = sorted(support)
 
