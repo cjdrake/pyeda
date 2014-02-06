@@ -4,8 +4,8 @@
 ** Interface to PicoSAT SAT solver C extension
 **
 ** Constants:
-**     PICOSAT_VERSION
-**     PICOSAT_COPYRIGHT
+**     VERSION
+**     COPYRIGHT
 **
 ** Exceptions:
 **     PicosatError
@@ -619,8 +619,8 @@ PyDoc_STRVAR(_module_docstring,
 Interface to PicoSAT SAT solver C extension\n\
 \n\
 Constants:\n\
-    PICOSAT_VERSION\n\
-    PICOSAT_COPYRIGHT\n\
+    VERSION\n\
+    COPYRIGHT\n\
 \n\
 Exceptions:\n\
     PicosatError\n\
@@ -658,10 +658,10 @@ PyInit_picosat(void)
         goto error;
 
     /* Create constants */
-    if (PyModule_AddStringConstant(pymodule, "PICOSAT_VERSION", "957") < 0)
+    if (PyModule_AddStringConstant(pymodule, "VERSION", "957") < 0)
         goto error;
 
-    if (PyModule_AddStringConstant(pymodule, "PICOSAT_COPYRIGHT", picosat_copyright()) < 0)
+    if (PyModule_AddStringConstant(pymodule, "COPYRIGHT", picosat_copyright()) < 0)
         goto error;
 
     /* Create PicosatError */
