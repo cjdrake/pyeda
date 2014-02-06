@@ -30,6 +30,9 @@ def test_espresso():
     truthtable2expr(f2).equivalent(f2m)
 
 def test_errors():
+    assert_raises(ValueError, espresso_exprs, "bad input")
+    assert_raises(ValueError, espresso_tts, "bad input")
+
     # expected row vector of length 2
     assert_raises(ValueError, espresso, 2, 2, {(1, 2, 3)})
     # expected N inputs
