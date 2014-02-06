@@ -1,0 +1,52 @@
+#!python
+
+"""\
+Minimize a PLA file
+"""
+
+import argparse
+import sys
+
+import pyeda
+from pyeda.boolalg.espresso import espresso, EspressoError
+from pyeda.parsing.pla import parse_pla, PLAError
+
+PARSER = argparse.ArgumentParser(description=__doc__)
+#PARSER.add_argument('-o', dest='outtype', action='store',
+#                    choices={'f', 'fd', 'fr', 'fdr'}, default='f',
+#                    help='select output format (default: f)')
+PARSER.add_argument('file', nargs='?', type=argparse.FileType('r'),
+                    default=sys.stdin, help="PLA file (default: stdin)")
+
+def main():
+    opts = PARSER.parse_args()
+    try:
+        pla = parse_pla(opts.file)
+    except PLAError as exc:
+        print("error parsing file:", opts.file.name)
+        print(exc)
+        return 1
+
+    try:
+        cover = espresso(pla['ninputs'], pla['noutputs'], pla['cover'],
+                         intype=pla['intype'])
+    except EspressoError as exc:
+        print("espresso failed:", exc)
+        return 1
+
+    print(".i", pla['ninputs'])
+    print(".o", pla['noutputs'])
+    if pla['input_labels']:
+        print(".ilb", " ".join(pla['input_labels']))
+    if pla['output_labels']:
+        print(".ob", " ".join(pla['output_labels']))
+    for invec, outvec in cover:
+        print("".join({1: '0', 2: '1', 3: '-'}[n] for n in invec),
+              "".join({0: '0', 1: '1', 2: '-'}[n] for n in outvec))
+    print(".e")
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
+
