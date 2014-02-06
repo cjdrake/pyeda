@@ -4,6 +4,9 @@
 ** Interface to Espresso logic minimization engine
 **
 ** Constants:
+**     FTYPE
+**     DTYPE
+**     RTYPE
 **
 ** Exceptions:
 **     EspressoError
@@ -388,6 +391,11 @@ error:
 PyDoc_STRVAR(_module_docstring,
 "\n\
 Interface to Espresso logic minimization engine\n\
+\n\
+Constants:\n\
+    FTYPE\n\
+    DTYPE\n\
+    RTYPE\n\
 \n\
 Exceptions:\n\
     EspressoError\n\

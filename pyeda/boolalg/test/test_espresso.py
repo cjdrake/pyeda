@@ -2,7 +2,7 @@
 Test the Espresso interface
 """
 
-from pyeda.boolalg.espresso import espresso, EspressoError
+from pyeda.boolalg import espresso
 from pyeda.boolalg.table import truthtable2expr, truthtable
 from pyeda.boolalg.vexpr import bitvec
 from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
@@ -11,6 +11,10 @@ from pyeda.logic.addition import ripple_carry_add
 from nose.tools import assert_raises
 
 def test_espresso():
+    assert espresso.FTYPE == 1
+    assert espresso.DTYPE == 2
+    assert espresso.RTYPE == 4
+
     A = bitvec('a', 16)
     B = bitvec('b', 16)
     S, C = ripple_carry_add(A, B)
@@ -34,23 +38,23 @@ def test_errors():
     assert_raises(ValueError, espresso_tts, "bad input")
 
     # expected row vector of length 2
-    assert_raises(ValueError, espresso, 2, 2, {(1, 2, 3)})
+    assert_raises(ValueError, espresso.espresso, 2, 2, {(1, 2, 3)})
     # expected N inputs
-    assert_raises(ValueError, espresso, 2, 2, {((1, 2, 3), (0, 0))})
+    assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2, 3), (0, 0))})
     # expected input to be an int
-    assert_raises(TypeError, espresso, 2, 2, {(('1', '2'), (0, 0))})
+    assert_raises(TypeError, espresso.espresso, 2, 2, {(('1', '2'), (0, 0))})
     # expected input in range
-    assert_raises(ValueError, espresso, 2, 2, {(1, 4), (0, 0)})
+    assert_raises(ValueError, espresso.espresso, 2, 2, {(1, 4), (0, 0)})
     # expected N outputs
-    assert_raises(ValueError, espresso, 2, 2, {((1, 2), (0, 0, 0))})
+    assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2), (0, 0, 0))})
     # expected output to be an int
-    assert_raises(TypeError, espresso, 2, 2, {((1, 2), ('0', '0'))})
+    assert_raises(TypeError, espresso.espresso, 2, 2, {((1, 2), ('0', '0'))})
     # expected output in {0, 1, 2}
-    assert_raises(ValueError, espresso, 2, 2, {((1, 2), (0, 3))})
+    assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2), (0, 3))})
     # expected num_inputs > 0
-    assert_raises(ValueError, espresso, 0, 2, {((), (0, 0))})
+    assert_raises(ValueError, espresso.espresso, 0, 2, {((), (0, 0))})
     # expected num_outputs > 0
-    assert_raises(ValueError, espresso, 2, 0, {((1, 2), ())})
+    assert_raises(ValueError, espresso.espresso, 2, 0, {((1, 2), ())})
     # expected intype in {f, r, fd, fr, dr, fdr}
-    assert_raises(ValueError, espresso, 2, 2, {((1, 2), (0, 1))}, intype=0)
+    assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2), (0, 1))}, intype=0)
 
