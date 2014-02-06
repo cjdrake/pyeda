@@ -8,7 +8,7 @@ Interface Functions:
 from pyeda.boolalg import boolfunc
 from pyeda.boolalg.espresso import (
     FTYPE, DTYPE, RTYPE,
-    espresso,
+    espresso, EspressoError,
 )
 from pyeda.boolalg.expr import exprvar, Expression, Or, And
 from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC

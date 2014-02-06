@@ -161,6 +161,10 @@ EXT_MODULES = [
     Extension('pyeda.boolalg.espresso', **ESPRESSO),
 ]
 
+SCRIPTS = [
+    pjoin('script', 'espresso'),
+]
+
 setup(
     name=NAME,
     version=VERSION,
@@ -175,6 +179,7 @@ setup(
     classifiers=CLASSIFIERS,
     packages=PACKAGES,
     ext_modules=EXT_MODULES,
+    scripts=SCRIPTS,
 
     test_suite='nose.collector',
 )
