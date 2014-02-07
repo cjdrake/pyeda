@@ -10,8 +10,11 @@ Interface Classes:
     BitVector
 """
 
+import functools
+import operator
+
 from pyeda.boolalg.boolfunc import Slicer, VectorFunction
-from pyeda.boolalg.expr import exprvar, Not, Or, And, Xor
+from pyeda.boolalg.expr import exprvar, And
 from pyeda.util import clog2, bit_on
 
 def bitvec(name, *slices):
@@ -106,31 +109,39 @@ class BitVector(VectorFunction):
     # Operators
     def uor(self):
         """Return the unary OR of a vector of expressions."""
-        return Or(*self)
+        return functools.reduce(operator.or_, self)
+
+    def unor(self):
+        """Return the unary NOR of a vector of expressions."""
+        return ~functools.reduce(operator.or_, self)
 
     def uand(self):
         """Return the unary AND of a vector of expressions."""
-        return And(*self)
+        return functools.reduce(operator.and_, self)
+
+    def unand(self):
+        """Return the unary NAND of a vector of expressions."""
+        return ~functools.reduce(operator.and_, self)
 
     def uxor(self):
         """Return the unary XOR of a vector of expressions."""
-        return Xor(*self)
+        return functools.reduce(operator.xor, self)
+
+    def uxnor(self):
+        """Return the unary XNOR of a vector of expressions."""
+        return ~functools.reduce(operator.xor, self)
 
     def __invert__(self):
-        items = [Not(f) for f in self]
-        return self.__class__(items, self.start)
+        return self.__class__(map(operator.invert, self), self.start)
 
     def __or__(self, other):
-        items = [Or(*t) for t in zip(self, other)]
-        return self.__class__(items)
+        return self.__class__(x | y for x, y in zip(self, other))
 
     def __and__(self, other):
-        items = [And(*t) for t in zip(self, other)]
-        return self.__class__(items)
+        return self.__class__(x & y for x, y in zip(self, other))
 
     def __xor__(self, other):
-        items = [Xor(*t) for t in zip(self, other)]
-        return self.__class__(items)
+        return self.__class__(x ^ y for x, y in zip(self, other))
 
     # Shift operators
     def lsh(self, num, cin=None):

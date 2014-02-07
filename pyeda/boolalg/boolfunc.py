@@ -22,6 +22,7 @@ Interface Classes:
 
 import collections
 import functools
+import operator
 from warnings import warn
 
 from pyeda.util import bit_on, boolify, cached_property
@@ -463,7 +464,7 @@ class Function(object):
         to variable :math:`x_i` is:
         :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`
         """
-        return functools.reduce(self.__class__.__or__, self.iter_cofactors(vs))
+        return functools.reduce(operator.or_, self.iter_cofactors(vs))
 
     def consensus(self, vs=None):
         r"""Return the consensus of a function.
@@ -472,7 +473,7 @@ class Function(object):
         to variable :math:`x_i` is:
         :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`
         """
-        return functools.reduce(self.__class__.__and__, self.iter_cofactors(vs))
+        return functools.reduce(operator.and_, self.iter_cofactors(vs))
 
     def derivative(self, vs=None):
         r"""Return the derivative of a function.
@@ -481,7 +482,7 @@ class Function(object):
         to variable :math:`x_i` is:
         :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`
         """
-        return functools.reduce(self.__class__.__xor__, self.iter_cofactors(vs))
+        return functools.reduce(operator.xor, self.iter_cofactors(vs))
 
     def is_zero(self):
         """Return whether this function is zero.
@@ -542,7 +543,7 @@ class Slicer(object):
     """
 
     def __init__(self, items, start=0):
-        self.items = items
+        self.items = list(items)
         self.start = start
 
     @property
