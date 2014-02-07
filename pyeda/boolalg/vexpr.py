@@ -14,7 +14,7 @@ import functools
 import operator
 
 from pyeda.boolalg.boolfunc import Slicer, VectorFunction
-from pyeda.boolalg.expr import exprvar, And
+from pyeda.boolalg.expr import exprvar, CONSTANTS
 from pyeda.util import clog2, bit_on
 
 def bitvec(name, *slices):
@@ -27,6 +27,9 @@ def bitvec(name, *slices):
         An int N means a slice from [0:N]
         A tuple (M, N) means a slice from [M:N]
     """
+    if not slices:
+        return exprvar(name)
+
     sls = list()
     for sl in slices:
         if type(sl) is int:
@@ -57,15 +60,12 @@ def _bitvec(name, slices, indices):
               for i in range(fst.start, fst.stop)]
         return BitVector(vs, fst.start)
 
-def uint2bv(num, length=None):
-    """Convert an unsigned integer to a BitVector."""
-    if num < 0:
-        raise ValueError("expected num >= 0")
-
+def _uint2items(num, length=None):
+    """Convert an unsigned integer to a list of constant expressions."""
     _num = num
     items = list()
     while _num != 0:
-        items.append(_num & 1)
+        items.append(CONSTANTS[_num & 1])
         _num >>= 1
 
     if length:
@@ -74,27 +74,35 @@ def uint2bv(num, length=None):
             raise ValueError(fstr.format(num, len(items), length))
         else:
             while len(items) < length:
-                items.append(0)
+                items.append(CONSTANTS[0])
 
-    return BitVector(items)
+    return items
+
+def uint2bv(num, length=None):
+    """Convert an unsigned integer to a BitVector."""
+    if num < 0:
+        raise ValueError("expected num >= 0")
+    else:
+        return BitVector(_uint2items(num, length))
 
 def int2bv(num, length=None):
     """Convert a signed integer to a BitVector."""
     if num < 0:
         req_length = clog2(abs(num)) + 1
-        bv = uint2bv(2 ** req_length + num)
+        items = _uint2items(2**req_length + num)
     else:
         req_length = clog2(num + 1) + 1
-        bv = uint2bv(num, req_length)
+        items = _uint2items(num, req_length)
 
     if length:
         if length < req_length:
             fstr = "overflow: num = {} requires length >= {}, got length = {}"
             raise ValueError(fstr.format(num, req_length, length))
         else:
-            bv.sext(length - req_length)
+            sign = items[-1]
+            items += [sign] * (length - req_length)
 
-    return bv
+    return BitVector(items)
 
 
 class BitVector(VectorFunction):
@@ -105,6 +113,9 @@ class BitVector(VectorFunction):
 
     def __str__(self):
         return str(self.items)
+
+    def __add__(self, other):
+        return BitVector(self.items + other.items, start=self.start)
 
     # Operators
     def uor(self):
@@ -149,14 +160,14 @@ class BitVector(VectorFunction):
         if num < 0 or num > self.__len__():
             raise ValueError("expected 0 <= num <= {}".format(self.__len__()))
         if cin is None:
-            cin = BitVector([0] * num)
+            cin = BitVector([CONSTANTS[0] for i in range(num)])
         else:
             if len(cin) != num:
                 raise ValueError("expected length of cin to be equal to num")
         if num == 0:
             return self, BitVector([])
         else:
-            return (BitVector(cin.items + self.items[:-num], self.start),
+            return (BitVector(cin.items + self.items[:-num]),
                     BitVector(self.items[-num:]))
 
     def rsh(self, num, cin=None):
@@ -164,14 +175,14 @@ class BitVector(VectorFunction):
         if num < 0 or num > self.__len__():
             raise ValueError("expected 0 <= num <= {}".format(self.__len__()))
         if cin is None:
-            cin = BitVector([0] * num)
+            cin = BitVector([CONSTANTS[0] for i in range(num)])
         else:
             if len(cin) != num:
                 raise ValueError("expected length of cin to be equal to num")
         if num == 0:
             return self, BitVector([])
         else:
-            return (BitVector(self.items[num:] + cin.items, self.start),
+            return (BitVector(self.items[num:] + cin.items),
                     BitVector(self.items[:num]))
 
     def arsh(self, num):
@@ -182,7 +193,7 @@ class BitVector(VectorFunction):
             return self, BitVector([])
         else:
             sign = self.items[-1]
-            return (BitVector(self.items[num:] + [sign] * num, self.start),
+            return (BitVector(self.items[num:] + (sign, ) * num),
                     BitVector(self.items[:num]))
 
     # Other logic
@@ -199,20 +210,9 @@ class BitVector(VectorFunction):
             |   1    0  |   0    1    0    0  |
             |   1    1  |   1    0    0    0  |
             +===========+=====================+
-
-        >>> A = bitvec('a', 2)
-        >>> d = A.decode()
-        >>> d.vrestrict({A: "00"})
-        [1, 0, 0, 0]
-        >>> d.vrestrict({A: "10"})
-        [0, 1, 0, 0]
-        >>> d.vrestrict({A: "01"})
-        [0, 0, 1, 0]
-        >>> d.vrestrict({A: "11"})
-        [0, 0, 0, 1]
         """
-        items = [And(*[f if bit_on(i, j) else ~f
-                       for j, f in enumerate(self)])
-                 for i in range(2 ** len(self))]
+        items = [functools.reduce(operator.and_, [f if bit_on(i, j) else ~f
+                                                  for j, f in enumerate(self)])
+                 for i in range(2 ** self.__len__())]
         return self.__class__(items)
 

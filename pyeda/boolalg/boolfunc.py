@@ -532,7 +532,7 @@ class Function(object):
 class Slicer(object):
     """Interface for vector objects that supports non-zero start index.
 
-    Similar to a Python list, this class can be used to support arbitrarily
+    Similar to a Python tuple, this class can be used to support arbitrarily
     nested vectors. Unlike Python lists, you can use a Slicer object to
     instantiate a vector with arbitrary start, stop indices.
 
@@ -543,10 +543,10 @@ class Slicer(object):
     """
 
     def __init__(self, items, start=0):
-        self.items = list(items)
+        self.items = tuple(items)
         self.start = start
 
-    @property
+    @cached_property
     def stop(self):
         """Return the stop index."""
         return self.start + self.__len__()
@@ -557,52 +557,41 @@ class Slicer(object):
     def __len__(self):
         return len(self.items)
 
-    def getifz(self, i):
-        """Get item from zero-based index."""
-        return self.__getitem__(i + self.start)
-
     def __getitem__(self, sl):
         if isinstance(sl, int):
             return self.items[self._norm_idx(sl)]
-        else:
+        elif isinstance(sl, slice):
             items = self.items[self._norm_slice(sl)]
             return self.__class__(items, sl.start)
-
-    def __setitem__(self, sl, item):
-        if isinstance(sl, int):
-            self.items[self._norm_idx(sl)] = item
         else:
-            self.items[self._norm_slice(sl)] = item
-
-    def __delitem__(self, sl):
-        if isinstance(sl, int):
-            del self.items[self._norm_idx(sl)]
-        else:
-            del self.items[self._norm_slice(sl)]
+            raise TypeError("expected int or slice")
 
     def _norm_idx(self, i):
         """Return an index normalized to vector start index."""
-        if i >= self.start and i < self.stop:
+        if i >= self.start and i <= self.stop:
             idx = i - self.start
-        elif i >= -self.stop and i < -self.start:
+        elif i >= -self.stop and i <= -self.start:
             idx = i + self.stop
         else:
-            raise IndexError("list index out of range")
+            fstr = "expected index in range [{0.start}, {0.stop}]"
+            raise IndexError(fstr.format(self))
         return idx
 
     def _norm_slice(self, sl):
         """Return a slice normalized to vector start index."""
         limits = {'start': None, 'stop': None}
-        for k in ('start', 'stop'):
+        for k in limits:
             i = getattr(sl, k)
             if i is not None:
-                if i >= self.start and i < self.stop:
+                if i >= self.start and i <= self.stop:
                     limits[k] = i - self.start
-                elif i >= -self.stop and i < -self.start:
+                elif i >= -self.stop and i <= -self.start:
                     limits[k] = i + self.stop
                 else:
-                    raise IndexError("list index out of range")
-        return slice(limits['start'], limits['stop'])
+                    fstr = "expected index in range [{0.start}, {0.stop}]"
+                    raise IndexError(fstr.format(self))
+        step = getattr(sl, 'step', None)
+        return slice(limits['start'], limits['stop'], step)
 
 
 class VectorFunction(Slicer):
@@ -624,7 +613,7 @@ class VectorFunction(Slicer):
     def to_uint(self):
         """Convert vector to an unsigned integer, if possible."""
         num = 0
-        for i, f in enumerate(self):
+        for i, f in enumerate(self, self.start):
             if f.is_zero():
                 pass
             elif f.is_one():
@@ -642,32 +631,22 @@ class VectorFunction(Slicer):
         else:
             return num
 
-    def zext(self, num):
-        """Zero extend this vector by N bits."""
-        self.items += [0] * num
-
-    def sext(self, num):
-        """Sign extend this vector by N bits."""
-        bit = self.items[-1]
-        self.items += [bit] * num
-
-    def append(self, f):
-        """Append a function to the end of this vector."""
-        self.items.append(f)
-
 
 def _expand_vectors(vpoint):
     """Expand all vectors in a substitution dict."""
     point = dict()
-    for vf, vals in vpoint.items():
-        if isinstance(vf, VectorFunction):
-            if len(vf) != len(vals):
+    for f, val in vpoint.items():
+        if isinstance(f, VectorFunction):
+            if len(f) != len(val):
                 fstr = ("invalid vector point: "
                         "expected 1:1 mapping from VectorFunction => {0, 1}")
                 raise ValueError(fstr)
-            for i, val in enumerate(vals):
-                point[vf.getifz(i)] = boolify(val)
+            for i, val in enumerate(val, start=f.start):
+                point[f[i]] = int(val)
+        elif isinstance(f, Function):
+            point[f] = val
         else:
-            point[vf] = boolify(vals)
+            fstr = "expected vpoint key to be Function or VectorFunction"
+            raise ValueError(fstr)
     return point
 

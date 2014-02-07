@@ -9,7 +9,7 @@ from pyeda.logic.addition import (
     kogge_stone_add as ksa,
     brent_kung_add as bka,
 )
-from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv
+from pyeda.boolalg.vexpr import BitVector, bitvec, uint2bv, int2bv
 
 from nose.tools import assert_raises
 
@@ -40,7 +40,7 @@ def test_unsigned_add():
 
     for adder in (rca, ksa, bka):
         S, C = adder(A, B)
-        S.append(C[N-1])
+        S = S + BitVector([C[N-1]])
 
         # 0 + 0 = 0
         assert uadd(S, A, B, 0, 0) == 0
