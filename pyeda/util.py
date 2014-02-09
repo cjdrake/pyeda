@@ -5,7 +5,6 @@ Interface Functions:
     bit_on
     clog2
     parity
-    boolify
     cached_property
 """
 
@@ -63,21 +62,6 @@ def parity(num):
         par ^= (num & 1)
         num >>= 1
     return par
-
-def boolify(arg):
-    """Convert arg to an integer in B = {0, 1}.
-
-    >>> [boolify(x) for x in (False, True, 0, 1, '0', '1')]
-    [0, 1, 0, 1, 0, 1]
-    >>> boolify(42)
-    Traceback (most recent call last):
-        ...
-    ValueError: expected arg in {0, 1}
-    """
-    try:
-        return BOOL_DICT[arg]
-    except KeyError:
-        raise ValueError("expected arg in {0, 1}")
 
 def cached_property(func):
     """Return a cached property calculated by the input function.

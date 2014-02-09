@@ -9,7 +9,7 @@ To prepare a terminal for interactive use:
 # Disable "unused import"
 # pylint: disable=W0611
 
-from pyeda.util import clog2, parity, boolify
+from pyeda.util import clog2, parity
 
 from pyeda.boolalg.boolfunc import (
     num2point, num2upoint, num2term,
