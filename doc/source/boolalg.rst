@@ -213,12 +213,12 @@ You can use the Python interpreter to evaluate complex expressions::
 
 PyEDA recognizes ``False``, ``0``, and ``'0'`` as Boolean zero (0),
 and ``True``, ``1``, and ``'1'`` as Boolean one (1).
-You can use the ``boolify`` function to manually convert the ``bool`` and
+You can use the ``int`` function to manually convert the ``bool`` and
 ``str`` data types to integers::
 
-   >>> boolify(True)
+   >>> int(True)
    1
-   >>> boolify('0')
+   >>> int('0')
    0
 
 Boolean Variables
