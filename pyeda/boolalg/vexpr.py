@@ -154,9 +154,39 @@ class BitVector(VectorFunction):
     def __xor__(self, other):
         return self.__class__(x ^ y for x, y in zip(self, other))
 
+    def __lshift__(self, arg):
+        if type(arg) is tuple and len(arg) == 2:
+            return self.lsh(arg[0], arg[1])[0]
+        elif type(arg) is int:
+            return self.lsh(arg)[0]
+        else:
+            raise TypeError("expected int or (int, bitvec)")
+
+    def __rshift__(self, arg):
+        if type(arg) is tuple and len(arg) == 2:
+            return self.rsh(arg[0], arg[1])[0]
+        elif type(arg) is int:
+            return self.rsh(arg)[0]
+        else:
+            raise TypeError("expected in or (int, bitvec)")
+
     # Shift operators
     def lsh(self, num, cin=None):
-        """Return the vector left shifted by N places."""
+        """Return the vector left shifted by N places.
+
+        Parameters
+        ----------
+        num : non-negative int
+            Number of places to shift
+
+        cin : bitvec
+            The "carry-in" bit vector
+
+        Returns
+        -------
+        (bitvec V, bitvec cout)
+            V is the shifted vector, and cout is the "carry out".
+        """
         if num < 0 or num > self.__len__():
             raise ValueError("expected 0 <= num <= {}".format(self.__len__()))
         if cin is None:
@@ -171,7 +201,21 @@ class BitVector(VectorFunction):
                     BitVector(self.items[-num:]))
 
     def rsh(self, num, cin=None):
-        """Return the vector right shifted by N places."""
+        """Return the vector right shifted by N places.
+
+        Parameters
+        ----------
+        num : non-negative int
+            Number of places to shift
+
+        cin : bitvec
+            The "carry-in" bit vector
+
+        Returns
+        -------
+        (bitvec V, bitvec cout)
+            V is the shifted vector, and cout is the "carry out".
+        """
         if num < 0 or num > self.__len__():
             raise ValueError("expected 0 <= num <= {}".format(self.__len__()))
         if cin is None:
@@ -186,7 +230,18 @@ class BitVector(VectorFunction):
                     BitVector(self.items[:num]))
 
     def arsh(self, num):
-        """Return the vector arithmetically right shifted by N places."""
+        """Return the vector arithmetically right shifted by N places.
+
+        Parameters
+        ----------
+        num : non-negative int
+            Number of places to shift
+
+        Returns
+        -------
+        bitvec
+            The shifted vector
+        """
         if num < 0 or num > self.__len__():
             raise ValueError("expected 0 <= num <= {}".format(self.__len__()))
         if num == 0:

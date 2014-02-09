@@ -73,6 +73,9 @@ def test_shift():
     a, b = X.lsh(0)
     assert str(a) == "(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7])"
     assert not b
+    assert_raises(TypeError, X.__lshift__, "foo")
+    assert str(X << 4) == "(0, 0, 0, 0, x[0], x[1], x[2], x[3])"
+    assert str(X << (4, Y)) == "(y[0], y[1], y[2], y[3], x[0], x[1], x[2], x[3])"
 
     # right shift
     assert_raises(ValueError, X.rsh, -1)
@@ -87,6 +90,9 @@ def test_shift():
     a, b = X.rsh(0)
     assert str(a) == "(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7])"
     assert not b
+    assert_raises(TypeError, X.__rshift__, "foo")
+    assert str(X >> 4) == "(x[4], x[5], x[6], x[7], 0, 0, 0, 0)"
+    assert str(X >> (4, Y)) == "(x[4], x[5], x[6], x[7], y[0], y[1], y[2], y[3])"
 
     # arithmetic right shift
     assert_raises(ValueError, X.arsh, -1)
