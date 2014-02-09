@@ -58,7 +58,7 @@ import itertools
 
 import pyeda.parsing.boolexpr
 from pyeda.boolalg import boolfunc, sat
-from pyeda.util import bit_on, parity, cached_property
+from pyeda.util import bit_on, clog2, parity, cached_property
 
 try:
     from pyeda.boolalg import picosat
@@ -379,6 +379,28 @@ def AchillesHeel(*args, simplify=True, factor=False):
         raise ValueError(fstr.format(nargs))
     expr = And(*[Or(args[2*i], args[2*i+1], simplify=False)
                  for i in range(nargs // 2)], simplify=False)
+    if factor:
+        expr = expr.factor()
+    elif simplify:
+        expr = expr.simplify()
+    return expr
+
+def Mux(fs, sel, simplify=True, factor=False):
+    """
+    Return an expression that multiplexes a sequence of input functions over a
+    sequence of select functions.
+    """
+    # convert Mux([a, b], x) to Mux([a, b], [x])
+    if isinstance(sel, Expression):
+        sel = [sel]
+
+    if len(sel) < clog2(len(fs)):
+        fstr = "expected at least {} select bits, got {}"
+        raise ValueError(fstr.format(clog2(len(fs)), len(sel)))
+
+    it = boolfunc.iter_terms(sel)
+    expr = Or(*[And(f, *next(it), simplify=False) for f in fs], simplify=False)
+
     if factor:
         expr = expr.factor()
     elif simplify:

@@ -28,7 +28,7 @@ from pyeda.boolalg.expr import (
     ast2expr, expr2dimacscnf, expr2dimacssat, upoint2exprpoint,
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel,
-    ForAll, Exists,
+    Mux, ForAll, Exists,
     Expression, ExprConstant, ExprLiteral, ExprVariable, ExprComplement,
     ExprNot, ExprOrAnd, ExprOr, ExprAnd, ExprNor, ExprNand,
     ExprExclusive, ExprXor, ExprXnor, ExprEqual, ExprUnequal,
