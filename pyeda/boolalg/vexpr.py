@@ -62,11 +62,14 @@ def _bitvec(name, slices, indices):
 
 def _uint2items(num, length=None):
     """Convert an unsigned integer to a list of constant expressions."""
-    _num = num
-    items = list()
-    while _num != 0:
-        items.append(CONSTANTS[_num & 1])
-        _num >>= 1
+    if num == 0:
+        items = [CONSTANTS[0]]
+    else:
+        _num = num
+        items = list()
+        while _num != 0:
+            items.append(CONSTANTS[_num & 1])
+            _num >>= 1
 
     if length:
         if length < len(items):
