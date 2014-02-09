@@ -25,7 +25,7 @@ import functools
 import operator
 from warnings import warn
 
-from pyeda.util import bit_on, boolify, cached_property
+from pyeda.util import bit_on, cached_property
 
 VARIABLES = dict()
 
