@@ -20,8 +20,7 @@ def test_bitvec():
 def test_uint2bv():
     assert_raises(ValueError, uint2bv, -1)
     assert_raises(ValueError, uint2bv, 42, 4)
-    # FIXME: this looks wrong
-    assert str(uint2bv(0)) == "()"
+    assert str(uint2bv(0)) == "(0,)"
     assert str(uint2bv(1)) == "(1,)"
     assert str(uint2bv(2)) == "(0, 1)"
     assert str(uint2bv(3)) == "(1, 1)"
