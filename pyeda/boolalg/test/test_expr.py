@@ -8,7 +8,7 @@ from pyeda.boolalg.expr import (
     expr2dimacscnf, expr2dimacssat,
     Expression,
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
-    OneHot0, OneHot, Majority, AchillesHeel,
+    OneHot0, OneHot, Majority, AchillesHeel, Mux,
     EXPRZERO, EXPRONE,
 )
 from pyeda.boolalg.vexpr import bitvec
@@ -178,6 +178,11 @@ def test_achilles_heel():
     assert AchillesHeel(a, b).equivalent(a | b)
     assert AchillesHeel(a, b, c, d).equivalent((a | b) & (c | d))
     assert_raises(ValueError, AchillesHeel, a, b, c)
+
+def test_mux():
+    assert Mux([EXPRONE] * 4, [a,b]).equivalent(EXPRONE)
+    assert Mux([EXPRZERO] * 4, [a,b]).equivalent(EXPRZERO)
+    assert Mux(X[:4], [a,b]).equivalent(~a&~b&X[0] | a&~b&X[1] | ~a&b&X[2] | a&b&X[3])
 
 def test_ops():
     # __sub__, __rsub__
