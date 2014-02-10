@@ -460,6 +460,18 @@ For example::
    >>> f.to_dnf()
    Or(And(a, c, w, y), And(a, c, w, z), And(a, c, x, y), And(a, c, x, z), And(a, d, w, y), And(a, d, w, z), And(a, d, x, y), And(a, d, x, z), And(b, c, w, y), And(b, c, w, z), And(b, c, x, y), And(b, c, x, z), And(b, d, w, y), And(b, d, w, z), And(b, d, x, y), And(b, d, x, z))
 
+.. function:: Mux(fs, sel, simplify=True, factor=False)
+
+   Return an expression that multiplexes a sequence of input functions over a
+   sequence of select functions.
+
+For example::
+
+   >>> X = bitvec('x', 4)
+   >>> S = bitvec('s', 2)
+   >>> Mux(X, S)
+   Or(And(~s[0], ~s[1], x[0]), And(s[0], ~s[1], x[1]), And(~s[0], s[1], x[2]), And(s[0], s[1], x[3]))
+
 From the ``expr`` Function
 --------------------------
 
