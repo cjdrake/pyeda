@@ -62,7 +62,7 @@ It's easy to verify that the minimal functions are equivalent to the originals::
 Minimize Truth Tables
 =====================
 
-An expression is a *completely* specific function.
+An expression is a *completely* specified function.
 Sometimes, instead of minimizing an existing expression,
 you instead start with only a truth table that maps inputs in :math:`{0, 1}`
 to outputs in :math:`{0, 1, *}`, where :math:`*` means "don't care".
