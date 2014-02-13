@@ -255,6 +255,81 @@ error:
 }
 
 /*
+** Python function definition: espresso.get_config()
+*/
+PyDoc_STRVAR(_get_config_docstring,
+    "Return a dict of Espresso global configuration values."
+);
+
+static PyObject *
+_get_config(PyObject *self)
+{
+    return Py_BuildValue(
+               "{s:i, s:i, s:i, s:i, s:i, s:i, s:i}",
+
+               "single_expand",     single_expand,
+               "remove_essential",  remove_essential,
+               "force_irredundant", force_irredundant,
+               "unwrap_onset",      unwrap_onset,
+               "recompute_onset",   recompute_onset,
+               "use_super_gasp",    use_super_gasp,
+
+               "skip_make_sparse",  skip_make_sparse
+           );
+}
+
+/*
+** Python function definition: espresso.set_config()
+*/
+PyDoc_STRVAR(_set_config_docstring,
+    "Set Espresso global configuration values.\n\
+\n\
+    Parameters\n\
+    ----------\n\
+    single_expand : bool\n\
+        stop after first expand/irredundant\n\
+\n\
+    remove_essential : bool\n\
+        remove essential primes\n\
+\n\
+    force_irredundant : bool\n\
+        iterate make_sparse to force a minimal solution\n\
+\n\
+    unwrap_onset : bool\n\
+        unwrap the function output part before first expand\n\
+\n\
+    recompute_onset : bool\n\
+        recompute onset using the complement before starting\n\
+\n\
+    use_super_gasp : bool\n\
+        use the super_gasp strategy rather than last_gasp\n\
+\n\
+    skip_make_sparse : bool\n\
+        skip the make_sparse step\n\
+    "
+);
+
+static PyObject *
+_set_config(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *keywords[] = {
+        "remove_essential", "single_expand", "use_super_gasp",
+        "recompute_onset", "unwrap_onset", "force_irredundant",
+        "skip_make_sparse",
+        NULL
+    };
+
+    PyArg_ParseTupleAndKeywords(
+        args, kwargs, "|iiiiiii:set_config", keywords,
+        &remove_essential, &single_expand, &use_super_gasp,
+        &recompute_onset, &unwrap_onset, &force_irredundant,
+        &skip_make_sparse
+    );
+
+    Py_RETURN_NONE;
+}
+
+/*
 ** Python function definition: espresso.espresso()
 */
 PyDoc_STRVAR(_espresso_docstring,
@@ -406,7 +481,9 @@ Interface Functions:\n\
 );
 
 static PyMethodDef _module_methods[] = {
-    {"espresso", (PyCFunction) _espresso, METH_VARARGS | METH_KEYWORDS, _espresso_docstring},
+    {"get_config", (PyCFunction) _get_config, METH_NOARGS,                  _get_config_docstring},
+    {"set_config", (PyCFunction) _set_config, METH_VARARGS | METH_KEYWORDS, _set_config_docstring},
+    {"espresso",   (PyCFunction) _espresso,   METH_VARARGS | METH_KEYWORDS, _espresso_docstring},
 
     /* sentinel */
     {NULL, NULL, 0, NULL}
