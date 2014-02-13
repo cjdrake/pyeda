@@ -8,18 +8,62 @@ import argparse
 import sys
 
 import pyeda
-from pyeda.boolalg.espresso import espresso, EspressoError
+from pyeda.boolalg.espresso import set_config, espresso, EspressoError
 from pyeda.parsing.pla import parse_pla, PLAError
 
 PARSER = argparse.ArgumentParser(description=__doc__)
-#PARSER.add_argument('-o', dest='outtype', action='store',
-#                    choices={'f', 'fd', 'fr', 'fdr'}, default='f',
-#                    help='select output format (default: f)')
+
+class EspressoConfigAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        key, val = (value[1:], False) if value[0] == 'n' else (value, True)
+        setattr(namespace, key, val)
+
+PARSER.add_argument(
+    '-e', dest='ecfg', action=EspressoConfigAction,
+    choices=['fast', 'ness', 'nirr', 'nunwrap', 'onset', 'strong'],
+    help="set Espresso global configuration values (legacy)"
+)
+
+PARSER.add_argument(
+    '--fast', action='store_true',
+    help="stop after the first EXPAND and IRREDUNDANT operations (i.e., do not iterate over the solution)"
+)
+PARSER.add_argument(
+    '--no-ess', action='store_false', dest='ess',
+    help="essential primes will not be detected"
+)
+PARSER.add_argument(
+    '--no-irr', action='store_false', dest='irr',
+    help="the result will not necessarily be made irredundant in the final step which removes redundant literals"
+)
+PARSER.add_argument(
+    '--no-unwrap', action='store_false', dest='unwrap',
+    help="the ON-set will not be unwrapped before beginning the minimization"
+)
+PARSER.add_argument(
+    '--onset', action='store_true',
+    help="recompute the ON-set before the minimization; useful when the PLA has a large number of product terms (e.g., an exhaustive list of minterms)"
+)
+PARSER.add_argument(
+    '--strong', action='store_true',
+    help="uses the alternate strategy SUPER_GASP (as a replacement for LAST_ GASP) which is more expensive, but occasionally provides better results"
+)
+
 PARSER.add_argument('file', nargs='?', type=argparse.FileType('r'),
                     default=sys.stdin, help="PLA file (default: stdin)")
 
 def main():
     opts = PARSER.parse_args()
+
+    set_config(
+        single_expand=opts.fast,
+        remove_essential=opts.ess,
+        force_irredundant=opts.irr,
+        unwrap_onset=opts.unwrap,
+        recompute_onset=opts.onset,
+        use_super_gasp=opts.strong,
+    )
+
     try:
         pla = parse_pla(opts.file)
     except PLAError as exc:
