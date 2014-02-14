@@ -27,8 +27,8 @@ def espresso_exprs(*exprs):
     for f in exprs:
         fscover |= f.cover
 
-    num_inputs = len(inputs)
-    num_outputs = len(exprs)
+    ninputs = len(inputs)
+    noutputs = len(exprs)
 
     cover = set()
     for fscube in fscover:
@@ -51,8 +51,8 @@ def espresso_exprs(*exprs):
 
         cover.add((tuple(invec), tuple(outvec)))
 
-    cover = espresso(num_inputs, num_outputs, cover, intype=FTYPE)
-    return _cover2exprs(inputs, num_outputs, cover)
+    cover = espresso(ninputs, noutputs, cover, intype=FTYPE)
+    return _cover2exprs(inputs, noutputs, cover)
 
 def espresso_tts(*tts):
     """Return a tuple of expressions optimized using Espresso."""
@@ -63,8 +63,8 @@ def espresso_tts(*tts):
     support = frozenset.union(*[f.support for f in tts])
     inputs = sorted(support)
 
-    num_inputs = len(inputs)
-    num_outputs = len(tts)
+    ninputs = len(inputs)
+    noutputs = len(tts)
 
     cover = set()
     for i, point in enumerate(boolfunc.iter_points(inputs)):
@@ -82,14 +82,14 @@ def espresso_tts(*tts):
                 raise ValueError("expected truth table entry in {0, 1, -}")
         cover.add((tuple(invec), tuple(outvec)))
 
-    cover = espresso(num_inputs, num_outputs, cover, intype=FTYPE|DTYPE|RTYPE)
+    cover = espresso(ninputs, noutputs, cover, intype=FTYPE|DTYPE|RTYPE)
     inputs = [exprvar(v.names, v.indices) for v in inputs]
-    return _cover2exprs(inputs, num_outputs, cover)
+    return _cover2exprs(inputs, noutputs, cover)
 
-def _cover2exprs(inputs, num_outputs, cover):
+def _cover2exprs(inputs, noutputs, cover):
     """Convert a cover to a tuple of Expression instances."""
     fs = list()
-    for i in range(num_outputs):
+    for i in range(noutputs):
         terms = list()
         for invec, outvec in cover:
             if outvec[i]:

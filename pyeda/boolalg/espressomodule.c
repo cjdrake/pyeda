@@ -33,7 +33,7 @@ static PyObject *_espresso_error;
 static int
 _pycov2esprcov(
     set_family_t *F, set_family_t *D, set_family_t *R,
-    int num_inputs, int num_outputs, PyObject *cover, int intype)
+    int ninputs, int noutputs, PyObject *cover, int intype)
 {
     int i, j;
     int index;
@@ -63,8 +63,8 @@ _pycov2esprcov(
         }
         pyins = PySequence_GetItem(pyrow, 0);
         val = PySequence_Length(pyins);
-        if (val != num_inputs) {
-            PyErr_Format(PyExc_ValueError, "expected %d inputs, got %d", num_inputs, val);
+        if (val != ninputs) {
+            PyErr_Format(PyExc_ValueError, "expected %d inputs, got %d", ninputs, val);
             Py_DECREF(pyins);
             Py_DECREF(pyrow);
             Py_DECREF(pyrows);
@@ -72,7 +72,7 @@ _pycov2esprcov(
         }
         set_clear(cf, CUBE.size);
         index = 0;
-        for (i = 0; i < num_inputs; i++) {
+        for (i = 0; i < ninputs; i++) {
             pylong = PySequence_GetItem(pyins, i);
             if (!PyLong_Check(pylong)) {
                 PyErr_SetString(PyExc_TypeError, "expected input to be an int");
@@ -100,7 +100,7 @@ _pycov2esprcov(
             }
 
             Py_DECREF(pylong);
-        } /* for (i = 0; i < num_inputs; i++) */
+        } /* for (i = 0; i < ninputs; i++) */
         Py_DECREF(pyins);
 
         set_copy(cd, cf);
@@ -108,15 +108,15 @@ _pycov2esprcov(
 
         pyouts = PySequence_GetItem(pyrow, 1);
         val = PySequence_Length(pyouts);
-        if (val != num_outputs) {
-            PyErr_Format(PyExc_ValueError, "expected %d outputs, got %d", num_outputs, val);
+        if (val != noutputs) {
+            PyErr_Format(PyExc_ValueError, "expected %d outputs, got %d", noutputs, val);
             Py_DECREF(pyrow);
             Py_DECREF(pyrows);
             goto error;
         }
 
         savef = saved = saver = 0;
-        for (i = 0; i < num_outputs; i++, index++) {
+        for (i = 0; i < noutputs; i++, index++) {
             pylong = PySequence_GetItem(pyouts, i);
             if (!PyLong_Check(pylong)) {
                 PyErr_SetString(PyExc_TypeError, "expected output to be an int");
@@ -159,7 +159,7 @@ _pycov2esprcov(
             }
 
             Py_DECREF(pylong);
-        } /* for (i = 0; i < num_outputs; i++) */
+        } /* for (i = 0; i < noutputs; i++) */
         Py_DECREF(pyouts);
 
         if (savef) F = sf_addset(F, cf);
@@ -184,7 +184,7 @@ error:
 ** Convert an Espresso cover to a Python set(((int), (int)))
 */
 static PyObject *
-_esprcov2pycov(int num_inputs, int num_outputs, set_family_t *F)
+_esprcov2pycov(int ninputs, int noutputs, set_family_t *F)
 {
     int i;
 
@@ -197,10 +197,10 @@ _esprcov2pycov(int num_inputs, int num_outputs, set_family_t *F)
         goto error;
 
     foreach_set(F, last, p) {
-        pyins = PyTuple_New(num_inputs);
+        pyins = PyTuple_New(ninputs);
         if (pyins == NULL)
             goto decref_pyset;
-        for (i = 0; i < num_inputs; i++) {
+        for (i = 0; i < ninputs; i++) {
             pylong = PyLong_FromLong((long) GETINPUT(p, i));
             if (PyTuple_SetItem(pyins, i, pylong) < 0) {
                 Py_DECREF(pylong);
@@ -209,12 +209,12 @@ _esprcov2pycov(int num_inputs, int num_outputs, set_family_t *F)
             }
         }
 
-        pyouts = PyTuple_New(num_outputs);
+        pyouts = PyTuple_New(noutputs);
         if (pyouts == NULL) {
             Py_DECREF(pyins);
             goto decref_pyset;
         }
-        for (i = 0; i < num_outputs; i++) {
+        for (i = 0; i < noutputs; i++) {
             pylong = PyLong_FromLong((long) GETOUTPUT(p, i));
             if (PyTuple_SetItem(pyouts, i, pylong) < 0) {
                 Py_DECREF(pylong);
@@ -340,16 +340,16 @@ PyDoc_STRVAR(_espresso_docstring,
 \n\
     Parameters\n\
     ----------\n\
-    num_inputs : posint\n\
+    ninputs : posint\n\
         Number of inputs in the implicant in-part vector.\n\
 \n\
-    num_outputs : posint\n\
+    noutputs : posint\n\
         Number of outputs in the implicant out-part vector.\n\
 \n\
     cover : iter(((int), (int)))\n\
         The iterator over multi-output implicants.\n\
         A multi-output implicant is a pair of row vectors of dimension\n\
-        *num_inputs*, and *num_outputs*, respectively.\n\
+        *ninputs*, and *noutputs*, respectively.\n\
         The input part contains integers in positional cube notation,\n\
         and the output part contains entries in {0, 1, 2}.\n\
 \n\
@@ -371,13 +371,13 @@ static PyObject *
 _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *keywords[] = {
-        "num_inputs", "num_outputs", "cover", "intype",
+        "ninputs", "noutputs", "cover", "intype",
         NULL
     };
 
     int err;
 
-    int num_inputs, num_outputs;
+    int ninputs, noutputs;
     PyObject *cover;
     int intype = F_type | D_type;
 
@@ -389,15 +389,15 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
 
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "iiO|i:espresso", keywords,
-            &num_inputs, &num_outputs, &cover, &intype))
+            &ninputs, &noutputs, &cover, &intype))
         goto error;
 
-    if (num_inputs <= 0) {
-        PyErr_Format(PyExc_ValueError, "expected num_inputs > 0, got: %d", num_inputs);
+    if (ninputs <= 0) {
+        PyErr_Format(PyExc_ValueError, "expected ninputs > 0, got: %d", ninputs);
         goto error;
     }
-    if (num_outputs <= 0) {
-        PyErr_Format(PyExc_ValueError, "expected num_outputs > 0, got: %d", num_outputs);
+    if (noutputs <= 0) {
+        PyErr_Format(PyExc_ValueError, "expected noutputs > 0, got: %d", noutputs);
         goto error;
     }
     if (!(intype & FR_type)) {
@@ -406,10 +406,10 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     }
 
     /* Initialize global CUBE dimensions */
-    CUBE.num_binary_vars = num_inputs;
-    CUBE.num_vars = num_inputs + 1;
+    CUBE.num_binary_vars = ninputs;
+    CUBE.num_vars = ninputs + 1;
     CUBE.part_size = (int *) malloc(CUBE.num_vars * sizeof(int));
-    CUBE.part_size[CUBE.num_vars-1] = num_outputs;
+    CUBE.part_size[CUBE.num_vars-1] = noutputs;
     cube_setup();
 
     /* Initialize F^on, F^dc, F^off */
@@ -417,7 +417,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     D = sf_new(10, CUBE.size);
     R = sf_new(10, CUBE.size);
 
-    if (!_pycov2esprcov(F, D, R, num_inputs, num_outputs, cover, intype))
+    if (!_pycov2esprcov(F, D, R, ninputs, noutputs, cover, intype))
         goto free_espresso;
 
     if (intype == F_type || intype == FD_type) {
@@ -444,7 +444,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     sf_free(Fsave);
 
     /* Might return NULL */
-    pyret = _esprcov2pycov(num_inputs, num_outputs, F);
+    pyret = _esprcov2pycov(ninputs, noutputs, F);
 
 free_espresso:
     sf_free(F);
