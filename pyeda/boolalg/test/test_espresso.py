@@ -51,9 +51,9 @@ def test_errors():
     assert_raises(TypeError, espresso.espresso, 2, 2, {((1, 2), ('0', '0'))})
     # expected output in {0, 1, 2}
     assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2), (0, 3))})
-    # expected num_inputs > 0
+    # expected ninputs > 0
     assert_raises(ValueError, espresso.espresso, 0, 2, {((), (0, 0))})
-    # expected num_outputs > 0
+    # expected noutputs > 0
     assert_raises(ValueError, espresso.espresso, 2, 0, {((1, 2), ())})
     # expected intype in {f, r, fd, fr, dr, fdr}
     assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2), (0, 1))}, intype=0)
