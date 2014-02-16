@@ -425,8 +425,12 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
         R = complement(cube2list(F, D));
     }
     else if (intype == FR_type) {
+        //set_family_t *X;
         sf_free(D);
         D = complement(cube2list(F, R));
+        //X = d1merge(sf_join(F, R), CUBE.num_vars - 1);
+        //D = complement(cube1list(X));
+        //sf_free(X);
     }
     else if (intype == R_type || intype == DR_type) {
         sf_free(F);
