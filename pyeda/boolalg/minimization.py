@@ -8,10 +8,19 @@ Interface Functions:
 from pyeda.boolalg import boolfunc
 from pyeda.boolalg.espresso import (
     FTYPE, DTYPE, RTYPE,
-    espresso, EspressoError,
+    set_config, espresso, EspressoError,
 )
 from pyeda.boolalg.expr import exprvar, Expression, Or, And
 from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC
+
+CONFIG = dict(
+    single_expand=False,
+    remove_essential=True,
+    force_irredundant=True,
+    unwrap_onset=True,
+    recompute_onset=False,
+    use_super_gasp=False,
+)
 
 def espresso_exprs(*exprs):
     """Return a tuple of expressions optimized using Espresso."""
@@ -51,6 +60,8 @@ def espresso_exprs(*exprs):
 
         cover.add((tuple(invec), tuple(outvec)))
 
+    set_config(**CONFIG)
+
     cover = espresso(ninputs, noutputs, cover, intype=FTYPE)
     return _cover2exprs(inputs, noutputs, cover)
 
@@ -81,6 +92,8 @@ def espresso_tts(*tts):
             else:
                 raise ValueError("expected truth table entry in {0, 1, -}")
         cover.add((tuple(invec), tuple(outvec)))
+
+    set_config(**CONFIG)
 
     cover = espresso(ninputs, noutputs, cover, intype=FTYPE|DTYPE|RTYPE)
     inputs = [exprvar(v.names, v.indices) for v in inputs]
