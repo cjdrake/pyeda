@@ -7,8 +7,8 @@ from pyeda.boolalg import picosat
 from nose.tools import assert_raises
 
 def test_basic():
-    assert picosat.COPYRIGHT == "Copyright (c) 2006 - 2012 Armin Biere JKU Linz"
-    assert picosat.VERSION == "957"
+    assert picosat.COPYRIGHT == "Copyright (c) 2006 - 2014 Armin Biere JKU Linz"
+    assert picosat.VERSION == "959"
 
 def test_satisfy_one_errors():
     assert_raises(TypeError, picosat.satisfy_one, 6, ((1, -2, 'bad_lit'), (-4, 5, -6)))

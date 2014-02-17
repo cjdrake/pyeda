@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2006 - 2012, Armin Biere, Johannes Kepler University.
+Copyright (c) 2006 - 2014, Armin Biere, Johannes Kepler University.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
@@ -57,7 +57,7 @@ const char *picosat_config (void);
 const char *picosat_copyright (void);
 
 /*------------------------------------------------------------------------*/
-/* You can make picosat use an external memory manager instead of the one
+/* You can make PicoSAT use an external memory manager instead of the one
  * provided by LIBC. But then you need to call these three function before
  * 'picosat_init'.  The memory manager functions here all have an additional
  * first argument which is a pointer to the memory manager, but otherwise
@@ -92,9 +92,9 @@ void picosat_reset (PicoSAT *);         /* destructor */
 void picosat_set_output (PicoSAT *, FILE *);
 
 /* Measure all time spent in all calls in the solver.  By default only the
- * time spent in 'picosat_sat' is measured.  Enabling this function may for
- * instance triple the time needed to add large CNFs, since every call to
- * 'picosat_add' will trigger a call to 'getrusage'.
+ * time spent in 'picosat_sat' is measured.  Enabling this function might
+ * for instance triple the time needed to add large CNFs, since every call
+ * to 'picosat_add' will trigger a call to 'getrusage'.
  */
 void picosat_measure_all_calls (PicoSAT *);
 
@@ -190,7 +190,7 @@ void picosat_set_seed (PicoSAT *, unsigned random_number_generator_seed);
  * is not necessary if you only use 'picosat_set_incremental_rup_file'.
  *
  * NOTE, trace generation code is not necessarily included, e.g. if you
- * configure picosat with full optimzation as './configure -O' or with
+ * configure PicoSAT with full optimzation as './configure -O' or with
  
  * you do not get any results by trying to generate traces.
  *
@@ -222,10 +222,10 @@ void picosat_save_original_clauses (PicoSAT *);
 int picosat_inc_max_var (PicoSAT *);
 
 /*------------------------------------------------------------------------*/
-/* Push/pop semantics for PicoSAT.   'picosat_push' opens up a new context.
- * All clauses added in this context are attached to it and discared when
- * the context is closed with 'picosat_pop'.  It is also possible to
- * nest contexts.
+/* Push and pop semantics for PicoSAT.   'picosat_push' opens up a new
+ * context.  All clauses added in this context are attached to it and
+ * discarded when the context is closed with 'picosat_pop'.  It is also
+ * possible to nest contexts.
  *
  * The current implementation uses a new internal variable for each context.
  * However, the indices for these internal variables are shared with
@@ -287,9 +287,9 @@ unsigned long long picosat_propagations (PicoSAT *);	/* #propagations */
 unsigned long long picosat_decisions (PicoSAT *);	/* #decisions */
 unsigned long long picosat_visits (PicoSAT *);		/* #visits */
 
-/* The time spent in the library or in 'picosat_sat'.  The former is only
- * returned if, right after initialization 'picosat_measure_all_calls'
- * is called.
+/* The time spent in calls to the library or in 'picosat_sat' respectively.
+ * The former is returned if, right after initialization
+ * 'picosat_measure_all_calls' is called.
  */
 double picosat_seconds (PicoSAT *);
 
@@ -316,22 +316,25 @@ int picosat_add_lits (PicoSAT *, int * lits);
  */
 void picosat_print (PicoSAT *, FILE *);
 
-/* You can add arbitrary many assumptions before the next 'picosat_sat'.
- * This is similar to the using assumptions in MiniSAT, except that you do
- * not have to collect all your assumptions yourself.  In PicoSAT you can
- * add one after the other before the next call to 'picosat_sat'.
+/* You can add arbitrary many assumptions before the next 'picosat_sat'
+ * call.  This is similar to the using assumptions in MiniSAT, except that
+ * for PicoSAT you do not have to collect all your assumptions in a vector
+ * yourself.  In PicoSAT you can add one after the other, to be used in the 
+ * next call to 'picosat_sat'.
  *
- * These assumptions can be seen as adding unit clauses with those
+ * These assumptions can be interpreted as adding unit clauses with those
  * assumptions as literals.  However these assumption clauses are only valid
- * for exactly the next call to 'picosat_sat'.  And will be removed
- * afterwards, e.g. in future calls to 'picosat_sat' after the next one they
- * are not assumed, unless they are assumed again trough 'picosat_assume'.
+ * for exactly the next call to 'picosat_sat', and will be removed
+ * afterwards, e.g. in following future calls to 'picosat_sat' after the
+ * next 'picosat_sat' call, unless they are assumed again trough
+ * 'picosat_assume'.
  *
  * More precisely, assumptions actually remain valid even after the next
- * call to 'picosat_sat' returns.  Valid means they remain 'assumed' until a
- * call to 'picosat_add', 'picosat_assume', or another 'picosat_sat,
- * following the first 'picosat_sat'.  They need to stay valid for
- * 'picosat_failed_assumption' to return correct values.  
+ * call to 'picosat_sat' has returned.  Valid means they remain 'assumed'
+ * internally until a call to 'picosat_add', 'picosat_assume', or a second
+ * 'picosat_sat', following the first 'picosat_sat'.  The reason for keeping
+ * them valid is to allow 'picosat_failed_assumption' to return correct
+ * values.  
  *
  * Example:
  *
@@ -530,9 +533,8 @@ const int * picosat_maximal_satisfiable_subset_of_assumptions (PicoSAT *);
  * can be used to iterate over all maximal consistent subsets of
  * the set of assumptions {a1,a2,a3,a4}.
  *
- *
  * It could be beneficial to set the default phase of assumptions
- * to true (positive).  This can speed up the computation.
+ * to true (positive).  This might speed up the computation.
  */
 const int * 
 picosat_next_maximal_satisfiable_subset_of_assumptions (PicoSAT *);
@@ -545,13 +547,14 @@ picosat_next_maximal_satisfiable_subset_of_assumptions (PicoSAT *);
  * subset functions above).
  *
  * It could be beneficial to set the default phase of assumptions
- * to true (positive).  This may speed up the computation.
+ * to true (positive).  This might speed up the computation.
  */
 const int *
 picosat_next_minimal_correcting_subset_of_assumptions (PicoSAT *);
 
 /* Compute the union of all minmal correcting sets, which is called
- * the 'high level union of all minimal unsatisfiable subset sets'.
+ * the 'high level union of all minimal unsatisfiable subset sets'
+ * or 'HUMUS' in our papers.
  *
  * It uses 'picosat_next_minimal_correcting_subset_of_assumptions' and
  * the same notes and advices apply.  In particular, this implies that
@@ -577,18 +580,19 @@ picosat_humus (PicoSAT *,
  * larger then the maximum variable added so far).  The next call to
  * 'picosat_sat' also returns 'SATISFIABLE'. If this function
  * 'picosat_changed' returns '0', then the assignment to the old variables
- * did not change.  Otherwise it may have changed.   The return value to
- * this function is only valid until new clauses are added through
- * 'picosat_add', an assumption is made through 'picosat_assume', or again
- * 'picosat_sat' is called.  This is the same assumption as for
- * 'picosat_deref'.
+ * is guaranteed to not have changed.  Otherwise it might have changed.
+ * 
+ * The return value to this function is only valid until new clauses are
+ * added through 'picosat_add', an assumption is made through
+ * 'picosat_assume', or again 'picosat_sat' is called.  This is the same
+ * assumption as for 'picosat_deref'.
  *
- * TODO currently this function may also return a non zero value even if the
- * old assignment did not change, because it only checks whether the
+ * TODO currently this function might also return a non zero value even if
+ * the old assignment did not change, because it only checks whether the
  * assignment of at least one old variable was flipped at least once during
  * the search.  In principle it should be possible to be exact in the other
- * direcetion as well by using a counter of variables that have an odd
- * number of flips.  But this is not implemented yet.
+ * direction as well by using a counter of variables that have an odd number
+ * of flips.  But this is not implemented yet.
  */
 int picosat_changed (PicoSAT *);
 
@@ -598,8 +602,9 @@ int picosat_changed (PicoSAT *);
  * 'picosat_enable_trace_generation' right after calling 'picosat_init'.
  *
  * TODO: using these functions in incremental mode with failed assumptions
- * has only been tested for 'picosat_corelit' thoroughly.  The others may
- * only work in non-incremental mode or without using 'picosat_assume'.
+ * has only been tested for 'picosat_corelit' thoroughly.  The others
+ * probably only work in non-incremental mode or without using
+ * 'picosat_assume'.
  */
 
 /* This function determines whether the i'th added original clause is in the
