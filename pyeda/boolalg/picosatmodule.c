@@ -658,7 +658,7 @@ PyInit_picosat(void)
         goto error;
 
     /* Create constants */
-    if (PyModule_AddStringConstant(pymodule, "VERSION", "957") < 0)
+    if (PyModule_AddStringConstant(pymodule, "VERSION", "959") < 0)
         goto error;
 
     if (PyModule_AddStringConstant(pymodule, "COPYRIGHT", picosat_copyright()) < 0)

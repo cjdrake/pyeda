@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2006 - 2012, Armin Biere, Johannes Kepler University.
+Copyright (c) 2006 - 2014, Armin Biere, Johannes Kepler University.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
@@ -6736,7 +6736,7 @@ extract_all_failed_assumptions (PS * ps)
 const char *
 picosat_copyright (void)
 {
-  return "Copyright (c) 2006 - 2012 Armin Biere JKU Linz";
+  return "Copyright (c) 2006 - 2014 Armin Biere JKU Linz";
 }
 
 PicoSAT *
