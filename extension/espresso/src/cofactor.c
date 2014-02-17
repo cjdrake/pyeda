@@ -212,7 +212,7 @@ massive_count(set **T)
                 mostactive = active,
                 mostzero = CDATA.var_zeros[best],
                 mostbalanced = maxactive;
-            else if (active == mostactive)
+            else if (active == mostactive) {
                 // secondary condition is to maximize the number zeros
                 // for binary variables, this is the same as minimum # of 2's
                 if (CDATA.var_zeros[var] > mostzero)
@@ -225,6 +225,7 @@ massive_count(set **T)
                     if (maxactive < mostbalanced)
                         best = var,
                         mostbalanced = maxactive;
+            }
 
             CDATA.parts_active[var] = active;
             CDATA.is_unate[var] = (active == 1);
