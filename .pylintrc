@@ -148,6 +148,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # Good variable names which should always be accepted, separated by a comma
 # _ : generic
 # i, j, k : iterator index
+# it : generic iterator
 # ab, cd : short-hand for positional cube variables
 # s, d1, d0 : conventional ITE (if-then-else) variable names s ? d1 : d0
 # p, q : conventional Implies variable names p => q
@@ -166,10 +167,10 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # bv : BitVector instance
 # op : Boolean operator
 # Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE : Expression factory functions
-# Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel : Expression higher-order factory functions
+# Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel, Mux : Expression higher-order factory functions
 # ForAll, Exists : Expression quantifiers
 # NF_Not, DNF_Or, CNF_And : NormalForm factory functions
-good-names=_,i,j,k,ab,cd,s,d1,d0,p,q,v,vs,bf,ex,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Not,Or,And,Xor,Xnor,Equal,Unequal,Implies,ITE,Nor,Nand,OneHot0,OneHot,Majority,AchillesHeel,ForAll,Exists,NF_Not,DNF_Or,CNF_And
+good-names=_,i,j,k,it,ab,cd,s,d1,d0,p,q,v,vs,bf,ex,f,g,h,cf,fs,nf,tt,sl,vf,vfs,bv,op,Not,Or,And,Xor,Xnor,Equal,Unequal,Implies,ITE,Nor,Nand,OneHot0,OneHot,Majority,AchillesHeel,Mux,ForAll,Exists,NF_Not,DNF_Or,CNF_And
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz

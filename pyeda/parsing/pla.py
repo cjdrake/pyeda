@@ -56,12 +56,12 @@ def parse_pla(fin):
         if m_in:
             if pla['ninputs'] is None:
                 try:
-                    n = int(m_in.group(1))
-                except (TypeError, ValueError) as exc:
+                    num = int(m_in.group(1))
+                except (TypeError, ValueError):
                     raise PLAError(".i expected a positive int")
-                if n <= 0:
+                if num <= 0:
                     raise PLAError(".i expected a positive int")
-                pla['ninputs'] = n
+                pla['ninputs'] = num
             else:
                 raise PLAError(".i declared more than once")
             continue
@@ -71,12 +71,12 @@ def parse_pla(fin):
         if m_out:
             if pla['noutputs'] is None:
                 try:
-                    n = int(m_out.group(1))
-                except (TypeError, ValueError) as exc:
+                    num = int(m_out.group(1))
+                except (TypeError, ValueError):
                     raise PLAError(".o expected a positive int")
-                if n <= 0:
+                if num <= 0:
                     raise PLAError(".o expected a positive int")
-                pla['noutputs'] = n
+                pla['noutputs'] = num
             else:
                 raise PLAError(".o declared more than once")
             continue
