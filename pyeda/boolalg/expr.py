@@ -17,6 +17,8 @@ Interface Functions:
     Nor, Nand
     OneHot0, OneHot
     Majority
+    AchillesHeel
+    Mux
 
     ForAll, Exists
 
