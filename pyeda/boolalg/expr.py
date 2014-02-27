@@ -66,6 +66,16 @@ from pyeda.util import bit_on, clog2, parity, cached_property
 EXPRVARIABLES = dict()
 EXPRCOMPLEMENTS = dict()
 
+_ASSUMPTIONS = set()
+
+def _assume2upoint():
+    """Convert global assumptions to an untyped point."""
+    return (
+        frozenset(lit.exprvar.uniqid for lit in _ASSUMPTIONS
+                  if isinstance(lit, ExprComplement)),
+        frozenset(lit.uniqid for lit in _ASSUMPTIONS
+                  if isinstance(lit, ExprVariable))
+    )
 
 def exprvar(name, index=None):
     """Return an Expression Variable.
@@ -494,6 +504,8 @@ class Expression(boolfunc.Function):
         return tuple(sorted(self.support))
 
     def urestrict(self, upoint):
+        aupnt = _assume2upoint()
+        upoint = (upoint[0] | aupnt[0], upoint[1] | aupnt[1])
         intersect = upoint[0] & upoint[1]
         if intersect:
             parts = list()
@@ -510,13 +522,20 @@ class Expression(boolfunc.Function):
     def satisfy_one(self):
         if self.is_cnf():
             cnf = expr2dimacscnf(self)
-            soln = picosat.satisfy_one(cnf.nvars, cnf.clauses)
+            assumptions = [cnf.litmap[lit] for lit in _ASSUMPTIONS]
+            soln = picosat.satisfy_one(cnf.nvars, cnf.clauses,
+                                       assumptions=assumptions)
             if soln is None:
                 return None
             else:
                 return cnf.soln2point(soln)
         else:
-            upoint = sat.backtrack(self)
+            if _ASSUMPTIONS:
+                aupnt = _assume2upoint()
+                upoint = sat.backtrack(self.urestrict(aupnt))
+                upoint = (upoint[0] | aupnt[0], upoint[1] | aupnt[1])
+            else:
+                upoint = sat.backtrack(self)
         if upoint is None:
             return None
         else:
@@ -1013,6 +1032,12 @@ class ExprLiteral(Expression, sat.DPLLInterface):
     def __init__(self):
         super(ExprLiteral, self).__init__()
         self._simplified = True
+
+    def __enter__(self):
+        _ASSUMPTIONS.add(self)
+
+    def __exit__(self, exc_type, exc_val, traceback):
+        _ASSUMPTIONS.discard(self)
 
     # From Expression
     def _traverse(self, visited):
@@ -1677,6 +1702,20 @@ class ExprAnd(ExprOrAnd):
 
     def __str__(self):
         return "And(" + self.args_str(", ") + ")"
+
+    def __enter__(self):
+        for arg in self.args:
+            if isinstance(arg, ExprLiteral):
+                _ASSUMPTIONS.add(arg)
+            else:
+                raise ValueError("expected assumption to be a literal")
+
+    def __exit__(self, exc_type, exc_val, traceback):
+        for arg in self.args:
+            if isinstance(arg, ExprLiteral):
+                _ASSUMPTIONS.discard(arg)
+            else:
+                raise ValueError("expected assumption to be a literal")
 
     def to_unicode(self):
         parts = list()
