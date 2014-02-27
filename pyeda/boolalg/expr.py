@@ -491,6 +491,17 @@ class Expression(boolfunc.Function):
     def inputs(self):
         return tuple(sorted(self.support))
 
+    def urestrict(self, upoint):
+        intersect = upoint[0] & upoint[1]
+        if intersect:
+            parts = list()
+            for uniqid in intersect:
+                v = EXPRVARIABLES[uniqid]
+                nv = str(~v)
+                parts += [str(v), str(nv)]
+            raise ValueError("conflicting constraints: " + ", ".join(parts))
+        return self._urestrict(upoint)
+
     def satisfy_one(self):
         if self.is_cnf():
             cnf = expr2dimacscnf(self)
@@ -862,7 +873,7 @@ class ExprConstant(Expression, sat.DPLLInterface):
     def support(self):
         return frozenset()
 
-    def urestrict(self, upoint):
+    def _urestrict(self, upoint):
         return self
 
     def compose(self, mapping):
@@ -1095,7 +1106,7 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
     def support(self):
         return frozenset([self, ])
 
-    def urestrict(self, upoint):
+    def _urestrict(self, upoint):
         if self.uniqid in upoint[0]:
             return EXPRZERO
         elif self.uniqid in upoint[1]:
@@ -1170,7 +1181,7 @@ class ExprComplement(ExprLiteral):
     def support(self):
         return frozenset([self.exprvar, ])
 
-    def urestrict(self, upoint):
+    def _urestrict(self, upoint):
         if self.exprvar.uniqid in upoint[0]:
             return EXPRONE
         elif self.exprvar.uniqid in upoint[1]:
@@ -1238,8 +1249,8 @@ class ExprNot(Expression):
     def support(self):
         return self.arg.support
 
-    def urestrict(self, upoint):
-        new_arg = self.arg.urestrict(upoint)
+    def _urestrict(self, upoint):
+        new_arg = self.arg._urestrict(upoint)
         if new_arg is not self.arg:
             return self.__class__(new_arg).simplify()
         else:
@@ -1300,9 +1311,9 @@ class _ArgumentContainer(Expression):
     def support(self):
         return frozenset.union(*[arg.support for arg in self.args])
 
-    def urestrict(self, upoint):
+    def _urestrict(self, upoint):
         if self.usupport & (upoint[0] | upoint[1]):
-            args = [arg.urestrict(upoint) for arg in self.args]
+            args = [arg._urestrict(upoint) for arg in self.args]
             return self.__class__(*args).simplify()
         else:
             return self.simplify()
@@ -1381,13 +1392,13 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         return id(self) < id(other)
 
     # From Function
-    def urestrict(self, upoint):
+    def _urestrict(self, upoint):
         if self.usupport & (upoint[0] | upoint[1]):
             # speed hack
             if self.DOMINATOR in self.args:
                 return self.DOMINATOR
             else:
-                args = {arg.urestrict(upoint) for arg in self.args}
+                args = {arg._urestrict(upoint) for arg in self.args}
             return self.__class__(*args).simplify()
         else:
             return self.simplify()
@@ -1732,7 +1743,7 @@ class ExprAnd(ExprOrAnd):
                 bcp_upnt = clause.bcp()
                 upnt = (upnt[0] | bcp_upnt[0], upnt[1] | bcp_upnt[1])
         if upnt[0] or upnt[1]:
-            bcp_upnt = self.urestrict(upnt).bcp()
+            bcp_upnt = self._urestrict(upnt).bcp()
             if bcp_upnt is None:
                 return None
             else:
@@ -1812,13 +1823,13 @@ class ExprNor(ExprNorNand):
         return "\\overline{" + ExprOr(*self.args).to_latex() + "}"
 
     # From Function
-    def urestrict(self, upoint):
+    def _urestrict(self, upoint):
         if self.usupport & (upoint[0] | upoint[1]):
             # speed hack
             if EXPRONE in self.args:
                 return EXPRZERO
             else:
-                args = {arg.urestrict(upoint) for arg in self.args}
+                args = {arg._urestrict(upoint) for arg in self.args}
             return self.__class__(*args).simplify()
         else:
             return self.simplify()
@@ -1884,13 +1895,13 @@ class ExprNand(ExprNorNand):
         return "\\overline{" + ExprAnd(*self.args).to_latex() + "}"
 
     # From Function
-    def urestrict(self, upoint):
+    def _urestrict(self, upoint):
         if self.usupport & (upoint[0] | upoint[1]):
             # speed hack
             if EXPRZERO in self.args:
                 return EXPRONE
             else:
-                args = {arg.urestrict(upoint) for arg in self.args}
+                args = {arg._urestrict(upoint) for arg in self.args}
             return self.__class__(*args).simplify()
         else:
             return self.simplify()
@@ -2516,7 +2527,7 @@ def _iter_zeros(expr):
         upnt0 = frozenset([v.uniqid]), frozenset()
         upnt1 = frozenset(), frozenset([v.uniqid])
         for upnt in [upnt0, upnt1]:
-            for zero_upnt in _iter_zeros(expr.urestrict(upnt)):
+            for zero_upnt in _iter_zeros(expr._urestrict(upnt)):
                 yield (upnt[0] | zero_upnt[0], upnt[1] | zero_upnt[1])
 
 def _iter_ones(expr):
@@ -2528,7 +2539,7 @@ def _iter_ones(expr):
         upnt0 = frozenset([v.uniqid]), frozenset()
         upnt1 = frozenset(), frozenset([v.uniqid])
         for upnt in [upnt0, upnt1]:
-            for one_upnt in _iter_ones(expr.urestrict(upnt)):
+            for one_upnt in _iter_ones(expr._urestrict(upnt)):
                 yield (upnt[0] | one_upnt[0], upnt[1] | one_upnt[1])
 
 def _tseitin(expr, auxvarname, auxvars=None):
