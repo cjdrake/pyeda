@@ -1240,14 +1240,14 @@ class ExprNot(Expression):
 
     def urestrict(self, upoint):
         new_arg = self.arg.urestrict(upoint)
-        if id(new_arg) != id(self.arg):
+        if new_arg is not self.arg:
             return self.__class__(new_arg).simplify()
         else:
             return self
 
     def compose(self, mapping):
         new_arg = self.arg.compose(mapping)
-        if id(new_arg) != id(self.arg):
+        if new_arg is not self.arg:
             return self.__class__(new_arg).simplify()
         else:
             return self
@@ -2317,10 +2317,10 @@ class ExprImplies(_ArgumentContainer):
         elif q is EXPRZERO:
             return ExprNot(p).simplify()
         # p => p = 1
-        elif p == q:
+        elif p is q:
             return EXPRONE
         # ~p => p = p
-        elif isinstance(p, ExprLiteral) and ~p == q:
+        elif isinstance(p, ExprLiteral) and ~p is q:
             return q.simplify()
 
         obj = self.__class__(p, q)
@@ -2404,7 +2404,7 @@ class ExprITE(_ArgumentContainer):
         elif d0 is EXPRONE:
             return ExprOr(ExprNot(s), d1).simplify()
         # s ? d1 : d1 = d1
-        elif d1 == d0:
+        elif d1 is d0:
             return d1.simplify()
 
         obj = self.__class__(s, d1, d0)
