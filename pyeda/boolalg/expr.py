@@ -499,10 +499,13 @@ class Expression(boolfunc.Function):
             parts = list()
             for uniqid in intersect:
                 v = EXPRVARIABLES[uniqid]
-                nv = str(~v)
-                parts += [str(v), str(nv)]
+                parts += [str(v), str(~v)]
             raise ValueError("conflicting constraints: " + ", ".join(parts))
         return self._urestrict(upoint)
+
+    def _urestrict(self, upoint):
+        """Implementation of restrict after error-checking."""
+        raise NotImplementedError()
 
     def satisfy_one(self):
         if self.is_cnf():
