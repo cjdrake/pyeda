@@ -522,8 +522,7 @@ class Expression(boolfunc.Function):
         if self.is_cnf():
             litmap, cnf = expr2dimacscnf(self)
             assumptions = [litmap[lit] for lit in _ASSUMPTIONS]
-            soln = picosat.satisfy_one(cnf.nvars, cnf.clauses,
-                                       assumptions=assumptions)
+            soln = cnf.satisfy_one(assumptions)
             if soln is None:
                 return None
             else:
@@ -543,7 +542,7 @@ class Expression(boolfunc.Function):
     def satisfy_all(self):
         if self.is_cnf():
             litmap, cnf = expr2dimacscnf(self)
-            for soln in picosat.satisfy_all(cnf.nvars, cnf.clauses):
+            for soln in cnf.satisfy_all():
                 yield cnf.soln2point(soln, litmap)
         else:
             for upoint in sat.iter_backtrack(self):
@@ -2543,6 +2542,24 @@ class ConjNormalForm(NormalForm):
         clauses = {frozenset(-idx for idx in clause) for clause in self.clauses}
         return DisjNormalForm(self.nvars, clauses)
 
+    def satisfy_one(self, assumptions=None):
+        """
+        If the input CNF is satisfiable, return a satisfying input point.
+        A contradiction will return None.
+        """
+        return picosat.satisfy_one(self.nvars, self.clauses,
+                                   assumptions=assumptions)
+
+    def satisfy_all(self):
+        """Iterate through all satisfying input points."""
+        yield from picosat.satisfy_all(self.nvars, self.clauses)
+
+    @staticmethod
+    def soln2point(soln, litmap):
+        """Convert a solution vector to a point."""
+        return {litmap[i]: int(val > 0)
+                for i, val in enumerate(soln, start=1)}
+
 
 class DimacsCNF(ConjNormalForm):
     """Wrapper class for a DIMACS CNF representation"""
@@ -2550,12 +2567,6 @@ class DimacsCNF(ConjNormalForm):
     def __str__(self):
         formula = super(DimacsCNF, self).__str__()
         return "p cnf {0.nvars} {0.nclauses}\n{1}".format(self, formula)
-
-    @staticmethod
-    def soln2point(soln, litmap):
-        """Convert a solution vector to a point."""
-        return {litmap[i]: int(val > 0)
-                for i, val in enumerate(soln, start=1)}
 
 
 def _iter_zeros(expr):

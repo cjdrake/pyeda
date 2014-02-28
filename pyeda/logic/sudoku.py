@@ -7,7 +7,6 @@ Logic functions for Sudoku
 
 from pyeda.boolalg.expr import And, OneHot, expr2dimacscnf
 from pyeda.boolalg.vexpr import bitvec
-from pyeda.boolalg.picosat import satisfy_one
 
 DIGITS = "123456789"
 
@@ -41,8 +40,7 @@ class SudokuSolver(object):
 
     def solve(self, grid):
         """Return a solution point for a Sudoku grid."""
-        soln = satisfy_one(self.S.nvars, self.S.clauses,
-                           assumptions=self._parse_grid(grid))
+        soln = self.S.satisfy_one(assumptions=self._parse_grid(grid))
         return self.S.soln2point(soln, self.litmap)
 
     def display_solve(self, grid):
