@@ -698,7 +698,6 @@ def test_satisfy():
     assert EXPRZERO.satisfy_one() is None
     assert EXPRONE.satisfy_one() == {}
     assert f.satisfy_one() == {a: 1, b: 0, c: 1, d: 0}
-    assert f.satisfy_one() == {a: 1, b: 0, c: 1, d: 0}
 
     # PLE solution
     f = (a | b | c) & (~a | ~b | c)
@@ -712,6 +711,16 @@ def test_satisfy():
         {a: 1, b: 1, c: 1},
     ]
     assert Xor(a, b, c).satisfy_count() == 4
+
+    # Assumptions
+    f = OneHot(a, b, c)
+    g = Xor(a, b, c)
+    with a, ~b:
+        assert f.satisfy_one() == {a: 1, b: 0, c: 0}
+        assert g.satisfy_one() == {a: 1, b: 0, c: 0}
+    with a & ~b:
+        assert f.satisfy_one() == {a: 1, b: 0, c: 0}
+        assert g.satisfy_one() == {a: 1, b: 0, c: 0}
 
 def test_depth():
     assert (a | b).depth == 1
