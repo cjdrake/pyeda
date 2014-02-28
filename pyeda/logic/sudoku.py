@@ -17,6 +17,7 @@ class SudokuSolver(object):
 
     def __init__(self, varname='x'):
         self.X = bitvec(varname, (1, 10), (1, 10), (1, 10))
+
         V = And(*[
                 And(*[OneHot(*[self.X[r][c][v] for v in range(1, 10)])
                       for c in range(1, 10)])
@@ -35,13 +36,14 @@ class SudokuSolver(object):
                                for c in range(1, 4)])
                       for v in range(1, 10)])
                   for br in range(3) for bc in range(3)])
-        self.S = expr2dimacscnf(And(V, R, C, B))
+
+        self.litmap, self.S = expr2dimacscnf(And(V, R, C, B))
 
     def solve(self, grid):
         """Return a solution point for a Sudoku grid."""
         soln = satisfy_one(self.S.nvars, self.S.clauses,
                            assumptions=self._parse_grid(grid))
-        return self.S.soln2point(soln)
+        return self.S.soln2point(soln, self.litmap)
 
     def display_solve(self, grid):
         """Return a solution point for a Sudoku grid as a string."""
@@ -52,7 +54,7 @@ class SudokuSolver(object):
         chars = [c for c in grid if c in DIGITS or c in "0."]
         if len(chars) != 9**2:
             raise ValueError("expected 9x9 grid")
-        return [self.S.litmap[self.X[i // 9 + 1][i % 9 + 1][int(c)]]
+        return [self.litmap[self.X[i // 9 + 1][i % 9 + 1][int(c)]]
                 for i, c in enumerate(chars) if c in DIGITS]
 
     def _soln2str(self, soln, fancy=False):
