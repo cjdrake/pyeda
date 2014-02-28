@@ -504,8 +504,6 @@ class Expression(boolfunc.Function):
         return tuple(sorted(self.support))
 
     def urestrict(self, upoint):
-        aupnt = _assume2upoint()
-        upoint = (upoint[0] | aupnt[0], upoint[1] | aupnt[1])
         intersect = upoint[0] & upoint[1]
         if intersect:
             parts = list()
