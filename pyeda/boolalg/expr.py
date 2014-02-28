@@ -2555,7 +2555,8 @@ class ConjNormalForm(NormalForm):
 
     def satisfy_all(self):
         """Iterate through all satisfying input points."""
-        yield from picosat.satisfy_all(self.nvars, self.clauses)
+        for soln in picosat.satisfy_all(self.nvars, self.clauses):
+            yield soln
 
     @staticmethod
     def soln2point(soln, litmap):
