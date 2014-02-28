@@ -16,7 +16,7 @@ def test_satisfy_one_errors():
 
 def test_satisfy_one():
     a, b, c = map(expr, 'abc')
-    cnf = expr2dimacscnf(a & b & c)
+    _, cnf = expr2dimacscnf(a & b & c)
     assert picosat.satisfy_one(cnf.nvars, cnf.clauses) == (1, 1, 1)
     assert list(picosat.satisfy_all(cnf.nvars, cnf.clauses)) == [(1, 1, 1)]
 
