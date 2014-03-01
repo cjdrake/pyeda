@@ -179,7 +179,7 @@ That is:
    a \cdot a' = 0
 
 One way to create a complement from a pre-existing variable is to simply
-apply Python's ``-`` unary negate operator.
+apply Python's ``~`` unary negate operator.
 
 For example, let's create a variable and its complement::
 
