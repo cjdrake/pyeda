@@ -4,6 +4,81 @@
   Release Notes
 *****************
 
+Version 0.20
+============
+
+Probably the most useful feature in this release is the ``espresso`` script::
+
+   $ espresso -h
+   usage: espresso [-h] [-e {fast,ness,nirr,nunwrap,onset,strong}] [--fast]
+                   [--no-ess] [--no-irr] [--no-unwrap] [--onset] [--strong]
+                   [file]
+
+   Minimize a PLA file
+
+   positional arguments:
+     file                  PLA file (default: stdin)
+
+   optional arguments:
+     ...
+
+This script implements a subset of the functionality of the original
+``Espresso`` command-line program.
+It uses the new ``parse_pla`` function in the ``pyeda.parsing.pla`` module
+to parse common PLA files.
+Note that the script only intends to implement basic truth-table functionality
+at the moment.
+It doesn't support multiple-valued variables,
+and various other Espresso built-in features.
+
+Added Espresso ``get_config`` and ``set_config`` functions,
+to manipulate global configuration
+
+New ``Bitvector`` methods:
+
+* ``unor`` - unary nor
+* ``unand`` - unary nand
+* ``uxnor`` - unary xnor
+
+Made ``BitVector`` an immutable type.
+As a result, dropped item assignment ``X[0] = a``,
+zero extension ``X.zext(4)``, sign extension ``X.sext(4)``,
+and ``append`` method.
+
+The ``BitVector`` type now supports more overloaded operators:
+
+* ``X + Y`` concatenate two bit vectors
+* ``X << n`` return the bit vector left-shifted by ``n`` places
+* ``X >> n`` return the bit vector right-shifted by ``n`` places
+
+Both left shift and right shift are simple shifts--they use the default
+"carry-in" of zero.
+
+Got rid of ``boolify`` utility function.
+It had been replaced over time by more sophisticated techniques.
+
+There is a new ``Mux`` factory function,
+for multiplexing arbitrarily many input functions.
+
+Update to PicoSAT 959.
+Check the `homepage <http://fmv.jku.at/picosat>`_ for details,
+but it looks like the only changes were related to header file documentation.
+
+Added a neat capability to specify assumptions for SAT-solving using a ``with``
+statement.
+It supports both literal and product-term forms::
+
+   >>> f = Xor(a, b, c)
+   >>> with a, ~b:
+   ...     print(f.satisfy_one())
+   {a: 1, b: 0, c: 0}
+   >>> with a & ~b:
+   ...     print(f.satisfy_one())
+   {a: 1, b: 0, c: 0}
+
+At the moment, this only works for the ``satisfy_one`` method,
+because it is so handy and intuitive.
+
 Version 0.19
 ============
 
