@@ -23,7 +23,6 @@ Interface Classes:
 import collections
 import functools
 import operator
-from warnings import warn
 
 from pyeda.util import bit_on, cached_property
 
@@ -319,24 +318,6 @@ class Function(object):
         raise NotImplementedError()
 
     # Deprecated operators
-    def __neg__(self):
-        warn("-a deprecated, use ~a instead")
-        return self.__invert__()
-
-    def __add__(self, other):
-        warn("a + b deprecated, use a | b instead")
-        return self.__or__(other)
-
-    def __radd__(self, other):
-        return self.__or__(other)
-
-    def __mul__(self, other):
-        warn("a * b deprecated, use a & b instead")
-        return self.__and__(other)
-
-    def __rmul__(self, other):
-        return self.__and__(other)
-
     def __sub__(self, other):
         """Alias: a - b <=> a + -b"""
         raise NotImplementedError()
