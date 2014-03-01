@@ -290,6 +290,10 @@ let's use the `PicoSAT <http://fmv.jku.at/picosat>`_ fast SAT solver to crunch t
    ...     cnf = I & S
    ...     return cnf.satisfy_one()
 
+   >>> def solve(grid):
+   ...     with parse_grid(grid):
+   ...         return S.satisfy_one()
+
 Here is the solution to the :ref:`Example_grid`::
 
    >>> display(solve(grid))
