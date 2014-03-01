@@ -12,6 +12,8 @@
 **     EspressoError
 **
 ** Interface Functions:
+**     get_config
+**     set_config
 **     espresso
 */
 
