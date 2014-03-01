@@ -745,6 +745,40 @@ and can be used to solve very non-trivial problems.
           for SAT solving. This is an active area of research, and no single
           solver is ideal for all cases.
 
+Assumptions
+-----------
+
+A common pattern in SAT-solving is to setup a large database of clauses,
+and attempt to solve the CNF several times with different simplifying
+assumptions.
+This is equivalent to adding unit clauses to the database,
+which can be easily eliminated by boolean constraint propagation.
+
+The ``Expression`` data type supports applying assumptions using the ``with``
+statement.
+Here is an example of creating a nested context of literals that assumes
+``a=1`` and ``b=0``::
+
+   >>> f = Xor(a, b, c)
+   >>> with a, ~b:
+   ...     print(f.satisfy_one())
+   {a: 1, b: 0, c: 0}
+
+There are four satisfying solutions to this function,
+but the return value will always correspond to the input assumptions.
+
+``And`` terms of literals (clauses) may also be used as assumptions::
+
+   >>> with a & ~b:
+   ...     print(f.satisfy_one())
+   {a: 1, b: 0, c: 0}
+
+Note that it is an error to assume conflicting values for a literal::
+
+   >>> with a, ~a:
+   ...     print(f.satisfy_one())
+   ValueError: conflicting constraints: a, ~a
+
 Tseitin's Encoding
 ==================
 
