@@ -67,7 +67,7 @@ Sometimes, instead of minimizing an existing expression,
 you instead start with only a truth table that maps inputs in :math:`{0, 1}`
 to outputs in :math:`{0, 1, *}`, where :math:`*` means "don't care".
 For this type of *incompletely* specified function,
-you may use the ``espresso_tts`` function to find a lost-cost, equivalent
+you may use the ``espresso_tts`` function to find a low-cost, equivalent
 Boolean expression.
 
 Consider the following truth table with four inputs and two outputs:
