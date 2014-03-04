@@ -44,6 +44,14 @@ from pyeda.boolalg.table import (
 
 from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv, BitVector
 
+from pyeda.boolalg.bfarray import (
+    exprarray, exprzeros, exprones, exprvars,
+    bddarray, bddzeros, bddones, bddvars,
+    ttarray, ttzeros, ttones, ttvars,
+    uint2array, int2array,
+    FunctionArray,
+)
+
 try:
     from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
 except ImportError:
