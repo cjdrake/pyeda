@@ -25,11 +25,15 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import exprvar, Or, And, EXPRZERO, EXPRONE
 from pyeda.util import cached_property
 
-# existing BDDVariable references
-BDDVARIABLES = dict()
 
-BDDNODES = weakref.WeakValueDictionary()
-BDDS = weakref.WeakValueDictionary()
+# existing BDDVariable references
+_BDDVARIABLES = dict()
+
+# node/bdd cache
+_BDDNODES = weakref.WeakValueDictionary()
+_BDDS = weakref.WeakValueDictionary()
+
+# unique table
 _RESTRICT_CACHE = weakref.WeakValueDictionary()
 
 
@@ -40,8 +44,8 @@ class BDDNode(object):
         self.low = low
         self.high = high
 
-BDDNODEZERO = BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
-BDDNODEONE = BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
+BDDNODEZERO = _BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
+BDDNODEONE = _BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
 
 
 def bddvar(name, index=None):
@@ -57,10 +61,10 @@ def bddvar(name, index=None):
     """
     bvar = boolfunc.var(name, index)
     try:
-        var = BDDVARIABLES[bvar.uniqid]
+        var = _BDDVARIABLES[bvar.uniqid]
     except KeyError:
-        var = BDDVARIABLES[bvar.uniqid] = BDDVariable(bvar)
-        BDDS[var.node] = var
+        var = _BDDVARIABLES[bvar.uniqid] = BDDVariable(bvar)
+        _BDDS[var.node] = var
     return var
 
 def bddnode(root, low, high):
@@ -70,17 +74,17 @@ def bddnode(root, low, high):
     else:
         key = (root, low, high)
         try:
-            node = BDDNODES[key]
+            node = _BDDNODES[key]
         except KeyError:
-            node = BDDNODES[key] = BDDNode(*key)
+            node = _BDDNODES[key] = BDDNode(*key)
     return node
 
 def bdd(node):
     """Return a unique BDD."""
     try:
-        _bdd = BDDS[node]
+        _bdd = _BDDS[node]
     except KeyError:
-        _bdd = BDDS[node] = BinaryDecisionDiagram(node)
+        _bdd = _BDDS[node] = BinaryDecisionDiagram(node)
     return _bdd
 
 def expr2bddnode(expr):
@@ -129,18 +133,18 @@ def path2point(path):
     point = dict()
     for i, node in enumerate(path[:-1]):
         if node.low is path[i+1]:
-            point[BDDVARIABLES[node.root]] = 0
+            point[_BDDVARIABLES[node.root]] = 0
         elif node.high is path[i+1]:
-            point[BDDVARIABLES[node.root]] = 1
+            point[_BDDVARIABLES[node.root]] = 1
     return point
 
 def upoint2bddpoint(upoint):
     """Convert an untyped point to a BDD point."""
     point = dict()
     for uniqid in upoint[0]:
-        point[BDDVARIABLES[uniqid]] = 0
+        point[_BDDVARIABLES[uniqid]] = 0
     for uniqid in upoint[1]:
-        point[BDDVARIABLES[uniqid]] = 1
+        point[_BDDVARIABLES[uniqid]] = 1
 
 
 class BinaryDecisionDiagram(boolfunc.Function):
@@ -189,7 +193,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         _inputs = list()
         for node in self.traverse():
             if node.root > 0:
-                v = BDDVARIABLES[node.root]
+                v = _BDDVARIABLES[node.root]
                 if v not in _inputs:
                     _inputs.append(v)
         return tuple(reversed(_inputs))
@@ -254,7 +258,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
             elif node is BDDNODEONE:
                 parts += ['n' + str(id(node)), '[label=1,shape=box];']
             else:
-                v = BDDVARIABLES[node.root]
+                v = _BDDVARIABLES[node.root]
                 parts.append('n' + str(id(node)))
                 parts.append('[label="{}",shape=circle];'.format(v))
         for node in self.traverse():
@@ -302,8 +306,8 @@ class _BDDOne(BDDConstant):
         super(_BDDOne, self).__init__(BDDNODEONE)
 
 
-BDDZERO = BDDS[BDDNODEZERO] = _BDDZero()
-BDDONE = BDDS[BDDNODEONE] = _BDDOne()
+BDDZERO = _BDDS[BDDNODEZERO] = _BDDZero()
+BDDONE = _BDDS[BDDNODEONE] = _BDDOne()
 
 CONSTANTS = [BDDZERO, BDDONE]
 

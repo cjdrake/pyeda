@@ -63,8 +63,11 @@ from pyeda.boolalg import boolfunc, picosat, sat
 from pyeda.util import bit_on, clog2, parity, cached_property
 
 
-_ASSUMPTIONS = set()
+# existing ExprVariable/ExprLiteral references
 _EXPRLITERALS = dict()
+
+# satisfy_one literal assumptions
+_ASSUMPTIONS = set()
 
 
 def _assume2upoint():
