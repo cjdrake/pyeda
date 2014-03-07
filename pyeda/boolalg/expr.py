@@ -63,10 +63,9 @@ from pyeda.boolalg import boolfunc, picosat, sat
 from pyeda.util import bit_on, clog2, parity, cached_property
 
 
-EXPRVARIABLES = dict()
-EXPRCOMPLEMENTS = dict()
-
 _ASSUMPTIONS = set()
+_EXPRLITERALS = dict()
+
 
 def _assume2upoint():
     """Convert global assumptions to an untyped point."""
@@ -91,19 +90,18 @@ def exprvar(name, index=None):
     """
     bvar = boolfunc.var(name, index)
     try:
-        var = EXPRVARIABLES[bvar.uniqid]
+        var = _EXPRLITERALS[bvar.uniqid]
     except KeyError:
-        var = EXPRVARIABLES[bvar.uniqid] = ExprVariable(bvar)
+        var = _EXPRLITERALS[bvar.uniqid] = ExprVariable(bvar)
     return var
 
 def exprcomp(exprvar):
     """Return an Expression Complement."""
-    uniqid = ~exprvar.uniqid
+    uniqid = -exprvar.uniqid
     try:
-        comp = EXPRCOMPLEMENTS[uniqid]
+        comp = _EXPRLITERALS[uniqid]
     except KeyError:
-        comp = ExprComplement(exprvar)
-        EXPRCOMPLEMENTS[uniqid] = comp
+        comp = _EXPRLITERALS[uniqid] = ExprComplement(exprvar)
     return comp
 
 def expr(arg, simplify=True, factor=False):
@@ -191,9 +189,9 @@ def upoint2exprpoint(upoint):
     """Convert an untyped point to an Expression point."""
     point = dict()
     for uniqid in upoint[0]:
-        point[EXPRVARIABLES[uniqid]] = 0
+        point[_EXPRLITERALS[uniqid]] = 0
     for uniqid in upoint[1]:
-        point[EXPRVARIABLES[uniqid]] = 1
+        point[_EXPRLITERALS[uniqid]] = 1
     return point
 
 # primitive functions
@@ -509,7 +507,7 @@ class Expression(boolfunc.Function):
         if intersect:
             parts = list()
             for uniqid in intersect:
-                v = EXPRVARIABLES[uniqid]
+                v = _EXPRLITERALS[uniqid]
                 parts += [str(v), str(~v)]
             raise ValueError("conflicting constraints: " + ", ".join(parts))
         return self._urestrict(upoint)
@@ -711,8 +709,8 @@ class Expression(boolfunc.Function):
         else:
             terms = list()
             for upnt in _iter_ones(self):
-                lits = [~EXPRVARIABLES[uniqid] for uniqid in upnt[0]]
-                lits += [EXPRVARIABLES[uniqid] for uniqid in upnt[1]]
+                lits = [~_EXPRLITERALS[uniqid] for uniqid in upnt[0]]
+                lits += [_EXPRLITERALS[uniqid] for uniqid in upnt[1]]
                 terms.append(And(*lits))
             return Or(*terms)
 
@@ -732,8 +730,8 @@ class Expression(boolfunc.Function):
         else:
             terms = list()
             for upnt in _iter_zeros(self):
-                lits = [EXPRVARIABLES[uniqid] for uniqid in upnt[0]]
-                lits += [~EXPRVARIABLES[uniqid] for uniqid in upnt[1]]
+                lits = [_EXPRLITERALS[uniqid] for uniqid in upnt[0]]
+                lits += [~_EXPRLITERALS[uniqid] for uniqid in upnt[1]]
                 terms.append(Or(*lits))
             return And(*terms)
 
