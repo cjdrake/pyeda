@@ -68,6 +68,10 @@ class KW_majority(KeywordToken):
     """Expression 'Majority' keyword"""
     ASTOP = 'majority'
 
+class KW_achillesheel(KeywordToken):
+    """Expression 'AchillesHeel' keyword"""
+    ASTOP = 'achillesheel'
+
 class KW_ite(KeywordToken):
     """Expression 'ITE' keyword"""
     ASTOP = 'ite'
@@ -164,6 +168,7 @@ class BoolExprLexer(RegexLexer):
             (r"\bOneHot0\b", keyword),
             (r"\bOneHot\b", keyword),
             (r"\bMajority\b", keyword),
+            (r"\bAchillesHeel\b", keyword),
 
             (r"\bITE\b", keyword),
             (r"\bImplies\b", keyword),
@@ -199,6 +204,7 @@ class BoolExprLexer(RegexLexer):
         'OneHot0'  : KW_onehot0,
         'OneHot'   : KW_onehot,
         'Majority' : KW_majority,
+        'AchillesHeel' : KW_achillesheel,
 
         'ITE'     : KW_ite,
         'Implies' : KW_implies,
@@ -272,6 +278,7 @@ class BoolExprLexer(RegexLexer):
 #      | 'OneHot0'
 #      | 'OneHot'
 #      | 'Majority'
+#      | 'AchillesHeel'
 #
 # ARGS := EXPR ',' ARGS
 #       | EXPR
@@ -289,6 +296,7 @@ OPN_TOKS = {
     KW_onehot0,
     KW_onehot,
     KW_majority,
+    KW_achillesheel,
 }
 
 FACTOR_TOKS = {

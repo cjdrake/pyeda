@@ -546,6 +546,7 @@ The full list of valid operators accepted by the expression parser:
 * ``OneHot0(...)``
 * ``OneHot(...)``
 * ``Majority(...)``
+* ``AchillesHeel(...)``
 * ``ITE(s, d1, d0)``
 * ``Implies(p, q)``
 * ``Not(a)``
