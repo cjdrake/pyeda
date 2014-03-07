@@ -2653,6 +2653,7 @@ ASTOPS = {
     'onehot0'  : OneHot0,
     'onehot'   : OneHot,
     'majority' : Majority,
+    'achillesheel' : AchillesHeel,
 }
 
 EXCLOPS = {
