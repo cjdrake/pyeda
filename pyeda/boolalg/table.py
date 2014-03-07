@@ -19,6 +19,7 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import exprvar, Or, And
 from pyeda.util import cached_property
 
+
 # Binary-valued positional cube (msb:lsb):
 # 00 : void
 # 01 : 0
@@ -27,7 +28,7 @@ from pyeda.util import cached_property
 PC_VOID, PC_ZERO, PC_ONE, PC_DC = range(4)
 
 # existing TTVariable references
-TTVARIABLES = dict()
+_TTVARIABLES = dict()
 
 _PC2STR = {
     PC_VOID : '?',
@@ -35,6 +36,7 @@ _PC2STR = {
     PC_ONE  : '1',
     PC_DC   : '-'
 }
+
 
 def ttvar(name, index=None):
     """Return a TruthTable variable.
@@ -49,9 +51,9 @@ def ttvar(name, index=None):
     """
     bvar = boolfunc.var(name, index)
     try:
-        var = TTVARIABLES[bvar.uniqid]
+        var = _TTVARIABLES[bvar.uniqid]
     except KeyError:
-        var = TTVARIABLES[bvar.uniqid] = TTVariable(bvar)
+        var = _TTVARIABLES[bvar.uniqid] = TTVariable(bvar)
     return var
 
 def truthtable(inputs, outputs):
@@ -309,7 +311,7 @@ class TruthTable(boolfunc.Function):
         ones = usupport & upoint[1]
         others = usupport - upoint[0] - upoint[1]
         if zeros or ones:
-            inputs = sorted(TTVARIABLES[uniqid] for uniqid in others)
+            inputs = sorted(_TTVARIABLES[uniqid] for uniqid in others)
             def items():
                 """Iterate through restricted outputs."""
                 for i in self._iter_restrict(zeros, ones):
