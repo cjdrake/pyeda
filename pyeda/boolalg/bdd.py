@@ -22,7 +22,7 @@ import random
 import weakref
 
 from pyeda.boolalg import boolfunc
-from pyeda.boolalg.expr import exprvar, Or, And, EXPRZERO, EXPRONE
+from pyeda.boolalg.expr import exprvar, Or, And
 from pyeda.util import cached_property
 
 
@@ -89,9 +89,9 @@ def bdd(node):
 
 def expr2bddnode(expr):
     """Convert an expression into a BDD node."""
-    if expr is EXPRZERO:
+    if expr.is_zero():
         return BDDNODEZERO
-    elif expr is EXPRONE:
+    elif expr.is_one():
         return BDDNODEONE
     else:
         top = expr.top
@@ -110,23 +110,18 @@ def expr2bdd(expr):
 
 def bdd2expr(bdd, conj=False):
     """Convert a binary decision diagram into an expression."""
-    if bdd.node is BDDNODEZERO:
-        return EXPRZERO
-    elif bdd.node is BDDNODEONE:
-        return EXPRONE
+    if conj:
+        outer, inner = (And, Or)
+        paths = _iter_all_paths(bdd.node, BDDNODEZERO)
     else:
-        if conj:
-            outer, inner = (And, Or)
-            paths = _iter_all_paths(bdd.node, BDDNODEZERO)
-        else:
-            outer, inner = (Or, And)
-            paths = _iter_all_paths(bdd.node, BDDNODEONE)
-        terms = list()
-        for path in paths:
-            expr_point = {exprvar(v.names, v.indices): val
-                          for v, val in path2point(path).items()}
-            terms.append(boolfunc.point2term(expr_point, conj))
-        return outer(*[inner(*term) for term in terms])
+        outer, inner = (Or, And)
+        paths = _iter_all_paths(bdd.node, BDDNODEONE)
+    terms = list()
+    for path in paths:
+        expr_point = {exprvar(v.names, v.indices): val
+                      for v, val in path2point(path).items()}
+        terms.append(boolfunc.point2term(expr_point, conj))
+    return outer(*[inner(*term) for term in terms])
 
 def path2point(path):
     """Convert a BDD path to a BDD point."""
