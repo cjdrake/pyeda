@@ -9,8 +9,10 @@ Interface Functions:
 
 Interface Classes:
     TruthTable
-    TTConstant
-    TTVariable
+        TTConstant
+            TTZERO
+            TTONE
+        TTVariable
 """
 
 import array
