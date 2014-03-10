@@ -11,8 +11,10 @@ Interface Functions:
 
 Interface Classes:
     BinaryDecisionDiagram
-    BDDConstant
-    BDDVariable
+        BDDConstant
+            BDDZERO
+            BDDONE
+        BDDVariable
 """
 
 # Disable "redefining name from outer scope"
