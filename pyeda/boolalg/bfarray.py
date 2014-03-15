@@ -670,7 +670,8 @@ def _iter_coords(sls):
         else:
             ranges.append(range(sl.start, sl.stop, sl.step))
     # Iterate through all matching coordinates
-    yield from itertools.product(*ranges)
+    for coord in itertools.product(*ranges):
+        yield coord
 
 def _norm_idx(i, start, stop):
     """Return an index normalized to an array start index."""
