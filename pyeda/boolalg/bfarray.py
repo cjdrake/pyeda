@@ -217,7 +217,7 @@ def uint2array(num, length=None, ftype=Expression):
         return farray(items)
 
 def int2array(num, length=None, ftype=Expression):
-    """Convert a signed integer to a BitVector."""
+    """Convert a signed integer to an farray."""
     if num < 0:
         req_length = clog2(abs(num)) + 1
         items = _uint2items(2**req_length + num, ftype=ftype)
