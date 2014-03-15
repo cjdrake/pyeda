@@ -244,10 +244,12 @@ class farray(object):
         self.items, _shape, self.ftype = _itemize(objs)
         if shape is None:
             self.shape = _shape
-        elif _volume(shape) == len(self.items):
-            self.shape = shape
         else:
-            raise ValueError("expected shape volume to match items")
+            shape = _readshape(shape)
+            if _volume(shape) == len(self.items):
+                self.shape = shape
+            else:
+                raise ValueError("expected shape volume to match items")
 
     def __iter__(self):
         for i in range(self.shape[0][0], self.shape[0][1]):
