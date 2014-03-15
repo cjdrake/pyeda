@@ -45,11 +45,11 @@ from pyeda.boolalg.table import (
 from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv, BitVector
 
 from pyeda.boolalg.bfarray import (
-    exprarray, exprzeros, exprones, exprvars,
-    bddarray, bddzeros, bddones, bddvars,
-    ttarray, ttzeros, ttones, ttvars,
+    exprzeros, exprones, exprvars,
+    bddzeros, bddones, bddvars,
+    ttzeros, ttones, ttvars,
     uint2array, int2array,
-    FunctionArray,
+    farray,
 )
 
 try:
