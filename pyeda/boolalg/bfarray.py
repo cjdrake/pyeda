@@ -639,9 +639,7 @@ def _itemize(objs):
                     raise ValueError("expected valid Function inputs")
             elif not isinstance(obj, ftype):
                 raise ValueError("expected uniform Function types")
-        items = [ftype.box(obj) for obj in objs]
-        shape = ((0, len(objs)), )
-        return items, shape, ftype
+        return list(objs), ((0, len(objs)), ), ftype
     elif all(isseq):
         items = list()
         shape = None
