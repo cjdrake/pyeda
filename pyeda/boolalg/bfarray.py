@@ -2,13 +2,13 @@
 Boolean Function Arrays
 
 Interface Functions:
-    exprzeros
-    exprones
-    exprvars
-
     bddzeros
     bddones
     bddvars
+
+    exprzeros
+    exprones
+    exprvars
 
     ttzeros
     ttones
@@ -56,55 +56,6 @@ _CONSTANTS = {
     TruthTable: (TTZERO, TTONE),
 }
 
-
-def exprzeros(*dims):
-    """
-    Return a new array of given dimensions, filled with EXPRZERO.
-
-    Parameters
-    ----------
-    dims : sequence of int or (int, int)
-        Dimensions of the new array
-
-    Returns
-    -------
-    farray of EXPRZERO with the given dimensions.
-    """
-    return _zeros(Expression, *dims)
-
-def exprones(*dims):
-    """
-    Return a new array of given dimensions, filled with EXPRONE.
-
-    Parameters
-    ----------
-    dims : sequence of int or (int, int)
-        Dimensions of the new array
-
-    Returns
-    -------
-    farray of EXPRONE with the given dimensions.
-    """
-    return _ones(Expression, *dims)
-
-def exprvars(name, *dims):
-    """
-    Return a new array of given dimensions, filled with ExprVariable.
-
-    Parameters
-    ----------
-    dims : sequence of int or (int, int)
-        Dimensions of the new array, e.g:
-
-        * ``4`` means [0:4]
-        * ``4, 8`` means [4:8]
-        * ``4, (3, 8)`` means [0:4][3:8]
-
-    Returns
-    -------
-    farray of ExprVariable with the given dimensions.
-    """
-    return _vars(Expression, name, *dims)
 
 def bddzeros(*dims):
     """
@@ -154,6 +105,55 @@ def bddvars(name, *dims):
     farray of BDDVariable with the given dimensions.
     """
     return _vars(BinaryDecisionDiagram, name, *dims)
+
+def exprzeros(*dims):
+    """
+    Return a new array of given dimensions, filled with EXPRZERO.
+
+    Parameters
+    ----------
+    dims : sequence of int or (int, int)
+        Dimensions of the new array
+
+    Returns
+    -------
+    farray of EXPRZERO with the given dimensions.
+    """
+    return _zeros(Expression, *dims)
+
+def exprones(*dims):
+    """
+    Return a new array of given dimensions, filled with EXPRONE.
+
+    Parameters
+    ----------
+    dims : sequence of int or (int, int)
+        Dimensions of the new array
+
+    Returns
+    -------
+    farray of EXPRONE with the given dimensions.
+    """
+    return _ones(Expression, *dims)
+
+def exprvars(name, *dims):
+    """
+    Return a new array of given dimensions, filled with ExprVariable.
+
+    Parameters
+    ----------
+    dims : sequence of int or (int, int)
+        Dimensions of the new array, e.g:
+
+        * ``4`` means [0:4]
+        * ``4, 8`` means [4:8]
+        * ``4, (3, 8)`` means [0:4][3:8]
+
+    Returns
+    -------
+    farray of ExprVariable with the given dimensions.
+    """
+    return _vars(Expression, name, *dims)
 
 def ttzeros(*dims):
     """
