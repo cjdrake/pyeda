@@ -48,7 +48,8 @@ from pyeda.boolalg.bfarray import (
     bddzeros, bddones, bddvars,
     exprzeros, exprones, exprvars,
     ttzeros, ttones, ttvars,
-    uint2array, int2array,
+    uint2bdds, uint2exprs, uint2tts,
+    int2bdds, int2exprs, int2tts,
     farray,
 )
 

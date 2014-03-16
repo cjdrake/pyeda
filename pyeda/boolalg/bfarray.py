@@ -14,8 +14,12 @@ Interface Functions:
     ttones
     ttvars
 
-    uint2array
-    int2array
+    uint2bdds
+    uint2exprs
+    uint2tts
+    int2bdds
+    int2exprs
+    int2tts
 
     cat
 
@@ -204,34 +208,32 @@ def ttvars(name, *dims):
     """
     return _vars(TruthTable, name, *dims)
 
-def uint2array(num, length=None, ftype=Expression):
-    """Convert an unsigned integer to an farray."""
-    if num < 0:
-        raise ValueError("expected num >= 0")
-    else:
-        items = _uint2items(num, length, ftype)
-        return farray(items)
+def uint2bdds(num, length=None):
+    """Convert an unsigned integer to an farray of BDDs."""
+    return _uint2array(BinaryDecisionDiagram, num, length)
 
-def int2array(num, length=None, ftype=Expression):
-    """Convert a signed integer to an farray."""
-    if num < 0:
-        req_length = clog2(abs(num)) + 1
-        items = _uint2items(2**req_length + num, ftype=ftype)
-    else:
-        req_length = clog2(num + 1) + 1
-        items = _uint2items(num, req_length, ftype)
+def uint2exprs(num, length=None):
+    """Convert an unsigned integer to an farray of Expressions."""
+    return _uint2array(Expression, num, length)
 
-    if length:
-        if length < req_length:
-            fstr = "overflow: num = {} requires length >= {}, got length = {}"
-            raise ValueError(fstr.format(num, req_length, length))
-        else:
-            sign = items[-1]
-            items += [sign] * (length - req_length)
+def uint2tts(num, length=None):
+    """Convert an unsigned integer to an farray of TruthTables."""
+    return _uint2array(TruthTable, num, length)
 
-    return farray(items)
+def int2bdds(num, length=None):
+    """Convert a signed integer to an farray of BDDs."""
+    return _int2array(BinaryDecisionDiagram, num, length)
+
+def int2exprs(num, length=None):
+    """Convert a signed integer to an farray of Expressions."""
+    return _int2array(Expression, num, length)
+
+def int2tts(num, length=None):
+    """Convert a signed integer to an farray of TruthTables."""
+    return _int2array(TruthTable, num, length)
 
 def cat(*fs):
+    """Concatenate a sequence of farrays."""
     items = list()
     for f in fs:
         if isinstance(f, Function):
@@ -586,7 +588,7 @@ def _vars(ftype, name, *dims):
         items.append(_VAR[ftype](name, indices))
     return farray(items, shape)
 
-def _uint2items(num, length=None, ftype=Expression):
+def _uint2items(ftype, num, length=None):
     """Convert an unsigned integer to a list of constant expressions."""
     if num == 0:
         items = [_CONSTANTS[ftype][0]]
@@ -606,6 +608,33 @@ def _uint2items(num, length=None, ftype=Expression):
                 items.append(_CONSTANTS[ftype][0])
 
     return items
+
+def _uint2array(ftype, num, length=None):
+    """Convert an unsigned integer to an farray."""
+    if num < 0:
+        raise ValueError("expected num >= 0")
+    else:
+        items = _uint2items(ftype, num, length)
+        return farray(items)
+
+def _int2array(ftype, num, length=None):
+    """Convert a signed integer to an farray."""
+    if num < 0:
+        req_length = clog2(abs(num)) + 1
+        items = _uint2items(ftype, 2**req_length + num)
+    else:
+        req_length = clog2(num + 1) + 1
+        items = _uint2items(ftype, num, req_length)
+
+    if length:
+        if length < req_length:
+            fstr = "overflow: num = {} requires length >= {}, got length = {}"
+            raise ValueError(fstr.format(num, req_length, length))
+        else:
+            sign = items[-1]
+            items += [sign] * (length - req_length)
+
+    return farray(items)
 
 def _expand_vectors(vpoint):
     """Expand all vectors in a substitution dict."""
