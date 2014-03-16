@@ -6,7 +6,7 @@ Logic functions for Sudoku
 # pylint: disable=C0103
 
 from pyeda.boolalg.expr import And, OneHot, expr2dimacscnf
-from pyeda.boolalg.vexpr import bitvec
+from pyeda.boolalg.bfarray import exprvars
 
 DIGITS = "123456789"
 
@@ -14,23 +14,23 @@ DIGITS = "123456789"
 class SudokuSolver(object):
     """Logical constraints for 3x3 Sudoku"""
 
-    def __init__(self, varname='x'):
-        self.X = bitvec(varname, (1, 10), (1, 10), (1, 10))
+    def __init__(self):
+        self.X = exprvars('x', (1, 10), (1, 10), (1, 10))
 
         V = And(*[
-                And(*[OneHot(*[self.X[r][c][v] for v in range(1, 10)])
+                And(*[OneHot(*[self.X[r,c,v] for v in range(1, 10)])
                       for c in range(1, 10)])
                   for r in range(1, 10)])
         R = And(*[
-                And(*[OneHot(*[self.X[r][c][v] for c in range(1, 10)])
+                And(*[OneHot(*[self.X[r,c,v] for c in range(1, 10)])
                       for v in range(1, 10)])
                   for r in range(1, 10)])
         C = And(*[
-                And(*[OneHot(*[self.X[r][c][v] for r in range(1, 10)])
+                And(*[OneHot(*[self.X[r,c,v] for r in range(1, 10)])
                       for v in range(1, 10)])
                   for c in range(1, 10)])
         B = And(*[
-                And(*[OneHot(*[self.X[3*br+r][3*bc+c][v]
+                And(*[OneHot(*[self.X[3*br+r,3*bc+c,v]
                                for r in range(1, 4)
                                for c in range(1, 4)])
                       for v in range(1, 10)])
@@ -52,7 +52,7 @@ class SudokuSolver(object):
         chars = [c for c in grid if c in DIGITS or c in "0."]
         if len(chars) != 9**2:
             raise ValueError("expected 9x9 grid")
-        return [self.litmap[self.X[i // 9 + 1][i % 9 + 1][int(c)]]
+        return [self.litmap[self.X[i // 9 + 1,i % 9 + 1,int(c)]]
                 for i, c in enumerate(chars) if c in DIGITS]
 
     def _soln2str(self, soln, fancy=False):
@@ -72,7 +72,7 @@ class SudokuSolver(object):
     def _get_val(self, soln, r, c):
         """Return the string value for a solution coordinate."""
         for v in range(1, 10):
-            if soln[self.X[r][c][v]]:
+            if soln[self.X[r,c,v]]:
                 return DIGITS[v-1]
         return "X"
 
