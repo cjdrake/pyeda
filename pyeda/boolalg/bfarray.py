@@ -210,15 +210,15 @@ def ttvars(name, *dims):
 
 def uint2bdds(num, length=None):
     """Convert an unsigned integer to an farray of BDDs."""
-    return _uint2array(BinaryDecisionDiagram, num, length)
+    return _uint2farray(BinaryDecisionDiagram, num, length)
 
 def uint2exprs(num, length=None):
     """Convert an unsigned integer to an farray of Expressions."""
-    return _uint2array(Expression, num, length)
+    return _uint2farray(Expression, num, length)
 
 def uint2tts(num, length=None):
     """Convert an unsigned integer to an farray of TruthTables."""
-    return _uint2array(TruthTable, num, length)
+    return _uint2farray(TruthTable, num, length)
 
 def int2bdds(num, length=None):
     """Convert a signed integer to an farray of BDDs."""
@@ -571,70 +571,70 @@ class farray(object):
 def _zeros(ftype, *dims):
     """Return a new array filled with zeros."""
     shape = _dims2shape(*dims)
-    items = [_ZEROS[ftype] for _ in range(_volume(shape))]
-    return farray(items, shape)
+    objs = [_ZEROS[ftype] for _ in range(_volume(shape))]
+    return farray(objs, shape)
 
 def _ones(ftype, *dims):
     """Return a new array filled with ones."""
     shape = _dims2shape(*dims)
-    items = [_ONES[ftype] for _ in range(_volume(shape))]
-    return farray(items, shape)
+    objs = [_ONES[ftype] for _ in range(_volume(shape))]
+    return farray(objs, shape)
 
 def _vars(ftype, name, *dims):
     """Return a new array filled with Boolean variables."""
     shape = _dims2shape(*dims)
-    items = list()
+    objs = list()
     for indices in itertools.product(*[range(i, j) for i, j in shape]):
-        items.append(_VAR[ftype](name, indices))
-    return farray(items, shape)
+        objs.append(_VAR[ftype](name, indices))
+    return farray(objs, shape)
 
-def _uint2items(ftype, num, length=None):
+def _uint2objs(ftype, num, length=None):
     """Convert an unsigned integer to a list of constant expressions."""
     if num == 0:
-        items = [_CONSTANTS[ftype][0]]
+        objs = [_CONSTANTS[ftype][0]]
     else:
         _num = num
-        items = list()
+        objs = list()
         while _num != 0:
-            items.append(_CONSTANTS[ftype][_num & 1])
+            objs.append(_CONSTANTS[ftype][_num & 1])
             _num >>= 1
 
     if length:
-        if length < len(items):
+        if length < len(objs):
             fstr = "overflow: num = {} requires length >= {}, got length = {}"
-            raise ValueError(fstr.format(num, len(items), length))
+            raise ValueError(fstr.format(num, len(objs), length))
         else:
-            while len(items) < length:
-                items.append(_CONSTANTS[ftype][0])
+            while len(objs) < length:
+                objs.append(_CONSTANTS[ftype][0])
 
-    return items
+    return objs
 
-def _uint2array(ftype, num, length=None):
+def _uint2farray(ftype, num, length=None):
     """Convert an unsigned integer to an farray."""
     if num < 0:
         raise ValueError("expected num >= 0")
     else:
-        items = _uint2items(ftype, num, length)
-        return farray(items)
+        objs = _uint2objs(ftype, num, length)
+        return farray(objs)
 
 def _int2array(ftype, num, length=None):
     """Convert a signed integer to an farray."""
     if num < 0:
         req_length = clog2(abs(num)) + 1
-        items = _uint2items(ftype, 2**req_length + num)
+        objs = _uint2objs(ftype, 2**req_length + num)
     else:
         req_length = clog2(num + 1) + 1
-        items = _uint2items(ftype, num, req_length)
+        objs = _uint2objs(ftype, num, req_length)
 
     if length:
         if length < req_length:
             fstr = "overflow: num = {} requires length >= {}, got length = {}"
             raise ValueError(fstr.format(num, req_length, length))
         else:
-            sign = items[-1]
-            items += [sign] * (length - req_length)
+            sign = objs[-1]
+            objs += [sign] * (length - req_length)
 
-    return farray(items)
+    return farray(objs)
 
 def _expand_vectors(vpoint):
     """Expand all vectors in a substitution dict."""
