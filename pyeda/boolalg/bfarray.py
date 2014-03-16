@@ -285,6 +285,11 @@ class farray(object):
         """Return the number of dimensions."""
         return len(self.shape)
 
+    @property
+    def flat(self):
+        """Return a 1D iterator over the array."""
+        yield from self.items
+
     def restrict(self, point):
         """
         Return the array that results from applying the 'restrict' method to
