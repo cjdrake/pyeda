@@ -17,6 +17,8 @@ Interface Functions:
     uint2array
     int2array
 
+    cat
+
 Classes:
     farray
 """
@@ -233,6 +235,17 @@ def int2array(num, length=None, ftype=Expression):
             sign = items[-1]
             items += [sign] * (length - req_length)
 
+    return farray(items)
+
+def cat(*fs):
+    items = list()
+    for f in fs:
+        if isinstance(f, Function):
+            items.append(f)
+        elif isinstance(f, farray):
+            items += f.items
+        else:
+            raise TypeError("expected Function or farray")
     return farray(items)
 
 
