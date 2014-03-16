@@ -45,8 +45,8 @@ from pyeda.boolalg.table import (
 from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv, BitVector
 
 from pyeda.boolalg.bfarray import (
-    exprzeros, exprones, exprvars,
     bddzeros, bddones, bddvars,
+    exprzeros, exprones, exprvars,
     ttzeros, ttones, ttvars,
     uint2array, int2array,
     farray,
