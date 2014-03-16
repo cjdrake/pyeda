@@ -716,6 +716,8 @@ def _readshape(shape):
                 start, stop = 0, part
             elif type(part) is tuple and len(part) == 2:
                 start, stop = part
+            else:
+                raise TypeError("expected int or (int, int)")
             parts.append((start, stop))
         return tuple(parts)
     else:
