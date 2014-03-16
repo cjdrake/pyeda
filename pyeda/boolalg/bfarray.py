@@ -261,11 +261,15 @@ class farray(object):
                 raise ValueError("expected shape volume to match items")
 
     def __iter__(self):
-        for i in range(self.shape[0][0], self.shape[0][1]):
-            yield self[i]
+        if self.shape:
+            for i in range(self.shape[0][0], self.shape[0][1]):
+                yield self[i]
 
     def __len__(self):
-        return self.shape[0][1] - self.shape[0][0]
+        if self.shape:
+            return self.shape[0][1] - self.shape[0][0]
+        else:
+            return 0
 
     def __getitem__(self, key):
         # Convert the abbreviated input key to its full form
@@ -584,8 +588,9 @@ def _vars(ftype, name, *dims):
     """Return a new array filled with Boolean variables."""
     shape = _dims2shape(*dims)
     objs = list()
-    for indices in itertools.product(*[range(i, j) for i, j in shape]):
-        objs.append(_VAR[ftype](name, indices))
+    if shape:
+        for indices in itertools.product(*[range(i, j) for i, j in shape]):
+            objs.append(_VAR[ftype](name, indices))
     return farray(objs, shape)
 
 def _uint2objs(ftype, num, length=None):
