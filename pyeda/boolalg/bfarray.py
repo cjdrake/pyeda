@@ -512,9 +512,9 @@ class farray(object):
             sizes.append(prod)
         return sizes
 
-    def _coord2idx(self, vertex):
+    def _coord2idx(self, coord):
         """Convert a coordinate to an item index."""
-        return sum(v * self._dimsizes[i] for i, v in enumerate(vertex))
+        return sum(v * self._dimsizes[i] for i, v in enumerate(coord))
 
     def _key2sls(self, key):
         """Convert a slice key to a normalized list of int or slice."""
@@ -530,28 +530,29 @@ class farray(object):
 
         # Fill '...' entries with ':'
         nfill = self.ndim - keylen
-        _key = list()
+        fkeys = list()
         for k in key:
             if k is Ellipsis:
                 while nfill:
-                    _key.append(slice(None, None, None))
+                    fkeys.append(slice(None, None, None))
                     nfill -= 1
-                _key.append(slice(None, None, None))
+                fkeys.append(slice(None, None, None))
             else:
-                _key.append(k)
+                fkeys.append(k)
         # Append ':' to the end
-        for _ in range(self.ndim - len(_key)):
-            _key.append(slice(None, None, None))
-        # Normalize indices
-        keys = [self._norm_key(i, k) for i, k in enumerate(_key)]
+        for _ in range(self.ndim - len(fkeys)):
+            fkeys.append(slice(None, None, None))
+
+        # Normalize indices, and fill empty slice entries
         sls = list()
-        for i, sl in enumerate(keys):
-            if type(sl) is int:
-                sls.append(sl)
+        for i, fkey in enumerate(fkeys):
+            nkey = self._norm_key(i, fkey)
+            if type(nkey) is int:
+                sls.append(nkey)
             else:
-                start = 0 if sl.start is None else sl.start
-                stop = self._normshape[i] if sl.stop is None else sl.stop
-                step = 1 if sl.step is None else sl.step
+                start = 0 if nkey.start is None else nkey.start
+                stop = self._normshape[i] if nkey.stop is None else nkey.stop
+                step = 1 if nkey.step is None else nkey.step
                 sls.append(slice(start, stop, step))
 
         return sls
