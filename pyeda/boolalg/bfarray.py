@@ -57,158 +57,152 @@ _CONSTANTS = {
 }
 
 
-def exprzeros(shape):
+def exprzeros(*dims):
     """
-    Return a new array of given shape and type, filled with EXPRZERO.
+    Return a new array of given dimensions, filled with EXPRZERO.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
-    ftype : Function type, optional
-        The desired Function type for the array. Default is Expression.
+    dims : sequence of int or (int, int)
+        Dimensions of the new array
 
     Returns
     -------
-    farray of EXPRZERO with the given shape.
+    farray of EXPRZERO with the given dimensions.
     """
-    return _zeros(shape, Expression)
+    return _zeros(Expression, *dims)
 
-def exprones(shape):
+def exprones(*dims):
     """
-    Return a new array of given shape and type, filled with EXPRONE.
+    Return a new array of given dimensions, filled with EXPRONE.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    dims : sequence of int or (int, int)
+        Dimensions of the new array
 
     Returns
     -------
-    farray of EXPRONE with the given shape.
+    farray of EXPRONE with the given dimensions.
     """
-    return _ones(shape, Expression)
+    return _ones(Expression, *dims)
 
-def exprvars(name, shape):
+def exprvars(name, *dims):
     """
-    Return a new array of given shape and type, filled with ExprVariable.
+    Return a new array of given dimensions, filled with ExprVariable.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g:
+    dims : sequence of int or (int, int)
+        Dimensions of the new array, e.g:
 
         * ``4`` means [0:4]
-        * ``(4, 8)`` means [4:8]
-        * ``(4, (3, 8))`` means [0:4][3:8]
+        * ``4, 8`` means [4:8]
+        * ``4, (3, 8)`` means [0:4][3:8]
 
     Returns
     -------
-    farray of ExprVariable with the given shape.
+    farray of ExprVariable with the given dimensions.
     """
-    return _vars(name, shape, Expression)
+    return _vars(Expression, name, *dims)
 
-def bddzeros(shape):
+def bddzeros(*dims):
     """
-    Return a new array of given shape and type, filled with BDDZERO.
+    Return a new array of given dimensions, filled with BDDZERO.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
-    ftype : Function type, optional
-        The desired Function type for the array. Default is Expression.
+    dims : sequence of int or (int, int)
+        Dimensions of the new array
 
     Returns
     -------
-    farray of BDDZERO with the given shape.
+    farray of BDDZERO with the given dimensions.
     """
-    return _zeros(shape, BinaryDecisionDiagram)
+    return _zeros(BinaryDecisionDiagram, *dims)
 
-def bddones(shape):
+def bddones(*dims):
     """
-    Return a new array of given shape and type, filled with BDDONE.
+    Return a new array of given dimensions, filled with BDDONE.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    dims : sequence of int or (int, int)
+        Dimensions of the new array
 
     Returns
     -------
-    farray of BDDONE with the given shape.
+    farray of BDDONE with the given dimensions.
     """
-    return _ones(shape, BinaryDecisionDiagram)
+    return _ones(BinaryDecisionDiagram, *dims)
 
-def bddvars(name, shape):
+def bddvars(name, *dims):
     """
-    Return a new array of given shape and type, filled with BDDVariable.
+    Return a new array of given dimensions, filled with BDDVariable.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g:
+    dims : sequence of int or (int, int)
+        Dimensions of the new array, e.g:
 
         * ``4`` means [0:4]
-        * ``(4, 8)`` means [4:8]
-        * ``(4, (3, 8))`` means [0:4][3:8]
+        * ``4, 8`` means [4:8]
+        * ``4, (3, 8)`` means [0:4][3:8]
 
     Returns
     -------
-    farray of BDDVariable with the given shape.
+    farray of BDDVariable with the given dimensions.
     """
-    return _vars(name, shape, BinaryDecisionDiagram)
+    return _vars(BinaryDecisionDiagram, name, *dims)
 
-def ttzeros(shape):
+def ttzeros(*dims):
     """
-    Return a new array of given shape and type, filled with TTZERO.
+    Return a new array of given dimensions, filled with TTZERO.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
-    ftype : Function type, optional
-        The desired Function type for the array. Default is Expression.
+    dims : sequence of int or (int, int)
+        Dimensions of the new array
 
     Returns
     -------
-    farray of TTZERO with the given shape.
+    farray of TTZERO with the given dimensions.
     """
-    return _zeros(shape, TruthTable)
+    return _zeros(TruthTable, *dims)
 
-def ttones(shape):
+def ttones(*dims):
     """
-    Return a new array of given shape and type, filled with TTONE.
+    Return a new array of given dimensions, filled with TTONE.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    dims : sequence of int or (int, int)
+        Dimensions of the new array
 
     Returns
     -------
-    farray of TTONE with the given shape.
+    farray of TTONE with the given dimensions.
     """
-    return _ones(shape, TruthTable)
+    return _ones(TruthTable, *dims)
 
-def ttvars(name, shape):
+def ttvars(name, *dims):
     """
-    Return a new array of given shape and type, filled with TTVariable.
+    Return a new array of given dimensions, filled with TTVariable.
 
     Parameters
     ----------
-    shape : int or sequence of ints
-        Shape of the new array, e.g:
+    dims : sequence of int or (int, int)
+        Dimensions of the new array, e.g:
 
         * ``4`` means [0:4]
-        * ``(4, 8)`` means [4:8]
-        * ``(4, (3, 8))`` means [0:4][3:8]
+        * ``4, 8`` means [4:8]
+        * ``4, (3, 8)`` means [0:4][3:8]
 
     Returns
     -------
-    farray of TTVariable with the given shape.
+    farray of TTVariable with the given dimensions.
     """
-    return _vars(name, shape, TruthTable)
+    return _vars(TruthTable, name, *dims)
 
 def uint2array(num, length=None, ftype=Expression):
     """Convert an unsigned integer to an farray."""
@@ -258,7 +252,7 @@ class farray(object):
         if shape is None:
             self.shape = _shape
         else:
-            shape = _readshape(shape)
+            #shape = _readshape(shape)
             if _volume(shape) == len(self.items):
                 self.shape = shape
             else:
@@ -572,23 +566,21 @@ class farray(object):
 
 # Local functions
 
-def _zeros(shape, ftype):
-    """Return a new array of given shape and type, filled with zeros."""
-    shape = _readshape(shape)
+def _zeros(ftype, *dims):
+    """Return a new array filled with zeros."""
+    shape = _dims2shape(*dims)
     items = [_ZEROS[ftype] for _ in range(_volume(shape))]
     return farray(items, shape)
 
-def _ones(shape, ftype):
-    """Return a new array of given shape and type, filled with ones."""
-    shape = _readshape(shape)
+def _ones(ftype, *dims):
+    """Return a new array filled with ones."""
+    shape = _dims2shape(*dims)
     items = [_ONES[ftype] for _ in range(_volume(shape))]
     return farray(items, shape)
 
-def _vars(name, shape, ftype):
-    """
-    Return a new array of given shape and type, filled with Boolean variables.
-    """
-    shape = _readshape(shape)
+def _vars(ftype, name, *dims):
+    """Return a new array filled with Boolean variables."""
+    shape = _dims2shape(*dims)
     items = list()
     for indices in itertools.product(*[range(i, j) for i, j in shape]):
         items.append(_VAR[ftype](name, indices))
@@ -717,28 +709,34 @@ def _norm_slice(sl, start, stop):
     step = getattr(sl, 'step', None)
     return slice(limits['start'], limits['stop'], step)
 
-def _readshape(shape):
-    """Read and verify an input shape, and return a tuple((int, int))."""
-    if type(shape) is int:
-        return ((0, shape), )
-    elif isinstance(shape, collections.Sequence):
-        parts = list()
-        for part in shape:
-            if type(part) is int:
-                start, stop = 0, part
-            elif type(part) is tuple and len(part) == 2:
-                start, stop = part
-            else:
-                raise TypeError("expected int or (int, int)")
-            parts.append((start, stop))
-        return tuple(parts)
-    else:
-        raise TypeError("expected int or sequence of int | (int, int)")
+def _dims2shape(*dims):
+    """Convert input dimensions to a shape."""
+    shape = list()
+    for dim in dims:
+        if type(dim) is int:
+            if dim <= 0:
+                raise ValueError("expected high dimension to be > 0")
+            start, stop = 0, dim
+        elif type(dim) is tuple and len(dim) == 2:
+            if dim[0] < 0:
+                raise ValueError("expected low dimension to be >= 0")
+            if dim[1] <= 0:
+                raise ValueError("expected high dimension to be > 0")
+            if dim[0] >= dim[1]:
+                raise ValueError("expected low < high dimensions")
+            start, stop = dim
+        else:
+            raise TypeError("expected dimension to be int or (int, int)")
+        shape.append((start, stop))
+    return tuple(shape)
 
 def _volume(shape):
     """Return the volume of a shape."""
-    prod = 1
-    for start, stop in shape:
-        prod *= stop - start
-    return prod
+    if shape:
+        prod = 1
+        for start, stop in shape:
+            prod *= stop - start
+        return prod
+    else:
+        return 0
 
