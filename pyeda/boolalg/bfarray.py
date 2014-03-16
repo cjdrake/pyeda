@@ -301,7 +301,8 @@ class farray(object):
     @property
     def flat(self):
         """Return a 1D iterator over the array."""
-        yield from self.items
+        for item in self.items:
+            yield item
 
     def restrict(self, point):
         """
