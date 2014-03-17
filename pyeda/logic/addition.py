@@ -12,20 +12,19 @@ Interface Functions:
 
 from math import floor, log
 
-from pyeda.boolalg.expr import Xor, Majority
-from pyeda.boolalg.vexpr import BitVector
+from pyeda.boolalg.bfarray import farray
 from pyeda.util import clog2
 
 def ripple_carry_add(A, B, cin=0):
     """Return symbolic logic for an N-bit ripple carry adder."""
     if len(A) != len(B):
         raise ValueError("expected A and B to be equal length")
-    s, c = list(), list()
-    for i, ai in enumerate(A, A.start):
-        carry = (cin if i == 0 else c[i-1])
-        s.append(Xor(ai, B[i], carry))
-        c.append(Majority(ai, B[i], carry))
-    return BitVector(s), BitVector(c)
+    ss, cs = list(), list()
+    for i, a in enumerate(A):
+        c = (cin if i == 0 else cs[i-1])
+        ss.append(a ^ B[i] ^ c)
+        cs.append(a & B[i] | a & c | B[i] & c)
+    return farray(ss), farray(cs)
 
 def kogge_stone_add(A, B, cin=0):
     """Return symbolic logic for an N-bit Kogge-Stone adder."""
@@ -33,16 +32,17 @@ def kogge_stone_add(A, B, cin=0):
         raise ValueError("expected A and B to be equal length")
     N = len(A)
     # generate/propagate logic
-    g = [A[i] & B[i] for i in range(N)]
-    p = [Xor(A[i], B[i]) for i in range(N)]
+    gs = [A[i] & B[i] for i in range(N)]
+    ps = [A[i] ^ B[i] for i in range(N)]
     for i in range(clog2(N)):
         start = 1 << i
         for j in range(start, N):
-            g[j] = g[j] | p[j] & g[j-start]
-            p[j] = p[j] & p[j-start]
+            gs[j] = gs[j] | ps[j] & gs[j-start]
+            ps[j] = ps[j] & ps[j-start]
     # sum logic
-    s = [Xor(A[i], B[i], (cin if i == 0 else g[i-1])) for i in range(N)]
-    return BitVector(s), BitVector(g)
+    ss = [A[0] ^ B[0] ^ cin]
+    ss += [A[i] ^ B[i] ^ gs[i-1] for i in range(1, N)]
+    return farray(ss), farray(gs)
 
 def brent_kung_add(A, B, cin=0):
     """Return symbolic logic for an N-bit Brent-Kung adder."""
@@ -50,23 +50,24 @@ def brent_kung_add(A, B, cin=0):
         raise ValueError("expected A and B to be equal length")
     N = len(A)
     # generate/propagate logic
-    g = [A[i] & B[i] for i in range(N)]
-    p = [Xor(A[i], B[i]) for i in range(N)]
+    gs = [A[i] & B[i] for i in range(N)]
+    ps = [A[i] ^ B[i] for i in range(N)]
     # carry tree
     for i in range(floor(log(N, 2))):
         step = 2**i
         for start in range(2**(i+1)-1, N, 2**(i+1)):
-            g[start] = g[start] | p[start] & g[start-step]
-            p[start] = p[start] & p[start-step]
+            gs[start] = gs[start] | ps[start] & gs[start-step]
+            ps[start] = ps[start] & ps[start-step]
     # inverse carry tree
     for i in range(floor(log(N, 2))-2, -1, -1):
         start = 2**(i+1)-1
         step = 2**i
         while start + step < N:
-            g[start+step] = g[start+step] | p[start+step] & g[start]
-            p[start+step] = p[start+step] & p[start]
+            gs[start+step] = gs[start+step] | ps[start+step] & gs[start]
+            ps[start+step] = ps[start+step] & ps[start]
             start += step
     # sum logic
-    s = [Xor(A[i], B[i], (cin if i == 0 else g[i-1])) for i in range(N)]
-    return BitVector(s), BitVector(g)
+    ss = [A[0] ^ B[0] ^ cin]
+    ss += [A[i] ^ B[i] ^ gs[i-1] for i in range(1, N)]
+    return farray(ss), farray(gs)
 
