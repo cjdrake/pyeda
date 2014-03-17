@@ -357,13 +357,19 @@ class farray(object):
         return self.__class__([~x for x in self.items], self.shape)
 
     def __or__(self, other):
-        return self.__class__([x | y for x, y in zip(self.items, other.items)])
+        shape = self._get_op_shape(other)
+        items = [x | y for x, y in zip(self.flat, other.flat)]
+        return self.__class__(items, shape)
 
     def __and__(self, other):
-        return self.__class__([x & y for x, y in zip(self.items, other.items)])
+        shape = self._get_op_shape(other)
+        items = [x & y for x, y in zip(self.flat, other.flat)]
+        return self.__class__(items, shape)
 
     def __xor__(self, other):
-        return self.__class__([x ^ y for x, y in zip(self.items, other.items)])
+        shape = self._get_op_shape(other)
+        items = [x ^ y for x, y in zip(self.flat, other.flat)]
+        return self.__class__(items, shape)
 
     def __lshift__(self, obj):
         if type(obj) is tuple and len(obj) == 2:
@@ -585,6 +591,17 @@ class farray(object):
     def _denorm_slice(self, i, sl):
         """Return a slice denormalized to dimension offsets."""
         return (sl.start + self.offsets[i], sl.stop + self.offsets[i])
+
+    def _get_op_shape(self, other):
+        if isinstance(other, farray):
+            if self.shape == other.shape:
+                return self.shape
+            elif self.size == other.size:
+                return None
+            else:
+                raise ValueError("expected operand sizes to match")
+        else:
+            raise TypeError("expected farray input")
 
 
 # Local functions
