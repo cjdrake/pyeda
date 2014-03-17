@@ -7,7 +7,7 @@ from multiprocessing import Pool
 
 from pyeda.boolalg import espresso
 from pyeda.boolalg.table import truthtable2expr, truthtable
-from pyeda.boolalg.vexpr import bitvec
+from pyeda.boolalg.bfarray import exprvars
 from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
 from pyeda.logic.addition import ripple_carry_add
 from pyeda.parsing.pla import parse_pla
@@ -30,8 +30,8 @@ def test_espresso():
     assert espresso.DTYPE == 2
     assert espresso.RTYPE == 4
 
-    A = bitvec('a', 16)
-    B = bitvec('b', 16)
+    A = exprvars('a', 16)
+    B = exprvars('b', 16)
     S, C = ripple_carry_add(A, B)
     s0, s1, s2, s3 = espresso_exprs(S[0].to_dnf(), S[1].to_dnf(),
                                     S[2].to_dnf(), S[3].to_dnf())
@@ -40,7 +40,7 @@ def test_espresso():
     assert s2.equivalent(S[2])
     assert s3.equivalent(S[3])
 
-    X = bitvec('x', 4)
+    X = exprvars('x', 4)
     f1 = truthtable(X, "0000011111------")
     f2 = truthtable(X, "0001111100------")
     f1m, f2m = espresso_tts(f1, f2)
