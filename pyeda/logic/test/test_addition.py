@@ -9,7 +9,7 @@ from pyeda.logic.addition import (
     kogge_stone_add as ksa,
     brent_kung_add as bka,
 )
-from pyeda.boolalg.vexpr import BitVector, bitvec, uint2bv, int2bv
+from pyeda.boolalg.bfarray import farray, exprvars, uint2exprs, int2exprs, cat
 
 from nose.tools import assert_raises
 
@@ -17,17 +17,17 @@ NVECS = 100
 
 def uadd(S, A, B, aval, bval):
     N = len(A)
-    R = S.vrestrict({A: uint2bv(aval, N), B: uint2bv(bval, N)})
+    R = S.vrestrict({A: uint2exprs(aval, N), B: uint2exprs(bval, N)})
     return R.to_uint()
 
 def sadd(S, A, B, aval, bval):
     N = len(A)
-    R = S.vrestrict({A: int2bv(aval, N), B: int2bv(bval, N)})
+    R = S.vrestrict({A: int2exprs(aval, N), B: int2exprs(bval, N)})
     return R.to_int()
 
 def test_errors():
-    A = bitvec('A', 7)
-    B = bitvec('B', 9)
+    A = exprvars('A', 7)
+    B = exprvars('B', 9)
 
     for adder in (rca, ksa, bka):
         assert_raises(ValueError, adder, A, B)
@@ -35,12 +35,12 @@ def test_errors():
 def test_unsigned_add():
     N = 9
 
-    A = bitvec('A', N)
-    B = bitvec('B', N)
+    A = exprvars('A', N)
+    B = exprvars('B', N)
 
     for adder in (rca, ksa, bka):
         S, C = adder(A, B)
-        S = S + BitVector([C[N-1]])
+        S = cat(S, C[-1])
 
         # 0 + 0 = 0
         assert uadd(S, A, B, 0, 0) == 0
@@ -56,8 +56,8 @@ def test_unsigned_add():
             assert uadd(S, A, B, ra, rb) == ra + rb
 
 def test_signed_add():
-    A = bitvec('A', 8)
-    B = bitvec('B', 8)
+    A = exprvars('A', 8)
+    B = exprvars('B', 8)
 
     for adder in (rca, ksa, bka):
         S, C = adder(A, B)
@@ -78,9 +78,9 @@ def test_signed_add():
             assert sadd(S, A, B, ra, rb) == ra + rb
 
         # 64 + 64, overflow
-        R = C.vrestrict({A: int2bv(64, 8), B: int2bv(64, 8)})
+        R = C.vrestrict({A: int2exprs(64, 8), B: int2exprs(64, 8)})
         assert R[7] != R[6]
         # -65 + -64, overflow
-        R = C.vrestrict({A: int2bv(-65, 8), B: int2bv(-64, 8)})
+        R = C.vrestrict({A: int2exprs(-65, 8), B: int2exprs(-64, 8)})
         assert R[7] != R[6]
 
