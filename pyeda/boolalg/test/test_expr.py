@@ -11,14 +11,14 @@ from pyeda.boolalg.expr import (
     OneHot0, OneHot, Majority, AchillesHeel, Mux,
     EXPRZERO, EXPRONE,
 )
-from pyeda.boolalg.vexpr import bitvec
+from pyeda.boolalg.bfarray import exprvars
 
 from nose.tools import assert_raises
 
 a, b, c, d, e, p, q, s = map(exprvar, 'abcdepqs')
 
-X = bitvec('x', 16)
-Y = bitvec('y', 16, 16, 16)
+X = exprvars('x', 16)
+Y = exprvars('y', 16, 16, 16)
 
 def test_misc():
     f = a & b | a & c | b & c
