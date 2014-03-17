@@ -2,9 +2,6 @@
 Test DIMACS load/dump methods
 """
 
-from pyeda.boolalg.vexpr import bitvec
-from pyeda.boolalg.expr import Not, Xor, Equal, Implies
-
 from pyeda.parsing.lex import LexError
 from pyeda.parsing.dimacs import (
     DIMACSError, parse_cnf, parse_sat,
