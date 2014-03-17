@@ -343,6 +343,16 @@ class farray(object):
         else:
             return num
 
+    def zext(self, num):
+        """Return a flat copy of this array, zero-extended by N bits."""
+        zero = _ZEROS[self.ftype]
+        return self.__class__(self.items + [zero] * num)
+
+    def sext(self, num):
+        """Return a flat copy of this array, sign-extended by N bits."""
+        sign = self.items[-1]
+        return self.__class__(self.items + [sign] * num)
+
     # Operators
     def __invert__(self):
         return self.__class__([~x for x in self.items], self.shape)
