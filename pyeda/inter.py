@@ -50,6 +50,7 @@ from pyeda.boolalg.bfarray import (
     ttzeros, ttones, ttvars,
     uint2bdds, uint2exprs, uint2tts,
     int2bdds, int2exprs, int2tts,
+    cat,
     farray,
 )
 

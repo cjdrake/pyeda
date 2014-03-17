@@ -239,7 +239,7 @@ def cat(*fs):
         if isinstance(f, Function):
             items.append(f)
         elif isinstance(f, farray):
-            items += f.items
+            items.extend(f.flat)
         else:
             raise TypeError("expected Function or farray")
     return farray(items)
@@ -254,7 +254,7 @@ class farray(object):
         if shape is None:
             self.shape = _shape
         else:
-            #shape = _readshape(shape)
+            _check_shape(shape)
             if _volume(shape) == len(self.items):
                 self.shape = shape
             else:
@@ -274,7 +274,7 @@ class farray(object):
     def __getitem__(self, key):
         # Convert the abbreviated input key to its full form
         sls = self._key2sls(key)
-        items = [self.items[self._coord2idx(c)] for c in _iter_coords(sls)]
+        items = [self.items[self._coord2index(c)] for c in _iter_coords(sls)]
         # Denormalize slices, and drop int dimensions
         shape = tuple(self._denorm_slice(i, sl) for i, sl in enumerate(sls)
                       if type(sl) is slice)
@@ -297,6 +297,12 @@ class farray(object):
     def ndim(self):
         """Return the number of dimensions."""
         return len(self.shape)
+
+    def reshape(self, *dims):
+        shape = _dims2shape(*dims)
+        if _volume(shape) != self.size:
+            raise ValueError("expected shape with equal volume")
+        return self.__class__(self.items, shape)
 
     @property
     def flat(self):
@@ -506,14 +512,14 @@ class farray(object):
     @cached_property
     def _dimsizes(self):
         """Return a list of dimension sizes."""
-        prod = len(self.items)
+        prod = self.size
         sizes = list()
-        for idx in self._normshape:
-            prod //= idx
+        for index in self._normshape:
+            prod //= index
             sizes.append(prod)
         return sizes
 
-    def _coord2idx(self, coord):
+    def _coord2index(self, coord):
         """Convert a coordinate to an item index."""
         return sum(v * self._dimsizes[i] for i, v in enumerate(coord))
 
@@ -561,7 +567,7 @@ class farray(object):
     def _norm_key(self, i, key):
         """Return a key normalized to a zero-based index."""
         if type(key) is int:
-            return _norm_idx(key, *self.shape[i])
+            return _norm_index(key, *self.shape[i])
         elif type(key) is slice:
             return _norm_slice(key, *self.shape[i])
         else:
@@ -719,16 +725,16 @@ def _iter_coords(sls):
     for coord in itertools.product(*ranges):
         yield coord
 
-def _norm_idx(i, start, stop):
+def _norm_index(i, start, stop):
     """Return an index normalized to an array start index."""
     if i >= start and i < stop:
-        idx = i - start
+        index = i - start
     elif i >= -stop and i < -start:
-        idx = i + stop
+        index = i + stop
     else:
         fstr = "expected index in range [{}, {}]"
         raise IndexError(fstr.format(start, stop))
-    return idx
+    return index
 
 def _norm_slice(sl, start, stop):
     """Return a slice normalized to an array start index."""
@@ -766,6 +772,23 @@ def _dims2shape(*dims):
             raise TypeError("expected dimension to be int or (int, int)")
         shape.append((start, stop))
     return tuple(shape)
+
+def _check_shape(shape):
+    """Verify that a shape has the right format."""
+    if type(shape) is tuple:
+        for dim in shape:
+            if ( type(dim) is tuple and len(dim) == 2 and
+                 type(dim[0]) is int and type(dim[1]) is int ):
+                if dim[0] < 0:
+                    raise ValueError("expected low dimension to be >= 0")
+                if dim[1] <= 0:
+                    raise ValueError("expected high dimension to be > 0")
+                if dim[0] >= dim[1]:
+                    raise ValueError("expected low < high dimensions")
+            else:
+                raise TypeError("expected shape dimension to be (int, int)")
+    else:
+        raise TypeError("expected shape to be tuple of (int, int)")
 
 def _volume(shape):
     """Return the volume of a shape."""
