@@ -21,7 +21,7 @@ Interface Functions:
     int2exprs
     int2tts
 
-    cat
+    fcat
 
 Classes:
     farray
@@ -238,7 +238,7 @@ def int2tts(num, length=None):
     """Convert a signed integer to an farray of TruthTables."""
     return _int2farray(TruthTable, num, length)
 
-def cat(*fs):
+def fcat(*fs):
     """Concatenate a sequence of farrays."""
     items = list()
     for f in fs:
