@@ -9,7 +9,7 @@ from pyeda.logic.addition import (
     kogge_stone_add as ksa,
     brent_kung_add as bka,
 )
-from pyeda.boolalg.bfarray import farray, exprvars, uint2exprs, int2exprs, cat
+from pyeda.boolalg.bfarray import farray, exprvars, uint2exprs, int2exprs, fcat
 
 from nose.tools import assert_raises
 
@@ -40,7 +40,7 @@ def test_unsigned_add():
 
     for adder in (rca, ksa, bka):
         S, C = adder(A, B)
-        S = cat(S, C[-1])
+        S = fcat(S, C[-1])
 
         # 0 + 0 = 0
         assert uadd(S, A, B, 0, 0) == 0
