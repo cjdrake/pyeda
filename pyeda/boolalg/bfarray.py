@@ -311,6 +311,7 @@ class farray(object):
         return len(self.shape)
 
     def reshape(self, *dims):
+        """Return an equivalent farray with modified dimensions."""
         shape = _dims2shape(*dims)
         if _volume(shape) != self.size:
             raise ValueError("expected shape with equal volume")
@@ -606,6 +607,7 @@ class farray(object):
         return (sl.start + self.offsets[i], sl.stop + self.offsets[i])
 
     def _get_op_shape(self, other):
+        """Return shape that will be used by farray constructor."""
         if isinstance(other, farray):
             if self.shape == other.shape:
                 return self.shape
@@ -816,8 +818,8 @@ def _check_shape(shape):
     """Verify that a shape has the right format."""
     if type(shape) is tuple:
         for dim in shape:
-            if ( type(dim) is tuple and len(dim) == 2 and
-                 type(dim[0]) is int and type(dim[1]) is int ):
+            if (type(dim) is tuple and len(dim) == 2 and
+                type(dim[0]) is int and type(dim[1]) is int):
                 if dim[0] < 0:
                     raise ValueError("expected low dimension to be >= 0")
                 if dim[1] <= 0:
