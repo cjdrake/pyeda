@@ -164,8 +164,8 @@ Finally, you can combine multiple namespaces and dimensions::
 
 .. NOTE::
    The previous syntax is starting to get a bit cumbersome.
-   For a more powerful method of creating multi-dimensional bit vectors,
-   use the ``bitvec`` function.
+   For a more powerful method of creating multi-dimensional arrays,
+   use the ``exprvars`` function.
 
 Complements
 -----------
@@ -467,8 +467,8 @@ For example::
 
 For example::
 
-   >>> X = bitvec('x', 4)
-   >>> S = bitvec('s', 2)
+   >>> X = exprvars('x', 4)
+   >>> S = exprvars('s', 2)
    >>> Mux(X, S)
    Or(And(~s[0], ~s[1], x[0]), And(s[0], ~s[1], x[1]), And(~s[0], s[1], x[2]), And(s[0], s[1], x[3]))
 
@@ -840,8 +840,8 @@ Let's test whether bit 6 of a ripple carry adder is equivalent to bit 6 of a
 Kogge Stone adder::
 
    >>> from pyeda.logic.addition import ripple_carry_add, kogge_stone_add
-   >>> A = bitvec('a', 16)
-   >>> B = bitvec('b', 16)
+   >>> A = exprvars('a', 16)
+   >>> B = exprvars('b', 16)
    >>> S1, C1 = ripple_carry_add(A, B)
    >>> S2, C2 = kogge_stone_add(A, B)
    >>> S1[6].equivalent(S2[6])

@@ -308,9 +308,9 @@ You can even give variables multiple indices by using a tuple::
    x[0][1][2][3]
 
 Assigning individual variables names like this is a bit cumbersome.
-It is much easier to just use the ``bitvec`` factory function::
+It is much easier to just use the ``exprvars`` factory function::
 
-   >>> X = bitvec('x', 8)
+   >>> X = exprvars('x', 8)
    >>> X
    [x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]]
    >>> X[3]
@@ -326,7 +326,7 @@ It is much easier to just use the ``bitvec`` factory function::
 
 Similary for multi-dimensional bit vectors::
 
-   >>> X = bitvec('x', 4, 4)
+   >>> X = exprvars('x', 4, 4)
    >>> X.items
    [[x[0][0], x[0][1], x[0][2], x[0][3]],
     [x[1][0], x[1][1], x[1][2], x[1][3]],
@@ -450,7 +450,7 @@ Summarize the game using a **truth table**.
 
 You can create the equivalent truth table with PyEDA like so::
 
-   >>> X = bitvec('x', 3)
+   >>> X = exprvars('x', 3)
    >>> f = truthtable(X, "00000001")
    >>> f
    inputs: x[2] x[1] x[0]

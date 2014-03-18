@@ -59,15 +59,15 @@ create a 3-dimensional variable, ``X``.
 
 ::
 
-   >>> X = bitvec('x', (1, 10), (1, 10), (1, 10))
+   >>> X = exprvars('x', (1, 10), (1, 10), (1, 10))
 
-``bitvec`` is a versatile function for returning arbitrary-length bit vectors.
+``exprvars`` is a versatile function for returning arrays of arbitrary dimension.
 The first argument is the variable name.
 Each additional argument adds an additional dimension with a non-negative start
 and stop index.
 If you provide only a number instead of a two-tuple,
 the start index is zero.
-For example, we could also have used ``bitvec('x', 10, 10, 10)``,
+For example, we could also have used ``exprvars('x', 9, 9, 9)``,
 but that would have given ``X[0:9][0:9][0:9]`` instead of ``X[1:10][1:10][1:10]``.
 
 The variable ``X`` is a 9x9x9 bit vector,
