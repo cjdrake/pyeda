@@ -97,6 +97,8 @@ def bddvars(name, *dims):
 
     Parameters
     ----------
+    name : str
+
     dims : sequence of int or (int, int)
         Dimensions of the new array, e.g:
 
@@ -146,6 +148,8 @@ def exprvars(name, *dims):
 
     Parameters
     ----------
+    name : str
+
     dims : sequence of int or (int, int)
         Dimensions of the new array, e.g:
 
@@ -195,6 +199,8 @@ def ttvars(name, *dims):
 
     Parameters
     ----------
+    name : str
+
     dims : sequence of int or (int, int)
         Dimensions of the new array, e.g:
 
