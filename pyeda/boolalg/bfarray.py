@@ -228,15 +228,15 @@ def uint2tts(num, length=None):
 
 def int2bdds(num, length=None):
     """Convert a signed integer to an farray of BDDs."""
-    return _int2array(BinaryDecisionDiagram, num, length)
+    return _int2farray(BinaryDecisionDiagram, num, length)
 
 def int2exprs(num, length=None):
     """Convert a signed integer to an farray of Expressions."""
-    return _int2array(Expression, num, length)
+    return _int2farray(Expression, num, length)
 
 def int2tts(num, length=None):
     """Convert a signed integer to an farray of TruthTables."""
-    return _int2array(TruthTable, num, length)
+    return _int2farray(TruthTable, num, length)
 
 def cat(*fs):
     """Concatenate a sequence of farrays."""
@@ -669,7 +669,7 @@ def _uint2farray(ftype, num, length=None):
         objs = _uint2objs(ftype, num, length)
         return farray(objs)
 
-def _int2array(ftype, num, length=None):
+def _int2farray(ftype, num, length=None):
     """Convert a signed integer to an farray."""
     if num < 0:
         req_length = clog2(abs(num)) + 1
