@@ -266,6 +266,12 @@ class farray(object):
             else:
                 raise ValueError("expected shape volume to match items")
 
+    def __str__(self):
+        return str(self.items)
+
+    def __repr__(self):
+        return self.__str__()
+
     def __iter__(self):
         if self.shape:
             for i in range(self.shape[0][0], self.shape[0][1]):
