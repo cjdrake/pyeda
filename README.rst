@@ -228,8 +228,8 @@ Multi-Dimensional Bit Vectors
 
 Create some four-bit vectors, and use slice operators::
 
-   >>> A = bitvec('A', 4)
-   >>> B = bitvec('B', 4)
+   >>> A = exprvars('A', 4)
+   >>> B = exprvars('B', 4)
    >>> A
    [A[0], A[1], A[2], A[3]]
    >>> A[2:]
@@ -314,7 +314,7 @@ Use the ``espresso_exprs`` function to minimize multiple expressions::
 
 Use the ``espresso_tts`` function to minimize multiple truth tables::
 
-   >>> X = bitvec('x', 4)
+   >>> X = exprvars('x', 4)
    >>> f1 = truthtable(X, "0000011111------")
    >>> f2 = truthtable(X, "0001111100------")
    >>> f1m, f2m = espresso_tts(f1, f2)

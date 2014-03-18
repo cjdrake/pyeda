@@ -28,7 +28,7 @@ Therefore, we can represent the board using a two-dimensional bit vector, ``X``.
 
 ::
 
-   >>> X = bitvec('x', 8, 8)
+   >>> X = exprvars('x', 8, 8)
 
 Constraints
 ===========
