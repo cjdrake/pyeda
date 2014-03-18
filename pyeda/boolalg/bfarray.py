@@ -33,31 +33,16 @@ import itertools
 import operator
 
 from pyeda.boolalg.boolfunc import Variable, Function
-from pyeda.boolalg.bdd import BinaryDecisionDiagram, BDDZERO, BDDONE, bddvar
-from pyeda.boolalg.expr import Expression, EXPRZERO, EXPRONE, exprvar
-from pyeda.boolalg.table import TruthTable, TTZERO, TTONE, ttvar
+from pyeda.boolalg.bdd import BinaryDecisionDiagram, bddvar
+from pyeda.boolalg.expr import Expression, exprvar
+from pyeda.boolalg.table import TruthTable, ttvar
 from pyeda.util import bit_on, cached_property, clog2
 
 
-_ZEROS = {
-    BinaryDecisionDiagram: BDDZERO,
-    Expression: EXPRZERO,
-    TruthTable: TTZERO,
-}
-_ONES = {
-    BinaryDecisionDiagram: BDDONE,
-    Expression: EXPRONE,
-    TruthTable: TTONE,
-}
 _VAR = {
     BinaryDecisionDiagram: bddvar,
     Expression: exprvar,
     TruthTable: ttvar,
-}
-_CONSTANTS = {
-    BinaryDecisionDiagram: (BDDZERO, BDDONE),
-    Expression: (EXPRZERO, EXPRONE),
-    TruthTable: (TTZERO, TTONE),
 }
 
 
@@ -357,7 +342,7 @@ class farray(object):
 
     def zext(self, num):
         """Return a flat copy of this array, zero-extended by N bits."""
-        zero = _ZEROS[self.ftype]
+        zero = self.ftype.box(0)
         return self.__class__(self.items + [zero] * num)
 
     def sext(self, num):
@@ -445,7 +430,7 @@ class farray(object):
         if num < 0 or num > self.size:
             raise ValueError("expected 0 <= num <= {0.size}".format(self))
         if cin is None:
-            items = [_ZEROS[self.ftype] for _ in range(num)]
+            items = [self.ftype.box(0) for _ in range(num)]
             cin = self.__class__(items)
         else:
             if len(cin) != num:
@@ -476,7 +461,7 @@ class farray(object):
         if num < 0 or num > self.size:
             raise ValueError("expected 0 <= num <= {0.size}".format(self))
         if cin is None:
-            items = [_ZEROS[self.ftype] for _ in range(num)]
+            items = [self.ftype.box(0) for _ in range(num)]
             cin = self.__class__(items)
         else:
             if len(cin) != num:
@@ -623,13 +608,13 @@ class farray(object):
 def _zeros(ftype, *dims):
     """Return a new array filled with zeros."""
     shape = _dims2shape(*dims)
-    objs = [_ZEROS[ftype] for _ in range(_volume(shape))]
+    objs = [ftype.box(0) for _ in range(_volume(shape))]
     return farray(objs, shape)
 
 def _ones(ftype, *dims):
     """Return a new array filled with ones."""
     shape = _dims2shape(*dims)
-    objs = [_ONES[ftype] for _ in range(_volume(shape))]
+    objs = [ftype.box(1) for _ in range(_volume(shape))]
     return farray(objs, shape)
 
 def _vars(ftype, name, *dims):
@@ -644,12 +629,12 @@ def _vars(ftype, name, *dims):
 def _uint2objs(ftype, num, length=None):
     """Convert an unsigned integer to a list of constant expressions."""
     if num == 0:
-        objs = [_CONSTANTS[ftype][0]]
+        objs = [ftype.box(0)]
     else:
         _num = num
         objs = list()
         while _num != 0:
-            objs.append(_CONSTANTS[ftype][_num & 1])
+            objs.append(ftype.box(_num & 1))
             _num >>= 1
 
     if length:
@@ -658,7 +643,7 @@ def _uint2objs(ftype, num, length=None):
             raise ValueError(fstr.format(num, len(objs), length))
         else:
             while len(objs) < length:
-                objs.append(_CONSTANTS[ftype][0])
+                objs.append(ftype.box(0))
 
     return objs
 
