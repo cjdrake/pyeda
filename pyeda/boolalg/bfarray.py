@@ -28,9 +28,9 @@ Classes:
 """
 
 import collections
-import functools
 import itertools
 import operator
+from functools import reduce
 
 from pyeda.boolalg.boolfunc import Variable, Function
 from pyeda.boolalg.bdd import BinaryDecisionDiagram, bddvar
@@ -388,27 +388,27 @@ class farray(object):
     # Unary operators
     def uor(self):
         """Return the unary OR of a array of functions."""
-        return functools.reduce(operator.or_, self.items)
+        return reduce(operator.or_, self.items)
 
     def unor(self):
         """Return the unary NOR of a array of functions."""
-        return ~functools.reduce(operator.or_, self.items)
+        return ~reduce(operator.or_, self.items)
 
     def uand(self):
         """Return the unary AND of a array of functions."""
-        return functools.reduce(operator.and_, self.items)
+        return reduce(operator.and_, self.items)
 
     def unand(self):
         """Return the unary NAND of a array of functions."""
-        return ~functools.reduce(operator.and_, self.items)
+        return ~reduce(operator.and_, self.items)
 
     def uxor(self):
         """Return the unary XOR of a array of functions."""
-        return functools.reduce(operator.xor, self.items)
+        return reduce(operator.xor, self.items)
 
     def uxnor(self):
         """Return the unary XNOR of a array of functions."""
-        return ~functools.reduce(operator.xor, self.items)
+        return ~reduce(operator.xor, self.items)
 
     # Shift operators
     def lsh(self, num, cin=None):
@@ -511,9 +511,9 @@ class farray(object):
             |   1    1  |   1    0    0    0  |
             +===========+=====================+
         """
-        items = [functools.reduce(operator.and_,
-                                  [f if bit_on(i, j) else ~f
-                                   for j, f in enumerate(self.items)])
+        items = [reduce(operator.and_,
+                        [f if bit_on(i, j) else ~f
+                         for j, f in enumerate(self.items)])
                  for i in range(2 ** self.size)]
         return self.__class__(items)
 
@@ -522,19 +522,13 @@ class farray(object):
         """Return the shape normalized to zero start indices."""
         return tuple(stop - start for start, stop in self.shape)
 
-    @cached_property
-    def _dimsizes(self):
-        """Return a list of dimension sizes."""
-        prod = self.size
-        sizes = list()
-        for index in self._normshape:
-            prod //= index
-            sizes.append(prod)
-        return sizes
+    def _dimsize(self, i):
+        """Return the size of the i'th dimension."""
+        return self.size // reduce(operator.mul, self._normshape[:i+1])
 
     def _coord2index(self, coord):
         """Convert a coordinate to an item index."""
-        return sum(v * self._dimsizes[i] for i, v in enumerate(coord))
+        return sum(v * self._dimsize(i) for i, v in enumerate(coord))
 
     def _key2sls(self, key):
         """Convert a slice key to a normalized list of int or slice."""
