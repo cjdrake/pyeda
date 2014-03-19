@@ -533,7 +533,7 @@ class farray(object):
 
     def _key2sls(self, key):
         """Convert a slice key to a normalized list of int or slice."""
-        # Convert all indices to slices
+        # Convert all input keys to a tuple
         if type(key) in {int, slice} or key is Ellipsis:
             key = (key, )
         elif type(key) is not tuple:
@@ -543,20 +543,25 @@ class farray(object):
             fstr = "expected <= {} slice dimensions, got {}"
             raise ValueError(fstr.format(self.ndim, keylen))
 
+        # Forbid slice steps
+        for k in key:
+            if type(k) is slice and k.step is not None:
+                raise ValueError("farray slice step is not supported")
+
         # Fill '...' entries with ':'
         nfill = self.ndim - keylen
         fkeys = list()
         for k in key:
             if k is Ellipsis:
                 while nfill:
-                    fkeys.append(slice(None, None, None))
+                    fkeys.append(slice(None, None))
                     nfill -= 1
-                fkeys.append(slice(None, None, None))
+                fkeys.append(slice(None, None))
             else:
                 fkeys.append(k)
         # Append ':' to the end
         for _ in range(self.ndim - len(fkeys)):
-            fkeys.append(slice(None, None, None))
+            fkeys.append(slice(None, None))
 
         # Normalize indices, and fill empty slice entries
         sls = list()
@@ -567,8 +572,7 @@ class farray(object):
             else:
                 start = 0 if nkey.start is None else nkey.start
                 stop = self._normshape[i] if nkey.stop is None else nkey.stop
-                step = 1 if nkey.step is None else nkey.step
-                sls.append(slice(start, stop, step))
+                sls.append(slice(start, stop))
 
         return sls
 
@@ -740,7 +744,7 @@ def _iter_coords(sls):
         if type(sl) is int:
             ranges.append(range(sl, sl+1))
         else:
-            ranges.append(range(sl.start, sl.stop, sl.step))
+            ranges.append(range(sl.start, sl.stop))
     # Iterate through all matching coordinates
     for coord in itertools.product(*ranges):
         yield coord
@@ -769,8 +773,7 @@ def _norm_slice(sl, start, stop):
             else:
                 fstr = "expected index in range [{}, {}]"
                 raise IndexError(fstr.format(start, stop))
-    step = getattr(sl, 'step', None)
-    return slice(limits['start'], limits['stop'], step)
+    return slice(limits['start'], limits['stop'])
 
 def _dims2shape(*dims):
     """Convert input dimensions to a shape."""
