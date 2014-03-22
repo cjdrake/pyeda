@@ -12,6 +12,8 @@ from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
 from pyeda.logic.addition import ripple_carry_add
 from pyeda.parsing.pla import parse_pla
 
+from pyeda.inter import exprvar
+
 from nose.tools import assert_raises
 
 BOOM_PLAS = [
@@ -46,6 +48,15 @@ def test_espresso():
     f1m, f2m = espresso_tts(f1, f2)
     truthtable2expr(f1).equivalent(f1m)
     truthtable2expr(f2).equivalent(f2m)
+
+def test_espresso_2():
+    b,x = map(exprvar, "bx")
+
+    f_out = ~(b|~x)
+    f_out_dnf = f_out.to_dnf()
+    assert(f_out.equivalent(f_out_dnf))
+    f_out_r, = espresso_exprs(f_out_dnf)
+    assert(f_out.equivalent(f_out_r))
 
 def _do_espresso(fname):
     fpath = os.path.join('extension', 'espresso', 'test', 'bb_all', fname)
