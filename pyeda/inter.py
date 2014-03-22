@@ -16,7 +16,7 @@ from pyeda.boolalg.boolfunc import (
     point2upoint, point2term,
     iter_points, iter_upoints, iter_terms,
     vpoint2point,
-    Variable, Function, VectorFunction,
+    Variable, Function,
 )
 
 from pyeda.boolalg.bdd import (
@@ -43,7 +43,7 @@ from pyeda.boolalg.table import (
     TruthTable, TTConstant, TTVariable,
 )
 
-from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv, BitVector
+from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv
 
 from pyeda.boolalg.bfarray import (
     bddzeros, bddones, bddvars,
