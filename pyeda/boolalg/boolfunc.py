@@ -18,8 +18,6 @@ Interface Functions:
 Interface Classes:
     Variable
     Function
-    Slicer
-    VectorFunction
 """
 
 import collections
@@ -548,106 +546,4 @@ class Function(object):
             else:
                 raise TypeError("expected iter of Variable")
 
-
-class Slicer(object):
-    """Interface for vector objects that supports non-zero start index.
-
-    Similar to a Python tuple, this class can be used to support arbitrarily
-    nested vectors. Unlike Python lists, you can use a Slicer object to
-    instantiate a vector with arbitrary start, stop indices.
-
-    NOTE: This is a general-purpose utility class, but for the purposes of
-          creating and manipulating BitVectors, we recommend using the
-          BitVector class from pyeda.vexpr, or the 'bitvec' convenience
-          function.
-    """
-
-    def __init__(self, items, start=0):
-        self.items = tuple(items)
-        self.start = start
-
-    @cached_property
-    def stop(self):
-        """Return the stop index."""
-        return self.start + self.__len__()
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def __len__(self):
-        return len(self.items)
-
-    def __getitem__(self, sl):
-        if isinstance(sl, int):
-            return self.items[self._norm_idx(sl)]
-        elif isinstance(sl, slice):
-            items = self.items[self._norm_slice(sl)]
-            return self.__class__(items, sl.start)
-        else:
-            raise TypeError("expected int or slice")
-
-    def _norm_idx(self, i):
-        """Return an index normalized to vector start index."""
-        if i >= self.start and i <= self.stop:
-            idx = i - self.start
-        elif i >= -self.stop and i <= -self.start:
-            idx = i + self.stop
-        else:
-            fstr = "expected index in range [{0.start}, {0.stop}]"
-            raise IndexError(fstr.format(self))
-        return idx
-
-    def _norm_slice(self, sl):
-        """Return a slice normalized to vector start index."""
-        limits = {'start': None, 'stop': None}
-        for k in limits:
-            i = getattr(sl, k)
-            if i is not None:
-                if i >= self.start and i <= self.stop:
-                    limits[k] = i - self.start
-                elif i >= -self.stop and i <= -self.start:
-                    limits[k] = i + self.stop
-                else:
-                    fstr = "expected index in range [{0.start}, {0.stop}]"
-                    raise IndexError(fstr.format(self))
-        step = getattr(sl, 'step', None)
-        return slice(limits['start'], limits['stop'], step)
-
-
-class VectorFunction(Slicer):
-    """
-    Abstract base class that defines an interface for a vector Boolean function.
-    """
-    def restrict(self, point):
-        """
-        Return the vector that results from applying the 'restrict' method to
-        all functions.
-        """
-        items = [f.restrict(point) for f in self]
-        return self.__class__(items, self.start)
-
-    def vrestrict(self, vpoint):
-        """Expand all vectors before applying 'restrict'."""
-        return self.restrict(vpoint2point(vpoint))
-
-    def to_uint(self):
-        """Convert vector to an unsigned integer, if possible."""
-        num = 0
-        for i, f in enumerate(self, self.start):
-            if f.is_zero():
-                pass
-            elif f.is_one():
-                num += 1 << i
-            else:
-                fstr = "expected all functions to be a constant (0 or 1) form"
-                raise ValueError(fstr)
-        return num
-
-    def to_int(self):
-        """Convert vector to an integer, if possible."""
-        num = self.to_uint()
-        if self.items[-1].unbox():
-            return num - (1 << self.__len__())
-        else:
-            return num
 
