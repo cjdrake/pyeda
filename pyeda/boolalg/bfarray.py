@@ -32,7 +32,7 @@ import itertools
 import operator
 from functools import reduce
 
-from pyeda.boolalg.boolfunc import Variable, Function
+from pyeda.boolalg.boolfunc import Function, vpoint2point
 from pyeda.boolalg.bdd import BinaryDecisionDiagram, bddvar
 from pyeda.boolalg.expr import Expression, exprvar
 from pyeda.boolalg.table import TruthTable, ttvar
@@ -317,7 +317,7 @@ class farray(object):
 
     def vrestrict(self, vpoint):
         """Expand all vectors before applying 'restrict'."""
-        return self.restrict(_expand_vectors(vpoint))
+        return self.restrict(vpoint2point(vpoint))
 
     def to_uint(self):
         """Convert vector to an unsigned integer, if possible."""
@@ -671,28 +671,6 @@ def _int2farray(ftype, num, length=None):
             objs += [sign] * (length - req_length)
 
     return farray(objs)
-
-def _expand_vectors(vpoint):
-    """Expand all vectors in a substitution dict."""
-    point = dict()
-    for f, val in vpoint.items():
-        if isinstance(f, farray):
-            if f.size != len(val):
-                fstr = ("invalid vector point: "
-                        "expected 1:1 mapping from farray => {0, 1}")
-                raise ValueError(fstr)
-            for i, val in enumerate(val):
-                v = f.items[i]
-                if not isinstance(v, Variable):
-                    fstr = "expected vpoint key to be a Variable"
-                    raise TypeError(fstr)
-                point[v] = int(val)
-        elif isinstance(f, Variable):
-            point[f] = int(val)
-        else:
-            fstr = "expected vpoint key to be a Variable or farray(Variable)"
-            raise ValueError(fstr)
-    return point
 
 def _itemize(objs):
     """Recursive helper function for farray."""
