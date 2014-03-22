@@ -15,6 +15,7 @@ from pyeda.boolalg.boolfunc import (
     num2point, num2upoint, num2term,
     point2upoint, point2term,
     iter_points, iter_upoints, iter_terms,
+    vpoint2point,
     Variable, Function, VectorFunction,
 )
 

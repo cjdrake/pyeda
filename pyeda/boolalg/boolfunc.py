@@ -13,6 +13,8 @@ Interface Functions:
     iter_upoints
     iter_terms
 
+    vpoint2point
+
 Interface Classes:
     Variable
     Function
@@ -171,6 +173,23 @@ def iter_terms(vs, conj=False):
     """
     for num in range(1 << len(vs)):
         yield num2term(num, vs, conj)
+
+def vpoint2point(vpoint):
+    """Convert a vector point to a point."""
+    point = dict()
+    for v, val in vpoint.items():
+        point.update(_flatten(v, val))
+    return point
+
+def _flatten(v, val):
+    """Recursively flatten vectorized var => {0, 1} mappings."""
+    if isinstance(v, Variable):
+        yield v, int(val)
+    else:
+        if len(v) != len(val):
+            raise ValueError("expected 1:1 mapping from Variable => {0, 1}")
+        for _v, _val in zip(v, val):
+            yield from _flatten(_v, _val)
 
 
 _UNIQIDS = dict()
@@ -403,7 +422,7 @@ class Function(object):
 
     def vrestrict(self, vpoint):
         """Expand all vectors before applying 'restrict'."""
-        return self.restrict(_expand_vectors(vpoint))
+        return self.restrict(vpoint2point(vpoint))
 
     def compose(self, mapping):
         r"""
@@ -609,7 +628,7 @@ class VectorFunction(Slicer):
 
     def vrestrict(self, vpoint):
         """Expand all vectors before applying 'restrict'."""
-        return self.restrict(_expand_vectors(vpoint))
+        return self.restrict(vpoint2point(vpoint))
 
     def to_uint(self):
         """Convert vector to an unsigned integer, if possible."""
@@ -631,23 +650,4 @@ class VectorFunction(Slicer):
             return num - (1 << self.__len__())
         else:
             return num
-
-
-def _expand_vectors(vpoint):
-    """Expand all vectors in a substitution dict."""
-    point = dict()
-    for f, val in vpoint.items():
-        if isinstance(f, VectorFunction):
-            if len(f) != len(val):
-                fstr = ("invalid vector point: "
-                        "expected 1:1 mapping from VectorFunction => {0, 1}")
-                raise ValueError(fstr)
-            for i, val in enumerate(val, start=f.start):
-                point[f[i]] = int(val)
-        elif isinstance(f, Function):
-            point[f] = val
-        else:
-            fstr = "expected vpoint key to be Function or VectorFunction"
-            raise ValueError(fstr)
-    return point
 
