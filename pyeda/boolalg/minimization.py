@@ -10,7 +10,11 @@ from pyeda.boolalg.espresso import (
     FTYPE, DTYPE, RTYPE,
     set_config, espresso,
 )
-from pyeda.boolalg.expr import exprvar, Expression, Or, And
+from pyeda.boolalg.expr import (
+    exprvar,
+    Expression, ExprLiteral, ExprAnd,
+    Or, And
+)
 from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC
 
 CONFIG = dict(
@@ -34,7 +38,10 @@ def espresso_exprs(*exprs):
     # Gather all cubes in the cover of input functions
     fscover = set()
     for f in exprs:
-        fscover |= f.cover
+        if isinstance(f, ExprLiteral) or isinstance(f, ExprAnd):
+            fscover.add(f.cube)
+        else:
+            fscover.update(f.cover)
 
     ninputs = len(inputs)
     noutputs = len(exprs)
