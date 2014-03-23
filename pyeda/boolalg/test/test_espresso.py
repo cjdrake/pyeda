@@ -49,14 +49,15 @@ def test_espresso():
     truthtable2expr(f1).equivalent(f1m)
     truthtable2expr(f2).equivalent(f2m)
 
-def test_espresso_2():
-    b,x = map(exprvar, "bx")
+def test_issue75():
+    """Reference: https://github.com/cjdrake/pyeda/issues/75"""
+    b, x = map(exprvar, "bx")
 
-    f_out = ~(b|~x)
+    f_out = ~(b | ~x)
     f_out_dnf = f_out.to_dnf()
-    assert(f_out.equivalent(f_out_dnf))
+    assert f_out.equivalent(f_out_dnf)
     f_out_r, = espresso_exprs(f_out_dnf)
-    assert(f_out.equivalent(f_out_r))
+    assert f_out.equivalent(f_out_r)
 
 def _do_espresso(fname):
     fpath = os.path.join('extension', 'espresso', 'test', 'bb_all', fname)
