@@ -186,8 +186,8 @@ def _flatten(v, val):
     else:
         if len(v) != len(val):
             raise ValueError("expected 1:1 mapping from Variable => {0, 1}")
-        for _v, _val in zip(v, val):
-            yield from _flatten(_v, _val)
+        for _var, _val in zip(v, val):
+            yield from _flatten(_var, _val)
 
 
 _UNIQIDS = dict()
