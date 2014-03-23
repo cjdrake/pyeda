@@ -32,7 +32,7 @@ import itertools
 import operator
 from functools import reduce
 
-from pyeda.boolalg.boolfunc import Function, vpoint2point
+from pyeda.boolalg import boolfunc
 from pyeda.boolalg.bdd import BinaryDecisionDiagram, bddvar
 from pyeda.boolalg.expr import Expression, exprvar
 from pyeda.boolalg.table import TruthTable, ttvar
@@ -227,7 +227,7 @@ def fcat(*fs):
     """Concatenate a sequence of farrays."""
     items = list()
     for f in fs:
-        if isinstance(f, Function):
+        if isinstance(f, boolfunc.Function):
             items.append(f)
         elif isinstance(f, farray):
             items.extend(f.flat)
@@ -317,7 +317,7 @@ class farray(object):
 
     def vrestrict(self, vpoint):
         """Expand all vectors before applying 'restrict'."""
-        return self.restrict(vpoint2point(vpoint))
+        return self.restrict(boolfunc.vpoint2point(vpoint))
 
     def to_uint(self):
         """Convert vector to an unsigned integer, if possible."""
@@ -679,9 +679,9 @@ def _itemize(objs):
 
     isseq = [isinstance(obj, collections.Sequence) for obj in objs]
     if not any(isseq):
-        ftype = Function
+        ftype = boolfunc.Function
         for obj in objs:
-            if ftype is Function:
+            if ftype is boolfunc.Function:
                 if isinstance(obj, BinaryDecisionDiagram):
                     ftype = BinaryDecisionDiagram
                 elif isinstance(obj, Expression):
@@ -696,14 +696,14 @@ def _itemize(objs):
     elif all(isseq):
         items = list()
         shape = None
-        ftype = Function
+        ftype = boolfunc.Function
         for obj in objs:
             _items, _shape, _ftype = _itemize(obj)
             if shape is None:
                 shape = _shape
             elif shape != _shape:
                 raise ValueError("expected uniform array dimensions")
-            if ftype is Function:
+            if ftype is boolfunc.Function:
                 ftype = _ftype
             elif ftype != _ftype:
                 raise ValueError("expected uniform Function types")
