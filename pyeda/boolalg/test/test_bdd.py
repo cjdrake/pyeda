@@ -25,7 +25,7 @@ def test_bddvar():
     assert aa.indices == tuple()
 
 def test_expr2bdd():
-    assert expr2bdd(a) == aa
+    assert expr2bdd(a) is aa
 
     assert expr2bdd(~a & ~b | a & ~b | ~a & b | a & b).node is BDDNODEONE
     assert expr2bdd(~(~a & ~b | a & ~b | ~a & b | a & b)).node is BDDNODEZERO
@@ -33,7 +33,7 @@ def test_expr2bdd():
     ff = expr2bdd(a & b | a & c | b & c)
     gg = expr2bdd(a & b | a & c | b & c)
 
-    assert ff == gg
+    assert ff is gg
 
     assert ff.node.root == a.uniqid
     assert ff.node.low.root == b.uniqid
@@ -82,18 +82,18 @@ def test_restrict():
     assert ff.restrict({cc: 1}).equivalent(expr2bdd(a | b))
 
     assert ff.restrict({aa: 0, bb: 0}) is BDDZERO
-    assert ff.restrict({aa: 0, bb: 1}) == cc
-    assert ff.restrict({aa: 1, bb: 0}) == cc
+    assert ff.restrict({aa: 0, bb: 1}) is cc
+    assert ff.restrict({aa: 1, bb: 0}) is cc
     assert ff.restrict({aa: 1, bb: 1}) is BDDONE
 
     assert ff.restrict({aa: 0, cc: 0}) is BDDZERO
-    assert ff.restrict({aa: 0, cc: 1}) == bb
-    assert ff.restrict({aa: 1, cc: 0}) == bb
+    assert ff.restrict({aa: 0, cc: 1}) is bb
+    assert ff.restrict({aa: 1, cc: 0}) is bb
     assert ff.restrict({aa: 1, cc: 1}) is BDDONE
 
     assert ff.restrict({bb: 0, cc: 0}) is BDDZERO
-    assert ff.restrict({bb: 0, cc: 1}) == aa
-    assert ff.restrict({bb: 1, cc: 0}) == aa
+    assert ff.restrict({bb: 0, cc: 1}) is aa
+    assert ff.restrict({bb: 1, cc: 0}) is aa
     assert ff.restrict({bb: 1, cc: 1}) is BDDONE
 
     assert ff.restrict({aa: 0, bb: 0, cc: 0}) is BDDZERO
@@ -116,23 +116,23 @@ def test_negate():
     assert bdd2expr(~ff).equivalent(~f)
 
 def test_ops():
-    assert aa | 0 == aa
+    assert aa | 0 is aa
     assert aa | 1 is BDDONE
-    assert 0 | aa == aa
+    assert 0 | aa is aa
     assert 1 | aa is BDDONE
 
     assert aa - 0 is BDDONE
-    assert aa - 1 == aa
-    assert 0 - aa == ~aa
+    assert aa - 1 is aa
+    assert 0 - aa is ~aa
     assert 1 - aa is BDDONE
 
     assert aa & 0 is BDDZERO
-    assert aa & 1 == aa
+    assert aa & 1 is aa
     assert 0 & aa is BDDZERO
-    assert 1 & aa == aa
+    assert 1 & aa is aa
 
-    assert aa ^ 0 == aa
-    assert aa ^ 1 == ~aa
+    assert aa ^ 0 is aa
+    assert aa ^ 1 is ~aa
 
     assert bdd2expr(~aa & bb | aa & ~bb).equivalent(~a & b | a & ~b)
     assert bdd2expr(aa - bb).equivalent(a - b)
