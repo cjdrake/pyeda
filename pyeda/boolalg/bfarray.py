@@ -269,20 +269,44 @@ class farray(object):
             return 0
 
     def __getitem__(self, key):
-        if isinstance(key, boolfunc.Function):
-            key = farray([key])
+        # Convert all input keys to a list
+        if type(key) in {int, slice, farray} or key is Ellipsis:
+            sls = [key, ]
+        elif type(key) is tuple:
+            sls = list(key)
+        else:
+            raise TypeError("invalid slice input type")
 
-        # Convert the abbreviated input key to its full form
-        sls = self._key2sls(key)
+        if len(sls) > self.ndim:
+            fstr = "expected <= {0.ndim} slice dimensions, got {1}"
+            raise ValueError(fstr.format(self, len(sls)))
 
-        # Slice through all dimensions
-        items = self.items.copy()
-        for dim in range(self.ndim - 1, -1, -1):
-            items = list(_iterdim(items, self._normshape, sls[dim], dim))
+        # Check/fix some input conditions
+        for i in range(len(sls)):
+            sl = sls[i]
+            # Convert Function to farray
+            if isinstance(sl, boolfunc.Function):
+                sls[i] = farray([sl])
+            # Forbid slice steps
+            elif type(sl) is slice:
+                if sl.step is not None:
+                    raise ValueError("farray slice step is not supported")
+            # Check for valid type
+            elif type(sl) not in {int, farray} and sl is not Ellipsis:
+                raise TypeError("invalid slice input type")
 
-        # Denormalize slices, and drop non-slice dimensions
-        shape = tuple(self._denorm_slice(i, sl) for i, sl in enumerate(sls)
-                      if type(sl) is slice)
+        # Normalize input slices
+        nsls = self._norm_slices(sls)
+
+        # Speed hack for coordinates
+        if all(type(nsl) is int for nsl in nsls):
+            return self._fastgetitem(nsls)
+        else:
+            # Filter through all dimensions (right to left)
+            items, shape = self.items[:], self.shape[:]
+            for dim in range(self.ndim - 1, -1, -1):
+                items, shape = self._filtdim(items, shape, dim, nsls[dim])
+
         if shape:
             return self.__class__(items, shape)
         else:
@@ -364,17 +388,17 @@ class farray(object):
         return self.__class__([~x for x in self.items], self.shape)
 
     def __or__(self, other):
-        shape = self._get_op_shape(other)
+        shape = self._op_shape(other)
         items = [x | y for x, y in zip(self.flat, other.flat)]
         return self.__class__(items, shape)
 
     def __and__(self, other):
-        shape = self._get_op_shape(other)
+        shape = self._op_shape(other)
         items = [x & y for x, y in zip(self.flat, other.flat)]
         return self.__class__(items, shape)
 
     def __xor__(self, other):
-        shape = self._get_op_shape(other)
+        shape = self._op_shape(other)
         items = [x ^ y for x, y in zip(self.flat, other.flat)]
         return self.__class__(items, shape)
 
@@ -526,73 +550,92 @@ class farray(object):
                  for i in range(2 ** self.size)]
         return self.__class__(items)
 
-    @cached_property
-    def _normshape(self):
-        """Return the shape normalized to zero start indices."""
-        return tuple(stop - start for start, stop in self.shape)
+    def _fastgetitem(self, coord):
+        """Return an item from a normalized coordinate."""
+        size = self.size
+        offset = 0
+        for dim, index in enumerate(coord):
+            size //= self._normshape[dim]
+            offset += size * index
+        return self.items[offset]
 
-    def _key2sls(self, key):
-        """Convert a slice key to a normalized list of int or slice."""
-        # Convert all input keys to a tuple
-        if type(key) in {int, slice, farray} or key is Ellipsis:
-            key = (key, )
-        elif type(key) is not tuple:
-            raise TypeError("invalid slice input type")
-        keylen = len(key)
-        if keylen > self.ndim:
-            fstr = "expected <= {} slice dimensions, got {}"
-            raise ValueError(fstr.format(self.ndim, keylen))
-
-        # Forbid slice steps
-        for k in key:
-            if type(k) is slice and k.step is not None:
-                raise ValueError("farray slice step is not supported")
-
-        # Fill '...' entries with ':'
-        nfill = self.ndim - keylen
-        fkeys = list()
-        for k in key:
-            if k is Ellipsis:
-                while nfill:
-                    fkeys.append(slice(None, None))
-                    nfill -= 1
-                fkeys.append(slice(None, None))
+    def _filtdim(self, items, shape, dim, nsl):
+        """Return items filtered by a dimension slice."""
+        normshape = tuple(stop - start for start, stop in shape)
+        nsl_type = type(nsl)
+        newitems = list()
+        if nsl_type is farray:
+            N = reduce(operator.mul, normshape[dim:])
+            if nsl.size < clog2(N):
+                fstr = "expected dim {} select to have >= {} bits, got {}"
+                raise ValueError(fstr.format(dim, clog2(N), nsl.size))
+            for i in range(len(items) // N):
+                it = boolfunc.iter_terms(nsl.items)
+                args = [reduce(operator.and_, (items[i*N+j], ) + next(it))
+                        for j in range(N)]
+                newitems.append(reduce(operator.or_, args))
+            # Collapse subsequent dimensions
+            newshape = shape[:dim]
+        else:
+            stride = reduce(operator.mul, normshape[:dim+1])
+            N = len(items) // stride
+            if nsl_type is int:
+                for i in range(stride):
+                    if i % normshape[dim] == nsl:
+                        newitems += items[N*i:N*(i+1)]
+                # Collapse this dimension
+                newshape = shape[:dim] + shape[dim+1:]
             else:
-                fkeys.append(k)
+                for i in range(stride):
+                    if nsl.start <= (i % normshape[dim]) < nsl.stop:
+                        newitems += items[N*i:N*(i+1)]
+                # Reshape this dimension
+                offset = shape[dim][0]
+                redim = (offset + nsl.start, offset + nsl.stop)
+                newshape = shape[:dim] + (redim, ) + shape[dim+1:]
+        return newitems, newshape
+
+    def _norm_slices(self, sls):
+        """Convert slices to a normalized tuple of int/slice/farray."""
+        # Fill '...' entries with ':'
+        nfill = self.ndim - len(sls)
+        fsls = list()
+        for sl in sls:
+            if sl is Ellipsis:
+                while nfill:
+                    fsls.append(slice(None, None))
+                    nfill -= 1
+                fsls.append(slice(None, None))
+            else:
+                fsls.append(sl)
+
         # Append ':' to the end
-        for _ in range(self.ndim - len(fkeys)):
-            fkeys.append(slice(None, None))
+        for _ in range(self.ndim - len(fsls)):
+            fsls.append(slice(None, None))
 
         # Normalize indices, and fill empty slice entries
-        sls = list()
-        for i, fkey in enumerate(fkeys):
-            if type(fkey) is farray:
-                sls.append(fkey)
+        nsls = list()
+        for i, fsl in enumerate(fsls):
+            fsl_type = type(fsl)
+            if fsl_type is farray:
+                nsls.append(fsl)
             else:
-                nkey = self._norm_key(i, fkey)
-                if type(nkey) is int:
-                    sls.append(nkey)
+                if fsl_type is int:
+                    nsls.append(_norm_index(fsl, *self.shape[i]))
                 else:
-                    start = 0 if nkey.start is None else nkey.start
-                    stop = self._normshape[i] if nkey.stop is None else nkey.stop
-                    sls.append(slice(start, stop))
+                    nsl = _norm_slice(fsl, *self.shape[i])
+                    start = 0 if nsl.start is None else nsl.start
+                    stop = self._normshape[i] if nsl.stop is None else nsl.stop
+                    nsls.append(slice(start, stop))
 
-        return sls
+        return nsls
 
-    def _norm_key(self, i, key):
-        """Return a key normalized to a zero-based index."""
-        if type(key) is int:
-            return _norm_index(key, *self.shape[i])
-        elif type(key) is slice:
-            return _norm_slice(key, *self.shape[i])
-        else:
-            raise TypeError("invalid slice input type")
+    @cached_property
+    def _normshape(self):
+        """Return the shape normalized to zero offsets."""
+        return tuple(stop - start for start, stop in self.shape)
 
-    def _denorm_slice(self, i, sl):
-        """Return a slice denormalized to dimension offsets."""
-        return (sl.start + self.offsets[i], sl.stop + self.offsets[i])
-
-    def _get_op_shape(self, other):
+    def _op_shape(self, other):
         """Return shape that will be used by farray constructor."""
         if isinstance(other, farray):
             if self.shape == other.shape:
@@ -718,32 +761,6 @@ def _itemize(objs):
         raise ValueError("expected uniform array dimensions")
 
 
-def _iterdim(items, normshape, sl, dim):
-    """Iterate through items in a dimension."""
-    slt = type(sl)
-    if slt is farray:
-        nitems = normshape[dim]
-        nparts = len(items) // nitems
-        if sl.size < clog2(nparts):
-            fstr = "expected at least {} select bits, got {}"
-            raise ValueError(fstr.format(clog2(nparts), sl.size))
-        for i in range(nparts):
-            it = boolfunc.iter_terms(list(sl.flat))
-            args = [reduce(operator.and_, (items[i*nitems + j], ) + next(it))
-                    for j in range(nitems)]
-            yield reduce(operator.or_, args)
-    else:
-        nparts = reduce(operator.mul, normshape[:dim+1])
-        nitems = len(items) // nparts
-        for i in range(nparts):
-            for j in range(nitems):
-                if slt is int:
-                    if i % normshape[dim] == sl:
-                        yield items[i*nitems + j]
-                else:
-                    if sl.start <= (i % normshape[dim]) < sl.stop:
-                        yield items[i*nitems + j]
-
 def _norm_index(i, start, stop):
     """Return an index normalized to an array start index."""
     if i >= start and i < stop:
@@ -751,7 +768,7 @@ def _norm_index(i, start, stop):
     elif i >= -stop and i < -start:
         index = i + stop
     else:
-        fstr = "expected index in range [{}, {}]"
+        fstr = "expected index in range [{}, {})"
         raise IndexError(fstr.format(start, stop))
     return index
 
@@ -766,7 +783,7 @@ def _norm_slice(sl, start, stop):
             elif i >= -stop and i <= -start:
                 limits[k] = i + stop
             else:
-                fstr = "expected index in range [{}, {}]"
+                fstr = "expected index in range [{}, {})"
                 raise IndexError(fstr.format(start, stop))
     return slice(limits['start'], limits['stop'])
 
