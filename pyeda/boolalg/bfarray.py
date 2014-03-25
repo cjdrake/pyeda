@@ -566,32 +566,38 @@ class farray(object):
         normshape = tuple(stop - start for start, stop in shape)
         nsl_type = type(nsl)
         newitems = list()
+        # Number of groups
+        num = reduce(operator.mul, normshape[:dim+1])
+        # Size of each group
+        size = len(items) // num
+        # Size of the dimension
+        N = normshape[dim]
         if nsl_type is farray:
-            N = reduce(operator.mul, normshape[dim:])
             if nsl.size < clog2(N):
                 fstr = "expected dim {} select to have >= {} bits, got {}"
                 raise ValueError(fstr.format(dim, clog2(N), nsl.size))
-            for i in range(len(items) // N):
+            groups = [list() for _ in range(N)]
+            for i in range(num):
+                groups[i % N] += items[size*i:size*(i+1)]
+            for muxins in zip(*groups):
                 it = boolfunc.iter_terms(nsl.items)
-                args = [reduce(operator.and_, (items[i*N+j], ) + next(it))
-                        for j in range(N)]
+                args = [reduce(operator.and_, (muxin, ) + next(it))
+                        for muxin in muxins]
                 newitems.append(reduce(operator.or_, args))
-            # Collapse subsequent dimensions
-            newshape = shape[:dim]
+            # Collapse dimension
+            newshape = shape[:dim] + shape[dim+1:]
         else:
-            stride = reduce(operator.mul, normshape[:dim+1])
-            N = len(items) // stride
             if nsl_type is int:
-                for i in range(stride):
-                    if i % normshape[dim] == nsl:
-                        newitems += items[N*i:N*(i+1)]
-                # Collapse this dimension
+                for i in range(num):
+                    if i % N == nsl:
+                        newitems += items[size*i:size*(i+1)]
+                # Collapse dimension
                 newshape = shape[:dim] + shape[dim+1:]
             else:
-                for i in range(stride):
-                    if nsl.start <= (i % normshape[dim]) < nsl.stop:
-                        newitems += items[N*i:N*(i+1)]
-                # Reshape this dimension
+                for i in range(num):
+                    if nsl.start <= (i % N) < nsl.stop:
+                        newitems += items[size*i:size*(i+1)]
+                # Reshape dimension
                 offset = shape[dim][0]
                 redim = (offset + nsl.start, offset + nsl.stop)
                 newshape = shape[:dim] + (redim, ) + shape[dim+1:]
