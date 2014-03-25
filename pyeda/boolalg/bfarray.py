@@ -270,7 +270,9 @@ class farray(object):
 
     def __getitem__(self, key):
         # Convert all input keys to a list
-        if type(key) in {int, slice, farray} or key is Ellipsis:
+        if isinstance(key, boolfunc.Function):
+            sls = [key, ]
+        elif type(key) in {int, slice, farray} or key is Ellipsis:
             sls = [key, ]
         elif type(key) is tuple:
             sls = list(key)
