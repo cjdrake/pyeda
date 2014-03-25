@@ -83,13 +83,13 @@ def num2upoint(num, vs):
         upoint[bit_on(num, i)].add(v.uniqid)
     return frozenset(upoint[0]), frozenset(upoint[1])
 
-def num2term(num, vs, conj=False):
+def num2term(num, fs, conj=False):
     """Convert a number into a min/max term.
 
     Parameters
     ----------
     num : int
-    vs : [Variable]
+    fs : [Function]
     conj : bool
         conj=False for minterms, conj=True for maxterms
 
@@ -112,9 +112,9 @@ def num2term(num, vs, conj=False):
     +-------+----------+----------+
     """
     if conj:
-        return tuple(~v if bit_on(num, i) else v for i, v in enumerate(vs))
+        return tuple(~f if bit_on(num, i) else f for i, f in enumerate(fs))
     else:
-        return tuple(v if bit_on(num, i) else ~v for i, v in enumerate(vs))
+        return tuple(f if bit_on(num, i) else ~f for i, f in enumerate(fs))
 
 def point2upoint(point):
     """Convert a point into an untyped point.
@@ -162,15 +162,15 @@ def iter_upoints(vs):
     for num in range(1 << len(vs)):
         yield num2upoint(num, vs)
 
-def iter_terms(vs, conj=False):
+def iter_terms(fs, conj=False):
     """Iterate through all min/max terms in an N-dimensional space.
 
     Parameters
     ----------
-    vs: [Variable]
+    fs : [Function]
     """
-    for num in range(1 << len(vs)):
-        yield num2term(num, vs, conj)
+    for num in range(1 << len(fs)):
+        yield num2term(num, fs, conj)
 
 def vpoint2point(vpoint):
     """Convert a vector point to a point."""
