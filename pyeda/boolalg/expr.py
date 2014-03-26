@@ -107,22 +107,22 @@ def exprcomp(exprvar):
         comp = _EXPRLITERALS[uniqid] = ExprComplement(exprvar)
     return comp
 
-def expr(arg, simplify=True, factor=False):
+def expr(obj, simplify=True, factor=False):
     """Return an Expression."""
-    if isinstance(arg, Expression):
-        return arg
+    if isinstance(obj, Expression):
+        return obj
     # False, True, 0, 1
-    elif isinstance(arg, int) and arg in {0, 1}:
-        return CONSTANTS[arg]
-    elif type(arg) is str:
-        ex = ast2expr(pyeda.parsing.boolexpr.parse(arg))
+    elif isinstance(obj, int) and obj in {0, 1}:
+        return CONSTANTS[obj]
+    elif type(obj) is str:
+        ex = ast2expr(pyeda.parsing.boolexpr.parse(obj))
         if factor:
             ex = ex.factor()
         elif simplify:
             ex = ex.simplify()
         return ex
     else:
-        return CONSTANTS[bool(arg)]
+        return CONSTANTS[bool(obj)]
 
 def ast2expr(ast):
     """Convert an abstract syntax tree to an Expression."""
