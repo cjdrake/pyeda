@@ -568,15 +568,15 @@ class Expression(boolfunc.Function):
         return False
 
     @staticmethod
-    def box(arg):
-        if isinstance(arg, Expression):
-            return arg
-        elif arg in {0, 1}:
-            return CONSTANTS[arg]
-        elif type(arg) is str:
-            return ast2expr(pyeda.parsing.boolexpr.parse(arg))
+    def box(obj):
+        if isinstance(obj, Expression):
+            return obj
+        elif obj in {0, 1}:
+            return CONSTANTS[obj]
+        elif type(obj) is str:
+            return ast2expr(pyeda.parsing.boolexpr.parse(obj))
         else:
-            return CONSTANTS[bool(arg)]
+            return CONSTANTS[bool(obj)]
 
     # Specific to Expression
     def is_neg_unate(self, vs=None):

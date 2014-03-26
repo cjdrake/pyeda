@@ -226,15 +226,15 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return self.node is BDDNODEONE
 
     @staticmethod
-    def box(arg):
-        if isinstance(arg, BinaryDecisionDiagram):
-            return arg
-        elif arg == 0 or arg == '0':
+    def box(obj):
+        if isinstance(obj, BinaryDecisionDiagram):
+            return obj
+        elif obj == 0 or obj == '0':
             return BDDZERO
-        elif arg == 1 or arg == '1':
+        elif obj == 1 or obj == '1':
             return BDDONE
         else:
-            return CONSTANTS[bool(arg)]
+            return CONSTANTS[bool(obj)]
 
     # Specific to BinaryDecisionDiagram
     def traverse(self):
