@@ -518,7 +518,7 @@ class Function(object):
         raise NotImplementedError()
 
     @staticmethod
-    def box(arg):
+    def box(obj):
         """Convert primitive types to a Function."""
         raise NotImplementedError()
 

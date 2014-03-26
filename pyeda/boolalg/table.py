@@ -367,15 +367,15 @@ class TruthTable(boolfunc.Function):
         return not self._inputs and self.pcdata[0] == PC_ONE
 
     @staticmethod
-    def box(arg):
-        if isinstance(arg, TruthTable):
-            return arg
-        elif arg == 0 or arg == '0':
+    def box(obj):
+        if isinstance(obj, TruthTable):
+            return obj
+        elif obj == 0 or obj == '0':
             return TTZERO
-        elif arg == 1 or arg == '1':
+        elif obj == 1 or obj == '1':
             return TTONE
         else:
-            return CONSTANTS[bool(arg)]
+            return CONSTANTS[bool(obj)]
 
     # Specific to TruthTable
     def is_neg_unate(self, vs=None):
