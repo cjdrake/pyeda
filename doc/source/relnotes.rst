@@ -4,6 +4,53 @@
   Release Notes
 *****************
 
+Version 0.21
+============
+
+Important bug fix! `Issue 75 <https://github.com/cjdrake/pyeda/issues/75>`_.
+`Harnesser <https://github.com/Harnesser>`_ pointed out that Espresso was
+returning some goofy results for
+degenerate inputs (a literal or ``AND(lit, lit, ...)``).
+
+The major new feature in this release is the ``farray`` mult-dimensional
+array (MDA) data type.
+The implementation of ``BitVector`` was a kludge --
+it was built around the ``Expression`` function type,
+and didn't support all the fancy things you could do with numpy slices.
+All usage of the old ``Slicer`` and ``BitVector`` types has been eliminated,
+and replaced by ``farray``.
+This includes the ``bitvec``, ``uint2bv``, and ``int2bv`` functions,
+and the contents of the ``pyeda.logic`` package (addition, Sudoku, etc).
+
+Both ``uint2bv`` and ``int2bv`` are deprecated,
+superceded by ``uint2exprs`` and ``int2exprs`` (or ``uint2bdds``, etc).
+So far I haven't deprecated ``bitvec``,
+because it's a very commonly-used function.
+
+See `Issue 68 <https://github.com/cjdrake/pyeda/issues/68>`_ for some details
+on the ``farray`` type.
+My favorite part is the ability to multiplex an ``farray`` using Python's
+slice syntax::
+
+   >>> xs = exprvars('x', 4)
+   >>> sel = exprvars('s', 2)
+   >>> xs[sel]
+   Or(And(~s[0], ~s[1], x[0]), And(s[0], ~s[1], x[1]), And(~s[0], s[1], x[2]), And(s[0], s[1], x[3]))
+
+This even works with MDAs::
+
+   >>> xs = exprvars('x', 4, 4)
+   >>> sel = exprvars('s', 2)
+   >>> xs[0,sel]
+   Or(And(~s[0], ~s[1], x[0][0]), And(s[0], ~s[1], x[0][1]), And(~s[0], s[1], x[0][2]), And(s[0], s[1], x[0][3]))
+
+Added ``AchillesHeel`` function to expression parsing engine.
+
+Eliminated the ``+`` and ``*`` operators for Boolean OR, AND, respectively.
+This is annoying, but I need these operators for
+`Issue 77 <https://github.com/cjdrake/pyeda/issues/77>`_.
+Sorry for any trouble, but that's what major version zero is for :).
+
 Version 0.20
 ============
 
