@@ -216,9 +216,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
         for path in _iter_all_paths(self.node, BDDNODEONE):
             yield path2point(path)
 
-    def satisfy_count(self):
-        return sum(1 for _ in self.satisfy_all())
-
     def is_zero(self):
         return self.node is BDDNODEZERO
 

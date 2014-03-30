@@ -549,9 +549,6 @@ class Expression(boolfunc.Function):
             for upoint in sat.iter_backtrack(self):
                 yield upoint2exprpoint(upoint)
 
-    def satisfy_count(self):
-        return sum(1 for _ in self.satisfy_all())
-
     def is_zero(self):
         return False
 
