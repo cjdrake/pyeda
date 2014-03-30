@@ -674,8 +674,9 @@ class Expression(boolfunc.Function):
         vs = self._expect_vars(vs)
         if vs:
             outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
-            terms = [inner(self, *term).simplify()
-                     for term in boolfunc.iter_terms(vs, conj)]
+            terms = [inner(self.restrict(p),
+                           *boolfunc.point2term(p, conj)).simplify()
+                     for p in boolfunc.iter_points(vs)]
             if conj:
                 terms = [term for term in terms if term is not EXPRONE]
             else:
