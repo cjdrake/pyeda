@@ -552,15 +552,6 @@ class Expression(boolfunc.Function):
     def satisfy_count(self):
         return sum(1 for _ in self.satisfy_all())
 
-    def smoothing(self, vs=None):
-        return Or(*self.cofactors(vs))
-
-    def consensus(self, vs=None):
-        return And(*self.cofactors(vs))
-
-    def derivative(self, vs=None):
-        return Xor(*self.cofactors(vs))
-
     def is_zero(self):
         return False
 
