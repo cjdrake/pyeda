@@ -41,10 +41,10 @@ _RESTRICT_CACHE = weakref.WeakValueDictionary()
 
 class BDDNode(object):
     """Binary Decision Diagram Node"""
-    def __init__(self, root, low, high):
+    def __init__(self, root, lo, hi):
         self.root = root
-        self.low = low
-        self.high = high
+        self.lo = lo
+        self.hi = hi
 
 BDDNODEZERO = _BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
 BDDNODEONE = _BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
@@ -69,12 +69,12 @@ def bddvar(name, index=None):
         _BDDS[var.node] = var
     return var
 
-def bddnode(root, low, high):
+def bddnode(root, lo, hi):
     """Return a unique BDD node."""
-    if low is high:
-        node = low
+    if lo is hi:
+        node = lo
     else:
-        key = (root, low, high)
+        key = (root, lo, hi)
         try:
             node = _BDDNODES[key]
         except KeyError:
@@ -102,9 +102,9 @@ def expr2bddnode(expr):
         _ = bddvar(top.names, top.indices)
 
         root = top.uniqid
-        low = expr2bddnode(expr.restrict({top: 0}))
-        high = expr2bddnode(expr.restrict({top: 1}))
-        return bddnode(root, low, high)
+        lo = expr2bddnode(expr.restrict({top: 0}))
+        hi = expr2bddnode(expr.restrict({top: 1}))
+        return bddnode(root, lo, hi)
 
 def expr2bdd(expr):
     """Convert an expression into a binary decision diagram."""
@@ -129,9 +129,9 @@ def path2point(path):
     """Convert a BDD path to a BDD point."""
     point = dict()
     for i, node in enumerate(path[:-1]):
-        if node.low is path[i+1]:
+        if node.lo is path[i+1]:
             point[_BDDVARIABLES[node.root]] = 0
-        elif node.high is path[i+1]:
+        elif node.hi is path[i+1]:
             point[_BDDVARIABLES[node.root]] = 1
     return point
 
@@ -151,7 +151,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         self.node = node
 
     def __str__(self):
-        return "BDD({0.root}, {0.low}, {0.high})".format(self.node)
+        return "BDD({0.root}, {0.lo}, {0.hi})".format(self.node)
 
     def __repr__(self):
         return str(self)
@@ -262,10 +262,10 @@ class BinaryDecisionDiagram(boolfunc.Function):
         for node in self.traverse():
             if node is not BDDNODEZERO and node is not BDDNODEONE:
                 parts += ['n' + str(id(node)), '--',
-                          'n' + str(id(node.low)),
+                          'n' + str(id(node.lo)),
                           '[label=0,style=dashed];']
                 parts += ['n' + str(id(node)), '--',
-                          'n' + str(id(node.high)),
+                          'n' + str(id(node.hi)),
                           '[label=1];']
         parts.append('}')
         return " ".join(parts)
@@ -326,7 +326,7 @@ def _neg(node):
     elif node is BDDNODEONE:
         return BDDNODEZERO
     else:
-        return bddnode(node.root, _neg(node.low), _neg(node.high))
+        return bddnode(node.root, _neg(node.lo), _neg(node.hi))
 
 def _ite(f, g, h):
     """Return node that results from recursively applying ITE(f, g, h)."""
@@ -364,13 +364,13 @@ def _urestrict(node, upoint):
         ret = _RESTRICT_CACHE[key]
     except KeyError:
         if node.root in upoint[0]:
-            ret = _urestrict(node.low, upoint)
+            ret = _urestrict(node.lo, upoint)
         elif node.root in upoint[1]:
-            ret = _urestrict(node.high, upoint)
+            ret = _urestrict(node.hi, upoint)
         else:
-            low = _urestrict(node.low, upoint)
-            high = _urestrict(node.high, upoint)
-            ret = bddnode(node.root, low, high)
+            lo = _urestrict(node.lo, upoint)
+            hi = _urestrict(node.hi, upoint)
+            ret = bddnode(node.root, lo, hi)
         _RESTRICT_CACHE[key] = ret
     return ret
 
@@ -384,10 +384,10 @@ def _find_path(start, end, path=tuple()):
         return path
     else:
         ret = None
-        if start.low is not None:
-            ret = _find_path(start.low, end, path)
-        if ret is None and start.high is not None:
-            ret = _find_path(start.high, end, path)
+        if start.lo is not None:
+            ret = _find_path(start.lo, end, path)
+        if ret is None and start.hi is not None:
+            ret = _find_path(start.hi, end, path)
         return ret
 
 def _iter_all_paths(start, end, rand=False, path=tuple()):
@@ -396,7 +396,7 @@ def _iter_all_paths(start, end, rand=False, path=tuple()):
     if start is end:
         yield path
     else:
-        nodes = [start.low, start.high]
+        nodes = [start.lo, start.hi]
         if rand:
             random.shuffle(nodes)
         for node in nodes:
@@ -406,12 +406,12 @@ def _iter_all_paths(start, end, rand=False, path=tuple()):
 
 def _dfs(node, visited):
     """Iterate through a depth-first traveral starting at node."""
-    low, high = node.low, node.high
-    if low is not None:
-        for _node in _dfs(low, visited):
+    lo, hi = node.lo, node.hi
+    if lo is not None:
+        for _node in _dfs(lo, visited):
             yield _node
-    if high is not None:
-        for _node in _dfs(high, visited):
+    if hi is not None:
+        for _node in _dfs(hi, visited):
             yield _node
     if node not in visited:
         visited.add(node)
