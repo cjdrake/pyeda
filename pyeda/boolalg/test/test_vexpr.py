@@ -2,7 +2,8 @@
 Test vector Boolean functions
 """
 
-from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv
+from pyeda.boolalg.vexpr import bitvec
+from pyeda.boolalg.bfarray import uint2exprs, int2exprs
 
 from nose.tools import assert_raises
 
@@ -18,27 +19,27 @@ def test_bitvec():
     #X = bitvec('x', (8, 4))
     #assert X.shape[0][0] == 4 and X.shape[0][1] == 8 and len(X.items) == 4
 
-def test_uint2bv():
-    assert_raises(ValueError, uint2bv, -1)
-    assert_raises(ValueError, uint2bv, 42, 4)
-    assert str(uint2bv(0)) == "[0]"
-    assert str(uint2bv(1)) == "[1]"
-    assert str(uint2bv(2)) == "[0, 1]"
-    assert str(uint2bv(3)) == "[1, 1]"
-    assert str(uint2bv(4)) == "[0, 0, 1]"
-    assert str(uint2bv(4, 4)) == "[0, 0, 1, 0]"
+def test_uint2exprs():
+    assert_raises(ValueError, uint2exprs, -1)
+    assert_raises(ValueError, uint2exprs, 42, 4)
+    assert str(uint2exprs(0)) == "[0]"
+    assert str(uint2exprs(1)) == "[1]"
+    assert str(uint2exprs(2)) == "[0, 1]"
+    assert str(uint2exprs(3)) == "[1, 1]"
+    assert str(uint2exprs(4)) == "[0, 0, 1]"
+    assert str(uint2exprs(4, 4)) == "[0, 0, 1, 0]"
 
-def test_int2bv():
-    assert_raises(ValueError, int2bv, 42, 4)
-    assert str(int2bv(-4)) == "[0, 0, 1]"
-    assert str(int2bv(-3)) == "[1, 0, 1]"
-    assert str(int2bv(-2)) == "[0, 1]"
-    assert str(int2bv(-1)) == "[1]"
-    assert str(int2bv(0)) == "[0]"
-    assert str(int2bv(1)) == "[1, 0]"
-    assert str(int2bv(2)) == "[0, 1, 0]"
-    assert str(int2bv(3)) == "[1, 1, 0]"
-    assert str(int2bv(3, 4)) == "[1, 1, 0, 0]"
+def test_int2exprs():
+    assert_raises(ValueError, int2exprs, 42, 4)
+    assert str(int2exprs(-4)) == "[0, 0, 1]"
+    assert str(int2exprs(-3)) == "[1, 0, 1]"
+    assert str(int2exprs(-2)) == "[0, 1]"
+    assert str(int2exprs(-1)) == "[1]"
+    assert str(int2exprs(0)) == "[0]"
+    assert str(int2exprs(1)) == "[1, 0]"
+    assert str(int2exprs(2)) == "[0, 1, 0]"
+    assert str(int2exprs(3)) == "[1, 1, 0]"
+    assert str(int2exprs(3, 4)) == "[1, 1, 0, 0]"
 
 def test_ops():
     X = bitvec('x', 4)
