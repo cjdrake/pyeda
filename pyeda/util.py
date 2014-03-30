@@ -8,13 +8,6 @@ Interface Functions:
     cached_property
 """
 
-BOOL_DICT = {
-    0: 0,
-    1: 1,
-    '0': 0,
-    '1': 1,
-}
-
 def bit_on(num, bit):
     """Return the value of a number's bit position.
 
