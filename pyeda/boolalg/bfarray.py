@@ -291,6 +291,35 @@ class farray(object):
         else:
             return items[0]
 
+    def __add__(self, other):
+        if isinstance(other, boolfunc.Function):
+            return farray(self.items + [other])
+        elif isinstance(other, farray):
+            return farray(self.items + list(other.flat))
+        else:
+            raise TypeError("expected Function or farray")
+
+    def __radd__(self, other):
+        if isinstance(other, boolfunc.Function):
+            return farray([other] + self.items)
+        elif isinstance(other, farray):
+            return farray(list(other.flat) + self.items)
+        else:
+            raise TypeError("expected Function or farray")
+
+    def __mul__(self, other):
+        if type(other) is not int:
+            raise TypeError("expected multiplier to be an int")
+        if other < 0:
+            raise ValueError("expected multiplier to be non-negative")
+        items = list()
+        for _ in range(other):
+            items.extend(self.flat)
+        return farray(items)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     @cached_property
     def size(self):
         """Return the size of the array."""

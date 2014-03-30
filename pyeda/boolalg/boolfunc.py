@@ -317,6 +317,35 @@ class Function(object):
         """
         raise NotImplementedError()
 
+    def __add__(self, other):
+        from pyeda.boolalg.bfarray import farray
+        if isinstance(other, Function):
+            return farray([self] + [other])
+        elif isinstance(other, farray):
+            return farray([self] + list(other.flat))
+        else:
+            raise TypeError("expected Function or farray")
+
+    def __radd__(self, other):
+        from pyeda.boolalg.bfarray import farray
+        if isinstance(other, Function):
+            return farray([other] + [self])
+        elif isinstance(other, farray):
+            return farray(list(other.flat) + [self])
+        else:
+            raise TypeError("expected Function or farray")
+
+    def __mul__(self, other):
+        from pyeda.boolalg.bfarray import farray
+        if type(other) is not int:
+            raise TypeError("expected multiplier to be an int")
+        if other < 0:
+            raise ValueError("expected multiplier to be non-negative")
+        return farray([self] * other)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     # Deprecated operators
     def __sub__(self, other):
         """Alias: a - b <=> a + -b"""
