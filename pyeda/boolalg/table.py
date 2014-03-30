@@ -357,9 +357,6 @@ class TruthTable(boolfunc.Function):
         for num in self.pcdata.iter_ones():
             yield boolfunc.num2point(num, self.inputs)
 
-    def satisfy_count(self):
-        return sum(1 for _ in self.satisfy_all())
-
     def is_zero(self):
         return not self._inputs and self.pcdata[0] == PC_ZERO
 

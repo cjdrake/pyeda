@@ -454,7 +454,7 @@ class Function(object):
 
     def satisfy_count(self):
         """Return the cardinality of the set of all satisfying input points."""
-        raise NotImplementedError()
+        return sum(1 for _ in self.satisfy_all())
 
     def iter_cofactors(self, vs=None):
         """Iterate through the cofactors of N variables.
@@ -554,5 +554,4 @@ class Function(object):
                 return vs
             else:
                 raise TypeError("expected iter of Variable")
-
 
