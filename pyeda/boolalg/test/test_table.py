@@ -113,11 +113,6 @@ def test_ops():
     assert str(0 & f) == "inputs: b a\n00 0\n01 0\n10 0\n11 0\n"
     assert str(1 & f) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
 
-    assert str(f - 0) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
-    assert str(f - 1) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(0 - f) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
-    assert str(1 - f) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
-
     assert str(f ^ 0) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
     assert str(f ^ 1) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
 
@@ -133,7 +128,6 @@ def test_ops():
     f = truthtable([a, b, c], "00011-00")
     g = truthtable([a, b, c], "01-1--00")
     assert str(f | g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 -\n110 0\n111 0\n"
-    assert str(f - g) == "inputs: c b a\n000 1\n001 0\n010 -\n011 1\n100 1\n101 -\n110 1\n111 1\n"
     assert str(f & g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 1\n100 -\n101 -\n110 0\n111 0\n"
     assert str(f ^ g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 0\n100 -\n101 -\n110 0\n111 0\n"
 

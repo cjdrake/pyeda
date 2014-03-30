@@ -175,11 +175,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
         # f ^ g <=> ITE(f, g', g)
         return bdd(_ite(self.node, _neg(other_node), other_node))
 
-    def __sub__(self, other):
-        other_node = self.box(other).node
-        # f - g <=> ITE(f, 1, g')
-        return bdd(_ite(self.node, BDDNODEONE, _neg(other_node)))
-
     # From Function
     @cached_property
     def support(self):
