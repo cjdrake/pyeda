@@ -191,7 +191,7 @@ def _flatten(v, val):
 
 
 _UNIQIDS = dict()
-_CNT = 1
+_COUNT = 1
 
 class Variable(object):
     """
@@ -204,12 +204,12 @@ class Variable(object):
     can be used to construct multi-dimensional bit vectors.
     """
     def __init__(self, names, indices):
-        global _UNIQIDS, _CNT
+        global _UNIQIDS, _COUNT
         try:
             uniqid = _UNIQIDS[(names, indices)]
         except KeyError:
-            uniqid = _CNT
-            _CNT += 1
+            uniqid = _COUNT
+            _COUNT += 1
             _UNIQIDS[(names, indices)] = uniqid
 
         self.names = names
