@@ -48,14 +48,14 @@ First, we write a constraint that says
 
 ::
 
-   >>> R = And(*[OneHot(*[X[r][c] for c in range(8)]) for r in range(8)])
+   >>> R = And(*[OneHot(*[X[r,c] for c in range(8)]) for r in range(8)])
 
 Next, we write a constraint that says
 "exactly one queen must be placed on each column".
 
 ::
 
-   >>> C = And(*[OneHot(*[X[r][c] for r in range(8)]) for c in range(8)])
+   >>> C = And(*[OneHot(*[X[r,c] for r in range(8)]) for c in range(8)])
 
 Diagonal Constraints
 --------------------
@@ -83,7 +83,7 @@ In both cases, we need to write a constraint that says
    ...         ri += 1
    ...         ci += 1
    ...
-   >>> DLR = And(*[OneHot0(*[X[r][c] for r, c in diag]) for diag in lrdiags])
+   >>> DLR = And(*[OneHot0(*[X[r,c] for r, c in diag]) for diag in lrdiags])
 
 ::
 
@@ -97,7 +97,7 @@ In both cases, we need to write a constraint that says
    ...         ri += 1
    ...         ci -= 1
    ...
-   >>> DRL = And(*[OneHot0(*[X[r][c] for r, c in diag]) for diag in rldiags])
+   >>> DRL = And(*[OneHot0(*[X[r,c] for r, c in diag]) for diag in rldiags])
 
 Putting It All Together
 -----------------------
@@ -131,7 +131,7 @@ ASCII:
    ...     chars = list()
    ...     for r in range(8):
    ...         for c in range(8):
-   ...             if point[X[r][c]]:
+   ...             if point[X[r,c]]:
    ...                 chars.append("Q")
    ...             else:
    ...                 chars.append(".")
