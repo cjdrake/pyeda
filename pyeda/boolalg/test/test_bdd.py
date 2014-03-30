@@ -36,14 +36,14 @@ def test_expr2bdd():
     assert ff is gg
 
     assert ff.node.root == a.uniqid
-    assert ff.node.low.root == b.uniqid
-    assert ff.node.high.root == b.uniqid
-    assert ff.node.low.low is BDDNODEZERO
-    assert ff.node.low.high.root == c.uniqid
-    assert ff.node.high.low.root == c.uniqid
-    assert ff.node.high.high is BDDNODEONE
-    assert ff.node.low.high.low is BDDNODEZERO
-    assert ff.node.high.low.high is BDDNODEONE
+    assert ff.node.lo.root == b.uniqid
+    assert ff.node.hi.root == b.uniqid
+    assert ff.node.lo.lo is BDDNODEZERO
+    assert ff.node.lo.hi.root == c.uniqid
+    assert ff.node.hi.lo.root == c.uniqid
+    assert ff.node.hi.hi is BDDNODEONE
+    assert ff.node.lo.hi.lo is BDDNODEZERO
+    assert ff.node.hi.lo.hi is BDDNODEONE
 
     assert ff.support == {aa, bb, cc}
     assert ff.inputs == (aa, bb, cc)
