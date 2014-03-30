@@ -801,9 +801,9 @@ class Expression(boolfunc.Function):
         if self.is_cnf():
             return self
 
-        _, cons = _tseitin(self.factor(), auxvarname)
-        fst = cons[-1][1]
-        rst = [Equal(f, expr).to_cnf() for f, expr in cons[:-1]]
+        _, constraints = _tseitin(self.factor(), auxvarname)
+        fst = constraints[-1][1]
+        rst = [Equal(f, expr).to_cnf() for f, expr in constraints[:-1]]
         return And(fst, *rst)
 
     def complete_sum(self):
@@ -2591,18 +2591,18 @@ def _tseitin(expr, auxvarname, auxvars=None):
             auxvars = list()
 
         fs = list()
-        cons = list()
+        constraints = list()
         for arg in expr.args:
             f, subcons = _tseitin(arg, auxvarname, auxvars)
             fs.append(f)
-            cons.extend(subcons)
+            constraints.extend(subcons)
 
         auxvarindex = len(auxvars)
         auxvar = exprvar(auxvarname, auxvarindex)
         auxvars.append(auxvar)
 
-        cons.append((auxvar, expr.__class__(*fs)))
-        return auxvar, cons
+        constraints.append((auxvar, expr.__class__(*fs)))
+        return auxvar, constraints
 
 def _complete_sum(dnf):
     """
