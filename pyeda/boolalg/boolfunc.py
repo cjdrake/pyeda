@@ -345,14 +345,6 @@ class Function(object):
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    # Deprecated operators
-    def __sub__(self, other):
-        """Alias: a - b <=> a + -b"""
-        raise NotImplementedError()
-
-    def __rsub__(self, other):
-        return self.__invert__().__or__(other)
-
     @property
     def support(self):
         r"""Return the support set of a function.

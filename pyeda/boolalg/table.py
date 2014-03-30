@@ -294,10 +294,6 @@ class TruthTable(boolfunc.Function):
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
-    def __sub__(self, other):
-        other = self.box(other)
-        return self.__or__(other.__invert__())
-
     # From Function
     @cached_property
     def support(self):

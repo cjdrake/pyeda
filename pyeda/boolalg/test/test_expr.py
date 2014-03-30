@@ -185,12 +185,6 @@ def test_mux():
     assert Mux(X[:4], [a,b]).equivalent(~a&~b&X[0] | a&~b&X[1] | ~a&b&X[2] | a&b&X[3])
 
 def test_ops():
-    # __sub__, __rsub__
-    assert (a - 0) is EXPRONE
-    assert (0 - a) == ~a
-    assert (a - 1) == a
-    assert (1 - a) is EXPRONE
-    assert (a - b).equivalent(a | ~b)
     # __xor__
     assert (a ^ b).equivalent(a & ~b | ~a & b)
     # ite

@@ -121,11 +121,6 @@ def test_ops():
     assert 0 | aa is aa
     assert 1 | aa is BDDONE
 
-    assert aa - 0 is BDDONE
-    assert aa - 1 is aa
-    assert 0 - aa is ~aa
-    assert 1 - aa is BDDONE
-
     assert aa & 0 is BDDZERO
     assert aa & 1 is aa
     assert 0 & aa is BDDZERO
@@ -135,7 +130,6 @@ def test_ops():
     assert aa ^ 1 is ~aa
 
     assert bdd2expr(~aa & bb | aa & ~bb).equivalent(~a & b | a & ~b)
-    assert bdd2expr(aa - bb).equivalent(a - b)
     assert bdd2expr(aa ^ bb).equivalent(Xor(a, b))
 
 def test_satisfy():
