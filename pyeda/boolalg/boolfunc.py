@@ -351,10 +351,10 @@ class Function(object):
     def support(self):
         r"""Return the support set of a function.
 
-        Let :math:`f(x_1, x_2, ..., x_n)` be a Boolean function of :math:`N`
+        Let :math:`f(x_1, x_2, \dots, x_n)` be a Boolean function of :math:`N`
         variables.
 
-        The unordered set :math:`\{x_1, x_2, ..., x_n\}` is called the *support*
+        The unordered set :math:`\{x_1, x_2, \dots, x_n\}` is called the *support*
         of the function.
         """
         raise NotImplementedError()
@@ -413,7 +413,7 @@ class Function(object):
         Return the Boolean function that results after restricting a subset of
         its input variables to :math:`\{0, 1\}`.
 
-        :math:`g = f \: | \: x_i = b`
+        :math:`f \bracevert \: x_i = b`
         """
         return self.urestrict(point2upoint(point))
 
@@ -430,7 +430,7 @@ class Function(object):
         Return the Boolean function that results after substituting a subset of
         its input variables for other Boolean functions.
 
-        :math:`g = f_1 \: | \: x_i = f2`
+        :math:`f_1 \bracevert \: x_i = f_2`
         """
         raise NotImplementedError()
 
@@ -451,57 +451,65 @@ class Function(object):
         return sum(1 for _ in self.satisfy_all())
 
     def iter_cofactors(self, vs=None):
-        """Iterate through the cofactors of N variables.
+        r"""Iterate through the cofactors of a function over N variables.
 
-        The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
+        The *cofactor* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)`
         with respect to variable :math:`x_i` is:
-        :math:`f_{x_i} = f(x_1, x_2, ..., 1, ..., x_n)`
+        :math:`f_{x_i} = f(x_1, x_2, \dots, 1, \dots, x_n)`
 
-        The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
+        The *cofactor* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)`
         with respect to variable :math:`x_i'` is:
-        :math:`f_{x_i'} = f(x_1, x_2, ..., 0, ..., x_n)`
+        :math:`f_{x_i'} = f(x_1, x_2, \dots, 0, \dots, x_n)`
         """
         vs = self._expect_vars(vs)
         for upoint in iter_upoints(vs):
             yield self.urestrict(upoint)
 
     def cofactors(self, vs=None):
-        """Return a tuple of cofactors of N variables.
+        r"""Return a tuple of the cofactors of a function over N variables.
 
-        The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
+        The *cofactor* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)`
         with respect to variable :math:`x_i` is:
-        :math:`f_{x_i} = f(x_1, x_2, ..., 1, ..., x_n)`
+        :math:`f_{x_i} = f(x_1, x_2, \dots, 1, \dots, x_n)`
 
-        The *cofactor* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)`
+        The *cofactor* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)`
         with respect to variable :math:`x_i'` is:
-        :math:`f_{x_i'} = f(x_1, x_2, ..., 0, ..., x_n)`
+        :math:`f_{x_i'} = f(x_1, x_2, \dots, 0, \dots, x_n)`
         """
         return tuple(cf for cf in self.iter_cofactors(vs))
 
     def smoothing(self, vs=None):
-        """Return the smoothing of a function.
+        r"""Return the smoothing of a function over a sequence of N variables.
 
-        The *smoothing* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
+        The *smoothing* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with respect
         to variable :math:`x_i` is:
         :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`
+
+        This is the same as the existential quantification operator:
+        :math:`\exists \{x_1, x_2, \dots\} \: f`
         """
         return functools.reduce(operator.or_, self.iter_cofactors(vs))
 
     def consensus(self, vs=None):
-        r"""Return the consensus of a function.
+        r"""Return the consensus of a function over a sequence of N variables.
 
-        The *consensus* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
+        The *consensus* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with respect
         to variable :math:`x_i` is:
         :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`
+
+        This is the same as the universal quantification operator:
+        :math:`\forall \{x_1, x_2, \dots\} \: f`
         """
         return functools.reduce(operator.and_, self.iter_cofactors(vs))
 
     def derivative(self, vs=None):
-        r"""Return the derivative of a function.
+        r"""Return the derivative of a function over a sequence of N variables.
 
-        The *derivative* of :math:`f(x_1, x_2, ..., x_i, ..., x_n)` with respect
+        The *derivative* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with respect
         to variable :math:`x_i` is:
         :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`
+
+        This is also known as the Boolean *difference*.
         """
         return functools.reduce(operator.xor, self.iter_cofactors(vs))
 
