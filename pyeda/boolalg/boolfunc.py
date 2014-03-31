@@ -23,6 +23,7 @@ Interface Classes:
 import collections
 import functools
 import operator
+import threading
 
 from pyeda.util import bit_on, cached_property
 
@@ -207,9 +208,10 @@ class Variable(object):
         try:
             uniqid = _UNIQIDS[(names, indices)]
         except KeyError:
-            uniqid = _COUNT
-            _COUNT += 1
-            _UNIQIDS[(names, indices)] = uniqid
+            with threading.Lock():
+                uniqid = _COUNT
+                _COUNT += 1
+                _UNIQIDS[(names, indices)] = uniqid
 
         self.names = names
         self.indices = indices
