@@ -355,8 +355,8 @@ class Function(object):
         Let :math:`f(x_1, x_2, \dots, x_n)` be a Boolean function of :math:`N`
         variables.
 
-        The unordered set :math:`\{x_1, x_2, \dots, x_n\}` is called the *support*
-        of the function.
+        The unordered set :math:`\{x_1, x_2, \dots, x_n\}` is called the
+        *support* of the function.
         """
         raise NotImplementedError()
 
@@ -483,8 +483,8 @@ class Function(object):
     def smoothing(self, vs=None):
         r"""Return the smoothing of a function over a sequence of N variables.
 
-        The *smoothing* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with respect
-        to variable :math:`x_i` is:
+        The *smoothing* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with
+        respect to variable :math:`x_i` is:
         :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`
 
         This is the same as the existential quantification operator:
@@ -495,8 +495,8 @@ class Function(object):
     def consensus(self, vs=None):
         r"""Return the consensus of a function over a sequence of N variables.
 
-        The *consensus* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with respect
-        to variable :math:`x_i` is:
+        The *consensus* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with
+        respect to variable :math:`x_i` is:
         :math:`C_{x_i}(f) = f_{x_i} \cdot f_{x_i'}`
 
         This is the same as the universal quantification operator:
@@ -507,8 +507,8 @@ class Function(object):
     def derivative(self, vs=None):
         r"""Return the derivative of a function over a sequence of N variables.
 
-        The *derivative* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with respect
-        to variable :math:`x_i` is:
+        The *derivative* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with
+        respect to variable :math:`x_i` is:
         :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`
 
         This is also known as the Boolean *difference*.
