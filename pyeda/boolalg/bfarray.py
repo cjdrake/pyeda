@@ -255,6 +255,7 @@ class farray(object):
         return "farray(" + self._str() + ")"
 
     def _str(self):
+        """Helper function for __str__"""
         if self.ndim > 1:
             return "[" + ", ".join(x._str() for x in self) + "]"
         else:
