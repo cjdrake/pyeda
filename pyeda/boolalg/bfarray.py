@@ -436,27 +436,33 @@ class farray(object):
     # Unary operators
     def uor(self):
         """Return the unary OR of a array of functions."""
-        return reduce(operator.or_, self.items)
+        return reduce(operator.or_, self.items, 0)
 
     def unor(self):
         """Return the unary NOR of a array of functions."""
-        return ~reduce(operator.or_, self.items)
+        if self.size == 0:
+            return 1
+        return ~self.uor()
 
     def uand(self):
         """Return the unary AND of a array of functions."""
-        return reduce(operator.and_, self.items)
+        return reduce(operator.and_, self.items, 1)
 
     def unand(self):
         """Return the unary NAND of a array of functions."""
-        return ~reduce(operator.and_, self.items)
+        if self.size == 0:
+            return 0
+        return ~self.uand()
 
     def uxor(self):
         """Return the unary XOR of a array of functions."""
-        return reduce(operator.xor, self.items)
+        return reduce(operator.xor, self.items, 0)
 
     def uxnor(self):
         """Return the unary XNOR of a array of functions."""
-        return ~reduce(operator.xor, self.items)
+        if self.size == 0:
+            return 1
+        return ~self.uxor()
 
     # Shift operators
     def lsh(self, num, cin=None):
@@ -546,7 +552,8 @@ class farray(object):
 
     # Other logic
     def decode(self):
-        """Return symbolic logic for an N-2^N binary decoder.
+        """
+        Return symbolic logic for an N:2^N binary decoder.
 
         Example Truth Table for a 2:4 decoder:
 
@@ -559,6 +566,11 @@ class farray(object):
             |   1    1  |   1    0    0    0  |
             +===========+=====================+
         """
+        # Degenerate case is just [1], but that's not a valid farray
+        if self.size == 0:
+            msg = "decode method undefined for zero-sized farray"
+            raise NotImplementedError(msg)
+
         items = [reduce(operator.and_,
                         [f if bit_on(i, j) else ~f
                          for j, f in enumerate(self.items)])
