@@ -1373,6 +1373,9 @@ class _ArgumentContainer(Expression):
 class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
     """Base class for Expression OR/AND expressions"""
 
+    IDENTITY = NotImplemented
+    DOMINATOR = NotImplemented
+
     def __new__(cls, *args):
         # Or() = 0; And() = 1
         if len(args) == 0:
@@ -1453,9 +1456,6 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         return max(arg.depth + 1 for arg in self.args)
 
     # Specific to ExprOrAnd
-    IDENTITY = NotImplemented
-    DOMINATOR = NotImplemented
-
     @staticmethod
     def get_dual():
         """Return the dual function.
@@ -1574,6 +1574,9 @@ class ExprOr(ExprOrAnd):
     LATEX_SYMBOL = '+'
     PRECEDENCE = 2
 
+    IDENTITY = EXPRZERO
+    DOMINATOR = EXPRONE
+
     def __str__(self):
         return "Or(" + self.args_str(", ") + ")"
 
@@ -1648,9 +1651,6 @@ class ExprOr(ExprOrAnd):
         return upnt
 
     # Specific to ExprOrAnd
-    IDENTITY = EXPRZERO
-    DOMINATOR = EXPRONE
-
     @staticmethod
     def get_dual():
         return ExprAnd
@@ -1687,6 +1687,9 @@ class ExprAnd(ExprOrAnd):
     SYMBOL = '·'
     LATEX_SYMBOL = '\\cdot'
     PRECEDENCE = 0
+
+    IDENTITY = EXPRONE
+    DOMINATOR = EXPRZERO
 
     def __str__(self):
         return "And(" + self.args_str(", ") + ")"
@@ -1788,9 +1791,6 @@ class ExprAnd(ExprOrAnd):
         return upnt[0] - upnt[1], upnt[1] - upnt[0]
 
     # From ExprOrAnd
-    IDENTITY = EXPRONE
-    DOMINATOR = EXPRZERO
-
     @staticmethod
     def get_dual():
         return ExprOr
@@ -1835,10 +1835,10 @@ class ExprNor(ExprNorNand):
     def __new__(cls, *args):
         # Nor() = 1
         if len(args) == 0:
-            return EXPRONE
+            return ExprOr.IDENTITY.invert()
         # Nor(a) = ~a
         elif len(args) == 1:
-            return Not(args[0])
+            return ExprNot(args[0])
         else:
             return super(ExprNor, cls).__new__(cls)
 
@@ -1907,10 +1907,10 @@ class ExprNand(ExprNorNand):
     def __new__(cls, *args):
         # Nand() = 0
         if len(args) == 0:
-            return EXPRZERO
+            return ExprAnd.IDENTITY.invert()
         # Nand(a) = ~a
         elif len(args) == 1:
-            return Not(args[0])
+            return ExprNot(args[0])
         else:
             return super(ExprNand, cls).__new__(cls)
 
@@ -1974,6 +1974,9 @@ class ExprNand(ExprNorNand):
 class ExprExclusive(_ArgumentContainer):
     """Expression exclusive (XOR, XNOR) operator"""
 
+    IDENTITY = NotImplemented
+    PARITY = NotImplemented
+
     # From Expression
     def simplify(self):
         if self._simplified:
@@ -2034,9 +2037,6 @@ class ExprExclusive(_ArgumentContainer):
     def depth(self):
         return max(arg.depth + 2 for arg in self.args)
 
-    # Specific to ExprExclusive
-    PARITY = NotImplemented
-
 
 class ExprXor(ExprExclusive):
     """Expression Exclusive OR (XOR) operator"""
@@ -2047,10 +2047,13 @@ class ExprXor(ExprExclusive):
     LATEX_SYMBOL = '\\oplus'
     PRECEDENCE = 1
 
+    IDENTITY = EXPRZERO
+    PARITY = 1
+
     def __new__(cls, *args):
         # Xor() = 0
         if len(args) == 0:
-            return EXPRZERO
+            return cls.IDENTITY
         # Xor(a) = a
         elif len(args) == 1:
             return args[0]
@@ -2088,22 +2091,22 @@ class ExprXor(ExprExclusive):
         obj._simplified = self._simplified
         return obj
 
-    # Specific to ExprExclusive
-    PARITY = 1
-
 
 class ExprXnor(ExprExclusive):
     """Expression Exclusive NOR (XNOR) operator"""
 
     ASTOP = 'xnor'
 
+    IDENTITY = EXPRONE
+    PARITY = 0
+
     def __new__(cls, *args):
         # Xnor() = 1
         if len(args) == 0:
-            return EXPRONE
+            return cls.IDENTITY
         # Xnor(a) = ~a
         elif len(args) == 1:
-            return ExprNot(args[0]).simplify()
+            return ExprNot(args[0])
         else:
             return super(ExprXnor, cls).__new__(cls)
 
@@ -2121,9 +2124,6 @@ class ExprXnor(ExprExclusive):
         obj = ExprXor(*self.args)
         obj._simplified = self._simplified
         return obj
-
-    # Specific to ExprExclusive
-    PARITY = 0
 
 
 class ExprEqualBase(_ArgumentContainer):
@@ -2144,10 +2144,12 @@ class ExprEqual(ExprEqualBase):
     LATEX_SYMBOL = '\\Leftrightarrow'
     PRECEDENCE = 4
 
+    IDENTITY = EXPRONE
+
     def __new__(cls, *args):
         # Equal(a) = Equal() = 1
         if len(args) <= 1:
-            return EXPRONE
+            return cls.IDENTITY
         else:
             return super(ExprEqual, cls).__new__(cls)
 
@@ -2233,10 +2235,12 @@ class ExprUnequal(ExprEqualBase):
 
     ASTOP = 'unequal'
 
+    IDENTITY = EXPRZERO
+
     def __new__(cls, *args):
         # Unequal(a) = Unequal() = 0
         if len(args) <= 1:
-            return EXPRZERO
+            return cls.IDENTITY
         else:
             return super(ExprUnequal, cls).__new__(cls)
 
