@@ -4,6 +4,7 @@ Test Boolean Function arrays
 
 from pyeda.boolalg.bfarray import (
     _dims2shape,
+    farray,
     bddzeros, exprzeros, ttzeros,
     bddones, exprones, ttones,
     bddvars, exprvars, ttvars,
@@ -43,4 +44,16 @@ def test_vars():
     assert all(x.name == 'x' and x.indices == (i, ) for i, x in enumerate(xs))
     xs = ttvars('x', 4)
     assert all(x.name == 'x' and x.indices == (i, ) for i, x in enumerate(xs))
+
+def test_degenerate():
+    xs = farray([])
+    # These are a bit silly
+    assert xs.uor() == 0
+    assert xs.unor() == 1
+    assert xs.uand() == 1
+    assert xs.unand() == 0
+    assert xs.uxor() == 0
+    assert xs.uxnor() == 1
+
+    assert_raises(NotImplementedError, xs.decode)
 
