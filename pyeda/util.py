@@ -69,7 +69,7 @@ def cached_property(func):
         try:
             return self._property_cache[func]
         except AttributeError:
-            self._property_cache = {}
+            self._property_cache = dict()
             prop = self._property_cache[func] = func(self)
             return prop
         except KeyError:
