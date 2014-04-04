@@ -277,7 +277,7 @@ class farray(object):
 
     def __getitem__(self, key):
         # Process input key
-        sls = self._get_keys2sls(key)
+        sls = self._keys2sls(key, _get_key2sl)
 
         # Normalize input slices
         fsls = self._fill_slices(sls)
@@ -296,6 +296,29 @@ class farray(object):
             return self.__class__(items, shape)
         else:
             return items[0]
+
+    def __setitem__(self, key, item):
+        # Process input key
+        sls = self._keys2sls(key, _set_key2sl)
+
+        # Normalize input slices
+        fsls = self._fill_slices(sls)
+        nsls = self._norm_slices(fsls)
+
+        if all(type(nsl) is int for nsl in nsls):
+            if not isinstance(item, boolfunc.Function):
+                raise TypeError("expected item to be a Function")
+            self.items[self._coord2offset(nsls)] = item
+        else:
+            if type(item) is not farray:
+                raise TypeError("expected item to be an farray")
+            coords = list(_iter_coords(nsls))
+            if item.size != len(coords):
+                fstr = "expected item.size = {}, got {}"
+                raise ValueError(fstr.format(len(coords), item.size))
+            it = item.flat
+            for coord in coords:
+                self.items[self._coord2offset(coord)] = next(it)
 
     def __add__(self, other):
         if isinstance(other, boolfunc.Function):
@@ -576,34 +599,19 @@ class farray(object):
                  for i in range(2 ** self.size)]
         return self.__class__(items)
 
-    # Subroutines of __getitem__
-    def _get_keys2sls(self, keys):
+    # Subroutines of __getitem__/__setitem__
+    def _keys2sls(self, keys, key2sl):
         """Convert an input key to a list of slices."""
         sls = list()
         if type(keys) is tuple:
             for key in keys:
-                sls.append(self._key2sl(key))
+                sls.append(key2sl(key))
         else:
-            sls.append(self._key2sl(keys))
+            sls.append(key2sl(keys))
         if len(sls) > self.ndim:
             fstr = "expected <= {0.ndim} slice dimensions, got {1}"
             raise ValueError(fstr.format(self, len(sls)))
         return sls
-
-    @staticmethod
-    def _key2sl(key):
-        """Convert a key part to a slice part."""
-        if type(key) in {int, farray} or key is Ellipsis:
-            return key
-        elif type(key) is slice:
-            # Forbid slice steps
-            if key.step is not None:
-                raise ValueError("farray slice step is not supported")
-            return key
-        elif isinstance(key, boolfunc.Function):
-            return farray([key])
-        else:
-            raise TypeError("expected int, slice, Function, farray, or ...")
 
     def _fill_slices(self, sls):
         """Fill all '...' and ':' slice entries."""
@@ -826,6 +834,32 @@ def _check_shape(shape):
     else:
         raise TypeError("expected shape to be tuple of (int, int)")
 
+def _get_key2sl(key):
+    """Convert a key part to a slice part."""
+    if type(key) in {int, farray} or key is Ellipsis:
+        return key
+    elif type(key) is slice:
+        # Forbid slice steps
+        if key.step is not None:
+            raise ValueError("farray slice step is not supported")
+        return key
+    elif isinstance(key, boolfunc.Function):
+        return farray([key])
+    else:
+        raise TypeError("expected int, slice, Function, farray, or ...")
+
+def _set_key2sl(key):
+    """Convert a key part to a slice part."""
+    if type(key) is int or key is Ellipsis:
+        return key
+    elif type(key) is slice:
+        # Forbid slice steps
+        if key.step is not None:
+            raise ValueError("farray slice step is not supported")
+        return key
+    else:
+        raise TypeError("expected int, slice, or ...")
+
 def _norm_index(dim, index, start, stop):
     """Return an index normalized to an array start index."""
     if start <= index < stop:
@@ -902,4 +936,16 @@ def _filtdim(items, shape, dim, nsl):
         # Collapse dimension
         newshape = shape[:dim] + shape[dim+1:]
     return newitems, newshape
+
+def _iter_coords(nsls):
+    """Iterate through all matching coordinates in a sequence of slices."""
+    # First convert all slices to ranges
+    ranges = list()
+    for nsl in nsls:
+        if type(nsl) is int:
+            ranges.append(range(nsl, nsl+1))
+        else:
+            ranges.append(range(nsl.start, nsl.stop))
+    # Iterate through all matching coordinates
+    yield from itertools.product(*ranges)
 
