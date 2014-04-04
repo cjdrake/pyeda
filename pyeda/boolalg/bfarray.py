@@ -277,8 +277,7 @@ class farray(object):
 
     def __getitem__(self, key):
         # Process input key
-        sls = _key2sls(key)
-        self._check_slices(sls)
+        sls = self._get_keys2sls(key)
 
         # Normalize input slices
         fsls = self._fill_slices(sls)
@@ -286,7 +285,7 @@ class farray(object):
 
         if all(type(nsl) is int for nsl in nsls):
             # Speed hack for coordinates
-            return self._fastgetitem(nsls)
+            return self.items[self._coord2offset(nsls)]
         else:
             # Filter through all dimensions (right to left)
             items, shape = self.items[:], self.shape[:]
@@ -578,22 +577,33 @@ class farray(object):
         return self.__class__(items)
 
     # Subroutines of __getitem__
-    def _check_slices(self, sls):
-        """Check input slice for error conditions."""
-        ndim = len(sls)
-        if ndim > self.ndim:
+    def _get_keys2sls(self, keys):
+        """Convert an input key to a list of slices."""
+        sls = list()
+        if type(keys) is tuple:
+            for key in keys:
+                sls.append(self._key2sl(key))
+        else:
+            sls.append(self._key2sl(keys))
+        if len(sls) > self.ndim:
             fstr = "expected <= {0.ndim} slice dimensions, got {1}"
-            raise ValueError(fstr.format(self, ndim))
-        for sl in sls:
-            # Check for valid type
-            if type(sl) in {int, farray} or sl is Ellipsis:
-                pass
+            raise ValueError(fstr.format(self, len(sls)))
+        return sls
+
+    @staticmethod
+    def _key2sl(key):
+        """Convert a key part to a slice part."""
+        if type(key) in {int, farray} or key is Ellipsis:
+            return key
+        elif type(key) is slice:
             # Forbid slice steps
-            elif type(sl) is slice:
-                if sl.step is not None:
-                    raise ValueError("farray slice step is not supported")
-            else:
-                raise TypeError("invalid slice item type")
+            if key.step is not None:
+                raise ValueError("farray slice step is not supported")
+            return key
+        elif isinstance(key, boolfunc.Function):
+            return farray([key])
+        else:
+            raise TypeError("expected int, slice, Function, farray, or ...")
 
     def _fill_slices(self, sls):
         """Fill all '...' and ':' slice entries."""
@@ -631,14 +641,14 @@ class farray(object):
 
         return nsls
 
-    def _fastgetitem(self, coord):
-        """Return an item from a normalized coordinate."""
+    def _coord2offset(self, coord):
+        """Convert a normalized coordinate to an item offset."""
         size = self.size
         offset = 0
         for dim, index in enumerate(coord):
             size //= self._normshape[dim]
             offset += size * index
-        return self.items[offset]
+        return offset
 
     @cached_property
     def _normshape(self):
@@ -815,23 +825,6 @@ def _check_shape(shape):
                 raise TypeError("expected shape dimension to be (int, int)")
     else:
         raise TypeError("expected shape to be tuple of (int, int)")
-
-def _key2sls(key):
-    """Convert an input key to a list of slices."""
-    if isinstance(key, boolfunc.Function):
-        sls = [farray([key])]
-    elif type(key) in {int, slice, farray} or key is Ellipsis:
-        sls = [key]
-    elif type(key) is tuple:
-        sls = list()
-        for k in key:
-            if isinstance(k, boolfunc.Function):
-                sls.append(farray([k]))
-            else:
-                sls.append(k)
-    else:
-        raise TypeError("invalid slice type")
-    return sls
 
 def _norm_index(dim, index, start, stop):
     """Return an index normalized to an array start index."""
