@@ -318,6 +318,9 @@ class Function(object):
         """
         raise NotImplementedError()
 
+    def __rxor__(self, other):
+        return self.__xor__(other)
+
     def __add__(self, other):
         from pyeda.boolalg.bfarray import farray
         if isinstance(other, Function):
