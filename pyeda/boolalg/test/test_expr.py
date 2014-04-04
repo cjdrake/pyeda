@@ -352,8 +352,8 @@ def test_or():
     assert Or(1, 1, 0) is EXPRONE
     assert Or(1, 1, 1) is EXPRONE
 
-    assert 0 | a == a
-    assert a | 0 == a
+    assert 0 | a is a
+    assert a | 0 is a
     assert 1 | a is EXPRONE
     assert a | 1 is EXPRONE
 
@@ -417,8 +417,8 @@ def test_and():
 
     assert 0 & a is EXPRZERO
     assert a & 0 is EXPRZERO
-    assert 1 & a == a
-    assert a & 1 == a
+    assert 1 & a is a
+    assert a & 1 is a
 
     assert (0 & a & b) is EXPRZERO
     assert (a & b & 0) is EXPRZERO
@@ -438,10 +438,10 @@ def test_and():
     assert str(((a & b) & c) & d) == "And(a, b, c, d)"
 
     # idempotent
-    assert a & a == a
-    assert a & a & a == a
-    assert a & a & a & a == a
-    assert (a & a) | (a & a) == a
+    assert a & a is a
+    assert a & a & a is a
+    assert a & a & a & a is a
+    assert (a & a) | (a & a) is a
 
     # inverse
     assert ~a & a is EXPRZERO
@@ -469,14 +469,27 @@ def test_xor():
     assert Xor(1, 1, 0) is EXPRZERO
     assert Xor(1, 1, 1) is EXPRONE
 
-    assert Xor(0, a) == a
-    assert Xor(a, 0) == a
-    assert Xor(1, a) == ~a
-    assert Xor(a, 1) == ~a
+    assert 0 ^ a is a
+    assert a ^ 0 is a
+    assert 1 ^ a is ~a
+    assert a ^ 1 is ~a
 
-    assert Xor(a, a) is EXPRZERO
-    assert Xor(a, ~a) is EXPRONE
-    assert Xor(~a, a) is EXPRONE
+    # associative
+    assert str((a ^ b) ^ c ^ d) == "Xor(a, b, c, d)"
+    assert str(a ^ (b ^ c) ^ d) == "Xor(a, b, c, d)"
+    assert str(a ^ b ^ (c ^ d)) == "Xor(a, b, c, d)"
+    assert str((a ^ b) ^ (c ^ d)) == "Xor(a, b, c, d)"
+    assert str((a ^ b ^ c) ^ d) == "Xor(a, b, c, d)"
+    assert str(a ^ (b ^ c ^ d)) == "Xor(a, b, c, d)"
+    assert str(a ^ (b ^ (c ^ d))) == "Xor(a, b, c, d)"
+    assert str(((a ^ b) ^ c) ^ d) == "Xor(a, b, c, d)"
+
+    assert a ^ a  is EXPRZERO
+    assert a ^ a ^ a is a
+    assert a ^ a ^ a ^ a is EXPRZERO
+
+    assert a ^ ~a is EXPRONE
+    assert ~a ^ a is EXPRONE
 
     assert str(Xor(a, 0, simplify=False)) == "Xor(0, a)"
 
