@@ -418,7 +418,7 @@ class Function(object):
         Return the Boolean function that results after restricting a subset of
         its input variables to :math:`\{0, 1\}`.
 
-        :math:`f \bracevert \: x_i = b`
+        :math:`f \: | \: x_i = b`
         """
         return self.urestrict(point2upoint(point))
 
@@ -435,7 +435,7 @@ class Function(object):
         Return the Boolean function that results after substituting a subset of
         its input variables for other Boolean functions.
 
-        :math:`f_1 \bracevert \: x_i = f_2`
+        :math:`f_1 \: | \: x_i = f_2`
         """
         raise NotImplementedError()
 

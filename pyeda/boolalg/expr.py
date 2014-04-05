@@ -454,16 +454,16 @@ class Expression(boolfunc.Function):
 
     # Operators
     def __invert__(self):
-        return Not(self)
+        return ExprNot(self).simplify()
 
     def __or__(self, other):
-        return Or(self, other)
+        return ExprOr(self, self.box(other)).simplify()
 
     def __and__(self, other):
-        return And(self, other)
+        return ExprAnd(self, self.box(other)).simplify()
 
     def __xor__(self, other):
-        return Xor(self, other)
+        return ExprXor(self, self.box(other)).simplify()
 
     def __rshift__(self, other):
         """Boolean implication
