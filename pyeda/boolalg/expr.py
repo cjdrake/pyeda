@@ -318,16 +318,16 @@ def OneHot0(*args, simplify=True, factor=False, conj=True):
     Return an expression that means:
         At most one input variable is true.
     """
+    args = [Expression.box(arg) for arg in args]
     terms = list()
     if conj:
         for arg1, arg2 in itertools.combinations(args, 2):
-            terms.append(Or(Not(arg1, simplify=False),
-                            Not(arg2, simplify=False), simplify=False))
-        expr = And(*terms, simplify=False)
+            terms.append(ExprOr(ExprNot(arg1), ExprNot(arg2)))
+        expr = ExprAnd(*terms)
     else:
         for comb in itertools.combinations(args, len(args) - 1):
-            terms.append(And(*[Not(arg, simplify=False) for arg in comb]))
-        expr = Or(*terms, simplify=False)
+            terms.append(ExprAnd(*[ExprNot(arg) for arg in comb]))
+        expr = ExprOr(*terms)
     if factor:
         expr = expr.factor()
     elif simplify:
@@ -339,15 +339,15 @@ def OneHot(*args, simplify=True, factor=False, conj=True):
     Return an expression that means:
         Exactly one input variable is true.
     """
+    args = [Expression.box(arg) for arg in args]
     if conj:
-        expr = And(Or(*args, simplify=False), OneHot0(*args, simplify=False),
-                   simplify=False)
+        expr = ExprAnd(ExprOr(*args), OneHot0(*args, simplify=False))
     else:
         terms = list()
         for i, arg in enumerate(args):
-            zeros = [Not(x, simplify=False) for x in args[:i] + args[i+1:]]
-            terms.append(And(arg, *zeros, simplify=False))
-        expr = Or(*terms, simplify=False)
+            zeros = [ExprNot(x) for x in args[:i] + args[i+1:]]
+            terms.append(ExprAnd(arg, *zeros))
+        expr = ExprOr(*terms)
     if factor:
         expr = expr.factor()
     elif simplify:
@@ -359,16 +359,17 @@ def Majority(*args, simplify=True, factor=False, conj=False):
     Return an expression that means:
         The majority of the input variables are true.
     """
+    args = [Expression.box(arg) for arg in args]
     if conj:
         terms = list()
         for comb in itertools.combinations(args, (len(args) + 1) // 2):
-            terms.append(Or(*comb, simplify=False))
-        expr = And(*terms, simplify=False)
+            terms.append(ExprOr(*comb))
+        expr = ExprAnd(*terms)
     else:
         terms = list()
         for comb in itertools.combinations(args, len(args) // 2 + 1):
-            terms.append(And(*comb, simplify=False))
-        expr = Or(*terms, simplify=False)
+            terms.append(ExprAnd(*comb))
+        expr = ExprOr(*terms)
     if factor:
         expr = expr.factor()
     elif simplify:
@@ -384,8 +385,8 @@ def AchillesHeel(*args, simplify=True, factor=False):
     if nargs & 1:
         fstr = "expected an even number of arguments, got {}"
         raise ValueError(fstr.format(nargs))
-    expr = And(*[Or(args[2*i], args[2*i+1], simplify=False)
-                 for i in range(nargs // 2)], simplify=False)
+    args = [Expression.box(arg) for arg in args]
+    expr = ExprAnd(*[ExprOr(args[2*i], args[2*i+1]) for i in range(nargs // 2)])
     if factor:
         expr = expr.factor()
     elif simplify:
@@ -406,7 +407,7 @@ def Mux(fs, sel, simplify=True, factor=False):
         raise ValueError(fstr.format(clog2(len(fs)), len(sel)))
 
     it = boolfunc.iter_terms(sel)
-    expr = Or(*[And(f, *next(it), simplify=False) for f in fs], simplify=False)
+    expr = ExprOr(*[ExprAnd(f, *next(it)) for f in fs])
 
     if factor:
         expr = expr.factor()
