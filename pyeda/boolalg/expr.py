@@ -571,17 +571,9 @@ class Expression(boolfunc.Function):
         A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
         in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
         """
-        vs = self._expect_vars(vs)
-        basis = self.support - set(vs)
-        cov = EXPRONE.expand(basis).mincover
-        for cf in self.iter_cofactors(vs):
-            cf = cf.expand(basis - cf.support)
-            if not cf.is_dnf():
-                cf = cf.to_dnf()
-            if not cf.mincover <= cov:
-                return False
-            cov = cf.mincover
-        return True
+        # FIXME: this is a hack
+        from pyeda.boolalg.table import expr2truthtable
+        return expr2truthtable(self).is_neg_unate(vs)
 
     def is_pos_unate(self, vs=None):
         r"""Return whether a function is positive unate.
@@ -589,17 +581,9 @@ class Expression(boolfunc.Function):
         A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
         in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
         """
-        vs = self._expect_vars(vs)
-        basis = self.support - set(vs)
-        cov = EXPRZERO.mincover
-        for cf in self.iter_cofactors(vs):
-            cf = cf.expand(basis - cf.support)
-            if not cf.is_dnf():
-                cf = cf.to_dnf()
-            if not cf.mincover >= cov:
-                return False
-            cov = cf.mincover
-        return True
+        # FIXME: this is a hack
+        from pyeda.boolalg.table import expr2truthtable
+        return expr2truthtable(self).is_pos_unate(vs)
 
     def is_binate(self, vs=None):
         """Return whether a function is binate.
@@ -732,6 +716,14 @@ class Expression(boolfunc.Function):
         """Return True if this expression is in conjunctive normal form."""
         # pylint: disable=R0201
         return False
+
+    @property
+    def cover(self):
+        """Return the DNF expression as a cover of cubes."""
+        if self.is_dnf():
+            return self._cover
+        else:
+            raise ValueError("expected a DNF expression")
 
     def _absorb(self):
         """Return the DNF/CNF expression after absorption."""
@@ -942,15 +934,14 @@ class _ExprZero(ExprConstant):
     def is_dnf(self):
         return True
 
+    @cached_property
+    def _cover(self):
+        return set()
+
     def _encode_dnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = set()
         return litmap, nvars, clauses
-
-    @cached_property
-    def mincover(self):
-        """Return the minterm cover."""
-        return set()
 
     # DPLL IF
     def bcp(self):
@@ -991,11 +982,6 @@ class _ExprOne(ExprConstant):
         litmap, nvars = self.encode_inputs()
         clauses = set()
         return litmap, nvars, clauses
-
-    @cached_property
-    def mincover(self):
-        """Return the minterm cover."""
-        return {0}
 
     # DPLL IF
     def bcp(self):
@@ -1052,14 +1038,19 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     # FlattenedExpression
     @cached_property
-    def cube(self):
+    def _lits(self):
+        """Return a frozenset of literals."""
+        return frozenset([self])
+
+    @cached_property
+    def _cube(self):
         """Return the cube representation."""
         return frozenset([self])
 
     @cached_property
-    def cover(self):
+    def _cover(self):
         """Return the cover representation."""
-        return {self.cube}
+        return {self._cube}
 
     def _absorb(self):
         return self
@@ -1079,11 +1070,6 @@ class ExprLiteral(Expression, sat.DPLLInterface):
         litmap, nvars = self.encode_inputs()
         clauses = {self._encode_clause(litmap)}
         return litmap, nvars, clauses
-
-    @cached_property
-    def mincover(self):
-        """Return the minterm cover."""
-        return {self.minterm_index}
 
     minterm_index = NotImplemented
 
@@ -1501,20 +1487,15 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
 
     # FlattenedExpression
     @cached_property
-    def cube(self):
-        """Return the cube representation."""
+    def _lits(self):
+        """Return a frozenset of literals."""
         return frozenset(self.args)
-
-    @cached_property
-    def cover(self):
-        """Return the cover representation."""
-        return {arg.cube for arg in self.args}
 
     def _absorb(self):
         dual = self.get_dual()
 
         # Get rid of all equivalent terms
-        temps = self.cover.copy()
+        temps = {arg._lits for arg in self.args}
         args = list()
 
         # Drop all terms that are a superset of other terms
@@ -1558,7 +1539,8 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
     def _encode_clause(self, litmap):
         return frozenset(litmap[arg] for arg in self.args)
 
-    def _term_expand(self, term, vs):
+    @staticmethod
+    def _term_expand(term, vs):
         """Return a term expanded by a list of variables."""
         raise NotImplementedError()
 
@@ -1652,6 +1634,12 @@ class ExprOr(ExprOrAnd):
     def get_dual():
         return ExprAnd
 
+    # FlattenedExpression
+    @cached_property
+    def _cover(self):
+        """Return the cover representation."""
+        return {arg._cube for arg in self.args}
+
     @property
     def term_index(self):
         return self.maxterm_index
@@ -1667,12 +1655,8 @@ class ExprOr(ExprOrAnd):
                 index |= 1 << (num - i)
         return index
 
-    @cached_property
-    def mincover(self):
-        """Return the minterm cover."""
-        return {term.minterm_index for term in self.args}
-
-    def _term_expand(self, term, vs):
+    @staticmethod
+    def _term_expand(term, vs):
         return term.expand(vs, conj=False).args
 
 
@@ -1792,6 +1776,17 @@ class ExprAnd(ExprOrAnd):
     def get_dual():
         return ExprOr
 
+    # FlattenedExpression
+    @cached_property
+    def _cube(self):
+        """Return the cube representation."""
+        return frozenset(self.args)
+
+    @cached_property
+    def _cover(self):
+        """Return the cover representation."""
+        return {self._cube}
+
     @property
     def term_index(self):
         return self.minterm_index
@@ -1807,12 +1802,8 @@ class ExprAnd(ExprOrAnd):
                 index |= 1 << (num - i)
         return index
 
-    @cached_property
-    def mincover(self):
-        """Return the minterm cover."""
-        return {self.minterm_index}
-
-    def _term_expand(self, term, vs):
+    @staticmethod
+    def _term_expand(term, vs):
         return term.expand(vs, conj=True).args
 
 
@@ -2621,8 +2612,8 @@ def _complete_sum(dnf):
         fv0, fv1 = dnf.cofactors(v)
         f = And(Or(v, _complete_sum(fv0)), Or(~v, _complete_sum(fv1)))
         if isinstance(f, ExprAnd):
-            f = Or(*[And(x, y) for x in f.args[0].cube
-                               for y in f.args[1].cube])
+            f = Or(*[And(x, y) for x in f.args[0]._lits
+                               for y in f.args[1]._lits])
         return f._absorb()
 
 
