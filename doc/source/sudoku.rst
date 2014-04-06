@@ -68,17 +68,17 @@ and stop index.
 If you provide only a number instead of a two-tuple,
 the start index is zero.
 For example, we could also have used ``exprvars('x', 9, 9, 9)``,
-but that would have given ``X[0:9][0:9][0:9]`` instead of ``X[1:10][1:10][1:10]``.
+but that would have given ``X[0:9, 0:9, 0:9]`` instead of ``X[1:10, 1:10, 1:10]``.
 
 The variable ``X`` is a 9x9x9 bit vector,
-indexed as ``X[row][column][value]``.
+indexed as ``X[row, column, value]``.
 So for the :ref:`Example_grid`, since row 5, column 3 has value '8', we would
-represent this by setting ``X[5][3][8] = 1``.
+represent this by setting ``X[5,3,8] = 1``.
 
 Constraints
 ===========
 
-Now that we have a variable ``X[r][c][v]`` to represent the state of the
+Now that we have a variable ``X[r,c,v]`` to represent the state of the
 Sudoku board,
 we need to program the constraints.
 We will use the familiar Boolean ``And`` function,
@@ -137,8 +137,8 @@ Value Constraints
 
 You probably already noticed that if the square at (5, 3) has value '8',
 it is not allowed to have any other value.
-That is, if ``X[5][3][8] = 1``,
-then ``X[5][3][1:9] = [0, 0, 0, 0, 0, 0, 0, 1, 0]``.
+That is, if ``X[5,3,8] = 1``,
+then ``X[5,3,1:10] == [0, 0, 0, 0, 0, 0, 0, 1, 0]``.
 
 We need to write a constraint formula that says "every square on the board
 can assume only one value."
@@ -146,7 +146,7 @@ With PyEDA, you can write this formula as follows::
 
    >>> V = And(*[
    ...         And(*[
-   ...             OneHot(*[ X[r][c][v]
+   ...             OneHot(*[ X[r, c, v]
    ...                 for v in range(1, 10) ])
    ...             for c in range(1, 10) ])
    ...         for r in range(1, 10) ])
@@ -162,14 +162,14 @@ and "every square in each column is unique", respectively.
 
    >>> R = And(*[
    ...         And(*[
-   ...             OneHot(*[ X[r][c][v]
+   ...             OneHot(*[ X[r, c, v]
    ...                 for c in range(1, 10) ])
    ...             for v in range(1, 10) ])
    ...         for r in range(1, 10) ])
    
    >>> C = And(*[
    ...         And(*[
-   ...             OneHot(*[ X[r][c][v]
+   ...             OneHot(*[ X[r, c, v]
    ...                 for r in range(1, 10) ])
    ...             for v in range(1, 10) ])
    ...         for c in range(1, 10) ])
@@ -188,7 +188,7 @@ we will iterate over the 3 rows and 3 columns of the 3x3 boxes.
 
    >>> B = And(*[
    ...         And(*[
-   ...             OneHot(*[ X[3*br+r][3*bc+c][v]
+   ...             OneHot(*[ X[3*br+r, 3*bc+c, v]
    ...                 for r in range(1, 4) for c in range(1, 4) ])
    ...             for v in range(1, 10) ])
    ...         for br in range(3) for bc in range(3) ])
@@ -230,7 +230,7 @@ This function also returns a CNF data type.
    >>> def parse_grid(grid):
    ...     chars = [c for c in grid if c in DIGITS or c in "0."]
    ...     assert len(chars) == 9 ** 2
-   ...     return And(*[ X[i // 9 + 1][i % 9 + 1][int(c)]
+   ...     return And(*[ X[i // 9 + 1, i % 9 + 1, int(c)]
    ...                   for i, c in enumerate(chars) if c in DIGITS ])
 
 The example grid above can be written like this::
@@ -260,7 +260,7 @@ it maps N Boolean variables (in our case 729) onto their values in {0, 1}.
 
    >>> def get_val(point, r, c):
    ...     for v in range(1, 10):
-   ...         if point[X[r][c][v]]:
+   ...         if point[X[r, c, v]]:
    ...             return DIGITS[v-1]
    ...     return "X"
    
