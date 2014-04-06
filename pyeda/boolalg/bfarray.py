@@ -947,5 +947,6 @@ def _iter_coords(nsls):
         else:
             ranges.append(range(nsl.start, nsl.stop))
     # Iterate through all matching coordinates
-    yield from itertools.product(*ranges)
+    for coord in itertools.product(*ranges):
+        yield coord
 
