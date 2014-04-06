@@ -701,8 +701,8 @@ class Expression(boolfunc.Function):
             for upnt in _iter_ones(self):
                 lits = [~_EXPRLITERALS[uniqid] for uniqid in upnt[0]]
                 lits += [_EXPRLITERALS[uniqid] for uniqid in upnt[1]]
-                terms.append(And(*lits))
-            return Or(*terms)
+                terms.append(ExprAnd(*lits).simplify())
+            return ExprOr(*terms).simplify()
 
     def to_cdnf(self, flatten=True):
         """Return the expression in canonical disjunctive normal form."""
@@ -722,8 +722,8 @@ class Expression(boolfunc.Function):
             for upnt in _iter_zeros(self):
                 lits = [_EXPRLITERALS[uniqid] for uniqid in upnt[0]]
                 lits += [~_EXPRLITERALS[uniqid] for uniqid in upnt[1]]
-                terms.append(Or(*lits))
-            return And(*terms)
+                terms.append(ExprOr(*lits).simplify())
+            return ExprAnd(*terms).simplify()
 
     def to_ccnf(self, flatten=True):
         """Return the expression in canonical conjunctive normal form."""
@@ -805,8 +805,8 @@ class Expression(boolfunc.Function):
 
         _, constraints = _tseitin(self.factor(), auxvarname)
         fst = constraints[-1][1]
-        rst = [Equal(f, expr).to_cnf() for f, expr in constraints[:-1]]
-        return And(fst, *rst)
+        rst = [ExprEqual(f, expr).to_cnf() for f, expr in constraints[:-1]]
+        return ExprAnd(fst, *rst).simplify()
 
     def complete_sum(self):
         """Return a DNF that contains all prime implicants."""
@@ -818,8 +818,7 @@ class Expression(boolfunc.Function):
 
     def equivalent(self, other):
         """Return True if this expression is equivalent to other."""
-        other = self.box(other)
-        f = Xor(self, other)
+        f = ExprXor(self, self.box(other)).simplify()
         return f.satisfy_one() is None
 
     def to_dot(self, name='EXPR'):
@@ -1993,11 +1992,11 @@ class ExprExclusive(_ArgumentContainer):
             # associative
             elif isinstance(arg, self.__class__):
                 temps.extend(arg.args)
-            # Xor(a, ~a) = 1
+            # (a, ~a) is either (0, 1) or (1, 0)
             elif isinstance(arg, ExprLiteral) and ~arg in args:
                 args.remove(~arg)
                 par ^= 1
-            # Xor(a, a) = 0
+            # (a, a) is either (0, 0) or (1, 1)
             elif arg in args:
                 args.remove(arg)
             else:
