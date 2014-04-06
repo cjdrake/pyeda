@@ -24,3 +24,6 @@ lib64
 .coverage
 cover
 
+# Other
+.ipynb*
+
