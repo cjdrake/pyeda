@@ -63,7 +63,6 @@ def test_expr2dimacssat():
     assert ret in {'p sat 2\n-(+(1 -2))', 'p sat 2\n-(+(-2 1))'}
 
 def test_unate():
-    # ~c & (~a | ~b)
     f = ~c & (~a | ~b)
     assert f.is_neg_unate([a, b, c])
     assert f.is_neg_unate([a, b])
