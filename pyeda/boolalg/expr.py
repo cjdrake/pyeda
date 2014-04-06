@@ -1351,7 +1351,7 @@ class _ArgumentContainer(Expression):
         return (self.ASTOP, ) + tuple(arg.to_ast() for arg in self.args)
 
     # Specific to _ArgumentContainer
-    def args_str(self, sep):
+    def _joinargs(self, sep):
         """Return arguments as a string, joined by a separator."""
         return sep.join(str(arg) for arg in sorted(self.args))
 
@@ -1576,7 +1576,7 @@ class ExprOr(ExprOrAnd):
     DOMINATOR = EXPRONE
 
     def __str__(self):
-        return "Or(" + self.args_str(", ") + ")"
+        return "Or(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         parts = list()
@@ -1690,7 +1690,7 @@ class ExprAnd(ExprOrAnd):
     DOMINATOR = EXPRZERO
 
     def __str__(self):
-        return "And(" + self.args_str(", ") + ")"
+        return "And(" + self._joinargs(", ") + ")"
 
     def __enter__(self):
         for arg in self.args:
@@ -1841,7 +1841,7 @@ class ExprNor(ExprNorNand):
             return super(ExprNor, cls).__new__(cls)
 
     def __str__(self):
-        return "Nor(" + self.args_str(", ") + ")"
+        return "Nor(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         return ExprNot.SYMBOL + "(" + ExprOr(*self.args).to_unicode() + ")"
@@ -1913,7 +1913,7 @@ class ExprNand(ExprNorNand):
             return super(ExprNand, cls).__new__(cls)
 
     def __str__(self):
-        return "Nand(" + self.args_str(", ") + ")"
+        return "Nand(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         return ExprNot.SYMBOL + "(" + ExprAnd(*self.args).to_unicode() + ")"
@@ -2059,7 +2059,7 @@ class ExprXor(ExprExclusive):
             return super(ExprXor, cls).__new__(cls)
 
     def __str__(self):
-        return "Xor(" + self.args_str(", ") + ")"
+        return "Xor(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         parts = list()
@@ -2109,7 +2109,7 @@ class ExprXnor(ExprExclusive):
             return super(ExprXnor, cls).__new__(cls)
 
     def __str__(self):
-        return "Xnor(" + self.args_str(", ") + ")"
+        return "Xnor(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         return ExprNot.SYMBOL + "(" + ExprXor(*self.args).to_unicode() + ")"
@@ -2152,7 +2152,7 @@ class ExprEqual(ExprEqualBase):
             return super(ExprEqual, cls).__new__(cls)
 
     def __str__(self):
-        return "Equal(" + self.args_str(", ") + ")"
+        return "Equal(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         parts = list()
@@ -2243,7 +2243,7 @@ class ExprUnequal(ExprEqualBase):
             return super(ExprUnequal, cls).__new__(cls)
 
     def __str__(self):
-        return "Unequal(" + self.args_str(", ") + ")"
+        return "Unequal(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         return ExprNot.SYMBOL + "(" + ExprEqual(*self.args).to_unicode() + ")"
