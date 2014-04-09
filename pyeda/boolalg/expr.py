@@ -718,6 +718,11 @@ class Expression(boolfunc.Function):
         # pylint: disable=R0201
         return False
 
+    @cached_property
+    def _cover(self):
+        """Return the cover representation."""
+        raise NotImplementedError()
+
     @property
     def cover(self):
         """Return the DNF expression as a cover of cubes."""
@@ -1050,7 +1055,6 @@ class ExprLiteral(Expression, sat.DPLLInterface):
 
     @cached_property
     def _cover(self):
-        """Return the cover representation."""
         return {self._cube}
 
     def _absorb(self):
@@ -1644,7 +1648,6 @@ class ExprOr(ExprOrAnd):
     # FlattenedExpression
     @cached_property
     def _cover(self):
-        """Return the cover representation."""
         return {arg._cube for arg in self.args}
 
     @property
@@ -1791,7 +1794,6 @@ class ExprAnd(ExprOrAnd):
 
     @cached_property
     def _cover(self):
-        """Return the cover representation."""
         return {self._cube}
 
     @property
