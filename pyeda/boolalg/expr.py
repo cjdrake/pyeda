@@ -1227,7 +1227,12 @@ class ExprNot(Expression):
     SYMBOL = '¬'
 
     def __new__(cls, arg):
+        # Primitives
         if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
+            return arg.invert()
+        # Auto-eliminate double negatives
+        elif (isinstance(arg, ExprNor) or isinstance(arg, ExprNand) or
+              isinstance(arg, ExprXnor) or isinstance(arg, ExprUnequal)):
             return arg.invert()
         else:
             return super(ExprNot, cls).__new__(cls)
@@ -1366,9 +1371,6 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         # Or() = 0; And() = 1
         if len(args) == 0:
             return cls.IDENTITY
-        # Or(a) = a; And(a) = a
-        elif len(args) == 1:
-            return args[0]
         else:
             return super(ExprOrAnd, cls).__new__(cls)
 
@@ -1413,6 +1415,9 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
             return self
 
         temps, args = set(self.args), set()
+        # Or(a) = a; And(a) = a
+        if len(temps) == 1:
+            return temps.pop().simplify()
         while temps:
             arg = temps.pop()
             arg = arg.simplify()
@@ -1429,9 +1434,13 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
             else:
                 args.add(arg)
 
-        obj = self.__class__(*args)
-        obj._simplified = True
-        return obj
+        # Or(a) = a, And(a) = a
+        if len(args) == 1:
+            return args.pop()
+        else:
+            obj = self.__class__(*args)
+            obj._simplified = True
+            return obj
 
     def factor(self, conj=False):
         args = [arg.factor() for arg in self.args]
@@ -1512,14 +1521,11 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                 elif fst < temp:
                     drop_rst.add(temp)
             if not drop_fst:
-                arg = dual(*fst)
-                arg._simplified = True
+                arg = dual(*fst).simplify()
                 args.append(arg)
             temps -= drop_rst
 
-        obj = self.__class__(*args)
-        obj._simplified = True
-        return obj
+        return self.__class__(*args).simplify()
 
     def _reduce(self):
         if self.depth == 1:
@@ -1535,9 +1541,7 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
                     terms.append(eterm)
                     indices.add(eterm.term_index)
 
-        obj = self.__class__(*terms)
-        obj._simplified = True
-        return obj
+        return self.__class__(*terms).simplify()
 
     def _encode_clause(self, litmap):
         return frozenset(litmap[arg] for arg in self.args)
@@ -1827,9 +1831,6 @@ class ExprNor(ExprNorNand):
         # Nor() = 1
         if len(args) == 0:
             return ExprOr.IDENTITY.invert()
-        # Nor(a) = ~a
-        elif len(args) == 1:
-            return ExprNot(args[0])
         else:
             return super(ExprNor, cls).__new__(cls)
 
@@ -1865,6 +1866,9 @@ class ExprNor(ExprNorNand):
             return self
 
         temps, args = set(self.args), set()
+        # Nor(a) = ~a
+        if len(temps) == 1:
+            return ExprNot(temps.pop()).simplify()
         while temps:
             arg = temps.pop()
             arg = arg.simplify()
@@ -1881,9 +1885,13 @@ class ExprNor(ExprNorNand):
             else:
                 args.add(arg)
 
-        obj = self.__class__(*args)
-        obj._simplified = True
-        return obj
+        # Nor(a) = ~a
+        if len(args) == 1:
+            return ExprNot(args.pop()).simplify()
+        else:
+            obj = self.__class__(*args)
+            obj._simplified = True
+            return obj
 
     def factor(self, conj=False):
         args = [arg.invert().factor() for arg in self.args]
@@ -1899,9 +1907,6 @@ class ExprNand(ExprNorNand):
         # Nand() = 0
         if len(args) == 0:
             return ExprAnd.IDENTITY.invert()
-        # Nand(a) = ~a
-        elif len(args) == 1:
-            return ExprNot(args[0])
         else:
             return super(ExprNand, cls).__new__(cls)
 
@@ -1937,6 +1942,9 @@ class ExprNand(ExprNorNand):
             return self
 
         temps, args = set(self.args), set()
+        # Nand(a) = ~a
+        if len(temps) == 1:
+            return ExprNot(temps.pop()).simplify()
         while temps:
             arg = temps.pop()
             arg = arg.simplify()
@@ -1953,9 +1961,13 @@ class ExprNand(ExprNorNand):
             else:
                 args.add(arg)
 
-        obj = self.__class__(*args)
-        obj._simplified = True
-        return obj
+        # Nand(a) = ~a
+        if len(args) == 1:
+            return ExprNot(args.pop()).simplify()
+        else:
+            obj = self.__class__(*args)
+            obj._simplified = True
+            return obj
 
     def factor(self, conj=False):
         args = [arg.invert().factor() for arg in self.args]
@@ -1972,6 +1984,13 @@ class ExprExclusive(_ArgumentContainer):
     def simplify(self):
         if self._simplified:
             return self
+
+        # Xor(a) = a; Xnor(a) = ~a
+        if len(self.args) == 1:
+            if self.PARITY:
+                return self.args[0].simplify()
+            else:
+                return ExprNot(self.args[0]).simplify()
 
         par = self.PARITY
         temps, args = list(self.args), set()
@@ -1993,9 +2012,16 @@ class ExprExclusive(_ArgumentContainer):
             else:
                 args.add(arg)
 
-        obj = EXCLOPS[par](*args)
-        obj._simplified = True
-        return obj
+        # Xor(a) = a; Xnor(a) = ~a
+        if len(args) == 1:
+            if par:
+                return args.pop()
+            else:
+                return ExprNot(args.pop()).simplify()
+        else:
+            obj = EXCLOPS[par](*args)
+            obj._simplified = True
+            return obj
 
     def factor(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
@@ -2045,9 +2071,6 @@ class ExprXor(ExprExclusive):
         # Xor() = 0
         if len(args) == 0:
             return cls.IDENTITY
-        # Xor(a) = a
-        elif len(args) == 1:
-            return args[0]
         else:
             return super(ExprXor, cls).__new__(cls)
 
@@ -2095,9 +2118,6 @@ class ExprXnor(ExprExclusive):
         # Xnor() = 1
         if len(args) == 0:
             return cls.IDENTITY
-        # Xnor(a) = ~a
-        elif len(args) == 1:
-            return ExprNot(args[0])
         else:
             return super(ExprXnor, cls).__new__(cls)
 
