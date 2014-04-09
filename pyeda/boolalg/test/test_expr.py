@@ -29,6 +29,50 @@ def test_misc():
 
     assert_raises(TypeError, expr2dimacscnf, 'foo')
 
+def test_issue81():
+    # Or(x) = x
+    assert str(Or(Or(a, b))) == "Or(a, b)"
+    assert str(Or(And(a, b))) == "And(a, b)"
+    assert str(Or(Nor(a, b))) == "Nor(a, b)"
+    assert str(Or(Nand(a, b))) == "Nand(a, b)"
+    assert str(Or(Xor(a, b))) == "Xor(a, b)"
+    assert str(Or(Xnor(a, b))) == "Xnor(a, b)"
+    # And(x) = x
+    assert str(And(Or(a, b))) == "Or(a, b)"
+    assert str(And(And(a, b))) == "And(a, b)"
+    assert str(And(Nor(a, b))) == "Nor(a, b)"
+    assert str(And(Nand(a, b))) == "Nand(a, b)"
+    assert str(And(Xor(a, b))) == "Xor(a, b)"
+    assert str(And(Xnor(a, b))) == "Xnor(a, b)"
+    # Nor(x) = ~x
+    assert str(Nor(Or(a, b))) == "Not(Or(a, b))"
+    assert str(Nor(And(a, b))) == "Not(And(a, b))"
+    assert str(Nor(Nor(a, b))) == "Or(a, b)"
+    assert str(Nor(Nand(a, b))) == "And(a, b)"
+    assert str(Nor(Xor(a, b))) == "Not(Xor(a, b))"
+    assert str(Nor(Xnor(a, b))) == "Xor(a, b)"
+    # Nand(x) = ~x
+    assert str(Nand(Or(a, b))) == "Not(Or(a, b))"
+    assert str(Nand(And(a, b))) == "Not(And(a, b))"
+    assert str(Nand(Nor(a, b))) == "Or(a, b)"
+    assert str(Nand(Nand(a, b))) == "And(a, b)"
+    assert str(Nand(Xor(a, b))) == "Not(Xor(a, b))"
+    assert str(Nand(Xnor(a, b))) == "Xor(a, b)"
+    # Xor(x) = x
+    assert str(Xor(Or(a, b))) == "Or(a, b)"
+    assert str(Xor(And(a, b))) == "And(a, b)"
+    assert str(Xor(Nor(a, b))) == "Nor(a, b)"
+    assert str(Xor(Nand(a, b))) == "Nand(a, b)"
+    assert str(Xor(Xor(a, b))) == "Xor(a, b)"
+    assert str(Xor(Xnor(a, b))) == "Xnor(a, b)"
+    # Xnor(x) = ~x
+    assert str(Xnor(Or(a, b))) == "Not(Or(a, b))"
+    assert str(Xnor(And(a, b))) == "Not(And(a, b))"
+    assert str(Xnor(Nor(a, b))) == "Or(a, b)"
+    assert str(Xnor(Nand(a, b))) == "And(a, b)"
+    assert str(Xnor(Xor(a, b))) == "Not(Xor(a, b))"
+    assert str(Xnor(Xnor(a, b))) == "Xor(a, b)"
+
 def test_expr():
     assert expr(a) is a
     f = a & ~b | c ^ ~d
