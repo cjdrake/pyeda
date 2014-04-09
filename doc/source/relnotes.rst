@@ -4,6 +4,46 @@
   Release Notes
 *****************
 
+Version 0.22
+============
+
+A couple features, and some good bug-fixes in this release.
+
+Fixed `Issue 80 <https://github.com/cjdrake/pyeda/issues/80>`_.
+Apparently, I forgot to implement the right-side version of XOR operator: ``0 ^ x``.
+
+Fixed `Issue 81 <https://github.com/cjdrake/pyeda/issues/81>`_.
+I continue finding bugs with degenerate forms.
+This particular one comes up when you try to do something similar to
+``Or(Or(a, b))``.
+The ``__new__`` method was implemented incorrectly,
+so I moved the ``Or(a) = a`` (and similar) rules to the ``simplify`` method.
+
+To match the notation used by Univ of Illinois VLSI class,
+I changed BDD low/high nodes to "lo", and "hi".
+
+Got rid of the "minus" operator, ``a - b``.
+This was previously implemented as ``a | ~b``,
+but I don't think it has merit anymore.
+
+The ``farray`` type now uses the ``+`` operator for concatenation,
+and ``*`` for repetition.
+These are very important features in SystemVerilog.
+See `Issue 77 <https://github.com/cjdrake/pyeda/issues/77>`_ for details.
+
+Implemented the ``farray.__setitem__`` method.
+It is very useful to instantiate an ``farray`` using ``exprzeros``,
+and then programmatically assign indices one-by-one.
+See `Issue 78 <https://github.com/cjdrake/pyeda/issues/78>`_ for details.
+
+To demonstrate some of the fancy, new ``farray`` features,
+I added the AES algorithm to the ``logic`` package.
+It manages to complete all the logic assignments,
+but I haven't been able to test its correctness yet,
+because it explodes the memory on my machine.
+At a bare minimum, it will be a nice test case for performance optimizations
+necessary to handle large designs.
+
 Version 0.21
 ============
 
