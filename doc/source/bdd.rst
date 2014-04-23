@@ -46,7 +46,8 @@ you can use the ``expr2bdd`` function to convert arbitrary expressions to BDDs::
    Or(And(a, b), And(a, c), And(b, c))
    >>> f = expr2bdd(f)
    >>> f
-   BDD(1, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b128>, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b198>)
+   BDD(1, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b128>,
+          <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b198>)
 
 As you can see, the BDD does not have such a useful string representation.
 More on this subject later.
@@ -88,12 +89,14 @@ Here is the simple majority function again::
 
    >>> f = a & b | a & c | b & c
    >>> f
-   BDD(1, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b128>, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b198>)
+   BDD(1, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b128>,
+          <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b198>)
 
 This time, we can see the benefit of having variables available::
 
    >>> f.restrict({a: 0})
-   BDD(2, <pyeda.boolalg.bdd.BDDNode object at 0x7f5436b7dfd0>, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b048>)
+   BDD(2, <pyeda.boolalg.bdd.BDDNode object at 0x7f5436b7dfd0>,
+          <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b048>)
    >>> f.restrict({a: 1, b: 0})
    c
    >>> f.restrict({a: 1, b: 1})
@@ -102,14 +105,178 @@ This time, we can see the benefit of having variables available::
 BDD Visualization with IPython and GraphViz
 ===========================================
 
+If you have `GraphViz <http://www.graphviz.org>`_ installed on your machine,
+and the ``dot`` executable is available on your shell's path,
+you can use the ``gvmagic`` IPython extension to visualize BDDs.
+
+::
+
+   In [1]: %install_ext https://raw.github.com/cjdrake/ipython-magic/master/gvmagic.py
+
+   In [2]: %load_ext gvmagic
+
+For example, here is the majority function in three variables as a BDD::
+
+   In [3]: a, b, c = map(bddvar, 'abc')
+
+   In [4]: f = a & b | a & c | b & c
+
+   In [5]: %dotobj f
+
+.. figure:: image/bdd_majority3.png
+   :align: center
+   :height: 250
+
+   BDD of Three-Input Majority Function
+
+The way this works is that the ``%dotobj`` extension internally calls the
+``to_dot`` method on ``f``::
+
+   In [6]: f.to_dot()
+   'graph BDD {
+       n139865543613912 [label=0,shape=box];
+       n139865543728208 [label=1,shape=box];
+       n139865543169752 [label="c",shape=circle];
+       n139865552542296 [label="b",shape=circle];
+       n139865543169864 [label="b",shape=circle];
+       n139865543170312 [label="a",shape=circle];
+       n139865543169752 -- n139865543613912 [label=0,style=dashed];
+       n139865543169752 -- n139865543728208 [label=1];
+       n139865552542296 -- n139865543613912 [label=0,style=dashed];
+       n139865552542296 -- n139865543169752 [label=1];
+       n139865543169864 -- n139865543169752 [label=0,style=dashed];
+       n139865543169864 -- n139865543728208 [label=1];
+       n139865543170312 -- n139865552542296 [label=0,style=dashed];
+       n139865543170312 -- n139865543169864 [label=1]; }'
+
 Satisfiability
 ==============
+
+Like we mentioned in the introduction,
+BDDs are a canonical form.
+That means that all unsatisfiable functions will reduce to zero,
+and all tautologies will reduce to one.
+If you simply want to check whether a function is SAT or UNSAT,
+just construct a BDD, and test whether it is zero/one.
+
+::
+
+   >>> a, b = map(bddvar, 'ab')
+   >>> f = ~a & ~b | ~a & b | a & ~b | a & b
+   >>> f
+   1
+   >>> f.is_one()
+   True
+   >>> g = (~a | ~b) & (~a | b) & (a | ~b) & (a | b)
+   >>> g
+   0
+   >>> g.is_zero()
+   True
+
+If you need one or more satisfying input points,
+use the ``satisfy_one`` and ``satisfy_all`` functions.
+The algorithm that implements SAT is very simple and elegant;
+it just finds a path from the function's root node to one.
+
+::
+
+   >>> a, b, c = map(bddvar, 'abc')
+   >>> f = a ^ b ^ c
+   >>> f.satisfy_one()
+   {b: 0, a: 0, c: 1}
+   >>> list(f.satisfy_all())
+   [{a: 0, b: 0, c: 1},
+    {a: 0, b: 1, c: 0},
+    {a: 1, b: 0, c: 0},
+    {a: 1, b: 1, c: 1}]
+
+Trace all that paths from the top node to ``1`` to verify.
+
+.. figure:: image/bdd_xor3.png
+   :align: center
+   :height: 250
+
+   BDD of Three-Input XOR Function
 
 Formal Equivalence
 ==================
 
+Because BDDs are a canonical form, functional equivalence is trivial.
+
+Here is an example where we define the XOR function by using
+1) the XOR operator, and 2) OR/AND/NOT operators.
+
+::
+
+   >>> a, b, c = map(bddvar, 'abc')
+   >>> f1 = a ^ b ^ c
+   >>> f2 = a & ~b & ~c | ~a & b & ~c | ~a & ~b & c | a & b & c
+
+Just like expressions, BDDs have an ``equivalent`` method::
+
+   >>> f1.equivalent(f2)
+   True
+
+However, this isn't required.
+PyEDA maintains a unique table of BDD nodes and their function pointers,
+so you can just test for equality using the Python ``is`` operator::
+
+   >>> f1 is f2
+   True
+
 Variable Ordering
 =================
+
+The size of a BDD is very sensitive to the order of variable decomposition.
+For example, here is a BDD that uses an ideal variable order::
+
+   In [1]: X = bddvars('x', 8)
+
+   In [2]: f1 = X[0] & X[1] | X[2] & X[3] | X[4] & X[5]
+
+   In [3]: %dotobj f1
+
+.. figure:: image/bdd_order1.png
+   :align: center
+   :height: 400
+
+   Good Variable Ordering
+
+And here is the same function, with a bad variable order::
+
+   In [2]: f2 = X[0] & X[3] | X[1] & X[4] | X[2] & X[5]
+
+   In [3]: %dotobj f2
+
+.. figure:: image/bdd_order2.png
+   :align: center
+   :height: 400
+
+   Bad Variable Ordering
+
+The previous example was used by Bryant [#f3]_ to demonstrate this concept.
+When you think of the definition of a BDD,
+it becomes clear why some orderings are superior to others.
+What you want in a variable ordering is to decide as much of the function
+at every decision level as you traverse towards ``0`` and ``1``.
+
+PyEDA implicitly orders all variables.
+It is therefore not possible to create a new BDD by reordering its inputs.
+You can, however, rename the variables using the ``compose`` method to achieve
+the desired result.
+
+For example, to optimize the previous BDD::
+
+   In [4]: g2 = f2.compose({X[0]: Y[0], X[1]: Y[2], X[2]: Y[4],
+                            X[3]: Y[1], X[4]: Y[3], X[5]: Y[5]})
+
+   In [5]: %dotobj g2
+
+.. figure:: image/bdd_rename.png
+   :align: center
+   :height: 400
+
+   After Variable Renaming
 
 References
 ==========
