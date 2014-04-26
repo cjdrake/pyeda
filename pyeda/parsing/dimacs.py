@@ -18,7 +18,7 @@ Interface Functions:
 
 # pylint: disable=C0103
 
-from pyeda.parsing.lex import RegexLexer, action
+from pyeda.parsing.lex import LexRunError, RegexLexer, action
 from pyeda.parsing.token import (
     KeywordToken, IntegerToken, OperatorToken, PunctuationToken,
 )
@@ -139,16 +139,43 @@ def _expect_token(lex, types):
 def parse_cnf(s, varname='x'):
     """
     Parse an input string in DIMACS CNF format,
-    and return an expression.
+    and return an expression abstract syntax tree.
+
+    Parameters
+    ----------
+    s : str
+        String containing a DIMACS CNF.
+
+    varname : str, optional
+        The variable name used for creating literals.
+        Defaults to 'x'.
+
+    Returns
+    -------
+    An ast tuple, defined recursively:
+
+    ast := ('var', names, indices)
+         | ('not', ast)
+         | ('or', ast, ...)
+         | ('and', ast, ...)
+
+    names := (name, ...)
+
+    indices := (index, ...)
     """
     lex = iter(CNFLexer(s))
+    try:
+        _expect_token(lex, {KW_p})
+        _expect_token(lex, {KW_cnf})
+        nvars = _expect_token(lex, {IntegerToken}).value
+        nclauses = _expect_token(lex, {IntegerToken}).value
+        ast = _cnf_formula(lex, varname, nvars, nclauses)
+    except LexRunError as exc:
+        fstr = ("{0.args[0]}: "
+                "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
+        raise DIMACSError(fstr.format(exc))
 
-    _expect_token(lex, {KW_p})
-    _expect_token(lex, {KW_cnf})
-    nvars = _expect_token(lex, {IntegerToken}).value
-    nclauses = _expect_token(lex, {IntegerToken}).value
-
-    return _cnf_formula(lex, varname, nvars, nclauses)
+    return ast
 
 def _cnf_formula(lex, varname, nvars, nclauses):
     """Return a DIMACS CNF formula."""
