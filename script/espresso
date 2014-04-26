@@ -7,7 +7,6 @@ Minimize a PLA file
 import argparse
 import sys
 
-import pyeda
 from pyeda.boolalg.espresso import set_config, espresso, EspressoError
 from pyeda.parsing.pla import parse_pla, PLAError
 
