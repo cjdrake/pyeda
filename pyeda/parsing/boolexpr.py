@@ -324,12 +324,25 @@ def parse(s):
     -------
     An ast tuple, defined recursively:
 
-    * ('const', 0)
-    * ('const', 1)
-    * ('var', (name, ...), (index, ...))
-    * (FUNC, ast, ...), where FUNC is one of:
-      {'not', 'or', 'and', 'nor', 'nand', 'xor', 'xnor', 'equal', 'unequal',
-       'implies', 'ite', 'onehot0', 'onehot', 'majority', 'achillesheel'}
+    ast := ('const', num)
+         | ('var', names, indices)
+         | ('not', ast)
+         | ('implies', ast, ast)
+         | ('ite', ast, ast, ast)
+         | (func, ast, ...)
+
+    num := 0 | 1
+
+    names := (name, ...)
+
+    indices := (index, ...)
+
+    func := 'or' | 'and'
+          | 'nor' | 'nand'
+          | 'xor' | 'xnor'
+          | 'equal' | 'unequal'
+          | 'onehot0' | 'onehot'
+          | 'majority' | 'achillesheel'
     """
     lex = iter(BoolExprLexer(s))
     try:
