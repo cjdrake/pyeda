@@ -162,6 +162,7 @@ EXT_MODULES = [
 
 SCRIPTS = [
     pjoin('script', 'espresso'),
+    pjoin('script', 'picosat'),
 ]
 
 setup(
