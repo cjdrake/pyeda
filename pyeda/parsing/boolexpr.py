@@ -227,57 +227,59 @@ class BoolExprLexer(RegexLexer):
     }
 
 
-# Grammar for a Boolean expression
-#
-# EXPR := ITE
-#
-# ITE := IMPL '?' ITE ':' ITE
-#      | IMPL
-#
-# IMPL := SUMTERM '=>' IMPL
-#       | SUMTERM '<=>' IMPL
-#       | SUMTERM
-#
-# SUMTERM := XORTERM SUMTERM'
-#
-# SUMTERM' := '|' XORTERM SUMTERM'
-#           | null
-#
-# XORTERM := PRODTERM XORTERM'
-#
-# XORTERM' := '^' PRODTERM XORTERM'
-#
-# PRODTERM := FACTOR PRODTERM'
-#
-# PRODTERM' := '&' FACTOR PRODTERM'
-#            | null
-#
-# FACTOR := '~' FACTOR
-#         | '(' EXPR ')'
-#         | OPN '(' ARGS ')'
-#         | 'ITE' '(' EXPR ',' EXPR ',' EXPR ')'
-#         | 'Implies' '(' EXPR ',' EXPR ')'
-#         | 'Not' '(' EXPR ')'
-#         | VAR
-#         | '0'
-#         | '1'
-#
-# OPN := 'Or'
-#      | 'And'
-#      | 'Xor'
-#      | 'Xnor'
-#      | 'Equal'
-#      | 'Unequal'
-#      | 'Nor'
-#      | 'Nand'
-#      | 'OneHot0'
-#      | 'OneHot'
-#      | 'Majority'
-#      | 'AchillesHeel'
-#
-# ARGS := EXPR ',' ARGS
-#       | EXPR
-#       | null
+GRAMMAR = """
+
+EXPR := ITE
+
+ITE := IMPL '?' ITE ':' ITE
+     | IMPL
+
+IMPL := SUMTERM '=>' IMPL
+      | SUMTERM '<=>' IMPL
+      | SUMTERM
+
+SUMTERM := XORTERM SUMTERM'
+
+SUMTERM' := '|' XORTERM SUMTERM'
+          | null
+
+XORTERM := PRODTERM XORTERM'
+
+XORTERM' := '^' PRODTERM XORTERM'
+
+PRODTERM := FACTOR PRODTERM'
+
+PRODTERM' := '&' FACTOR PRODTERM'
+           | null
+
+FACTOR := '~' FACTOR
+        | '(' EXPR ')'
+        | OPN '(' ARGS ')'
+        | 'ITE' '(' EXPR ',' EXPR ',' EXPR ')'
+        | 'Implies' '(' EXPR ',' EXPR ')'
+        | 'Not' '(' EXPR ')'
+        | VAR
+        | '0'
+        | '1'
+
+OPN := 'Or'
+     | 'And'
+     | 'Xor'
+     | 'Xnor'
+     | 'Equal'
+     | 'Unequal'
+     | 'Nor'
+     | 'Nand'
+     | 'OneHot0'
+     | 'OneHot'
+     | 'Majority'
+     | 'AchillesHeel'
+
+ARGS := EXPR ',' ARGS
+      | EXPR
+      | null
+
+"""
 
 OPN_TOKS = {
     KW_or,
@@ -302,8 +304,32 @@ FACTOR_TOKS = {
 
 def parse(s):
     """
-    Parse an input string in DIMACS SAT format,
+    Parse a Boolean expression string,
     and return an expression abstract syntax tree.
+
+    Parameters
+    ----------
+    s : str
+        String containing a Boolean expression.
+        See ``pyeda.parsing.boolexpr.GRAMMAR`` for details.
+
+    Examples
+    --------
+    >>> parse("a | b ^ c & d")
+    ('or', ('var', ('a',), ()), ('xor', ('var', ('b',), ()), ('and', ('var', ('c',), ()), ('var', ('d',), ()))))
+    >>> parse("p => q")
+    ('implies', ('var', ('p',), ()), ('var', ('q',), ()))
+
+    Returns
+    -------
+    An ast tuple, defined recursively:
+
+    * ('const', 0)
+    * ('const', 1)
+    * ('var', (name, ...), (index, ...))
+    * (FUNC, ast, ...), where FUNC is one of:
+      {'not', 'or', 'and', 'nor', 'nand', 'xor', 'xnor', 'equal', 'unequal',
+       'implies', 'ite', 'onehot0', 'onehot', 'majority', 'achillesheel'}
     """
     lex = iter(BoolExprLexer(s))
     try:
