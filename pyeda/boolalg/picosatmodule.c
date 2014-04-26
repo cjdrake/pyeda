@@ -149,12 +149,8 @@ _add_assumptions(PicoSAT *picosat, PyObject *assumptions)
             goto decref_pylits;
         }
         lit = PyLong_AsLong(pylit);
-        if (lit == 0 || abs(lit) > nvars) {
-            PyErr_Format(
-                PyExc_ValueError,
-                "expected assumption literal in range [-%d, 0), (0, %d], got: %d",
-                nvars, nvars, lit
-            );
+        if (lit == 0) {
+            PyErr_SetString(PyExc_ValueError, "expected nonzero assumption literal");
             goto decref_pylits;
         }
 
