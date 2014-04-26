@@ -263,6 +263,9 @@ PyDoc_STRVAR(_satisfy_one_docstring,
     clauses : iter of iter of (nonzero) int\n\
         The CNF clauses\n\
 \n\
+    assumptions : iter of (nonzero) int\n\
+        Add assumptions (unit clauses) to the CNF\n\
+\n\
     verbosity : int, optional\n\
         Set verbosity level. A verbosity level of 1 and above prints more and\n\
         more detailed progress reports to stdout.\n\
@@ -282,9 +285,6 @@ PyDoc_STRVAR(_satisfy_one_docstring,
         Set a limit on the number of decisions. A negative value sets no\n\
         decision limit.\n\
 \n\
-    assumptions : iter of (nonzero) int\n\
-        Add assumptions (unit clauses) to the CNF\n\
-\n\
     Returns\n\
     -------\n\
     tuple of {-1, 0, 1}\n\
@@ -299,8 +299,8 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *keywords[] = {
         "nvars", "clauses",
-        "verbosity", "default_phase", "propagation_limit", "decision_limit",
         "assumptions",
+        "verbosity", "default_phase", "propagation_limit", "decision_limit",
         NULL
     };
 
@@ -310,11 +310,11 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
     /* PicoSAT input parameters */
     int nvars = 0;
     PyObject *clauses;
+    PyObject *assumptions = NULL;
     int verbosity = 0;
     int default_phase = 2; /* Jeroslow-Wang */
     int propagation_limit = -1;
     int decision_limit = -1;
-    PyObject *assumptions = NULL;
 
     /* PicoSAT return value */
     int result;
@@ -323,10 +323,10 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
     PyObject *pyret = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "iO|iiiiO:satisfy_one", keywords,
+            args, kwargs, "iO|Oiiii:satisfy_one", keywords,
             &nvars, &clauses,
-            &verbosity, &default_phase, &propagation_limit, &decision_limit,
-            &assumptions))
+            &assumptions,
+            &verbosity, &default_phase, &propagation_limit, &decision_limit))
         goto done;
 
     if (nvars < 0) {
