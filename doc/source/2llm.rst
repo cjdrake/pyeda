@@ -147,7 +147,7 @@ Espresso Script
 Starting with version ``0.20``, PyEDA includes a script that implements some
 of the functionality of the original Espresso command-line utility.
 
-.. code-block:: sh
+::
 
    $ espresso -h
    usage: espresso [-h] [-e {fast,ness,nirr,nunwrap,onset,strong}] [--fast]
@@ -167,7 +167,7 @@ Here is an example of a simple PLA file that is part of the BOOM benchmark suite
 This function has 50 input variables, 5 output variables, and 50 product terms.
 Also, 20% of the literals in the implicants are "don't care".
 
-.. code-block:: sh
+::
 
    $ cat extension/espresso/test/bb_all/bb_50x5x50_20%_0.pla
    .i 50
@@ -231,7 +231,7 @@ Also, 20% of the literals in the implicants are "don't care".
 After running the input file through the ``espresso`` script,
 it minimizes the function to 26 implicants with significantly fewer literals.
 
-.. code-block:: sh
+::
 
    $ espresso extension/espresso/test/bb_all/bb_50x5x50_20%_0.pla
    .i 50
