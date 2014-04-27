@@ -125,7 +125,7 @@ For example, here is the majority function in three variables as a BDD::
 
 .. figure:: image/bdd_majority3.png
    :align: center
-   :height: 250
+   :height: 250px
 
    BDD of Three-Input Majority Function
 
@@ -194,7 +194,7 @@ Trace all that paths from the top node to ``1`` to verify.
 
 .. figure:: image/bdd_xor3.png
    :align: center
-   :height: 250
+   :height: 250px
 
    BDD of Three-Input XOR Function
 
@@ -238,7 +238,7 @@ For example, here is a BDD that uses an ideal variable order::
 
 .. figure:: image/bdd_order1.png
    :align: center
-   :height: 400
+   :height: 300px
 
    Good Variable Ordering
 
@@ -250,7 +250,7 @@ And here is the same function, with a bad variable order::
 
 .. figure:: image/bdd_order2.png
    :align: center
-   :height: 400
+   :height: 300px
 
    Bad Variable Ordering
 
@@ -274,7 +274,7 @@ For example, to optimize the previous BDD::
 
 .. figure:: image/bdd_rename.png
    :align: center
-   :height: 400
+   :height: 300px
 
    After Variable Renaming
 
