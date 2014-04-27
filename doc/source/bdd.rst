@@ -278,6 +278,56 @@ For example, to optimize the previous BDD::
 
    After Variable Renaming
 
+Garbage Collection
+==================
+
+Since BDDs are a memory-constrained data structure,
+the subject of garbage collection is very important.
+
+PyEDA uses the Python standard library's
+`weakref <https://docs.python.org/3.4/library/weakref.html>`_
+module to automatically garbage collect BDD nodes when they are no longer needed.
+The BDD function contains a reference to a node,
+which contains references to it's children, and so on until you get to zero/one.
+When a function's name is either deleted or it goes out of scope,
+it may initiate a corresponding cascade of node deletions.
+
+This is best illustrated with an example.
+If you look directly into the ``pyeda.boolalg.bdd`` module,
+you can find the memory structure that holds BDD nodes::
+
+   >>> from pyeda.boolalg.bdd import _BDDNODES
+   >>> len(_BDDNODES.valuerefs())
+   2
+
+The table contains two static nodes: zero and one.
+Let's define a few variables, and three simple BDDs::
+
+   >>> from pyeda.inter import *
+   >>> a, b = map(bddvar, 'ab')
+   >>> f1 = a | b
+   >>> f2 = a & b
+   >>> f3 = a ^ b
+   >>> len(_BDDNODES.valuerefs())
+   8
+
+Now there are eight nodes.
+Let's count the remaining nodes as we delete functions::
+
+   >>> del f1
+   >>> len(_BDDNODES.valuerefs())
+   7
+   >>> del f2
+   >>> len(_BDDNODES.valuerefs())
+   6
+   >>> del f3
+   >>> len(_BDDNODES.valuerefs())
+   4
+   >>> del a
+   >>> del b
+   >>> len(_BDDNODES.valuerefs())
+   2
+
 References
 ==========
 
