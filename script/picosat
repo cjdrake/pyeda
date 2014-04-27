@@ -107,6 +107,7 @@ def main():
                     print('v', *_soln2values(soln))
                 cnt += 1
             print('s', 'SOLUTIONS', cnt)
+            # This unexpected result matches PicoSAT
             return UNSATISFIABLE
         else:
             soln = satisfy_one(nvars, clauses,
@@ -121,8 +122,7 @@ def main():
                     print('v', *_soln2values(soln))
                 return SATISFIABLE
     except PicosatError as exc:
-        for line in str(exc).splitlines():
-            print('c', line)
+        print(exc)
         return UNKNOWN
 
 def _soln2values(soln):
