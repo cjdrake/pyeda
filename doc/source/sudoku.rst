@@ -286,11 +286,6 @@ let's use the `PicoSAT <http://fmv.jku.at/picosat>`_ fast SAT solver to crunch t
 ::
 
    >>> def solve(grid):
-   ...     I = parse_grid(grid)
-   ...     cnf = I & S
-   ...     return cnf.satisfy_one()
-
-   >>> def solve(grid):
    ...     with parse_grid(grid):
    ...         return S.satisfy_one()
 
