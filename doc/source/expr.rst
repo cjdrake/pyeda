@@ -780,6 +780,75 @@ Note that it is an error to assume conflicting values for a literal::
    ...     print(f.satisfy_one())
    ValueError: conflicting constraints: a, ~a
 
+PicoSAT Script
+--------------
+
+Starting with version ``0.23.0``, PyEDA includes a script that implements
+some of the functionality of the PicoSAT command-line utility.
+
+::
+
+   $ picosat -h
+   usage: picosat [-h] [--version] [-n] [-a LIT] [-v] [-i {0,1,2,3}] [-P LIMIT]
+                  [-l LIMIT] [--all]
+                  [file]
+
+   PicoSAT solver
+
+   positional arguments:
+     file          CNF input file (default: stdin)
+
+   optional arguments:
+     -h, --help    show this help message and exit
+     --version     print version and exit
+     ...
+
+Here is an example of a basic SAT problem encoded using the well-known DIMACS
+CNF format.
+See http://www.satcompetition.org/ for details on expected inputs and outputs.
+The function is a one-hot function on four input variables.
+
+::
+
+   $ cat onehot4.cnf
+   c Comments start with a 'c' character
+   c The problem 'p' line is followed by clauses
+   p cnf 4 7
+   1 2 3 4 0
+   -4 -3 0
+   -4 -2 0
+   -4 -1 0
+   -3 -2 0
+   -3 -1 0
+   -2 -1 0
+
+To get one satisfying solution::
+
+   $ picosat onehot4.cnf
+   s SATISFIABLE
+   v -1 -2 -3 4 0
+
+To get all satisfying solutions::
+
+   $ picosat --all onehot4.cnf
+   s SATISFIABLE
+   v -1 -2 -3 4 0
+   s SATISFIABLE
+   v -1 -2 3 -4 0
+   s SATISFIABLE
+   v -1 2 -3 -4 0
+   s SATISFIABLE
+   v 1 -2 -3 -4 0
+   s SOLUTIONS 4
+
+You can also constrain the solver with one or more assumptions::
+
+   $ picosat -a 1 -a -2 onehot4.cnf
+   s SATISFIABLE
+   v 1 -2 -3 -4 0
+   $ picosat -a 1 -a 2 onehot4.cnf
+   s UNSATISFIABLE
+
 Tseitin's Encoding
 ==================
 
