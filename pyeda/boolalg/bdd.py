@@ -29,14 +29,11 @@ from pyeda.util import cached_property
 
 
 # existing BDDVariable references
-_BDDVARIABLES = dict()
+_BDDVARIABLES = weakref.WeakValueDictionary()
 
 # node/bdd cache
 _BDDNODES = weakref.WeakValueDictionary()
 _BDDS = weakref.WeakValueDictionary()
-
-# unique table
-_RESTRICT_CACHE = weakref.WeakValueDictionary()
 
 
 class BDDNode(object):
@@ -346,24 +343,26 @@ def _ite(f, g, h):
         fv1, gv1, hv1 = [_urestrict(node, upoint1) for node in (f, g, h)]
         return bddnode(root, _ite(fv0, gv0, hv0), _ite(fv1, gv1, hv1))
 
-def _urestrict(node, upoint):
+def _urestrict(node, upoint, cache=None):
     """Return node that results from untyped point restriction."""
     if node is BDDNODEZERO or node is BDDNODEONE:
         return node
 
-    key = (node, upoint)
+    if cache is None:
+        cache = dict()
+
     try:
-        ret = _RESTRICT_CACHE[key]
+        ret = cache[node]
     except KeyError:
         if node.root in upoint[0]:
-            ret = _urestrict(node.lo, upoint)
+            ret = _urestrict(node.lo, upoint, cache)
         elif node.root in upoint[1]:
-            ret = _urestrict(node.hi, upoint)
+            ret = _urestrict(node.hi, upoint, cache)
         else:
-            lo = _urestrict(node.lo, upoint)
-            hi = _urestrict(node.hi, upoint)
+            lo = _urestrict(node.lo, upoint, cache)
+            hi = _urestrict(node.hi, upoint, cache)
             ret = bddnode(node.root, lo, hi)
-        _RESTRICT_CACHE[key] = ret
+        cache[node] = ret
     return ret
 
 def _find_path(start, end, path=tuple()):
