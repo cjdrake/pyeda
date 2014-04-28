@@ -26,6 +26,7 @@ Supported Python Versions
 =========================
 
 Starting with version ``0.15``, PyEDA will only work with Python 3.2+.
+Starting with version ``0.23``, PyEDA will only work with Python 3.3+.
 There were several reasons to drop support for Python 2:
 
 * Python 3 is the future of the language.
