@@ -34,14 +34,12 @@ _TYPES = {
     'fdr': FTYPE | DTYPE | RTYPE,
 }
 
-INCODE = {'0': 1, '1': 2, '-': 3}
-OUTCODE = {'0': 0, '1': 1, '-': 2}
+_INCODE = {'0': 1, '1': 2, '-': 3}
+_OUTCODE = {'0': 0, '1': 1, '-': 2}
 
 
 class PLAError(Exception):
     """An error happened during parsing a PLA file"""
-    def __init__(self, msg):
-        super(PLAError, self).__init__(msg)
 
 
 def parse_pla(s):
@@ -147,8 +145,8 @@ def parse_pla(s):
         m_cube = _CUBE.match(line)
         if m_cube:
             inputs, outputs = m_cube.groups()
-            invec = tuple(INCODE[c] for c in inputs)
-            outvec = tuple(OUTCODE[c] for c in outputs)
+            invec = tuple(_INCODE[c] for c in inputs)
+            outvec = tuple(_OUTCODE[c] for c in outputs)
             pla['cover'].add((invec, outvec))
             continue
 
