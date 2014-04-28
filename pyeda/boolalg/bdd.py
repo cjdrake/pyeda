@@ -3,13 +3,14 @@ Binary Decision Diagrams
 
 Interface Functions:
     bddvar
-    bddnode
-    bdd
-    expr2bddnode
     expr2bdd
     bdd2expr
+    upoint2bddpoint
 
 Interface Classes:
+    BDDNode
+        BDDNODEZERO
+        BDDNODEONE
     BinaryDecisionDiagram
         BDDConstant
             BDDZERO
@@ -66,27 +67,7 @@ def bddvar(name, index=None):
         _BDDS[var.node] = var
     return var
 
-def bddnode(root, lo, hi):
-    """Return a unique BDD node."""
-    if lo is hi:
-        node = lo
-    else:
-        key = (root, lo, hi)
-        try:
-            node = _BDDNODES[key]
-        except KeyError:
-            node = _BDDNODES[key] = BDDNode(*key)
-    return node
-
-def bdd(node):
-    """Return a unique BDD."""
-    try:
-        _bdd = _BDDS[node]
-    except KeyError:
-        _bdd = _BDDS[node] = BinaryDecisionDiagram(node)
-    return _bdd
-
-def expr2bddnode(expr):
+def _expr2bddnode(expr):
     """Convert an expression into a BDD node."""
     if expr.is_zero():
         return BDDNODEZERO
@@ -99,13 +80,13 @@ def expr2bddnode(expr):
         _ = bddvar(top.names, top.indices)
 
         root = top.uniqid
-        lo = expr2bddnode(expr.restrict({top: 0}))
-        hi = expr2bddnode(expr.restrict({top: 1}))
-        return bddnode(root, lo, hi)
+        lo = _expr2bddnode(expr.restrict({top: 0}))
+        hi = _expr2bddnode(expr.restrict({top: 1}))
+        return _bddnode(root, lo, hi)
 
 def expr2bdd(expr):
     """Convert an expression into a binary decision diagram."""
-    return bdd(expr2bddnode(expr))
+    return _bdd(_expr2bddnode(expr))
 
 def bdd2expr(bdd, conj=False):
     """Convert a binary decision diagram into an expression."""
@@ -118,19 +99,9 @@ def bdd2expr(bdd, conj=False):
     terms = list()
     for path in paths:
         expr_point = {exprvar(v.names, v.indices): val
-                      for v, val in path2point(path).items()}
+                      for v, val in _path2point(path).items()}
         terms.append(boolfunc.point2term(expr_point, conj))
     return outer(*[inner(*term) for term in terms])
-
-def path2point(path):
-    """Convert a BDD path to a BDD point."""
-    point = dict()
-    for i, node in enumerate(path[:-1]):
-        if node.lo is path[i+1]:
-            point[_BDDVARIABLES[node.root]] = 0
-        elif node.hi is path[i+1]:
-            point[_BDDVARIABLES[node.root]] = 1
-    return point
 
 def upoint2bddpoint(upoint):
     """Convert an untyped point to a BDD point."""
@@ -139,6 +110,36 @@ def upoint2bddpoint(upoint):
         point[_BDDVARIABLES[uniqid]] = 0
     for uniqid in upoint[1]:
         point[_BDDVARIABLES[uniqid]] = 1
+
+def _bddnode(root, lo, hi):
+    """Return a unique BDD node."""
+    if lo is hi:
+        node = lo
+    else:
+        key = (root, lo, hi)
+        try:
+            node = _BDDNODES[key]
+        except KeyError:
+            node = _BDDNODES[key] = BDDNode(*key)
+    return node
+
+def _bdd(node):
+    """Return a unique BDD."""
+    try:
+        bdd = _BDDS[node]
+    except KeyError:
+        bdd = _BDDS[node] = BinaryDecisionDiagram(node)
+    return bdd
+
+def _path2point(path):
+    """Convert a BDD path to a BDD point."""
+    point = dict()
+    for i, node in enumerate(path[:-1]):
+        if node.lo is path[i+1]:
+            point[_BDDVARIABLES[node.root]] = 0
+        elif node.hi is path[i+1]:
+            point[_BDDVARIABLES[node.root]] = 1
+    return point
 
 
 class BinaryDecisionDiagram(boolfunc.Function):
@@ -155,22 +156,22 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     # Operators
     def __invert__(self):
-        return bdd(_neg(self.node))
+        return _bdd(_neg(self.node))
 
     def __or__(self, other):
         other_node = self.box(other).node
         # f | g <=> ITE(f, 1, g)
-        return bdd(_ite(self.node, BDDNODEONE, other_node))
+        return _bdd(_ite(self.node, BDDNODEONE, other_node))
 
     def __and__(self, other):
         other_node = self.box(other).node
         # f & g <=> ITE(f, g, 0)
-        return bdd(_ite(self.node, other_node, BDDNODEZERO))
+        return _bdd(_ite(self.node, other_node, BDDNODEZERO))
 
     def __xor__(self, other):
         other_node = self.box(other).node
         # f ^ g <=> ITE(f, g', g)
-        return bdd(_ite(self.node, _neg(other_node), other_node))
+        return _bdd(_ite(self.node, _neg(other_node), other_node))
 
     # From Function
     @cached_property
@@ -188,25 +189,25 @@ class BinaryDecisionDiagram(boolfunc.Function):
         return tuple(reversed(_inputs))
 
     def urestrict(self, upoint):
-        return bdd(_urestrict(self.node, upoint))
+        return _bdd(_urestrict(self.node, upoint))
 
     def compose(self, mapping):
         node = self.node
         for v, g in mapping.items():
-            fv0, fv1 = bdd(node).cofactors(v)
+            fv0, fv1 = _bdd(node).cofactors(v)
             node = _ite(g.node, fv1.node, fv0.node)
-        return bdd(node)
+        return _bdd(node)
 
     def satisfy_one(self):
         path = _find_path(self.node, BDDNODEONE)
         if path is None:
             return None
         else:
-            return path2point(path)
+            return _path2point(path)
 
     def satisfy_all(self):
         for path in _iter_all_paths(self.node, BDDNODEONE):
-            yield path2point(path)
+            yield _path2point(path)
 
     def is_zero(self):
         return self.node is BDDNODEZERO
@@ -303,7 +304,7 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
 
     def __init__(self, bvar):
         boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
-        node = bddnode(bvar.uniqid, BDDNODEZERO, BDDNODEONE)
+        node = _bddnode(bvar.uniqid, BDDNODEZERO, BDDNODEONE)
         BinaryDecisionDiagram.__init__(self, node)
 
 
@@ -314,7 +315,7 @@ def _neg(node):
     elif node is BDDNODEONE:
         return BDDNODEZERO
     else:
-        return bddnode(node.root, _neg(node.lo), _neg(node.hi))
+        return _bddnode(node.root, _neg(node.lo), _neg(node.hi))
 
 def _ite(f, g, h):
     """Return node that results from recursively applying ITE(f, g, h)."""
@@ -340,7 +341,7 @@ def _ite(f, g, h):
         upoint1 = frozenset(), frozenset([root])
         fv0, gv0, hv0 = [_urestrict(node, upoint0) for node in (f, g, h)]
         fv1, gv1, hv1 = [_urestrict(node, upoint1) for node in (f, g, h)]
-        return bddnode(root, _ite(fv0, gv0, hv0), _ite(fv1, gv1, hv1))
+        return _bddnode(root, _ite(fv0, gv0, hv0), _ite(fv1, gv1, hv1))
 
 def _urestrict(node, upoint, cache=None):
     """Return node that results from untyped point restriction."""
@@ -360,7 +361,7 @@ def _urestrict(node, upoint, cache=None):
         else:
             lo = _urestrict(node.lo, upoint, cache)
             hi = _urestrict(node.hi, upoint, cache)
-            ret = bddnode(node.root, lo, hi)
+            ret = _bddnode(node.root, lo, hi)
         cache[node] = ret
     return ret
 

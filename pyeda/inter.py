@@ -20,7 +20,8 @@ from pyeda.boolalg.boolfunc import (
 )
 
 from pyeda.boolalg.bdd import (
-    bddvar, bddnode, bdd, expr2bddnode, expr2bdd, bdd2expr,
+    bddvar, expr2bdd, bdd2expr, upoint2bddpoint,
+    BDDNode,
     BinaryDecisionDiagram, BDDConstant, BDDVariable,
 )
 

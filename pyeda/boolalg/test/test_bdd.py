@@ -3,7 +3,7 @@ Test binary decision diagrams
 """
 
 from pyeda.boolalg.bdd import (
-    bddvar, bdd, expr2bdd, bdd2expr,
+    bddvar, _bdd, expr2bdd, bdd2expr,
     BDDNODEZERO, BDDNODEONE, BDDZERO, BDDONE
 )
 from pyeda.boolalg.expr import exprvar, EXPRZERO, EXPRONE, Xor
@@ -50,8 +50,8 @@ def test_expr2bdd():
 
 def test_bdd2expr():
     f = a & b | a & c | b & c
-    zero = bdd(BDDNODEZERO)
-    one = bdd(BDDNODEONE)
+    zero = _bdd(BDDNODEZERO)
+    one = _bdd(BDDNODEONE)
     assert bdd2expr(zero) is EXPRZERO
     assert bdd2expr(one) is EXPRONE
     assert bdd2expr(expr2bdd(f)).equivalent(f)
