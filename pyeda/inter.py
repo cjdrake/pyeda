@@ -55,10 +55,7 @@ from pyeda.boolalg.bfarray import (
     farray,
 )
 
-try:
-    from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
-except ImportError:
-    pass
+from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
 
 from pyeda.parsing.lex import LexRunError
 
