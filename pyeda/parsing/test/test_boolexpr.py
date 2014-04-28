@@ -9,15 +9,15 @@ from pyeda.boolalg.expr import (
 )
 from pyeda.parsing.boolexpr import BoolExprParseError
 
-import nose
+from nose.tools import assert_raises
 
 def test_expr_error():
     # incomplete expression
-    nose.tools.assert_raises(BoolExprParseError, expr, "a &")
+    assert_raises(BoolExprParseError, expr, "a &")
     # unexpected token
-    nose.tools.assert_raises(BoolExprParseError, expr, "a ,")
-    nose.tools.assert_raises(BoolExprParseError, expr, "a a")
-    nose.tools.assert_raises(BoolExprParseError, expr, "a ? b ,")
+    assert_raises(BoolExprParseError, expr, "a ,")
+    assert_raises(BoolExprParseError, expr, "a a")
+    assert_raises(BoolExprParseError, expr, "a ? b ,")
 
 def test_basic():
     a, b, c, d, p, q, s = map(exprvar, 'abcdpqs')
