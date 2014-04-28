@@ -4,6 +4,40 @@
   Release Notes
 *****************
 
+Version 0.23
+============
+
+This version introduces a new ``picosat`` script.
+Now you can solve DIMACS CNF files from the command-line.
+See http://pyeda.readthedocs.org/en/latest/expr.html#picosat-script
+for details.
+
+Finally there is a proper documentation chapter for binary decision diagrams!
+While writing this documentation,
+I noticed, and fixed some obscure bugs related to incorrect usage of weak
+references to BDD nodes.
+
+Made some minor changes to the public interface of the ``bdd`` module.
+
+Replaced the ``traverse`` method with three options for BDD iteration:
+
+* ``bdd.dfs_preorder`` - Depth-first search pre-order traversal
+* ``bdd.dfs_postorder`` - Depth-first search post-order traversal
+* ``bdd.bfs()`` - Breadth-first search
+
+Got rid of the deprecated ``uint2bv`` and ``int2bv`` functions.
+Use the ``uint2exprs``, ``int2exprs`` functions instead.
+
+Changed the ``pyeda.parsing.parse_pla`` function so it takes a string input.
+This makes it much easier to test.
+
+Deprecated the ``is_neg_unate``, ``is_pos_unate``, ``is_binate``
+methods for expressions.
+I haven't found a correct algorithm that is better than just 1) converting
+to a truth table, and 2) checking for monotonicity in the cofactors.
+
+As of this release, I will be dropping support for Python 3.2.
+
 Version 0.22
 ============
 
