@@ -339,7 +339,7 @@ generate a coverage report (including HTML) with the following command::
 Perform Static Lint Checks
 ==========================
 
-If you have `Pylint <http://www.logilab.org/857>`_ installed,
+If you have `Pylint <http://www.pylint.org>`_ installed,
 perform static lint checks with the following command::
 
    $ make lint
