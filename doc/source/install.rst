@@ -20,7 +20,7 @@ Supported Platforms
 ===================
 
 PyEDA supports Windows, and any platform with a C compiler.
-The author does most development and testing on Linux Mint.
+The author does most development and testing on Xubuntu Linux.
 
 Supported Python Versions
 =========================
