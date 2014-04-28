@@ -12,6 +12,7 @@ import nose
 def test_cnf_errors():
     # unexpected token
     nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf cnf 0 0\n")
+    nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf 1 1\n1 x 0")
     # formula has fewer clauses than specified
     nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf 0 1\n")
     # formula has more clauses than specified
