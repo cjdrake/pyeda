@@ -106,36 +106,6 @@ def test_expr2dimacssat():
     ret = expr2dimacssat(Not(a | ~b))
     assert ret in {'p sat 2\n-(+(1 -2))', 'p sat 2\n-(+(-2 1))'}
 
-def test_unate():
-    f = ~c & (~a | ~b)
-    assert f.is_neg_unate([a, b, c])
-    assert f.is_neg_unate([a, b])
-    assert f.is_neg_unate([a, c])
-    assert f.is_neg_unate([b, c])
-    assert f.is_neg_unate(a)
-    assert f.is_neg_unate(b)
-    assert f.is_neg_unate(c)
-    assert f.is_neg_unate()
-
-    f = c & (a | b)
-    assert f.is_pos_unate([a, b, c])
-    assert f.is_pos_unate([a, b])
-    assert f.is_pos_unate([a, c])
-    assert f.is_pos_unate([b, c])
-    assert f.is_pos_unate(a)
-    assert f.is_pos_unate(b)
-    assert f.is_pos_unate(c)
-    assert f.is_pos_unate()
-
-    f = Xor(a, b, c)
-    assert f.is_binate([a, b, c])
-    assert f.is_binate([a, b])
-    assert f.is_binate([a, c])
-    assert f.is_binate([b, c])
-    assert f.is_binate(a)
-    assert f.is_binate(b)
-    assert f.is_binate(c)
-
 def test_box():
     assert Expression.box(0) is EXPRZERO
     assert Expression.box('0') is EXPRZERO
