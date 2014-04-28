@@ -43,7 +43,7 @@ from pyeda.boolalg.table import (
     TruthTable, TTConstant, TTVariable,
 )
 
-from pyeda.boolalg.vexpr import bitvec, uint2bv, int2bv
+from pyeda.boolalg.vexpr import bitvec
 
 from pyeda.boolalg.bfarray import (
     bddzeros, bddones, bddvars,
