@@ -323,10 +323,6 @@ Let's count the remaining nodes as we delete functions::
    >>> del f3
    >>> len(_BDDNODES)
    4
-   >>> del a
-   >>> del b
-   >>> len(_BDDNODES)
-   2
 
 References
 ==========

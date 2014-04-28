@@ -21,6 +21,7 @@ Interface Classes:
 # Disable "redefining name from outer scope"
 # pylint: disable=W0621
 
+import collections
 import random
 import weakref
 
@@ -30,7 +31,7 @@ from pyeda.util import cached_property
 
 
 # existing BDDVariable references
-_BDDVARIABLES = weakref.WeakValueDictionary()
+_BDDVARIABLES = dict()
 
 # node/bdd cache
 _BDDNODES = weakref.WeakValueDictionary()
@@ -181,12 +182,12 @@ class BinaryDecisionDiagram(boolfunc.Function):
     @cached_property
     def inputs(self):
         _inputs = list()
-        for node in self.traverse():
+        for node in self.bfs():
             if node.root > 0:
                 v = _BDDVARIABLES[node.root]
                 if v not in _inputs:
                     _inputs.append(v)
-        return tuple(reversed(_inputs))
+        return tuple(_inputs)
 
     def urestrict(self, upoint):
         return _bdd(_urestrict(self.node, upoint))
@@ -227,9 +228,21 @@ class BinaryDecisionDiagram(boolfunc.Function):
             return CONSTANTS[bool(obj)]
 
     # Specific to BinaryDecisionDiagram
-    def traverse(self):
-        """Iterate through all nodes in this BDD in DFS order."""
-        yield from _dfs(self.node, set())
+    def dfs_preorder(self):
+        """Iterate through nodes in DFS pre-order."""
+        yield from _dfs_preorder(self.node, set())
+
+    def dfs_inorder(self):
+        """Iterate through nodes in DFS in-order."""
+        yield from _dfs_inorder(self.node, set())
+
+    def dfs_postorder(self):
+        """Iterate through nodes in DFS post-order."""
+        yield from _dfs_postorder(self.node, set())
+
+    def bfs(self):
+        """Iterate through nodes in BFS order."""
+        yield from _bfs(self.node, set())
 
     def equivalent(self, other):
         """Return whether this BDD is equivalent to another."""
@@ -239,7 +252,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
     def to_dot(self, name='BDD'):
         """Convert to DOT language representation."""
         parts = ['graph', name, '{']
-        for node in self.traverse():
+        for node in self.dfs_postorder():
             if node is BDDNODEZERO:
                 parts += ['n' + str(id(node)), '[label=0,shape=box];']
             elif node is BDDNODEONE:
@@ -248,7 +261,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
                 v = _BDDVARIABLES[node.root]
                 parts.append('n' + str(id(node)))
                 parts.append('[label="{}",shape=circle];'.format(v))
-        for node in self.traverse():
+        for node in self.dfs_postorder():
             if node is not BDDNODEZERO and node is not BDDNODEONE:
                 parts += ['n' + str(id(node)), '--',
                           'n' + str(id(node.lo)),
@@ -394,14 +407,47 @@ def _iter_all_paths(start, end, rand=False, path=tuple()):
             if node is not None:
                 yield from _iter_all_paths(node, end, rand, path)
 
-def _dfs(node, visited):
-    """Iterate through a depth-first traveral starting at node."""
-    lo, hi = node.lo, node.hi
-    if lo is not None:
-        yield from _dfs(lo, visited)
-    if hi is not None:
-        yield from _dfs(hi, visited)
+def _dfs_preorder(node, visited):
+    """Iterate through nodes in DFS pre-order."""
     if node not in visited:
         visited.add(node)
         yield node
+    if node.lo is not None:
+        yield from _dfs_preorder(node.lo, visited)
+    if node.hi is not None:
+        yield from _dfs_preorder(node.hi, visited)
+
+def _dfs_inorder(node, visited):
+    """Iterate through nodes in DFS in-order."""
+    if node.lo is not None:
+        yield from _dfs_inorder(node.lo, visited)
+    if node not in visited:
+        visited.add(node)
+        yield node
+    if node.hi is not None:
+        yield from _dfs_inorder(node.hi, visited)
+
+def _dfs_postorder(node, visited):
+    """Iterate through nodes in DFS post-order."""
+    if node.lo is not None:
+        yield from _dfs_postorder(node.lo, visited)
+    if node.hi is not None:
+        yield from _dfs_postorder(node.hi, visited)
+    if node not in visited:
+        visited.add(node)
+        yield node
+
+def _bfs(node, visited):
+    """Iterate through nodes in BFS order."""
+    queue = collections.deque()
+    queue.appendleft(node)
+    while queue:
+        node = queue.pop()
+        if node not in visited:
+            if node.lo is not None:
+                queue.appendleft(node.lo)
+            if node.hi is not None:
+                queue.appendleft(node.hi)
+            visited.add(node)
+            yield node
 
