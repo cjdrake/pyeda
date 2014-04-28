@@ -71,10 +71,8 @@ def parse_pla(s):
                input_labels=None, output_labels=None,
                intype=None, cover=set())
 
-    lines = s.splitlines()
+    lines = [line.strip() for line in s.splitlines()]
     for i, line in enumerate(lines, start=1):
-        line = line.strip()
-
         # skip comments
         if not line or _COMMENT.match(line):
             continue
@@ -83,31 +81,19 @@ def parse_pla(s):
         m_in = _NINS.match(line)
         if m_in:
             if pla['ninputs'] is None:
-                try:
-                    num = int(m_in.group(1))
-                except (TypeError, ValueError):
-                    raise PLAError(".i expected a positive int")
-                if num <= 0:
-                    raise PLAError(".i expected a positive int")
-                pla['ninputs'] = num
+                pla['ninputs'] = int(m_in.group(1))
+                continue
             else:
                 raise PLAError(".i declared more than once")
-            continue
 
         # .o
         m_out = _NOUTS.match(line)
         if m_out:
             if pla['noutputs'] is None:
-                try:
-                    num = int(m_out.group(1))
-                except (TypeError, ValueError):
-                    raise PLAError(".o expected a positive int")
-                if num <= 0:
-                    raise PLAError(".o expected a positive int")
-                pla['noutputs'] = num
+                pla['noutputs'] = int(m_out.group(1))
+                continue
             else:
                 raise PLAError(".o declared more than once")
-            continue
 
         # ignore .p
         m_prod = _PROD.match(line)
@@ -119,27 +105,27 @@ def parse_pla(s):
         if m_ilb:
             if pla['input_labels'] is None:
                 pla['input_labels'] = m_ilb.group(1).split()
+                continue
             else:
                 raise PLAError(".ilb declared more than once")
-            continue
 
         # .ob
         m_ob = _OB.match(line)
         if m_ob:
             if pla['output_labels'] is None:
                 pla['output_labels'] = m_ob.group(1).split()
+                continue
             else:
                 raise PLAError(".ob declared more than once")
-            continue
 
         # .type
         m_type = _TYPE.match(line)
         if m_type:
             if pla['intype'] is None:
                 pla['intype'] = _TYPES[m_type.group(1)]
+                continue
             else:
                 raise PLAError(".type declared more tha once")
-            continue
 
         # cube
         m_cube = _CUBE.match(line)
