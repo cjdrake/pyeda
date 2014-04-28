@@ -20,7 +20,6 @@ Interface Classes:
     Function
 """
 
-import collections
 import functools
 import operator
 import threading
@@ -548,15 +547,19 @@ class Function(object):
 
     @staticmethod
     def _expect_vars(vs=None):
-        """Verify the input type and return an iterable of Variables."""
+        """Verify the input type and return a list of Variables."""
         if vs is None:
             return list()
         elif isinstance(vs, Variable):
             return [vs]
         else:
-            if (isinstance(vs, collections.Iterable) and
-                all(isinstance(v, Variable) for v in vs)):
-                return vs
-            else:
-                raise TypeError("expected iter of Variable")
+            checked = list()
+            # Will raise TypeError if vs is not iterable
+            for v in vs:
+                if isinstance(v, Variable):
+                    checked.append(v)
+                else:
+                    fstr = "expected Variable, got {0.__name__}"
+                    raise TypeError(fstr.format(type(v)))
+            return checked
 
