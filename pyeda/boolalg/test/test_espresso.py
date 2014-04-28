@@ -62,7 +62,7 @@ def test_issue75():
 def _do_espresso(fname):
     fpath = os.path.join('extension', 'espresso', 'test', 'bb_all', fname)
     with open(fpath) as fin:
-        pla = parse_pla(fin)
+        pla = parse_pla(fin.read())
     return espresso.espresso(pla['ninputs'], pla['noutputs'], pla['cover'], intype=pla['intype'])
 
 def test_boom():

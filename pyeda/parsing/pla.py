@@ -1,6 +1,12 @@
 """
 PLA
 
+This is a partial implementation of the Berkeley PLA format.
+See extension/espresso/html/espresso.5.html for details.
+
+Exceptions:
+    PLAError
+
 Interface Functions:
     parse_pla
 """
@@ -38,13 +44,37 @@ class PLAError(Exception):
         super(PLAError, self).__init__(msg)
 
 
-def parse_pla(fin):
-    """Parse a file object, and return ..."""
+def parse_pla(s):
+    """
+    Parse an input string in PLA format,
+    and return an intermediate representation dict.
+
+    Parameters
+    ----------
+    s : str
+        String containing a PLA.
+
+    Returns
+    -------
+    A dict with all PLA information:
+
+        ===============  ============  =================================
+         Key              Value type    Value description
+        ===============  ============  =================================
+         ninputs          int           Number of inputs
+         noutputs         int           Number of outputs
+         input_labels     list          Input variable names
+         output_labels    list          Output function names
+         intype           int           Cover type: {F, R, FD, FR, DR, FDR}
+         cover            set           Implicant table
+        ===============  ============  =================================
+    """
     pla = dict(ninputs=None, noutputs=None,
                input_labels=None, output_labels=None,
                intype=None, cover=set())
 
-    for i, line in enumerate(fin, start=1):
+    lines = s.splitlines()
+    for i, line in enumerate(lines, start=1):
         line = line.strip()
 
         # skip comments

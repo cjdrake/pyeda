@@ -64,7 +64,7 @@ def main():
     )
 
     try:
-        pla = parse_pla(opts.file)
+        pla = parse_pla(opts.file.read())
     except PLAError as exc:
         print("error parsing file:", opts.file.name)
         print(exc)
