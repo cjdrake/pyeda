@@ -5,7 +5,7 @@ Test Boolean expression parsing
 from pyeda.boolalg.expr import (
     exprvar, expr,
     Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE,
-    Nor, Nand, OneHot0, OneHot, Majority,
+    Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel,
 )
 from pyeda.parsing.boolexpr import BoolExprParseError
 
@@ -20,7 +20,7 @@ def test_expr_error():
     nose.tools.assert_raises(BoolExprParseError, expr, "a ? b ,")
 
 def test_basic():
-    a, b, c, p, q, s = map(exprvar, 'abcpqs')
+    a, b, c, d, p, q, s = map(exprvar, 'abcdpqs')
     assert expr("a & ~b | b & ~c").equivalent(a & ~b | b & ~c)
     assert expr("p => q").equivalent(~p | q)
     assert expr("a <=> b").equivalent(~a & ~b | a & b)
@@ -39,6 +39,7 @@ def test_basic():
     assert expr("OneHot0(a, b, c)").equivalent(OneHot0(a, b, c))
     assert expr("OneHot(a, b, c)").equivalent(OneHot(a, b, c))
     assert expr("Majority(a, b, c)").equivalent(Majority(a, b, c))
+    assert expr("AchillesHeel(a, b, c, d)").equivalent(AchillesHeel(a, b, c, d))
 
 def test_misc():
     a, b, c = map(exprvar, 'abc')
