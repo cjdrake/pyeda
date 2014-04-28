@@ -111,6 +111,7 @@ def upoint2bddpoint(upoint):
         point[_BDDVARIABLES[uniqid]] = 0
     for uniqid in upoint[1]:
         point[_BDDVARIABLES[uniqid]] = 1
+    return point
 
 def _bddnode(root, lo, hi):
     """Return a unique BDD node."""
@@ -134,13 +135,8 @@ def _bdd(node):
 
 def _path2point(path):
     """Convert a BDD path to a BDD point."""
-    point = dict()
-    for i, node in enumerate(path[:-1]):
-        if node.lo is path[i+1]:
-            point[_BDDVARIABLES[node.root]] = 0
-        elif node.hi is path[i+1]:
-            point[_BDDVARIABLES[node.root]] = 1
-    return point
+    return {_BDDVARIABLES[node.root]: int(node.hi is path[i+1])
+            for i, node in enumerate(path[:-1])}
 
 
 class BinaryDecisionDiagram(boolfunc.Function):
@@ -148,12 +144,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     def __init__(self, node):
         self.node = node
-
-    def __str__(self):
-        return "BDD({0.root}, {0.lo}, {0.hi})".format(self.node)
-
-    def __repr__(self):
-        return str(self)
 
     # Operators
     def __invert__(self):
@@ -182,12 +172,12 @@ class BinaryDecisionDiagram(boolfunc.Function):
     @cached_property
     def inputs(self):
         _inputs = list()
-        for node in self.bfs():
+        for node in self.dfs_postorder():
             if node.root > 0:
                 v = _BDDVARIABLES[node.root]
                 if v not in _inputs:
                     _inputs.append(v)
-        return tuple(_inputs)
+        return tuple(reversed(_inputs))
 
     def urestrict(self, upoint):
         return _bdd(_urestrict(self.node, upoint))
@@ -232,10 +222,6 @@ class BinaryDecisionDiagram(boolfunc.Function):
         """Iterate through nodes in DFS pre-order."""
         yield from _dfs_preorder(self.node, set())
 
-    def dfs_inorder(self):
-        """Iterate through nodes in DFS in-order."""
-        yield from _dfs_inorder(self.node, set())
-
     def dfs_postorder(self):
         """Iterate through nodes in DFS post-order."""
         yield from _dfs_postorder(self.node, set())
@@ -249,7 +235,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         other = self.box(other)
         return self.node is other.node
 
-    def to_dot(self, name='BDD'):
+    def to_dot(self, name='BDD'): # pragma: no cover
         """Convert to DOT language representation."""
         parts = ['graph', name, '{']
         for node in self.dfs_postorder():
@@ -401,7 +387,7 @@ def _iter_all_paths(start, end, rand=False, path=tuple()):
         yield path
     else:
         nodes = [start.lo, start.hi]
-        if rand:
+        if rand: # pragma: no cover
             random.shuffle(nodes)
         for node in nodes:
             if node is not None:
@@ -416,16 +402,6 @@ def _dfs_preorder(node, visited):
         yield from _dfs_preorder(node.lo, visited)
     if node.hi is not None:
         yield from _dfs_preorder(node.hi, visited)
-
-def _dfs_inorder(node, visited):
-    """Iterate through nodes in DFS in-order."""
-    if node.lo is not None:
-        yield from _dfs_inorder(node.lo, visited)
-    if node not in visited:
-        visited.add(node)
-        yield node
-    if node.hi is not None:
-        yield from _dfs_inorder(node.hi, visited)
 
 def _dfs_postorder(node, visited):
     """Iterate through nodes in DFS post-order."""

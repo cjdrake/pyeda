@@ -46,8 +46,7 @@ you can use the ``expr2bdd`` function to convert arbitrary expressions to BDDs::
    Or(And(a, b), And(a, c), And(b, c))
    >>> f = expr2bdd(f)
    >>> f
-   BDD(1, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b128>,
-          <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b198>)
+   <pyeda.boolalg.bdd.BinaryDecisionDiagram at 0x7f556874ed68>
 
 As you can see, the BDD does not have such a useful string representation.
 More on this subject later.
@@ -89,14 +88,12 @@ Here is the simple majority function again::
 
    >>> f = a & b | a & c | b & c
    >>> f
-   BDD(1, <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b128>,
-          <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b198>)
+   <pyeda.boolalg.bdd.BinaryDecisionDiagram at 0x7f556874ed68>
 
 This time, we can see the benefit of having variables available::
 
    >>> f.restrict({a: 0})
-   BDD(2, <pyeda.boolalg.bdd.BDDNode object at 0x7f5436b7dfd0>,
-          <pyeda.boolalg.bdd.BDDNode object at 0x7f543690b048>)
+   <pyeda.boolalg.bdd.BinaryDecisionDiagram at 0x7f556874eb38>
    >>> f.restrict({a: 1, b: 0})
    c
    >>> f.restrict({a: 1, b: 1})

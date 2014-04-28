@@ -2,142 +2,155 @@
 Test binary decision diagrams
 """
 
-from pyeda.boolalg.bdd import (
-    bddvar, _bdd, expr2bdd, bdd2expr,
-    BDDNODEZERO, BDDNODEONE, BDDZERO, BDDONE
-)
-from pyeda.boolalg.expr import exprvar, EXPRZERO, EXPRONE, Xor
+import re
 
-a, b, c, d, e = map(exprvar, 'abcde')
-aa, bb, cc, dd, ee = map(bddvar, 'abcde')
+from pyeda.boolalg.bdd import (
+    bddvar, expr2bdd, bdd2expr, upoint2bddpoint,
+    BDDNODEZERO, BDDNODEONE,
+)
+from pyeda.boolalg.expr import expr
+
+a, b, c, d, e = map(bddvar, 'abcde')
+
+def test_const():
+    zero = a & []
+    one = a | ['foo']
+    assert int(zero) == 0
+    assert int(one) == 1
+    assert bool(zero) is False
+    assert bool(one) is True
+    assert str(zero) == '0'
+    assert str(one) == '1'
 
 def test_misc():
     f = a & b | a & c | b & c
-    ff = expr2bdd(f)
-
-    assert ff.smoothing(aa).equivalent(bb | cc)
-    assert ff.consensus(aa).equivalent(bb & cc)
-    assert ff.derivative(aa).equivalent(bb ^ cc)
+    assert f.smoothing(a) is b | c
+    assert f.consensus(a) is b & c
+    assert f.derivative(a) is b ^ c
 
 def test_bddvar():
-    assert aa.name == 'a'
-    assert aa.names == ('a', )
-    assert aa.indices == tuple()
+    assert a.name == 'a'
+    assert a.names == ('a', )
+    assert a.indices == tuple()
 
 def test_expr2bdd():
-    assert expr2bdd(a) is aa
+    assert expr2bdd(expr("a ^ b ^ c")) is a ^ b ^ c
 
-    assert expr2bdd(~a & ~b | a & ~b | ~a & b | a & b).node is BDDNODEONE
-    assert expr2bdd(~(~a & ~b | a & ~b | ~a & b | a & b)).node is BDDNODEZERO
+    assert expr2bdd(expr("~a & ~b | a & ~b | ~a & b | a & b")).is_one()
+    assert expr2bdd(expr("~(~a & ~b | a & ~b | ~a & b | a & b)")).is_zero()
 
-    ff = expr2bdd(a & b | a & c | b & c)
-    gg = expr2bdd(a & b | a & c | b & c)
+    f = expr2bdd(expr("a & b | a & c | b & c"))
+    g = expr2bdd(expr("Majority(a, b, c)"))
 
-    assert ff is gg
+    assert f is g
 
-    assert ff.node.root == a.uniqid
-    assert ff.node.lo.root == b.uniqid
-    assert ff.node.hi.root == b.uniqid
-    assert ff.node.lo.lo is BDDNODEZERO
-    assert ff.node.lo.hi.root == c.uniqid
-    assert ff.node.hi.lo.root == c.uniqid
-    assert ff.node.hi.hi is BDDNODEONE
-    assert ff.node.lo.hi.lo is BDDNODEZERO
-    assert ff.node.hi.lo.hi is BDDNODEONE
+    assert f.node.root == a.uniqid
+    assert f.node.lo.root == b.uniqid
+    assert f.node.hi.root == b.uniqid
+    assert f.node.lo.lo is BDDNODEZERO
+    assert f.node.lo.hi.root == c.uniqid
+    assert f.node.hi.lo.root == c.uniqid
+    assert f.node.hi.hi is BDDNODEONE
+    assert f.node.lo.hi.lo is BDDNODEZERO
+    assert f.node.hi.lo.hi is BDDNODEONE
 
-    assert ff.support == {aa, bb, cc}
-    assert ff.inputs == (aa, bb, cc)
+    assert f.support == {a, b, c}
+    assert f.inputs == (a, b, c)
 
 def test_bdd2expr():
+    assert bdd2expr(a & ~a).is_zero()
+    assert bdd2expr(a | ~a).is_one()
     f = a & b | a & c | b & c
-    zero = _bdd(BDDNODEZERO)
-    one = _bdd(BDDNODEONE)
-    assert bdd2expr(zero) is EXPRZERO
-    assert bdd2expr(one) is EXPRONE
-    assert bdd2expr(expr2bdd(f)).equivalent(f)
-    assert bdd2expr(expr2bdd(f), conj=True).equivalent(f)
+    assert bdd2expr(f).equivalent(expr("Majority(a, b, c)"))
+    assert bdd2expr(f, conj=True).equivalent(expr("Majority(a, b, c)"))
+
+def test_upoint2bddpoint():
+    upoint = (frozenset([a.uniqid, c.uniqid]), frozenset([b.uniqid, d.uniqid]))
+    assert upoint2bddpoint(upoint) == {a: 0, b: 1, c: 0, d: 1}
 
 def test_traverse():
-    f = expr2bdd(a & b | a & c | b & c)
-    #path = [node.root for node in ff.traverse()]
-    ## 0, 1, c, b(0, c), b(c, 1), a
-    #assert path == [-2, -1, c.uniqid, b.uniqid, b.uniqid, a.uniqid]
+    f = a & b | a & c | b & c
+    path1 = [node.root for node in f.dfs_preorder()]
+    path2 = [node.root for node in f.dfs_postorder()]
+    path3 = [node.root for node in f.bfs()]
+    # a, b(0, c), 0, c, 1, b(c, 1)
+    assert path1 == [a.uniqid, b.uniqid, -2, c.uniqid, -1, b.uniqid]
+    # 0, 1, c, b(0, c), b(c, 1), a
+    assert path2 == [-2, -1, c.uniqid, b.uniqid, b.uniqid, a.uniqid]
+    # a, b(0, c), b(c, 1), 0, c, 1
+    assert path3 == [a.uniqid, b.uniqid, b.uniqid, -2, c.uniqid, -1]
 
 def test_equivalent():
-    ff = expr2bdd(a & ~b | ~a & b)
-    gg = expr2bdd((~a | ~b) & (a | b))
-    assert ff.equivalent(ff)
-    assert gg.equivalent(ff)
+    f = a & ~b | ~a & b
+    g = (~a | ~b) & (a | b)
+    assert f.equivalent(g)
 
 def test_restrict():
-    ff = expr2bdd(a & b | a & c | b & c)
+    f = a & b | a & c | b & c
 
-    assert ff.restrict({}).equivalent(ff)
+    assert f.restrict({}) is f
 
-    assert ff.restrict({aa: 0}).equivalent(expr2bdd(b & c))
-    assert ff.restrict({aa: 1}).equivalent(expr2bdd(b | c))
-    assert ff.restrict({bb: 0}).equivalent(expr2bdd(a & c))
-    assert ff.restrict({bb: 1}).equivalent(expr2bdd(a | c))
-    assert ff.restrict({cc: 0}).equivalent(expr2bdd(a & b))
-    assert ff.restrict({cc: 1}).equivalent(expr2bdd(a | b))
+    assert f.restrict({a: 0}) is b & c
+    assert f.restrict({a: 1}) is b | c
+    assert f.restrict({b: 0}) is a & c
+    assert f.restrict({b: 1}) is a | c
+    assert f.restrict({c: 0}) is a & b
+    assert f.restrict({c: 1}) is a | b
 
-    assert ff.restrict({aa: 0, bb: 0}) is BDDZERO
-    assert ff.restrict({aa: 0, bb: 1}) is cc
-    assert ff.restrict({aa: 1, bb: 0}) is cc
-    assert ff.restrict({aa: 1, bb: 1}) is BDDONE
+    assert f.restrict({a: 0, b: 0}).is_zero()
+    assert f.restrict({a: 0, b: 1}) is c
+    assert f.restrict({a: 1, b: 0}) is c
+    assert f.restrict({a: 1, b: 1}).is_one()
 
-    assert ff.restrict({aa: 0, cc: 0}) is BDDZERO
-    assert ff.restrict({aa: 0, cc: 1}) is bb
-    assert ff.restrict({aa: 1, cc: 0}) is bb
-    assert ff.restrict({aa: 1, cc: 1}) is BDDONE
+    assert f.restrict({a: 0, c: 0}).is_zero()
+    assert f.restrict({a: 0, c: 1}) is b
+    assert f.restrict({a: 1, c: 0}) is b
+    assert f.restrict({a: 1, c: 1}).is_one()
 
-    assert ff.restrict({bb: 0, cc: 0}) is BDDZERO
-    assert ff.restrict({bb: 0, cc: 1}) is aa
-    assert ff.restrict({bb: 1, cc: 0}) is aa
-    assert ff.restrict({bb: 1, cc: 1}) is BDDONE
+    assert f.restrict({b: 0, c: 0}).is_zero()
+    assert f.restrict({b: 0, c: 1}) is a
+    assert f.restrict({b: 1, c: 0}) is a
+    assert f.restrict({b: 1, c: 1}).is_one()
 
-    assert ff.restrict({aa: 0, bb: 0, cc: 0}) is BDDZERO
-    assert ff.restrict({aa: 0, bb: 0, cc: 1}) is BDDZERO
-    assert ff.restrict({aa: 0, bb: 1, cc: 0}) is BDDZERO
-    assert ff.restrict({aa: 0, bb: 1, cc: 1}) is BDDONE
-    assert ff.restrict({aa: 1, bb: 0, cc: 0}) is BDDZERO
-    assert ff.restrict({aa: 1, bb: 0, cc: 1}) is BDDONE
-    assert ff.restrict({aa: 1, bb: 1, cc: 0}) is BDDONE
-    assert ff.restrict({aa: 1, bb: 1, cc: 1}) is BDDONE
+    assert f.restrict({a: 0, b: 0, c: 0}).is_zero()
+    assert f.restrict({a: 0, b: 0, c: 1}).is_zero()
+    assert f.restrict({a: 0, b: 1, c: 0}).is_zero()
+    assert f.restrict({a: 0, b: 1, c: 1}).is_one()
+    assert f.restrict({a: 1, b: 0, c: 0}).is_zero()
+    assert f.restrict({a: 1, b: 0, c: 1}).is_one()
+    assert f.restrict({a: 1, b: 1, c: 0}).is_one()
+    assert f.restrict({a: 1, b: 1, c: 1}).is_one()
 
 def test_compose():
     f = a & b | a & c | b & c
-    ff = expr2bdd(a & b | a & c | b & c)
-    assert ff.compose({aa: bb, cc: dd&ee}).equivalent(expr2bdd(f.compose({a: b, c: d&e})))
-
-def test_negate():
-    f = a & b | a & c | b & c
-    ff = expr2bdd(f)
-    assert bdd2expr(~ff).equivalent(~f)
+    assert f.compose({a: b, c: d&e}) is (b | b & d & e | b & d & e)
 
 def test_ops():
-    assert aa | 0 is aa
-    assert aa | 1 is BDDONE
-    assert 0 | aa is aa
-    assert 1 | aa is BDDONE
+    f = a & b | a & c | b & c
+    assert ~f is (~a & ~b | ~a & ~c | ~b & ~c)
 
-    assert aa & 0 is BDDZERO
-    assert aa & 1 is aa
-    assert 0 & aa is BDDZERO
-    assert 1 & aa is aa
+    assert a | 0 is a
+    assert (a | 1).is_one()
+    assert 0 | a is a
+    assert (1 | a).is_one()
 
-    assert aa ^ 0 is aa
-    assert aa ^ 1 is ~aa
+    assert (a & 0).is_zero()
+    assert a & 1 is a
+    assert (0 & a).is_zero()
+    assert 1 & a is a
 
-    assert bdd2expr(~aa & bb | aa & ~bb).equivalent(~a & b | a & ~b)
-    assert bdd2expr(aa ^ bb).equivalent(Xor(a, b))
+    assert a ^ 0 is a
+    assert a ^ 1 is ~a
+    assert 0 ^ a is a
+    assert 1 ^ a is ~a
+
+    assert a ^ b is ~a & b | a & ~b
 
 def test_satisfy():
     f = a & b | a & c | b & c
-    ff = expr2bdd(f)
-    assert [p for p in ff.satisfy_all()] == [{aa: 0, bb: 1, cc: 1}, {aa: 1, bb: 0, cc: 1}, {aa: 1, bb: 1}]
-    assert ff.satisfy_count() == 3
-    assert ff.satisfy_one() == {aa: 0, bb: 1, cc: 1}
-    assert expr2bdd(EXPRZERO).satisfy_one() is None
-    assert expr2bdd(EXPRONE).satisfy_one() == {}
+    assert [p for p in f.satisfy_all()] == [{a: 0, b: 1, c: 1}, {a: 1, b: 0, c: 1}, {a: 1, b: 1}]
+    assert f.satisfy_count() == 3
+    assert f.satisfy_one() == {a: 0, b: 1, c: 1}
+    assert (a & ~a).satisfy_one() is None
+    assert (a | ~a).satisfy_one() == {}
 
