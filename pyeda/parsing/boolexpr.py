@@ -17,8 +17,6 @@ from pyeda.parsing.token import (
 
 class BoolExprParseError(Exception):
     """An error happened during parsing a Boolean expression."""
-    def __init__(self, msg):
-        super(BoolExprParseError, self).__init__(msg)
 
 
 # Keywords

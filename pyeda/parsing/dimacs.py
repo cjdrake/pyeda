@@ -25,8 +25,6 @@ from pyeda.parsing.token import (
 
 class DIMACSError(Exception):
     """An error happened during parsing a DIMACS file"""
-    def __init__(self, msg):
-        super(DIMACSError, self).__init__(msg)
 
 
 # Keywords
