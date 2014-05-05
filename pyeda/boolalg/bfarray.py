@@ -256,10 +256,10 @@ class farray(object):
 
     def _str(self):
         """Helper function for __str__"""
-        if self.ndim > 1:
-            return "[" + ", ".join(x._str() for x in self) + "]"
-        else:
+        if self.ndim <= 1:
             return "[" + ", ".join(str(x) for x in self) + "]"
+        else:
+            return "[" + ", ".join(x._str() for x in self) + "]"
 
     def __repr__(self):
         return self.__str__()
