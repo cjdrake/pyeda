@@ -1605,11 +1605,9 @@ class ExprOr(ExprOrAnd):
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
         # a | b & c
         elif self.depth == 2:
-            return all(
-                       isinstance(arg, ExprLiteral) or
+            return all(isinstance(arg, ExprLiteral) or
                        isinstance(arg, ExprAnd) and arg.is_cnf()
-                       for arg in self.args
-                   )
+                       for arg in self.args)
         else:
             return False
 
@@ -1741,11 +1739,9 @@ class ExprAnd(ExprOrAnd):
             return all(isinstance(arg, ExprLiteral) for arg in self.args)
         # a & (b | c)
         elif self.depth == 2:
-            return all(
-                       isinstance(arg, ExprLiteral) or
+            return all(isinstance(arg, ExprLiteral) or
                        isinstance(arg, ExprOr) and arg.is_dnf()
-                       for arg in self.args
-                   )
+                       for arg in self.args)
         else:
             return False
 
@@ -2638,8 +2634,9 @@ def _complete_sum(dnf):
         fv0, fv1 = dnf.cofactors(v)
         f = And(Or(v, _complete_sum(fv0)), Or(~v, _complete_sum(fv1)))
         if isinstance(f, ExprAnd):
-            f = Or(*[And(x, y) for x in f.args[0]._lits
-                               for y in f.args[1]._lits])
+            f = Or(*[And(x, y)
+                     for x in f.args[0]._lits
+                     for y in f.args[1]._lits])
         return f._absorb()
 
 

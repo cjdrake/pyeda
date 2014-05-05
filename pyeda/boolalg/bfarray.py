@@ -821,7 +821,7 @@ def _check_shape(shape):
     if type(shape) is tuple:
         for dim in shape:
             if (type(dim) is tuple and len(dim) == 2 and
-                type(dim[0]) is int and type(dim[1]) is int):
+                    type(dim[0]) is int and type(dim[1]) is int):
                 if dim[0] < 0:
                     raise ValueError("expected low dimension to be >= 0")
                 if dim[1] <= 0:

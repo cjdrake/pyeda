@@ -17,23 +17,19 @@ class SudokuSolver(object):
     def __init__(self):
         self.X = exprvars('x', (1, 10), (1, 10), (1, 10))
 
-        V = And(*[
-                And(*[OneHot(*[self.X[r, c, v] for v in range(1, 10)])
-                      for c in range(1, 10)])
+        V = And(*[And(*[OneHot(*[self.X[r, c, v] for v in range(1, 10)])
+                        for c in range(1, 10)])
                   for r in range(1, 10)])
-        R = And(*[
-                And(*[OneHot(*[self.X[r, c, v] for c in range(1, 10)])
-                      for v in range(1, 10)])
+        R = And(*[And(*[OneHot(*[self.X[r, c, v] for c in range(1, 10)])
+                        for v in range(1, 10)])
                   for r in range(1, 10)])
-        C = And(*[
-                And(*[OneHot(*[self.X[r, c, v] for r in range(1, 10)])
-                      for v in range(1, 10)])
+        C = And(*[And(*[OneHot(*[self.X[r, c, v] for r in range(1, 10)])
+                        for v in range(1, 10)])
                   for c in range(1, 10)])
-        B = And(*[
-                And(*[OneHot(*[self.X[3*br+r, 3*bc+c, v]
-                               for r in range(1, 4)
-                               for c in range(1, 4)])
-                      for v in range(1, 10)])
+        B = And(*[And(*[OneHot(*[self.X[3*br+r, 3*bc+c, v]
+                                 for r in range(1, 4)
+                                 for c in range(1, 4)])
+                        for v in range(1, 10)])
                   for br in range(3) for bc in range(3)])
 
         self.litmap, self.S = expr2dimacscnf(And(V, R, C, B))
