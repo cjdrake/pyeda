@@ -204,10 +204,11 @@ class Variable(object):
     """
     def __init__(self, names, indices):
         global _UNIQIDS, _COUNT
-        try:
-            uniqid = _UNIQIDS[(names, indices)]
-        except KeyError:
-            with threading.Lock():
+
+        with threading.Lock():
+            try:
+                uniqid = _UNIQIDS[(names, indices)]
+            except KeyError:
                 uniqid = _COUNT
                 _COUNT += 1
                 _UNIQIDS[(names, indices)] = uniqid
