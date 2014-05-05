@@ -88,13 +88,19 @@ Construct Boolean functions using standard function syntax::
    >>> f13 = Xnor(a, b)
    >>> f14 = Equal(a, b, c)
    >>> f15 = ITE(a, b, c)
+   >>> f16 = Nor(a, b, c)
+   >>> f17 = Nand(a, b, c)
 
 Construct Boolean functions using higher order operators::
 
-   >>> f20 = Nor(a, b, c)
-   >>> f21 = Nand(a, b, c)
-   >>> f22 = OneHot(a, b, c)
-   >>> f23 = OneHot0(a, b, c)
+   >>> OneHot(a, b, c)
+   And(Or(~a, ~b), Or(~a, ~c), Or(~b, ~c), Or(a, b, c))
+   >>> OneHot0(a, b, c)
+   And(Or(~a, ~b), Or(~a, ~c), Or(~b, ~c))
+   >>> Majority(a, b, c)
+   Or(And(a, b), And(a, c), And(b, c))
+   >>> AchillesHeel(a, b, c, d)
+   And(Or(a, b), Or(c, d))
 
 Investigate a function's properties::
 
@@ -123,6 +129,10 @@ Factor complex expressions into only OR/AND and literals::
    Or(And(~a, ~b, ~c), And(a, b, c))
    >>> f15.factor()
    Or(And(a, b), And(~a, c))
+   >>> f16.factor()
+   And(~a, ~b, ~c)
+   >>> f17.factor()
+   Or(~a, ~b, ~c)
 
 Restrict a function's input variables to fixed values,
 and perform function composition::
@@ -228,35 +238,35 @@ Multi-Dimensional Bit Vectors
 
 Create some four-bit vectors, and use slice operators::
 
-   >>> A = exprvars('A', 4)
-   >>> B = exprvars('B', 4)
+   >>> A = exprvars('a', 4)
+   >>> B = exprvars('b', 4)
    >>> A
-   [A[0], A[1], A[2], A[3]]
+   farray([a[0], a[1], a[2], a[3]])
    >>> A[2:]
-   [A[2], A[3]]
+   farray([a[2], a[3]])
    >>> A[-3:-1]
-   [A[1], A[2]]
+   farray([a[1], a[2]])
 
 Perform bitwise operations using Python overloaded operators:
 ``~`` (NOT), ``|`` (OR), ``&`` (AND), ``^`` (XOR)::
 
    >>> ~A
-   [~A[0], ~A[1], ~A[2], ~A[3]]
+   farray([~a[0], ~a[1], ~a[2], ~a[3]])
    >>> A | B
-   [Or(A[0], B[0]), Or(A[1], B[1]), Or(A[2], B[2]), Or(A[3], B[3])]
+   farray([Or(a[0], b[0]), Or(a[1], b[1]), Or(a[2], b[2]), Or(a[3], b[3])])
    >>> A & B
-   [And(A[0], B[0]), And(A[1], B[1]), And(A[2], B[2]), And(A[3], B[3])]
+   farray([And(a[0], b[0]), And(a[1], b[1]), And(a[2], b[2]), And(a[3], b[3])])
    >>> A ^ B
-   [Xor(A[0], B[0]), Xor(A[1], B[1]), Xor(A[2], B[2]), Xor(A[3], B[3])]
+   farray([Xor(a[0], b[0]), Xor(a[1], b[1]), Xor(a[2], b[2]), Xor(a[3], b[3])])
 
 Reduce bit vectors using unary OR, AND, XOR::
 
    >>> A.uor()
-   Or(A[0], A[1], A[2], A[3])
-   >>> A.uxor()
-   Xor(A[0], A[1], A[2], A[3])
+   Or(a[0], a[1], a[2], a[3])
    >>> A.uand()
-   And(A[0], A[1], A[2], A[3])
+   And(a[0], a[1], a[2], a[3])
+   >>> A.uxor()
+   Xor(a[0], a[1], a[2], a[3])
 
 Create and test functions that implement non-trivial logic such as arithmetic::
 

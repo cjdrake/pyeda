@@ -11,10 +11,10 @@ Interface Functions:
     upoint2exprpoint
 
     Not, Or, And,
+    Nor, Nand
     Xor, Xnor,
     Equal, Unequal, Implies, ITE
 
-    Nor, Nand
     OneHot0, OneHot
     Majority
     AchillesHeel
