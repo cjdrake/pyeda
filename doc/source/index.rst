@@ -41,6 +41,7 @@ Contents
    boolalg.rst
    bdd.rst
    expr.rst
+   farray.rst
    2llm.rst
    sudoku.rst
    queens.rst
