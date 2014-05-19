@@ -1252,7 +1252,7 @@ class ExprNot(Expression):
         return "Not(" + str(self.arg) + ")"
 
     def to_unicode(self):
-        return self.SYMBOL + "(" + str(self.arg) + ")"
+        return self.SYMBOL + "(" + str(self.arg.to_unicode()) + ")"
 
     def to_latex(self):
         return "\\overline{" + self.arg.to_latex() + "}"
