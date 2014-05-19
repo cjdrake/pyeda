@@ -18,6 +18,7 @@ def test_expr_error():
     assert_raises(BoolExprParseError, expr, "a ,")
     assert_raises(BoolExprParseError, expr, "a a")
     assert_raises(BoolExprParseError, expr, "a ? b ,")
+    assert_raises(BoolExprParseError, expr, "a | 42")
 
 def test_basic():
     a, b, c, d, p, q, s = map(exprvar, 'abcdpqs')
@@ -43,13 +44,16 @@ def test_basic():
 
 def test_misc():
     a, b, c = map(exprvar, 'abc')
-    a0 = exprvar('a', 0)
-    b0 = exprvar('b', 0)
     assert expr("a & b & c").equivalent(a & b & c)
     assert expr("a ^ b ^ c").equivalent(a ^ b ^ c)
     assert expr("a | b | c").equivalent(a | b | c)
     assert expr("a & (b | c)").equivalent(a & (b | c))
     assert expr("a | (b & c)").equivalent(a | b & c)
     assert expr("Or()").is_zero()
-    assert expr("a[0] | b[0]").equivalent(a0 | b0)
+
+    a_0 = exprvar('a', 0)
+    b_a = exprvar(('a', 'b'))
+    a_0_1 = exprvar('a', (0, 1))
+    b_a_0_1 = exprvar(('a', 'b'), (0, 1))
+    assert expr("a[0] | b.a | a[0][1] | b.a[0,1]").equivalent(a_0 | b_a | a_0_1 | b_a_0_1)
 

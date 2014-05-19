@@ -114,8 +114,17 @@ class LPAREN(PunctuationToken):
 class RPAREN(PunctuationToken):
     """Expression ')' token"""
 
+class LBRACK(PunctuationToken):
+    """Expression '[' token"""
+
+class RBRACK(PunctuationToken):
+    """Expression ']' token"""
+
 class COMMA(PunctuationToken):
     """Expression ',' token"""
+
+class DOT(PunctuationToken):
+    """Expression '.' token"""
 
 
 class BoolExprLexer(RegexLexer):
@@ -170,8 +179,8 @@ class BoolExprLexer(RegexLexer):
             (r"\bImplies\b", keyword),
             (r"\bNot\b", keyword),
 
-            (r"[a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z][a-zA-Z0-9_]*)*(?:\[\d+\])*", name),
-            (r"\b[01]\b", integer),
+            (r"[a-zA-Z][a-zA-Z0-9_]*", name),
+            (r"\d+", integer),
 
             (r"=>", operator),
             (r"<=>", operator),
@@ -184,7 +193,10 @@ class BoolExprLexer(RegexLexer):
 
             (r"\(", punct),
             (r"\)", punct),
+            (r"\[", punct),
+            (r"\]", punct),
             (r",", punct),
+            (r"\.", punct),
         ],
     }
 
@@ -221,7 +233,10 @@ class BoolExprLexer(RegexLexer):
     PUNCTUATION = {
         '(': LPAREN,
         ')': RPAREN,
+        '[': LBRACK,
+        ']': RBRACK,
         ',': COMMA,
+        '.': DOT,
     }
 
 
@@ -256,7 +271,7 @@ FACTOR := '~' FACTOR
         | 'ITE' '(' EXPR ',' EXPR ',' EXPR ')'
         | 'Implies' '(' EXPR ',' EXPR ')'
         | 'Not' '(' EXPR ')'
-        | VAR
+        | VARIABLE
         | '0'
         | '1'
 
@@ -277,6 +292,22 @@ ARGS := EXPR ',' ARGS
       | EXPR
       | null
 
+VARIABLE := NAMES
+          | NAMES '[' INDICES ']'
+
+NAMES := NAME ZOM_NAME
+
+ZOM_NAME := '.' NAME ZOM_NAME
+          | null
+
+INDICES := INT ZOM_INDEX
+
+ZOM_INDEX := SEP INT ZOM_INDEX
+           | null
+
+# FIXME: this requires LL(2)
+SEP := ','
+     | ']' '['
 """
 
 OPN_TOKS = {
@@ -322,14 +353,14 @@ def parse(s):
     -------
     An ast tuple, defined recursively:
 
-    ast := ('const', num)
+    ast := ('const', bool)
          | ('var', names, indices)
          | ('not', ast)
          | ('implies', ast, ast)
          | ('ite', ast, ast, ast)
          | (func, ast, ...)
 
-    num := 0 | 1
+    bool := 0 | 1
 
     names := (name, ...)
 
@@ -530,12 +561,14 @@ def _factor(lex):
         arg = _expr(lex)
         _expect_token(lex, {RPAREN})
         return (tok.ASTOP, arg)
-    # VAR
+    # VARIABLE
     elif toktype is NameToken:
         lex.unpop_token(tok)
         return _variable(lex)
     # 0 | 1
     else:
+        if tok.value not in {0, 1}:
+            raise BoolExprParseError("unexpected token: " + str(tok))
         return ('const', tok.value)
 
 def _args(lex):
@@ -556,14 +589,78 @@ def _args(lex):
 
 def _variable(lex):
     """Return a variable expression."""
-    tok = _expect_token(lex, {NameToken})
+    names = _names(lex)
     try:
-        idx = tok.value.index('[')
-        name, tail = tok.value[:idx], tok.value[idx:]
-        indices = tuple(int(s[:-1]) for s in tail.split('[')[1:])
-    except ValueError:
-        name = tok.value
+        tok = next(lex)
+    except StopIteration:
+        # NAMES EOF
         indices = tuple()
-    names = tuple(reversed(name.split('.')))
+    else:
+        # NAMES '[' ... ']'
+        if type(tok) is LBRACK:
+            indices = _indices(lex)
+            _expect_token(lex, {RBRACK})
+        # NAMES ?
+        else:
+            lex.unpop_token(tok)
+            indices = tuple()
+
     return ('var', names, indices)
+
+def _names(lex):
+    """Return a tuple of names."""
+    first = _expect_token(lex, {NameToken}).value
+    rest = _zom_name(lex)
+    rnames = (first, ) + rest
+    return rnames[::-1]
+
+def _zom_name(lex):
+    """Return zero or more names."""
+    try:
+        tok = next(lex)
+    except StopIteration:
+        return tuple()
+    # '.' NAME
+    if type(tok) is DOT:
+        first = _expect_token(lex, {NameToken}).value
+        rest = _zom_name(lex)
+        return (first, ) + rest
+    # null
+    else:
+        lex.unpop_token(tok)
+        return tuple()
+
+def _indices(lex):
+    """Return a tuple of indices."""
+    first = _expect_token(lex, {IntegerToken}).value
+    rest = _zom_index(lex)
+    return (first, ) + rest
+
+def _zom_index(lex):
+    """Return zero or more indices."""
+    # This RBRACK might be the closing bracket
+    tok1 = _expect_token(lex, {COMMA, RBRACK})
+    # ',' INT
+    if type(tok1) is COMMA:
+        first = _expect_token(lex, {IntegerToken}).value
+        rest = _zom_index(lex)
+        return (first, ) + rest
+    # ']'
+    else:
+        try:
+            tok2 = next(lex)
+        except StopIteration:
+            # ']' EOF
+            lex.unpop_token(tok1)
+            return tuple()
+        # ']' '[' INT
+        if type(tok2) is LBRACK:
+            first = _expect_token(lex, {IntegerToken}).value
+            rest = _zom_index(lex)
+            return (first, ) + rest
+        # ']' ?
+        else:
+            lex.unpop_token(tok2)
+            lex.unpop_token(tok1)
+            return tuple()
 

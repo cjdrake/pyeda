@@ -28,10 +28,10 @@ class LexRunError(LexError):
     Errors raised during lexical analysis of the source text.
     """
     def __init__(self, msg, lineno, offset, text):
-        super(LexRunError, self).__init__(msg, (lineno, offset, text))
         self.lineno = lineno
         self.offset = offset
         self.text = text
+        super(LexRunError, self).__init__(msg, lineno, offset, text)
 
 
 class RegexLexer(object):
@@ -71,7 +71,10 @@ class RegexLexer(object):
         return self
 
     def __next__(self):
-        return next(self.gtoks)
+        if self.tokens:
+            return self.tokens.pop()
+        else:
+            return next(self.gtoks)
 
     def _compile_rules(self):
         """Compile the rules into the internal lexer state."""
