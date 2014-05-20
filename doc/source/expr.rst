@@ -211,12 +211,6 @@ From Constants, Variables, and Python Operators
 PyEDA overloads Python's ``~``, ``|``, ``^``, and ``&`` operators with
 NOT, OR, XOR, and AND, respectively.
 
-.. note:: Version 0.18 of PyEDA used ``-``, ``+``, and ``*`` for
-   NOT, OR, and AND.
-   This is currently maintained for backwards-compatibility,
-   but will go away in some future release.
-   See `issue #53 <https://github.com/cjdrake/pyeda/issues/53>`_ for details.
-
 Let's jump in by creating a full adder::
 
    >>> a, b, ci = map(exprvar, "a b ci".split())
