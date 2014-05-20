@@ -1205,7 +1205,8 @@ class ExprNot(Expression):
         if isinstance(arg, ExprConstant) or isinstance(arg, ExprLiteral):
             return arg.invert()
         # Auto-eliminate double negatives
-        elif (isinstance(arg, ExprNor) or isinstance(arg, ExprNand) or
+        elif (isinstance(arg, ExprNot) or
+              isinstance(arg, ExprNor) or isinstance(arg, ExprNand) or
               isinstance(arg, ExprXnor) or isinstance(arg, ExprUnequal)):
             return arg.invert()
         else:
