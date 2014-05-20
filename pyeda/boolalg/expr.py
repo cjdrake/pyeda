@@ -57,7 +57,6 @@ Interface Classes:
 
 import collections
 import itertools
-from warnings import warn
 
 import pyeda.parsing.boolexpr
 from pyeda.boolalg import boolfunc, picosat, sat
@@ -566,38 +565,6 @@ class Expression(boolfunc.Function):
             return CONSTANTS[bool(obj)]
 
     # Specific to Expression
-    def is_neg_unate(self, vs=None): # pragma: no cover
-        r"""Return whether a function is negative unate.
-
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *negative unate*
-        in variable :math:`x_i` if :math:`f_{x_i'} \geq f_{xi}`.
-        """
-        warn("Expression.is_neg_unate is deprecated. Use TruthTable.is_neg_unate")
-        # FIXME: this is a hack
-        from pyeda.boolalg.table import expr2truthtable
-        return expr2truthtable(self).is_neg_unate(vs)
-
-    def is_pos_unate(self, vs=None): # pragma: no cover
-        r"""Return whether a function is positive unate.
-
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *positive unate*
-        in variable :math:`x_i` if :math:`f_{x_i} \geq f_{x_i'}`.
-        """
-        warn("Expression.is_pos_unate is deprecated. Use TruthTable.is_pos_unate")
-        # FIXME: this is a hack
-        from pyeda.boolalg.table import expr2truthtable
-        return expr2truthtable(self).is_pos_unate(vs)
-
-    def is_binate(self, vs=None): # pragma: no cover
-        """Return whether a function is binate.
-
-        A function :math:`f(x_1, x_2, ..., x_i, ..., x_n)` is *binate* in
-        variable :math:`x_i` if it is neither negative nor positive unate in
-        :math:`x_i`.
-        """
-        warn("Expression.is_binate is deprecated. Use TruthTable.is_binate")
-        return not (self.is_neg_unate(vs) or self.is_pos_unate(vs))
-
     def traverse(self):
         """Iterate through all nodes in this expression in DFS order."""
         yield from self._traverse(set())
