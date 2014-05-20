@@ -33,7 +33,7 @@ VARIABLES = dict()
 def var(name, index=None):
     """Return a unique Variable instance.
 
-    .. NOTE:: Do NOT call this function directly. It should only be used by
+    .. note:: Do NOT call this function directly. It should only be used by
               concrete Variable implementations, eg ExprVariable.
     """
     tname = type(name)
@@ -548,7 +548,7 @@ class Function(object):
     def is_zero(self):
         """Return whether this function is zero.
 
-        .. NOTE:: This method will only look for a particular "zero form",
+        .. note:: This method will only look for a particular "zero form",
                   and will **NOT** do a full search for a contradiction.
         """
         raise NotImplementedError()
@@ -556,7 +556,7 @@ class Function(object):
     def is_one(self):
         """Return whether this function is one.
 
-        .. NOTE:: This method will only look for a particular "one form",
+        .. note:: This method will only look for a particular "one form",
                   and will **NOT** do a full search for a tautology.
         """
         raise NotImplementedError()

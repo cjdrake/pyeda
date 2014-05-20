@@ -451,7 +451,7 @@ class _TTZero(TTConstant):
     """
     Truth table zero
 
-    .. NOTE:: Never use this class. Use TTZERO instead.
+    .. note:: Never use this class. Use TTZERO instead.
     """
 
     VAL = 0
@@ -464,7 +464,7 @@ class _TTOne(TTConstant):
     """
     Truth table one
 
-    .. NOTE:: Never use this class. Use TTONE instead.
+    .. note:: Never use this class. Use TTONE instead.
     """
 
     VAL = 1

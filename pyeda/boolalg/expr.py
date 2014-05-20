@@ -889,7 +889,7 @@ class _ExprZero(ExprConstant):
     """
     Expression zero
 
-    .. NOTE:: Never use this class. Use EXPRZERO singleton instead.
+    .. note:: Never use this class. Use EXPRZERO singleton instead.
     """
 
     VALUE = 0
@@ -931,7 +931,7 @@ class _ExprOne(ExprConstant):
     """
     Expression one
 
-    .. NOTE:: Never use this class. Use EXPRONE singleton instead.
+    .. note:: Never use this class. Use EXPRONE singleton instead.
     """
 
     VALUE = 1

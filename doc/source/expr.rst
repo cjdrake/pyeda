@@ -162,7 +162,7 @@ Finally, you can combine multiple namespaces and dimensions::
    >>> str(c_b_a_1_2_3)
    c.b.a[1][2][3]
 
-.. NOTE::
+.. note::
    The previous syntax is starting to get a bit cumbersome.
    For a more powerful method of creating multi-dimensional arrays,
    use the ``exprvars`` function.
