@@ -8,8 +8,11 @@ from pyeda.boolalg.boolfunc import (
     num2term,
     point2upoint,
     point2term,
+    var,
 )
 from pyeda.boolalg.expr import exprvar
+
+from nose.tools import assert_raises
 
 a, b, c, d = map(exprvar, 'abcd')
 
@@ -136,4 +139,13 @@ def test_point2term():
     assert sorted(point2term({a: 1, b: 0, c: 1, d: 1}, conj=True)) == [~a,  b, ~c, ~d]
     assert sorted(point2term({a: 0, b: 1, c: 1, d: 1}, conj=True)) == [ a, ~b, ~c, ~d]
     assert sorted(point2term({a: 1, b: 1, c: 1, d: 1}, conj=True)) == [~a, ~b, ~c, ~d]
+
+def test_var():
+    assert_raises(TypeError, var, 42)
+    assert_raises(ValueError, var, tuple())
+    assert_raises(TypeError, var, (42, ))
+    assert_raises(ValueError, var, ('foo#bar', ))
+    assert_raises(TypeError, var, 'a', 'index')
+    assert_raises(TypeError, var, 'a', ('index', ))
+    assert_raises(ValueError, var, 'a', (-1, ))
 

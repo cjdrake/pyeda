@@ -22,6 +22,7 @@ Interface Classes:
 
 import functools
 import operator
+import re
 import threading
 
 from pyeda.util import bit_on, cached_property
@@ -35,22 +36,47 @@ def var(name, index=None):
     .. NOTE:: Do NOT call this function directly. It should only be used by
               concrete Variable implementations, eg ExprVariable.
     """
-    if type(name) is str:
+    tname = type(name)
+    if tname is str:
         names = (name, )
-    else:
+    elif tname is tuple:
         names = name
+    else:
+        fstr = "expected name to be a str or tuple, got {0.__name__}"
+        raise TypeError(fstr.format(tname))
+
+    if not names:
+        raise ValueError("expected at least one name")
+
+    for name in names:
+        tname = type(name)
+        if tname is not str:
+            fstr = "expected name to be a str, got {0.__name__}"
+            raise TypeError(fstr.format(tname))
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", name):
+            fstr = "expected name to match [a-zA-Z][a-zA-Z0-9_]*, got {}"
+            raise ValueError(fstr.format(name))
+
     if index is None:
         indices = tuple()
-    elif type(index) is int:
-        indices = (index, )
     else:
-        indices = index
+        tindex = type(index)
+        if tindex is int:
+            indices = (index, )
+        elif tindex is tuple:
+            indices = index
+        else:
+            fstr = "expected index to be an int or tuple, got {0.__name__}"
+            raise TypeError(fstr.format(tindex))
 
-    # Check input types
-    assert type(names) is tuple and len(names) > 0
-    assert all(type(name) is str for name in names)
-    assert type(indices) is tuple
-    assert all(type(index) is int for index in indices)
+    for index in indices:
+        tindex = type(index)
+        if tindex is not int:
+            fstr = "expected index to be an int, got {0.__name__}"
+            raise TypeError(fstr.format(tindex))
+        if index < 0:
+            fstr = "expected index to be >= 0, got {}"
+            raise ValueError(fstr.format(index))
 
     try:
         v = VARIABLES[(names, indices)]
