@@ -586,6 +586,30 @@ The depth of the simplified expression is one::
    >>> g.depth
    1
 
+If the ``simplify=False`` usage is too verbose,
+you can use the ``Expression`` subclasses directly to create unsimplified
+expressions::
+
+   >>> ExprAnd(a, ~a)
+   And(~a, a)
+   >>> ExprOr(a, ExprOr(b, c))
+   Or(a, Or(b, c))
+
+Notice that there are no unsimplified representations for:
+
+* degenerate forms
+* negated literals
+* double negation
+
+For example::
+
+   >>> ExprOr()
+   0
+   >>> ExprNot(a)
+   ~a
+   >>> ExprNot(ExprNand(a, b))
+   And(a, b)
+
 Simplifed
 ---------
 
