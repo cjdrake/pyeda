@@ -221,8 +221,11 @@ class Variable(object):
         return self.__str__()
 
     def __str__(self):
-        suffix = "".join("[{}]".format(idx) for idx in self.indices)
-        return self.qualname + suffix
+        if self.indices:
+            suffix = "[" + ",".join(str(idx) for idx in self.indices) + "]"
+            return self.qualname + suffix
+        else:
+            return self.qualname
 
     def __lt__(self, other):
         if self.names == other.names:

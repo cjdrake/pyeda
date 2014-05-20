@@ -250,7 +250,8 @@ def test_var():
     # Expression
     assert str(a) == 'a'
     assert str(X[10]) == 'x[10]'
-    assert str(Y[1][2][3]) == 'y[1][2][3]'
+    assert str(Y[1,2,3]) == 'y[1,2,3]'
+    assert str(Y[1][2][3]) == 'y[1,2,3]'
 
     assert a.simplify() == a
     assert a.factor() == a
