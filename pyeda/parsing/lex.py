@@ -13,6 +13,8 @@ Interface Classes:
 import collections
 import re
 
+from pyeda.parsing.token import EndToken
+
 class LexError(Exception):
     """
     Base class for all lexical analysis errors
@@ -131,6 +133,8 @@ class RegexLexer(object):
             text = self.string[self.pos]
             raise LexRunError(msg, self.lineno, self.offset, text)
 
+        yield EndToken("", self.lineno, self.offset)
+
     def push_token(self, tok):
         """Push a token into the token queue.
 
@@ -157,6 +161,12 @@ class RegexLexer(object):
         +--+--+--+--+
         """
         self.tokens.append(tok)
+
+    def peek_token(self):
+        """Peek at the next token from the token queue."""
+        tok = self.__next__()
+        self.unpop_token(tok)
+        return tok
 
 
 def action(toktype):

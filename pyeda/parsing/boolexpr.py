@@ -10,8 +10,11 @@ Interface Functions:
 
 # pylint: disable=C0103
 
+from warnings import warn
+
 from pyeda.parsing.lex import LexRunError, RegexLexer, action
 from pyeda.parsing.token import (
+    EndToken,
     KeywordToken, NameToken, IntegerToken, OperatorToken, PunctuationToken,
 )
 
@@ -259,6 +262,7 @@ SUMTERM' := '|' XORTERM SUMTERM'
 XORTERM := PRODTERM XORTERM'
 
 XORTERM' := '^' PRODTERM XORTERM'
+          | null
 
 PRODTERM := FACTOR PRODTERM'
 
@@ -267,6 +271,7 @@ PRODTERM' := '&' FACTOR PRODTERM'
 
 FACTOR := '~' FACTOR
         | '(' EXPR ')'
+        | OPN '(' ')'
         | OPN '(' ARGS ')'
         | 'ITE' '(' EXPR ',' EXPR ',' EXPR ')'
         | 'Implies' '(' EXPR ',' EXPR ')'
@@ -288,12 +293,14 @@ OPN := 'Or'
      | 'Majority'
      | 'AchillesHeel'
 
-ARGS := EXPR ',' ARGS
-      | EXPR
+ARGS := EXPR ZOM_ARG
       | null
 
-VARIABLE := NAMES
-          | NAMES '[' INDICES ']'
+ZOM_ARG := ',' EXPR ZOM_ARG
+          | null
+
+VARIABLE := NAMES '[' INDICES ']'
+          | NAMES
 
 NAMES := NAME ZOM_NAME
 
@@ -380,14 +387,11 @@ def parse(s):
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
         raise BoolExprParseError(fstr.format(exc))
-    except StopIteration:
-        raise BoolExprParseError("incomplete expression")
-    try:
-        tok = next(lex)
-    except StopIteration:
-        return expr
-    else:
-        raise BoolExprParseError("unexpected token: " + str(tok))
+
+    # Check for end of buffer
+    _expect_token(lex, {EndToken})
+
+    return expr
 
 def _expect_token(lex, types):
     """Return the next token, or raise an exception."""
@@ -404,16 +408,15 @@ def _expr(lex):
 def _ite(lex):
     """Return an ITE expression."""
     s = _impl(lex)
-    try:
-        tok = next(lex)
-    except StopIteration:
-        return s
 
+    tok = next(lex)
+    # IMPL '?' ITE ':' ITE
     if type(tok) is OP_question:
         d1 = _ite(lex)
         _expect_token(lex, {OP_colon})
         d0 = _ite(lex)
         return ('ite', s, d1, d0)
+    # IMPL
     else:
         lex.unpop_token(tok)
         return s
@@ -421,17 +424,17 @@ def _ite(lex):
 def _impl(lex):
     """Return an Implies expression."""
     p = _sumterm(lex)
-    try:
-        tok = next(lex)
-    except StopIteration:
-        return p
 
+    tok = next(lex)
+    # SUMTERM '=>' IMPL
     if type(tok) is OP_rarrow:
         q = _impl(lex)
         return ('implies', p, q)
+    # SUMTERM '<=>' IMPL
     elif type(tok) is OP_lrarrow:
         q = _impl(lex)
         return ('equal', p, q)
+    # SUMTERM
     else:
         lex.unpop_token(tok)
         return p
@@ -447,11 +450,8 @@ def _sumterm(lex):
 
 def _sumterm_prime(lex):
     """Return a sum term' expression, eliminates left recursion."""
-    try:
-        tok = next(lex)
-    except StopIteration:
-        return None
-    # '|' T E'
+    tok = next(lex)
+    # '|' XORTERM SUMTERM'
     if type(tok) is OP_or:
         xorterm = _xorterm(lex)
         sumterm_prime = _sumterm_prime(lex)
@@ -475,11 +475,8 @@ def _xorterm(lex):
 
 def _xorterm_prime(lex):
     """Return an xor term' expression, eliminates left recursion."""
-    try:
-        tok = next(lex)
-    except StopIteration:
-        return None
-    # '|' T E'
+    tok = next(lex)
+    # '^' PRODTERM XORTERM'
     if type(tok) is OP_xor:
         prodterm = _prodterm(lex)
         xorterm_prime = _xorterm_prime(lex)
@@ -503,11 +500,8 @@ def _prodterm(lex):
 
 def _prodterm_prime(lex):
     """Return a product term' expression, eliminates left recursion."""
-    try:
-        tok = next(lex)
-    except StopIteration:
-        return None
-    # '&' F T'
+    tok = next(lex)
+    # '&' FACTOR PRODTERM'
     if type(tok) is OP_and:
         factor = _factor(lex)
         prodterm_prime = _prodterm_prime(lex)
@@ -534,10 +528,18 @@ def _factor(lex):
         return expr
     # OPN '(' ... ')'
     elif any(toktype is t for t in OPN_TOKS):
+        op = tok.ASTOP
         _expect_token(lex, {LPAREN})
-        args = _args(lex)
-        _expect_token(lex, {RPAREN})
-        return (tok.ASTOP, ) + args
+        tok = next(lex)
+        # OPN '(' ')'
+        if type(tok) is RPAREN:
+            args = tuple()
+        # OPN '(' ARGS ')'
+        else:
+            lex.unpop_token(tok)
+            args = _args(lex)
+            _expect_token(lex, {RPAREN})
+        return (op, ) + args
     # ITE '(' EXPR ',' EXPR ',' EXPR ')'
     elif toktype is KW_ite:
         _expect_token(lex, {LPAREN})
@@ -566,45 +568,40 @@ def _factor(lex):
     elif toktype is NameToken:
         lex.unpop_token(tok)
         return _variable(lex)
-    # 0 | 1
+    # '0' | '1'
     else:
         if tok.value not in {0, 1}:
             raise BoolExprParseError("unexpected token: " + str(tok))
         return ('const', tok.value)
 
 def _args(lex):
-    """Return a (potentially empty) list of arguments."""
+    """Return a tuple of arguments."""
+    return (_expr(lex), ) + _zom_arg(lex)
+
+def _zom_arg(lex):
+    """Return zero or more arguments."""
     tok = next(lex)
-    if type(tok) is RPAREN:
-        lex.unpop_token(tok)
-        return tuple()
+    # ',' EXPR ZOM_ARG
+    if type(tok) is COMMA:
+        return (_expr(lex), ) + _zom_arg(lex)
+    # null
     else:
         lex.unpop_token(tok)
-        args = (_expr(lex), )
-        tok = _expect_token(lex, {COMMA, RPAREN})
-        if type(tok) is COMMA:
-            return args + _args(lex)
-        else:
-            lex.unpop_token(tok)
-            return args
+        return tuple()
 
 def _variable(lex):
     """Return a variable expression."""
     names = _names(lex)
-    try:
-        tok = next(lex)
-    except StopIteration:
-        # NAMES EOF
-        indices = tuple()
+
+    tok = next(lex)
+    # NAMES '[' ... ']'
+    if type(tok) is LBRACK:
+        indices = _indices(lex)
+        _expect_token(lex, {RBRACK})
+    # NAMES
     else:
-        # NAMES '[' ... ']'
-        if type(tok) is LBRACK:
-            indices = _indices(lex)
-            _expect_token(lex, {RBRACK})
-        # NAMES ?
-        else:
-            lex.unpop_token(tok)
-            indices = tuple()
+        lex.unpop_token(tok)
+        indices = tuple()
 
     return ('var', names, indices)
 
@@ -617,11 +614,8 @@ def _names(lex):
 
 def _zom_name(lex):
     """Return zero or more names."""
-    try:
-        tok = next(lex)
-    except StopIteration:
-        return tuple()
-    # '.' NAME
+    tok = next(lex)
+    # '.' NAME ZOM_NAME
     if type(tok) is DOT:
         first = _expect_token(lex, {NameToken}).value
         rest = _zom_name(lex)
@@ -648,14 +642,11 @@ def _zom_index(lex):
         return (first, ) + rest
     # ']'
     else:
-        try:
-            tok2 = next(lex)
-        except StopIteration:
-            # ']' EOF
-            lex.unpop_token(tok1)
-            return tuple()
+        tok2 = next(lex)
         # ']' '[' INT
         if type(tok2) is LBRACK:
+            warn('Variable syntax "a[0][1][2]" is deprecated. '
+                 'Use "a[0,1,2]" instead.')
             first = _expect_token(lex, {IntegerToken}).value
             rest = _zom_index(lex)
             return (first, ) + rest

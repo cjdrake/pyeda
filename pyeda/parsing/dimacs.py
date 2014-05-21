@@ -20,6 +20,7 @@ Interface Functions:
 
 from pyeda.parsing.lex import LexRunError, RegexLexer, action
 from pyeda.parsing.token import (
+    EndToken,
     KeywordToken, IntegerToken, OperatorToken, PunctuationToken,
 )
 
@@ -163,63 +164,78 @@ def parse_cnf(s, varname='x'):
     """
     lex = iter(CNFLexer(s))
     try:
-        _expect_token(lex, {KW_p})
-        _expect_token(lex, {KW_cnf})
-        nvars = _expect_token(lex, {IntegerToken}).value
-        nclauses = _expect_token(lex, {IntegerToken}).value
-        ast = _cnf_formula(lex, varname, nvars, nclauses)
+        ast = _cnf(lex, varname)
     except LexRunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
         raise DIMACSError(fstr.format(exc))
 
+    # Check for end of buffer
+    _expect_token(lex, {EndToken})
+
     return ast
+
+def _cnf(lex, varname):
+    """Return a DIMACS CNF."""
+    _expect_token(lex, {KW_p})
+    _expect_token(lex, {KW_cnf})
+    nvars = _expect_token(lex, {IntegerToken}).value
+    nclauses = _expect_token(lex, {IntegerToken}).value
+    return _cnf_formula(lex, varname, nvars, nclauses)
 
 def _cnf_formula(lex, varname, nvars, nclauses):
     """Return a DIMACS CNF formula."""
-    clauses = list()
-    while True:
-        try:
-            tok = _expect_token(lex, {OP_not, IntegerToken})
-        except StopIteration:
-            break
-        lex.unpop_token(tok)
-        clauses.append(_cnf_clause(lex, varname, nvars))
+    clauses = _clauses(lex, varname, nvars)
 
     if len(clauses) < nclauses:
         fstr = "formula has fewer than {} clauses"
         raise DIMACSError(fstr.format(nclauses))
-    elif len(clauses) > nclauses:
+    if len(clauses) > nclauses:
         fstr = "formula has more than {} clauses"
         raise DIMACSError(fstr.format(nclauses))
 
-    return ('and', ) + tuple(clauses)
+    return ('and', ) + clauses
 
-def _cnf_clause(lex, varname, nvars):
+def _clauses(lex, varname, nvars):
+    """Return a tuple of DIMACS CNF clauses."""
+    tok = next(lex)
+    toktype = type(tok)
+    if toktype is OP_not or toktype is IntegerToken:
+        lex.unpop_token(tok)
+        first = _clause(lex, varname, nvars)
+        rest = _clauses(lex, varname, nvars)
+        return (first, ) + rest
+    # null
+    else:
+        lex.unpop_token(tok)
+        return tuple()
+
+def _clause(lex, varname, nvars):
     """Return a DIMACS CNF clause."""
-    clause = list()
+    return ('or', ) + _lits(lex, varname, nvars)
+
+def _lits(lex, varname, nvars):
+    """Return a tuple of DIMACS CNF clause literals."""
     tok = _expect_token(lex, {OP_not, IntegerToken})
-    while not (type(tok) is IntegerToken and tok.value == 0):
+    if type(tok) is IntegerToken and tok.value == 0:
+        return tuple()
+    else:
         if type(tok) is OP_not:
             neg = True
             tok = _expect_token(lex, {IntegerToken})
-            index = tok.value
         else:
             neg = False
-            index = tok.value
+        index = tok.value
+
         if index > nvars:
             fstr = "formula literal {} is greater than {}"
             raise DIMACSError(fstr.format(index, nvars))
-        if neg:
-            clause.append(('not', ('var', (varname, ), (index, ))))
-        else:
-            clause.append(('var', (varname, ), (index, )))
-        try:
-            tok = _expect_token(lex, {OP_not, IntegerToken})
-        except StopIteration:
-            raise DIMACSError("incomplete clause")
 
-    return ('or', ) + tuple(clause)
+        lit = ('var', (varname, ), (index, ))
+        if neg:
+            lit = ('not', lit)
+
+        return (lit, ) + _lits(lex, varname, nvars)
 
 
 class SATLexer(RegexLexer):
@@ -296,26 +312,30 @@ class SATLexer(RegexLexer):
         ')': RPAREN,
     }
 
-# Grammar for a SAT file
-#
-# SAT := COMMENT* PREAMBLE FORMULA
-#
-# COMMENT := 'c' .* '\n'
-#
-# PREAMBLE := 'p' FORMAT VARIABLES '\n'
-#
-# FORMAT := 'sat' | 'satx' | 'sate' | 'satex'
-#
-# VARIABLES := INT
-#
-# FORMULA := INT
-#          | '-' INT
-#          | '(' FORMULA ')'
-#          | '-' '(' FORMULA ')'
-#          | '+' '(' FORMULA* ')'
-#          | '*' '(' FORMULA* ')'
-#          | 'xor' '(' FORMULA* ')'
-#          | '=' '(' FORMULA* ')'
+
+SAT_GRAMMAR = """
+
+SAT := COMMENT* PREAMBLE FORMULA
+
+COMMENT := 'c' .* '\n'
+
+PREAMBLE := 'p' FORMAT VARIABLES '\n'
+
+FORMAT := 'sat' | 'satx' | 'sate' | 'satex'
+
+VARIABLES := INT
+
+FORMULA := INT
+         | '-' INT
+         | '(' FORMULA ')'
+         | '-' '(' FORMULA ')'
+         | OP '(' FORMULAS ')'
+
+OP := '+' | '*' | 'xor' | '='
+
+FORMULAS := FORMULAS FORMULA
+          | null
+"""
 
 _SAT_TOKS = {
     'sat': {OP_not, OP_or, OP_and},
@@ -331,59 +351,72 @@ def parse_sat(s, varname='x'):
     """
     lex = iter(SATLexer(s))
 
+    try:
+        ast = _sat(lex, varname)
+    except LexRunError as exc:
+        fstr = ("{0.args[0]}: "
+                "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
+        raise DIMACSError(fstr.format(exc))
+
+    # Check for end of buffer
+    _expect_token(lex, {EndToken})
+
+    return ast
+
+def _sat(lex, varname):
+    """Return a DIMACS SAT."""
     _expect_token(lex, {KW_p})
     fmt = _expect_token(lex, {KW_sat, KW_satx, KW_sate, KW_satex}).value
     nvars = _expect_token(lex, {IntegerToken}).value
+    return _sat_formula(lex, varname, fmt, nvars)
 
-    try:
-        types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
-        tok = _expect_token(lex, types)
-        lex.unpop_token(tok)
-        return _sat_formula(lex, fmt, varname, nvars)
-    except StopIteration:
-        raise DIMACSError("incomplete formula")
-
-def _sat_formula(lex, fmt, varname, nvars):
+def _sat_formula(lex, varname, fmt, nvars):
     """Return a DIMACS SAT formula."""
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
     tok = _expect_token(lex, types)
+    # INT
     if type(tok) is IntegerToken:
         index = tok.value
         if not 0 < index <= nvars:
             fstr = "formula literal {} outside valid range: (0, {}]"
             raise DIMACSError(fstr.format(index, nvars))
         return ('var', (varname, ), (index, ))
+    # '-'
     elif type(tok) is OP_not:
         tok = _expect_token(lex, {IntegerToken, LPAREN})
+        # '-' INT
         if type(tok) is IntegerToken:
             index = tok.value
             if not 0 < index <= nvars:
                 fstr = "formula literal {} outside valid range: (0, {}]"
                 raise DIMACSError(fstr.format(index, nvars))
             return ('not', ('var', (varname, ), (index, )))
+        # '-' '(' FORMULA ')'
         else:
-            return ('not', _one_formula(lex, fmt, varname, nvars))
+            formula = _sat_formula(lex, varname, fmt, nvars)
+            _expect_token(lex, {RPAREN})
+            return ('not', formula)
+    # '(' FORMULA ')'
     elif type(tok) is LPAREN:
-        return _one_formula(lex, fmt, varname, nvars)
-    # OR/AND/XOR/EQUAL
+        formula = _sat_formula(lex, varname, fmt, nvars)
+        _expect_token(lex, {RPAREN})
+        return formula
+    # OP '(' FORMULAS ')'
     else:
         _expect_token(lex, {LPAREN})
-        return (tok.ASTOP, ) + _zom_formulas(lex, fmt, varname, nvars)
+        formulas = _formulas(lex, varname, fmt, nvars)
+        _expect_token(lex, {RPAREN})
+        return (tok.ASTOP, ) + formulas
 
-def _one_formula(lex, fmt, varname, nvars):
-    """Return one DIMACS SAT formula."""
-    f = _sat_formula(lex, fmt, varname, nvars)
-    _expect_token(lex, {RPAREN})
-    return f
-
-def _zom_formulas(lex, fmt, varname, nvars):
-    """Return zero or more DIMACS SAT formulas."""
-    fs = list()
-    types = {IntegerToken, LPAREN, RPAREN} | _SAT_TOKS[fmt]
-    tok = _expect_token(lex, types)
-    while type(tok) is not RPAREN:
-        lex.unpop_token(tok)
-        fs.append(_sat_formula(lex, fmt, varname, nvars))
-        tok = _expect_token(lex, types)
-    return tuple(fs)
+def _formulas(lex, varname, fmt, nvars):
+    """Return a tuple of DIMACS SAT formulas."""
+    types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
+    tok = lex.peek_token()
+    if any(type(tok) is t for t in types):
+        first = _sat_formula(lex, varname, fmt, nvars)
+        rest = _formulas(lex, varname, fmt, nvars)
+        return (first, ) + rest
+    # null
+    else:
+        return tuple()
 

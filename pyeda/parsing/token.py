@@ -3,6 +3,7 @@ Token types used by lex and parse operations
 
 Interface Classes:
     Token
+        EndToken
         KeywordToken
         NameToken
         LiteralToken
@@ -17,6 +18,9 @@ Interface Classes:
 import collections
 
 Token = collections.namedtuple('Token', ['value', 'lineno', 'offset'])
+
+class EndToken(Token):
+    """Special token for end of buffer"""
 
 class KeywordToken(Token):
     """Base class for keyword tokens"""

@@ -7,21 +7,23 @@ from pyeda.parsing.dimacs import (
     DIMACSError, parse_cnf, parse_sat,
 )
 
-import nose
+from nose.tools import assert_raises
 
 def test_cnf_errors():
+    # lexical error
+    assert_raises(DIMACSError, parse_cnf, "#a")
     # unexpected token
-    nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf cnf 0 0\n")
-    nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf 1 1\n1 x 0")
+    assert_raises(DIMACSError, parse_cnf, "p cnf cnf 0 0\n")
+    assert_raises(DIMACSError, parse_cnf, "p cnf 1 1\n1 x 0")
     # formula has fewer clauses than specified
-    nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf 0 1\n")
+    assert_raises(DIMACSError, parse_cnf, "p cnf 0 1\n")
     # formula has more clauses than specified
-    nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf 0 0\n0")
+    assert_raises(DIMACSError, parse_cnf, "p cnf 0 0\n0")
     # formula literal too large
-    nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf 0 1\n1 0")
-    nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf 0 1\n-1 0")
+    assert_raises(DIMACSError, parse_cnf, "p cnf 0 1\n1 0")
+    assert_raises(DIMACSError, parse_cnf, "p cnf 0 1\n-1 0")
     # incomplete clause
-    nose.tools.assert_raises(DIMACSError, parse_cnf, "p cnf 1 1\n1")
+    assert_raises(DIMACSError, parse_cnf, "p cnf 1 1\n1")
 
 def test_parse_cnf():
     # Empty formula corner cases
@@ -35,12 +37,13 @@ def test_parse_cnf():
     assert parse_cnf("p cnf 2 2\n-1 2 0 1 -2 0") == ('and', ('or', ('not', ('var', ('x', ), (1, ))), ('var', ('x', ), (2, ))), ('or', ('var', ('x', ), (1, )), ('not', ('var', ('x', ), (2, )))))
 
 def test_sat_errors():
-    nose.tools.assert_raises(DIMACSError, parse_sat, "p sat 0\n")
-    nose.tools.assert_raises(DIMACSError, parse_sat, "p sat 2\n0")
-    nose.tools.assert_raises(DIMACSError, parse_sat, "p sat 2\n3")
-    nose.tools.assert_raises(DIMACSError, parse_sat, "p sat 2\n-3")
-    nose.tools.assert_raises(DIMACSError, parse_sat, "p sat 2\n-(0)")
-    nose.tools.assert_raises(DIMACSError, parse_sat, "p sat 2\n-(3)")
+    assert_raises(DIMACSError, parse_sat, "#a")
+    assert_raises(DIMACSError, parse_sat, "p sat 0\n")
+    assert_raises(DIMACSError, parse_sat, "p sat 2\n0")
+    assert_raises(DIMACSError, parse_sat, "p sat 2\n3")
+    assert_raises(DIMACSError, parse_sat, "p sat 2\n-3")
+    assert_raises(DIMACSError, parse_sat, "p sat 2\n-(0)")
+    assert_raises(DIMACSError, parse_sat, "p sat 2\n-(3)")
 
 def test_parse_sat():
     assert parse_sat("p sat 1\n(-1)") == ('not', ('var', ('x', ), (1, )))
