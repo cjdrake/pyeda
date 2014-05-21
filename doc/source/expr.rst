@@ -725,6 +725,28 @@ Using the same function from the previous section as an example::
    >>> f.to_ccnf()
    And(Or(a, ~b, c), Or(~a, b, c), Or(~a, b, ~c), Or(~a, ~b, ~c))
 
+Depth
+=====
+
+Expressions are a type of tree data structure.
+The depth of a tree is defined recursively:
+
+1. A leaf node (constant or literal) has zero depth.
+2. A branch node (operator) has depth equal to the maximum depth of its
+   children (arguments) plus one.
+
+You can think of the depth as the maximum number of operators between the
+expression's inputs to its output.
+
+For example::
+
+   >>> a.depth
+   0
+   >>> (a & b).depth
+   1
+   >>> Xor(a, Implies(b, c)).depth
+   2
+
 Satisfiability
 ==============
 

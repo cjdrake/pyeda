@@ -603,7 +603,14 @@ class Expression(boolfunc.Function):
 
     @property
     def depth(self):
-        """Return the number of levels in the expression tree."""
+        """Return the depth of the expression tree.
+
+        Expression depth is defined recursively:
+
+        1. A leaf node (constant or literal) has zero depth.
+        2. A branch node (operator) has depth equal to the maximum depth of
+           its children (arguments) plus one.
+        """
         raise NotImplementedError()
 
     def to_ast(self):
@@ -1266,9 +1273,9 @@ class ExprNot(Expression):
     def factor(self, conj=False):
         return self.arg.invert().factor()
 
-    @cached_property
+    @property
     def depth(self):
-        return self.arg.depth
+        return self.arg.depth + 1
 
     def to_ast(self):
         return (self.ASTOP, self.arg.to_ast())
@@ -1312,6 +1319,10 @@ class _ArgumentContainer(Expression):
         if self not in visited:
             visited.add(self)
             yield self
+
+    @cached_property
+    def depth(self):
+        return max(arg.depth for arg in self.args) + 1
 
     def to_ast(self):
         return (self.ASTOP, ) + tuple(arg.to_ast() for arg in self.args)
@@ -1418,10 +1429,6 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
     def factor(self, conj=False):
         args = [arg.factor() for arg in self.args]
         return self.__class__(*args).simplify()
-
-    @cached_property
-    def depth(self):
-        return max(arg.depth + 1 for arg in self.args)
 
     # Specific to ExprOrAnd
     @staticmethod
@@ -1784,10 +1791,6 @@ class ExprAnd(ExprOrAnd):
 class ExprNorNand(_ArgumentContainer):
     """Base class for Expression NOR/NAND expressions"""
 
-    @cached_property
-    def depth(self):
-        return max(arg.depth + 1 for arg in self.args)
-
 
 class ExprNor(ExprNorNand):
     """Expression NOR operator"""
@@ -2017,10 +2020,6 @@ class ExprExclusive(_ArgumentContainer):
                     terms.append(inner(*term))
         return outer(*terms).simplify()
 
-    @cached_property
-    def depth(self):
-        return max(arg.depth + 2 for arg in self.args)
-
 
 class ExprXor(ExprExclusive):
     """Expression Exclusive OR (XOR) operator"""
@@ -2106,11 +2105,6 @@ class ExprXnor(ExprExclusive):
 
 class ExprEqualBase(_ArgumentContainer):
     """Expression equality (EQUAL, UNEQUAL) operators"""
-
-    # From Expression
-    @cached_property
-    def depth(self):
-        return max(arg.depth + 2 for arg in self.args)
 
 
 class ExprEqual(ExprEqualBase):
@@ -2357,10 +2351,6 @@ class ExprImplies(_ArgumentContainer):
         args.append(q.factor())
         return ExprOr(*args).simplify()
 
-    @cached_property
-    def depth(self):
-        return max(arg.depth + 1 for arg in self.args)
-
 
 class ExprITE(_ArgumentContainer):
     """Expression if-then-else ternary operator"""
@@ -2444,10 +2434,6 @@ class ExprITE(_ArgumentContainer):
             arg0 = ExprAnd(s.factor(), d1.factor())
             arg1 = ExprAnd(s.invert().factor(), d0.factor())
             return ExprOr(arg0, arg1).simplify()
-
-    @cached_property
-    def depth(self):
-        return max(arg.depth + 2 for arg in self.args)
 
 
 class NormalForm(object):

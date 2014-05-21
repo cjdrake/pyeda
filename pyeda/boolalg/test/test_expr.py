@@ -678,7 +678,7 @@ def test_ite():
 
     assert ITE(s, a, b).restrict({a: 1, b: 1}) is EXPRONE
     assert ITE(s, a, b).compose({a: b, b: a}).equivalent(s & b | ~s & a)
-    assert ITE(s, a & b, c | d).depth == 3
+    assert ITE(s, a & b, c | d).depth == 2
 
     f = ITE(s, 1, 1, simplify=False)
     assert str(f) == "ITE(s, 1, 1)"
@@ -752,25 +752,25 @@ def test_depth():
     assert (a & (b | c)).depth == 2
     assert (a & (b | (c & d))).depth == 3
 
-    assert Not(a | b).depth == 1
-    assert Not(a | (b & c)).depth == 2
-    assert Not(a | (b & (c | d))).depth == 3
+    assert Not(a | b).depth == 2
+    assert Not(a | (b & c)).depth == 3
+    assert Not(a | (b & (c | d))).depth == 4
 
-    assert Xor(a, b, c).depth == 2
-    assert Xor(a, b, c | d).depth == 3
-    assert Xor(a, b, c | Xor(d, e)).depth == 5
+    assert Xor(a, b, c).depth == 1
+    assert Xor(a, b, c | d).depth == 2
+    assert Xor(a, b, c | Xor(d, e)).depth == 3
 
-    assert Equal(a, b, c).depth == 2
-    assert Equal(a, b, c | d).depth == 3
-    assert Equal(a, b, c | Xor(d, e)).depth == 5
+    assert Equal(a, b, c).depth == 1
+    assert Equal(a, b, c | d).depth == 2
+    assert Equal(a, b, c | Xor(d, e)).depth == 3
 
     assert Implies(p, q).depth == 1
     assert Implies(p, a | b).depth == 2
-    assert Implies(p, Xor(a, b)).depth == 3
+    assert Implies(p, Xor(a, b)).depth == 2
 
-    assert ITE(s, a, b).depth == 2
-    assert ITE(s, a | b, b).depth == 3
-    assert ITE(s, a | b, Xor(a, b)).depth == 4
+    assert ITE(s, a, b).depth == 1
+    assert ITE(s, a | b, b).depth == 2
+    assert ITE(s, a | b, Xor(a, b)).depth == 2
 
 def test_nf():
     f = a ^ b ^ c
