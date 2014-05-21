@@ -448,8 +448,7 @@ def _sumterm_prime(lex):
     except StopIteration:
         return None
     # '|' T E'
-    toktype = type(tok)
-    if toktype is OP_or:
+    if type(tok) is OP_or:
         xorterm = _xorterm(lex)
         expr_prime = _sumterm_prime(lex)
         if expr_prime is None:
@@ -477,8 +476,7 @@ def _xorterm_prime(lex):
     except StopIteration:
         return None
     # '|' T E'
-    toktype = type(tok)
-    if toktype is OP_xor:
+    if type(tok) is OP_xor:
         prodterm = _prodterm(lex)
         expr_prime = _xorterm_prime(lex)
         if expr_prime is None:
@@ -506,8 +504,7 @@ def _prodterm_prime(lex):
     except StopIteration:
         return None
     # '&' F T'
-    toktype = type(tok)
-    if toktype is OP_and:
+    if type(tok) is OP_and:
         factor = _factor(lex)
         prodterm_prime = _prodterm_prime(lex)
         if prodterm_prime is None:
