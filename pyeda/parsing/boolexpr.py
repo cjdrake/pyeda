@@ -10,7 +10,7 @@ Interface Functions:
 
 # pylint: disable=C0103
 
-from pyeda.parsing.lex import RegexLexer, action
+from pyeda.parsing.lex import LexRunError, RegexLexer, action
 from pyeda.parsing.token import (
     KeywordToken, NameToken, IntegerToken, OperatorToken, PunctuationToken,
 )
@@ -376,6 +376,10 @@ def parse(s):
     lex = iter(BoolExprLexer(s))
     try:
         expr = _expr(lex)
+    except LexRunError as exc:
+        fstr = ("{0.args[0]}: "
+                "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
+        raise BoolExprParseError(fstr.format(exc))
     except StopIteration:
         raise BoolExprParseError("incomplete expression")
     try:

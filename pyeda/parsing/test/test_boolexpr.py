@@ -12,6 +12,8 @@ from pyeda.parsing.boolexpr import BoolExprParseError
 from nose.tools import assert_raises
 
 def test_expr_error():
+    # lexical error
+    assert_raises(BoolExprParseError, expr, "#a")
     # incomplete expression
     assert_raises(BoolExprParseError, expr, "a &")
     # unexpected token
