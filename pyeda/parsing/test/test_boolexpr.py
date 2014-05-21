@@ -57,5 +57,5 @@ def test_misc():
     b_a = exprvar(('a', 'b'))
     a_0_1 = exprvar('a', (0, 1))
     b_a_0_1 = exprvar(('a', 'b'), (0, 1))
-    assert expr("a[0] | b.a | a[0][1] | b.a[0,1]").equivalent(a_0 | b_a | a_0_1 | b_a_0_1)
+    assert expr("a[0] | b.a | a[0,1] | b.a[0,1]").equivalent(a_0 | b_a | a_0_1 | b_a_0_1)
 

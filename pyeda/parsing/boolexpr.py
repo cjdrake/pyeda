@@ -10,8 +10,6 @@ Interface Functions:
 
 # pylint: disable=C0103
 
-from warnings import warn
-
 from pyeda.parsing.lex import LexRunError, RegexLexer, action
 from pyeda.parsing.token import (
     EndToken,
@@ -633,26 +631,14 @@ def _indices(lex):
 
 def _zom_index(lex):
     """Return zero or more indices."""
-    # This RBRACK might be the closing bracket
-    tok1 = _expect_token(lex, {COMMA, RBRACK})
+    tok = next(lex)
     # ',' INT
-    if type(tok1) is COMMA:
+    if type(tok) is COMMA:
         first = _expect_token(lex, {IntegerToken}).value
         rest = _zom_index(lex)
         return (first, ) + rest
-    # ']'
+    # null
     else:
-        tok2 = next(lex)
-        # ']' '[' INT
-        if type(tok2) is LBRACK:
-            warn('Variable syntax "a[0][1][2]" is deprecated. '
-                 'Use "a[0,1,2]" instead.')
-            first = _expect_token(lex, {IntegerToken}).value
-            rest = _zom_index(lex)
-            return (first, ) + rest
-        # ']' ?
-        else:
-            lex.unpop_token(tok2)
-            lex.unpop_token(tok1)
-            return tuple()
+        lex.unpop_token(tok)
+        return tuple()
 
