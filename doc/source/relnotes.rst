@@ -4,6 +4,57 @@
   Release Notes
 *****************
 
+Version 0.24
+============
+
+Variables names are now required to be C-style identifiers.
+I.e., ``[a-zA-Z_][a-zA-Z0-9_]*``.
+
+The expression parser now handles both ``a[1][2][3]`` and ``a[1,2,3]`` syntaxes
+(`Issue 91 <https://github.com/cjdrake/pyeda/issues/91>`_).
+The ``a[1][2][3]`` is deprecated.
+
+Got rid of expression ``is_neg_unate``, ``is_pos_unate``,
+and ``is_binate`` functions.
+I haven't been able to find an *efficient* algorithm for this,
+so just convert expressions and BDDs to truth tables first.
+If your function is too big to fit in a truth table,
+it's probably also too big to expand to a canonical expression.
+
+``Not(Not(...))`` double negation is now automatically reduced,
+just like ``Not(Nand(...))``, etc.
+
+Cleaned up the definition of expression depth
+(`Issue 92 <https://github.com/cjdrake/pyeda/issues/92>`_).
+This is not backwards compatible.
+
+Fixed `Issue 93 <https://github.com/cjdrake/pyeda/issues/93>`_,
+picosat script fails with trivial zero input::
+
+   $ picosat
+   p cnf 0 1
+   0
+
+Changed ``RegexLexer`` to yield ``EndToken`` at the end of a token stream.
+This makes parsing nicer, avoiding catching ``StopIteration`` everywhere.
+
+Got rid of ``factor=False`` on expression factory functions.
+This was overly designed UI.
+
+The expression ``restrict`` method is a little faster now.
+Especially for big functions.
+
+Added *lots* of new reference documentation.
+
+Added new ``farray`` documentation chapter.
+Fixed several little issues with function arrays during this process.
+The constructor now takes an ``ftype=None`` parameter.
+Negative indices make more sense now.
+Slices behave more like Python tuple slices.
+Fixed several inconsistencies with empty arrays.
+
+Deprecated ``bitvec`` function.
+
 Version 0.23
 ============
 
