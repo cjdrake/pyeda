@@ -182,7 +182,7 @@ class BoolExprLexer(RegexLexer):
             (r"\bImplies\b", keyword),
             (r"\bNot\b", keyword),
 
-            (r"[a-zA-Z][a-zA-Z0-9_]*", name),
+            (r"[a-zA-Z_][a-zA-Z0-9_]*", name),
             (r"\d+", integer),
 
             (r"=>", operator),

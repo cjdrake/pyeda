@@ -53,7 +53,7 @@ def var(name, index=None):
         if tname is not str:
             fstr = "expected name to be a str, got {0.__name__}"
             raise TypeError(fstr.format(tname))
-        if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", name):
+        if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", name):
             fstr = "expected name to match [a-zA-Z][a-zA-Z0-9_]*, got {}"
             raise ValueError(fstr.format(name))
 
