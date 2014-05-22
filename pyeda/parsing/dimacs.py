@@ -211,7 +211,7 @@ def _cnf_clause(lex, varname, nvars):
             fstr = "formula literal {} is greater than {}"
             raise DIMACSError(fstr.format(index, nvars))
         if neg:
-            clause.append((OP_not.ASTOP, ('var', (varname, ), (index, ))))
+            clause.append(('not', ('var', (varname, ), (index, ))))
         else:
             clause.append(('var', (varname, ), (index, )))
         try:
@@ -360,9 +360,9 @@ def _sat_formula(lex, fmt, varname, nvars):
             if not 0 < index <= nvars:
                 fstr = "formula literal {} outside valid range: (0, {}]"
                 raise DIMACSError(fstr.format(index, nvars))
-            return (OP_not.ASTOP, ('var', (varname, ), (index, )))
+            return ('not', ('var', (varname, ), (index, )))
         else:
-            return (OP_not.ASTOP, _one_formula(lex, fmt, varname, nvars))
+            return ('not', _one_formula(lex, fmt, varname, nvars))
     elif type(tok) is LPAREN:
         return _one_formula(lex, fmt, varname, nvars)
     # OR/AND/XOR/EQUAL

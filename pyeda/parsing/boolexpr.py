@@ -547,7 +547,7 @@ def _factor(lex):
         _expect_token(lex, {COMMA})
         arg2 = _expr(lex)
         _expect_token(lex, {RPAREN})
-        return (tok.ASTOP, arg0, arg1, arg2)
+        return ('ite', arg0, arg1, arg2)
     # Implies '(' EXPR ',' EXPR ')'
     elif toktype is KW_implies:
         _expect_token(lex, {LPAREN})
@@ -555,13 +555,13 @@ def _factor(lex):
         _expect_token(lex, {COMMA})
         arg1 = _expr(lex)
         _expect_token(lex, {RPAREN})
-        return (tok.ASTOP, arg0, arg1)
+        return ('implies', arg0, arg1)
     # Not '(' EXPR ')'
     elif toktype is KW_not:
         _expect_token(lex, {LPAREN})
         arg = _expr(lex)
         _expect_token(lex, {RPAREN})
-        return (tok.ASTOP, arg)
+        return ('not', arg)
     # VARIABLE
     elif toktype is NameToken:
         lex.unpop_token(tok)
