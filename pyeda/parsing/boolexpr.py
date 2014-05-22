@@ -541,21 +541,21 @@ def _factor(lex):
     # ITE '(' EXPR ',' EXPR ',' EXPR ')'
     elif toktype is KW_ite:
         _expect_token(lex, {LPAREN})
-        arg0 = _expr(lex)
+        s = _expr(lex)
         _expect_token(lex, {COMMA})
-        arg1 = _expr(lex)
+        d1 = _expr(lex)
         _expect_token(lex, {COMMA})
-        arg2 = _expr(lex)
+        d0 = _expr(lex)
         _expect_token(lex, {RPAREN})
-        return ('ite', arg0, arg1, arg2)
+        return ('ite', s, d1, d0)
     # Implies '(' EXPR ',' EXPR ')'
     elif toktype is KW_implies:
         _expect_token(lex, {LPAREN})
-        arg0 = _expr(lex)
+        p = _expr(lex)
         _expect_token(lex, {COMMA})
-        arg1 = _expr(lex)
+        q = _expr(lex)
         _expect_token(lex, {RPAREN})
-        return ('implies', arg0, arg1)
+        return ('implies', p, q)
     # Not '(' EXPR ')'
     elif toktype is KW_not:
         _expect_token(lex, {LPAREN})
