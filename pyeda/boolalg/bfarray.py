@@ -252,14 +252,20 @@ class farray(object):
                 raise ValueError("expected shape volume to match items")
 
     def __str__(self):
-        return "farray(" + self._str() + ")"
+        pre, post = "farray(", ")"
+        indent = " " * len(pre) + " "
+        return pre + self._str(indent) + post
 
-    def _str(self):
+    def _str(self, indent=""):
         """Helper function for __str__"""
         if self.ndim <= 1:
             return "[" + ", ".join(str(x) for x in self) + "]"
+        elif self.ndim == 2:
+            sep = ",\n" + indent
+            return "[" + sep.join(x._str(indent + " ") for x in self) + "]"
         else:
-            return "[" + ", ".join(x._str() for x in self) + "]"
+            sep = ",\n\n" + indent
+            return "[" + sep.join(x._str(indent + " ") for x in self) + "]"
 
     def __repr__(self):
         return self.__str__()
