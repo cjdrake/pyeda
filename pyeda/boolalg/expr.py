@@ -84,7 +84,6 @@ def exprvar(name, index=None):
 
     Parameters
     ----------
-
     name : str
         The variable's identifier string.
     index : int or tuple[int], optional
@@ -595,7 +594,6 @@ class Expression(boolfunc.Function):
 
         Parameters
         ----------
-
         conj : bool
             Always choose a conjunctive form when there's a choice
         """
