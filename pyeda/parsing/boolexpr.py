@@ -439,11 +439,11 @@ def _impl(lex):
 def _sumterm(lex):
     """Return a sum term expresssion."""
     xorterm = _xorterm(lex)
-    expr_prime = _sumterm_prime(lex)
-    if expr_prime is None:
+    sumterm_prime = _sumterm_prime(lex)
+    if sumterm_prime is None:
         return xorterm
     else:
-        return ('or', xorterm, expr_prime)
+        return ('or', xorterm, sumterm_prime)
 
 def _sumterm_prime(lex):
     """Return a sum term' expression, eliminates left recursion."""
@@ -454,11 +454,11 @@ def _sumterm_prime(lex):
     # '|' T E'
     if type(tok) is OP_or:
         xorterm = _xorterm(lex)
-        expr_prime = _sumterm_prime(lex)
-        if expr_prime is None:
+        sumterm_prime = _sumterm_prime(lex)
+        if sumterm_prime is None:
             return xorterm
         else:
-            return ('or', xorterm, expr_prime)
+            return ('or', xorterm, sumterm_prime)
     # null
     else:
         lex.unpop_token(tok)
@@ -467,11 +467,11 @@ def _sumterm_prime(lex):
 def _xorterm(lex):
     """Return an xor term expresssion."""
     prodterm = _prodterm(lex)
-    expr_prime = _xorterm_prime(lex)
-    if expr_prime is None:
+    xorterm_prime = _xorterm_prime(lex)
+    if xorterm_prime is None:
         return prodterm
     else:
-        return ('xor', prodterm, expr_prime)
+        return ('xor', prodterm, xorterm_prime)
 
 def _xorterm_prime(lex):
     """Return an xor term' expression, eliminates left recursion."""
@@ -482,11 +482,11 @@ def _xorterm_prime(lex):
     # '|' T E'
     if type(tok) is OP_xor:
         prodterm = _prodterm(lex)
-        expr_prime = _xorterm_prime(lex)
-        if expr_prime is None:
+        xorterm_prime = _xorterm_prime(lex)
+        if xorterm_prime is None:
             return prodterm
         else:
-            return ('xor', prodterm, expr_prime)
+            return ('xor', prodterm, xorterm_prime)
     # null
     else:
         lex.unpop_token(tok)
