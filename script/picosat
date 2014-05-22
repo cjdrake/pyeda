@@ -84,11 +84,19 @@ def main():
 
     try:
         ast = parse_cnf(opts.file.read())
-        _, nvars, clauses = ast2expr(ast).encode_cnf()
     except DIMACSError as exc:
         print("error parsing file:", opts.file.name)
         print(exc)
         return UNKNOWN
+
+    expr = ast2expr(ast).simplify()
+
+    # Zero doesn't have a CNF encoding
+    if expr.is_zero():
+        print('s', 'UNSATISFIABLE')
+        return UNSATISFIABLE
+
+    _, nvars, clauses = expr.encode_cnf()
 
     config = {
         'verbosity' : opts.verbose,
