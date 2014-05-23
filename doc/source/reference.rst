@@ -9,4 +9,5 @@
 
    reference/util.rst
    reference/boolalg/bdd.rst
+   reference/boolalg/expr.rst
 

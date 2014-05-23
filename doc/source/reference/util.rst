@@ -1,12 +1,13 @@
 .. reference/util.rst
 
-:mod:`pyeda.util` --- Utilities
-===============================
+***********************************
+  :mod:`pyeda.util` --- Utilities
+***********************************
 
 .. automodule:: pyeda.util
 
 Interface Functions
--------------------
+===================
 
 .. autofunction:: pyeda.util.bit_on
 
@@ -15,7 +16,7 @@ Interface Functions
 .. autofunction:: pyeda.util.parity
 
 Decorators
-----------
+==========
 
 .. autofunction:: pyeda.util.cached_property
 

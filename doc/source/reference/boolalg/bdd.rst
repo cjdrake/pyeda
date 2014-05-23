@@ -1,12 +1,13 @@
 .. reference/boolalg/bdd.rst
 
-:mod:`pyeda.boolalg.bdd` --- Binary Decision Diagrams
-=====================================================
+*********************************************************
+  :mod:`pyeda.boolalg.bdd` --- Binary Decision Diagrams
+*********************************************************
 
 .. automodule:: pyeda.boolalg.bdd
 
 Interface Functions
--------------------
+===================
 
 .. autofunction:: pyeda.boolalg.bdd.bddvar
 
@@ -22,8 +23,11 @@ Interface Classes
 .. autoclass:: pyeda.boolalg.bdd.BDDNode
 
 .. autoclass:: pyeda.boolalg.bdd.BinaryDecisionDiagram
-   :members: dfs_preorder, dfs_postorder, bfs,
-             equivalent, to_dot
+   :members: dfs_preorder,
+             dfs_postorder,
+             bfs,
+             equivalent,
+             to_dot
    :member-order: bysource
 
 .. autoclass:: pyeda.boolalg.bdd.BDDConstant

@@ -1,54 +1,61 @@
 """
-Boolean Logic Expressions
+The :mod:`pyeda.boolalg.expr` module implements
+Boolean functions represented as expressions.
 
 Interface Functions:
-    exprvar
-    expr
-    ast2expr
-    expr2dimacscnf
-    expr2dimacssat
-    upoint2exprpoint
 
-    Not, Or, And,
-    Nor, Nand
-    Xor, Xnor,
-    Equal, Unequal, Implies, ITE
+* :func:`exprvar`
+* :func:`expr`
+* :func:`ast2expr`
+* :func:`expr2dimacscnf`
+* :func:`upoint2exprpoint`
 
-    OneHot0, OneHot
-    Majority
-    AchillesHeel
-    Mux
+* :func:`Not`
+* :func:`Or`
+* :func:`And`
 
-    ForAll, Exists
+* :func:`Nor`
+* :func:`Nand`
+* :func:`Xor`
+* :func:`Xnor`
+* :func:`Equal`
+* :func:`Unequal`
+* :func:`Implies`
+* :func:`ITE`
+
+* :func:`OneHot0`
+* :func:`OneHot`
+* :func:`Majority`
+* :func:`AchillesHeel`
+* :func:`Mux`
 
 Interface Classes:
-    Expression
-        ExprConstant
-            EXPRZERO
-            EXPRONE
-        ExprLiteral
-            ExprVariable
-            ExprComplement
-        ExprNot
-        ExprOrAnd
-            ExprOr
-            ExprAnd
-        ExprNorNand
-            ExprNor
-            ExprNand
-        ExprExclusive
-            ExprXor
-            ExprXnor
-        ExprEqualBase
-            ExprEqual
-            ExprUnequal
-        ExprImplies
-        ExprITE
 
-    NormalForm
-        DisjNormalForm
-        ConjNormalForm
-            DimacsCNF
+* :class:`Expression`
+* :class:`ExprConstant`
+* :class:`ExprLiteral`
+* :class:`ExprVariable`
+* :class:`ExprComplement`
+* :class:`ExprNot`
+* :class:`ExprOrAnd`
+* :class:`ExprOr`
+* :class:`ExprAnd`
+* :class:`ExprNorNand`
+* :class:`ExprNor`
+* :class:`ExprNand`
+* :class:`ExprExclusive`
+* :class:`ExprXor`
+* :class:`ExprXnor`
+* :class:`ExprEqualBase`
+* :class:`ExprEqual`
+* :class:`ExprUnequal`
+* :class:`ExprImplies`
+* :class:`ExprITE`
+
+* :class:`NormalForm`
+* :class:`DisjNormalForm`
+* :class:`ConjNormalForm`
+* :class:`DimacsCNF`
 """
 
 # Disable "redefining name from outer scope"
@@ -85,15 +92,43 @@ def _assume2upoint():
     )
 
 def exprvar(name, index=None):
-    """Return an Expression Variable.
+    r"""Return a unique Expression variable.
 
-    Parameters
-    ----------
-    name : str
-        The variable's identifier string.
-    index : int or tuple[int], optional
-        One or more integer suffixes for variables that are part of a
-        multi-dimensional bit-vector, eg x[1], x[1][2][3]
+    A Boolean *variable* is an abstract numerical quantity that may assume any
+    value in the set :math:`B = \{0, 1\}`.
+    The ``exprvar`` function returns a unique Boolean variable instance
+    represented by an expression.
+    Variable instances may be used to symbolically construct larger expressions.
+
+    A variable is defined by one or more *names*,
+    and zero or more *indices*.
+    Multiple names establish hierarchical namespaces,
+    and multiple indices group several related variables.
+    If the ``name`` parameter is a single ``str``,
+    it will be converted to ``(name, )``.
+    The ``index`` parameter is optional;
+    when empty, it will be converted to an empty tuple ``()``.
+    If the ``index`` parameter is a single ``int``,
+    it will be converted to ``(index, )``.
+
+    Given identical names and indices, the ``exprvar`` function will always
+    return the same variable:
+
+    >>> exprvar('a', 0) is exprvar('a', 0)
+    True
+
+    To create several single-letter variables:
+
+    >>> a, b, c, d = map(exprvar, "abcd")
+
+    To create variables with multiple names (inner-most first):
+
+    >>> fifo_push = exprvar(('push', 'fifo'))
+    >>> fifo_pop = exprvar(('pop', 'fifo'))
+
+    .. seealso::
+       For creating arrays of variables with incremental indices,
+       we recommend using the :func:`exprvars` function.
     """
     bvar = boolfunc.var(name, index)
     try:
@@ -112,7 +147,7 @@ def _exprcomp(exprvar):
     return comp
 
 def expr(obj, simplify=True):
-    """Return an Expression."""
+    """Convert an arbitrary object into an Expression."""
     if isinstance(obj, Expression):
         return obj
     # False, True, 0, 1
@@ -351,9 +386,9 @@ def Majority(*args, simplify=True, conj=False):
     return expr
 
 def AchillesHeel(*args, simplify=True):
-    """
-    Return the Achille's Heel function, defined as the product from i=0..n/2-1
-    of (X[2*i] | X[2*i+1]).
+    r"""
+    Return the Achille's Heel function, defined as
+    :math:`\prod_{i=0}^{n/2-1}{X_{2i} + X_{2i+1}}`.
     """
     nargs = len(args)
     if nargs & 1:
@@ -559,11 +594,12 @@ class Expression(boolfunc.Function):
         """Return a factored expression.
 
         A factored expression is one and only one of the following:
+
         * A literal.
         * A disjunction / conjunction of factored expressions.
 
         Parameters
-        ----------
+
         conj : bool
             Always choose a conjunctive form when there's a choice
         """

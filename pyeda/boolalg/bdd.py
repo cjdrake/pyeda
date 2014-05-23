@@ -1,6 +1,6 @@
 """
-The :mod:`pyeda.boolalg.bdd` module contains functions and classes for
-constructing and manipulating binary decision diagrams.
+The :mod:`pyeda.boolalg.bdd` module implements
+Boolean functions represented as binary decision diagrams.
 
 Interface Functions:
 
@@ -69,17 +69,22 @@ def bddvar(name, index=None):
     and multiple indices group several related variables.
     If the ``name`` parameter is a single ``str``,
     it will be converted to ``(name, )``.
+    The ``index`` parameter is optional;
+    when empty, it will be converted to an empty tuple ``()``.
     If the ``index`` parameter is a single ``int``,
     it will be converted to ``(index, )``.
 
     Given identical names and indices, the ``bddvar`` function will always
-    return the same identical variable.
+    return the same variable:
+
+    >>> bddvar('a', 0) is bddvar('a', 0)
+    True
 
     To create several single-letter variables:
 
     >>> a, b, c, d = map(bddvar, "abcd")
 
-    To create variables with multiple names:
+    To create variables with multiple names (inner-most first):
 
     >>> fifo_push = bddvar(('push', 'fifo'))
     >>> fifo_pop = bddvar(('pop', 'fifo'))
