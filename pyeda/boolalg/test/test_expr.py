@@ -85,7 +85,7 @@ def test_expr():
     assert expr(1) is EXPRONE
     assert expr('1') is EXPRONE
     assert expr(['foo', 'bar']) is EXPRONE
-    assert str(expr("a ^ b", factor=True)) == "Or(And(~a, b), And(a, ~b))"
+    assert str(expr("a ^ b").factor()) == "Or(And(~a, b), And(a, ~b))"
     assert str(expr("a ^ 0", simplify=False)) == "Xor(0, a)"
 
 def test_expr2dimacssat():

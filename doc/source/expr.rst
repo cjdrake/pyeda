@@ -259,9 +259,9 @@ This section will describe all the factory functions that can be used to create
 arbitrary Boolean expressions.
 
 The general form of these functions is
-``OP(arg [, arg], simplify=True, factor=False)``.
+``OP(arg [, arg], simplify=True)``.
 The function is an operator name, followed by one or more arguments,
-followed by the ``simplify``, and ``factor`` parameters.
+followed by the ``simplify`` parameter.
 Some functions also have a ``conj`` parameter,
 which selects between conjunctive (``conj=True``) and disjunctive
 (``conj=False``) formats.
@@ -288,16 +288,16 @@ Primary Operators
 Since NOT, OR, and AND form a complete basis for a Boolean algebra,
 these three operators are *primary*.
 
-.. function:: Not(arg, simplify=True, factor=False)
+.. function:: Not(arg, simplify=True)
 
    Return an expression that is the inverse of the input.
 
-.. function:: Or(\*args, simplify=True, factor=False)
+.. function:: Or(\*args, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if *any* inputs
    are :math:`1`.
 
-.. function:: And(\*args, simplify=True, factor=False)
+.. function:: And(\*args, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if *all* inputs
    are :math:`1`.
@@ -316,19 +316,19 @@ but contains more information than the primary operators.
 That is, these expressions always increase in tree size when converted to
 primary operators.
 
-.. function:: Nor(\*args, simplify=True, factor=False)
+.. function:: Nor(\*args, simplify=True)
 
    Return an expression that evaluates to :math:`0` if and only if *any* inputs
    are :math:`1`.
    The inverse of `Or`.
 
-.. function:: Nand(\*args, simplify=True, factor=False)
+.. function:: Nand(\*args, simplify=True)
 
    Return an expression that evaluates to :math:`0` if an only if *all* inputs
    are :math:`1`.
    The inverse of `And`.
 
-.. function:: Xor(\*args, simplify=True, factor=False, conj=False)
+.. function:: Xor(\*args, simplify=True, conj=False)
 
    Return an expression that evaluates to :math:`1` if and only if the input
    parity is odd.
@@ -344,22 +344,22 @@ use the ``Xor`` operator::
    >>> s = Xor('a', 'b', 'ci')
    >>> co = Or(And('a', 'b'), And('a', 'ci'), And('b', 'ci'))
 
-.. function:: Xnor(\*args, simplify=True, factor=False, conj=False)
+.. function:: Xnor(\*args, simplify=True, conj=False)
 
    Return an expression that evaluates to :math:`1` if and only if the input
    parity is even.
 
-.. function:: Equal(\*args, simplify=True, factor=False, conj=False)
+.. function:: Equal(\*args, simplify=True, conj=False)
 
    Return an expression that evaluates to :math:`1` if and only if all inputs
    are equivalent.
 
-.. function:: Unequal(\*args, simplify=True, factor=False, conj=False)
+.. function:: Unequal(\*args, simplify=True, conj=False)
 
    Return an expression that evaluates to :math:`1` if and only if *not* all
    inputs are equivalent.
 
-.. function:: Implies(p, q, simplify=True, factor=False)
+.. function:: Implies(p, q, simplify=True)
 
    Return an expression that implements Boolean implication
    (:math:`p \implies q`).
@@ -380,7 +380,7 @@ Note that this truth table is equivalent to :math:`p \leq q`,
 but Boolean implication is by far the more common form due to its use in
 `propositional logic <http://en.wikipedia.org/wiki/Propositional_calculus>`_.
 
-.. function:: ITE(s, d1, d0, simplify=True, factor=False)
+.. function:: ITE(s, d1, d0, simplify=True)
 
    Return an expression that implements the Boolean "if, then, else" operator.
    If :math:`s = 1`, then the output equals :math:`d_{0}`.
@@ -414,19 +414,19 @@ represented as a PyEDA expression.
 That is, these factory functions will always return expressions composed from
 primary and/or secondary operators.
 
-.. function:: OneHot0(\*args, simplify=True, factor=False, conj=True)
+.. function:: OneHot0(\*args, simplify=True, conj=True)
 
    Return an expression that evaluates to :math:`1` if and only if the number
    of inputs equal to :math:`1` is at most :math:`1`.
    That is, return true when at most one input is "hot".
 
-.. function:: OneHot(\*args, simplify=True, factor=False, conj=True)
+.. function:: OneHot(\*args, simplify=True, conj=True)
 
    Return an expression that evaluates to :math:`1` if and only if exactly one
    input is equal to :math:`1`.
    That is, return true when exactly one input is "hot".
 
-.. function:: Majority(\*args, simplify=True, factor=False, conj=False)
+.. function:: Majority(\*args, simplify=True, conj=False)
 
    Return an expression that evaluates to :math:`1` if and only if the majority
    of inputs equal :math:`1`.
@@ -437,7 +437,7 @@ use both the ``Xor`` and ``Majority`` operators::
    >>> s = Xor('a', 'b', 'ci')
    >>> co = Majority('a', 'b', 'ci')
 
-.. function:: AchillesHeel(\*args, simplify=True, factor=False)
+.. function:: AchillesHeel(\*args, simplify=True)
 
    Return the Achille's Heel function, defined as
    :math:`\prod_{i=0}^{N-1}{(x_{i/2} + x_{i/2+1})}`.
@@ -454,7 +454,7 @@ For example::
    >>> f.to_dnf()
    Or(And(a, c, w, y), And(a, c, w, z), And(a, c, x, y), And(a, c, x, z), And(a, d, w, y), And(a, d, w, z), And(a, d, x, y), And(a, d, x, z), And(b, c, w, y), And(b, c, w, z), And(b, c, x, y), And(b, c, x, z), And(b, d, w, y), And(b, d, w, z), And(b, d, x, y), And(b, d, x, z))
 
-.. function:: Mux(fs, sel, simplify=True, factor=False)
+.. function:: Mux(fs, sel, simplify=True)
 
    Return an expression that multiplexes a sequence of input functions over a
    sequence of select functions.
@@ -469,7 +469,7 @@ For example::
 From the ``expr`` Function
 --------------------------
 
-.. function:: expr(arg, simplify=True, factor=False)
+.. function:: expr(arg, simplify=True)
 
 The ``expr`` function is very special.
 It will attempt to convert the input argument to an ``Expression`` object.

@@ -111,7 +111,7 @@ def _exprcomp(exprvar):
         comp = _EXPRLITERALS[uniqid] = ExprComplement(exprvar)
     return comp
 
-def expr(obj, simplify=True, factor=False):
+def expr(obj, simplify=True):
     """Return an Expression."""
     if isinstance(obj, Expression):
         return obj
@@ -120,9 +120,7 @@ def expr(obj, simplify=True, factor=False):
         return CONSTANTS[obj]
     elif type(obj) is str:
         ex = ast2expr(pyeda.parsing.boolexpr.parse(obj))
-        if factor:
-            ex = ex.factor()
-        elif simplify:
+        if simplify:
             ex = ex.simplify()
         return ex
     else:
@@ -202,122 +200,100 @@ def upoint2exprpoint(upoint):
     return point
 
 # primitive functions
-def Not(arg, simplify=True, factor=False):
+def Not(arg, simplify=True):
     """Factory function for Boolean NOT expression."""
     arg = Expression.box(arg)
     expr = ExprNot(arg)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Or(*args, simplify=True, factor=False):
+def Or(*args, simplify=True):
     """Factory function for Boolean OR expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprOr(*args)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def And(*args, simplify=True, factor=False):
+def And(*args, simplify=True):
     """Factory function for Boolean AND expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprAnd(*args)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Nor(*args, simplify=True, factor=False):
+def Nor(*args, simplify=True):
     """Alias for Not(Or(...))"""
     args = [Expression.box(arg) for arg in args]
     expr = ExprNor(*args)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Nand(*args, simplify=True, factor=False):
+def Nand(*args, simplify=True):
     """Alias for Not(And(...))"""
     args = [Expression.box(arg) for arg in args]
     expr = ExprNand(*args)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
 # secondary functions
-def Xor(*args, simplify=True, factor=False, conj=False):
+def Xor(*args, simplify=True, conj=False):
     """Factory function for Boolean XOR expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprXor(*args)
-    if factor:
-        expr = expr.factor(conj)
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Xnor(*args, simplify=True, factor=False, conj=False):
+def Xnor(*args, simplify=True, conj=False):
     """Factory function for Boolean XNOR expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprXnor(*args)
-    if factor:
-        expr = expr.factor(conj)
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Equal(*args, simplify=True, factor=False, conj=False):
+def Equal(*args, simplify=True, conj=False):
     """Factory function for Boolean EQUAL expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprEqual(*args)
-    if factor:
-        expr = expr.factor(conj)
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Unequal(*args, simplify=True, factor=False, conj=False):
+def Unequal(*args, simplify=True, conj=False):
     """Factory function for Boolean UNEQUAL expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprUnequal(*args)
-    if factor:
-        expr = expr.factor(conj)
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Implies(p, q, simplify=True, factor=False):
+def Implies(p, q, simplify=True):
     """Factory function for Boolean implication expression."""
     p = Expression.box(p)
     q = Expression.box(q)
     expr = ExprImplies(p, q)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def ITE(s, d1, d0, simplify=True, factor=False):
+def ITE(s, d1, d0, simplify=True):
     """Factory function for Boolean If-Then-Else expression."""
     s = Expression.box(s)
     d1 = Expression.box(d1)
     d0 = Expression.box(d0)
     expr = ExprITE(s, d1, d0)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
 # high order functions
-def OneHot0(*args, simplify=True, factor=False, conj=True):
+def OneHot0(*args, simplify=True, conj=True):
     """
     Return an expression that means:
         At most one input variable is true.
@@ -332,13 +308,11 @@ def OneHot0(*args, simplify=True, factor=False, conj=True):
         for comb in itertools.combinations(args, len(args) - 1):
             terms.append(ExprAnd(*[ExprNot(arg) for arg in comb]))
         expr = ExprOr(*terms)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def OneHot(*args, simplify=True, factor=False, conj=True):
+def OneHot(*args, simplify=True, conj=True):
     """
     Return an expression that means:
         Exactly one input variable is true.
@@ -352,13 +326,11 @@ def OneHot(*args, simplify=True, factor=False, conj=True):
             zeros = [ExprNot(x) for x in args[:i] + args[i+1:]]
             terms.append(ExprAnd(arg, *zeros))
         expr = ExprOr(*terms)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Majority(*args, simplify=True, factor=False, conj=False):
+def Majority(*args, simplify=True, conj=False):
     """
     Return an expression that means:
         The majority of the input variables are true.
@@ -374,13 +346,11 @@ def Majority(*args, simplify=True, factor=False, conj=False):
         for comb in itertools.combinations(args, len(args) // 2 + 1):
             terms.append(ExprAnd(*comb))
         expr = ExprOr(*terms)
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def AchillesHeel(*args, simplify=True, factor=False):
+def AchillesHeel(*args, simplify=True):
     """
     Return the Achille's Heel function, defined as the product from i=0..n/2-1
     of (X[2*i] | X[2*i+1]).
@@ -391,13 +361,11 @@ def AchillesHeel(*args, simplify=True, factor=False):
         raise ValueError(fstr.format(nargs))
     args = [Expression.box(arg) for arg in args]
     expr = ExprAnd(*[ExprOr(args[2*i], args[2*i+1]) for i in range(nargs // 2)])
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
-def Mux(fs, sel, simplify=True, factor=False):
+def Mux(fs, sel, simplify=True):
     """
     Return an expression that multiplexes a sequence of input functions over a
     sequence of select functions.
@@ -412,10 +380,7 @@ def Mux(fs, sel, simplify=True, factor=False):
 
     it = boolfunc.iter_terms(sel)
     expr = ExprOr(*[ExprAnd(f, *next(it)) for f in fs])
-
-    if factor:
-        expr = expr.factor()
-    elif simplify:
+    if simplify:
         expr = expr.simplify()
     return expr
 
