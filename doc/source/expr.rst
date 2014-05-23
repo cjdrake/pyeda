@@ -154,13 +154,13 @@ To create a variable with multiple indices, use a tuple argument::
 
    >>> a_1_2_3 = exprvar('a', (1, 2, 3))
    >>> str(a_1_2_3)
-   a[1][2][3]
+   a[1,2,3]
 
 Finally, you can combine multiple namespaces and dimensions::
 
    >>> c_b_a_1_2_3 = exprvar(('a', 'b', 'c'), (1, 2, 3))
    >>> str(c_b_a_1_2_3)
-   c.b.a[1][2][3]
+   c.b.a[1,2,3]
 
 .. note::
    The previous syntax is starting to get a bit cumbersome.

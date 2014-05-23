@@ -69,17 +69,17 @@ Creating indexed variables with namespaces always works just like expressions::
    >>> a0
    a[0]
    >>> b_a_0_1 = bddvar(('a', 'b'), (0, 1))
-   b.a[0][1]
+   b.a[0,1]
 
 Also, the ``bddvars`` function can be used to create multi-dimensional arrays
 of indexed variables::
 
    >>> X = bddvars('x', 4, 4)
    >>> X
-   farray([[x[0][0], x[0][1], x[0][2], x[0][3]],
-           [x[1][0], x[1][1], x[1][2], x[1][3]],
-           [x[2][0], x[2][1], x[2][2], x[2][3]],
-           [x[3][0], x[3][1], x[3][2], x[3][3]]])
+   farray([[x[0,0], x[0,1], x[0,2], x[0,3]],
+           [x[1,0], x[1,1], x[1,2], x[1,3]],
+           [x[2,0], x[2,1], x[2,2], x[2,3]],
+           [x[3,0], x[3,1], x[3,2], x[3,3]]])
 
 From variables, you can use Python's ``~|&^`` operators to construct arbitrarily
 large BDDs.
