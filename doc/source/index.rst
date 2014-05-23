@@ -30,7 +30,8 @@ Features:
 * DIMACS CNF/SAT parsers
 * Logic expression parser
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
@@ -45,8 +46,16 @@ Contents:
    queens.rst
    relnotes.rst
 
+Reference
+---------
+
+.. toctree::
+   :maxdepth: 1
+
+   reference/util.rst
+
 Indices and Tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
