@@ -1,21 +1,20 @@
 """
-Binary Decision Diagrams
+The :mod:`pyeda.boolalg.bdd` module contains functions and classes for
+constructing and manipulating binary decision diagrams.
 
 Interface Functions:
-    bddvar
-    expr2bdd
-    bdd2expr
-    upoint2bddpoint
+
+* :func:`bddvar`
+* :func:`expr2bdd`
+* :func:`bdd2expr`
+* :func:`upoint2bddpoint`
 
 Interface Classes:
-    BDDNode
-        BDDNODEZERO
-        BDDNODEONE
-    BinaryDecisionDiagram
-        BDDConstant
-            BDDZERO
-            BDDONE
-        BDDVariable
+
+* :class:`BDDNode`
+* :class:`BinaryDecisionDiagram`
+* :class:`BDDConstant`
+* :class:`BDDVariable`
 """
 
 # Disable "redefining name from outer scope"
@@ -39,7 +38,13 @@ _BDDS = weakref.WeakValueDictionary()
 
 
 class BDDNode(object):
-    """Binary Decision Diagram Node"""
+    """Binary decision diagram node
+
+    .. note::
+       Never construct a ``BDDNode`` instance directly.
+       They will automically be created and destroyed during symbolic
+       manipulation.
+    """
     def __init__(self, root, lo, hi):
         self.root = root
         self.lo = lo
@@ -50,15 +55,38 @@ BDDNODEONE = _BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
 
 
 def bddvar(name, index=None):
-    """Return a BDD variable.
+    """Return a unique BDD variable.
 
-    Parameters
-    ----------
-    name : str
-        The variable's identifier string.
-    index : int or tuple[int], optional
-        One or more integer suffixes for variables that are part of a
-        multi-dimensional bit-vector, eg x[1], x[1][2][3]
+    A Boolean *variable* is an abstract numerical quantity that may assume any
+    value in the set :math:`B = \{0, 1\}`.
+    The ``bddvar`` function returns a unique Boolean variable instance
+    represented by a binary decision diagram.
+    Variable instances may be used to symbolically construct larger BDDs.
+
+    A variable is defined by one or more *names*,
+    and zero or more *indices*.
+    Multiple names establish hierarchical namespaces,
+    and multiple indices group several related variables.
+    If the ``name`` parameter is a single ``str``,
+    it will be converted to ``(name, )``.
+    If the ``index`` parameter is a single ``int``,
+    it will be converted to ``(index, )``.
+
+    Given identical names and indices, the ``bddvar`` function will always
+    return the same identical variable.
+
+    To create several single-letter variables:
+
+    >>> a, b, c, d = map(bddvar, "abcd")
+
+    To create variables with multiple names:
+
+    >>> fifo_push = bddvar(('push', 'fifo'))
+    >>> fifo_pop = bddvar(('pop', 'fifo'))
+
+    .. seealso::
+       For creating arrays of variables with incremental indices,
+       we recommend using the :func:`bddvars` function.
     """
     bvar = boolfunc.var(name, index)
     try:
@@ -105,7 +133,7 @@ def bdd2expr(bdd, conj=False):
     return outer(*[inner(*term) for term in terms])
 
 def upoint2bddpoint(upoint):
-    """Convert an untyped point to a BDD point."""
+    """Convert an untyped point into a BDD point."""
     point = dict()
     for uniqid in upoint[0]:
         point[_BDDVARIABLES[uniqid]] = 0
@@ -140,7 +168,13 @@ def _path2point(path):
 
 
 class BinaryDecisionDiagram(boolfunc.Function):
-    """Boolean function represented by a binary decision diagram."""
+    """Boolean function represented by a binary decision diagram
+
+    .. note::
+       Never construct a ``BinaryDecisionDiagram`` instance directly.
+       They will automatically be created and destroyed during symbolic
+       manipulation.
+    """
 
     def __init__(self, node):
         self.node = node
@@ -260,7 +294,12 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
 
 class BDDConstant(BinaryDecisionDiagram):
-    """Binary decision diagram constant"""
+    """Binary decision diagram constant
+
+    .. note::
+       Never construct a ``BDDConstant`` instance directly.
+       Use the ``int`` values ``0`` and ``1`` instead.
+    """
 
     VALUE = NotImplemented
 
@@ -299,7 +338,12 @@ CONSTANTS = [BDDZERO, BDDONE]
 
 
 class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
-    """Binary decision diagram variable"""
+    """Binary decision diagram variable
+
+    .. note::
+       Never construct a ``BDDVariable`` instance directly.
+       Use the :func:`bddvar` function instead.
+    """
 
     def __init__(self, bvar):
         boolfunc.Variable.__init__(self, bvar.names, bvar.indices)

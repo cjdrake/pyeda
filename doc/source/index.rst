@@ -53,6 +53,7 @@ Reference
    :maxdepth: 1
 
    reference/util.rst
+   reference/boolalg/bdd.rst
 
 Indices and Tables
 ------------------
