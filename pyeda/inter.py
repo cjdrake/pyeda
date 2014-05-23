@@ -26,7 +26,7 @@ from pyeda.boolalg.bdd import (
 )
 
 from pyeda.boolalg.expr import (
-    exprvar, exprcomp, expr,
+    exprvar, expr,
     ast2expr, expr2dimacscnf, expr2dimacssat, upoint2exprpoint,
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel,

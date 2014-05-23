@@ -3,7 +3,6 @@ Boolean Logic Expressions
 
 Interface Functions:
     exprvar
-    exprcomp
     expr
     ast2expr
     expr2dimacscnf
@@ -103,7 +102,7 @@ def exprvar(name, index=None):
         var = _EXPRLITERALS[bvar.uniqid] = ExprVariable(bvar)
     return var
 
-def exprcomp(exprvar):
+def _exprcomp(exprvar):
     """Return an Expression Complement."""
     uniqid = -exprvar.uniqid
     try:
@@ -1108,7 +1107,7 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
 
     # From Expression
     def invert(self):
-        return exprcomp(self)
+        return _exprcomp(self)
 
     def to_ast(self):
         return (self.ASTOP, self.names, self.indices)
