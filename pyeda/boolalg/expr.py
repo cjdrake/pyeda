@@ -59,8 +59,14 @@ import collections
 import itertools
 
 import pyeda.parsing.boolexpr
-from pyeda.boolalg import boolfunc, picosat, sat
+from pyeda.boolalg import boolfunc, sat
 from pyeda.util import bit_on, clog2, parity, cached_property
+
+# FIXME: This is a hack for readthedocs Sphinx autodoc
+try:
+    from pyeda.boolalg import picosat
+except ImportError:
+    pass
 
 
 # existing ExprVariable/ExprLiteral references
