@@ -25,7 +25,7 @@ def bit_on(num: int, bit: int) -> int:
     return (num >> bit) & 1
 
 def clog2(num: int) -> int:
-    """Return the ceiling log base two of an integer :math:`\ge 1`.
+    r"""Return the ceiling log base two of an integer :math:`\ge 1`.
 
     This function tells you the minimum dimension of a Boolean space with at
     least N points.

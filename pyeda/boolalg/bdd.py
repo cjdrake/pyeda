@@ -55,7 +55,7 @@ BDDNODEONE = _BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
 
 
 def bddvar(name, index=None):
-    """Return a unique BDD variable.
+    r"""Return a unique BDD variable.
 
     A Boolean *variable* is an abstract numerical quantity that may assume any
     value in the set :math:`B = \{0, 1\}`.
