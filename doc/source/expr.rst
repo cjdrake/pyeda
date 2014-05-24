@@ -328,7 +328,7 @@ primary operators.
    are :math:`1`.
    The inverse of `And`.
 
-.. function:: Xor(\*args, simplify=True, conj=False)
+.. function:: Xor(\*args, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if the input
    parity is odd.
@@ -344,17 +344,17 @@ use the ``Xor`` operator::
    >>> s = Xor('a', 'b', 'ci')
    >>> co = Or(And('a', 'b'), And('a', 'ci'), And('b', 'ci'))
 
-.. function:: Xnor(\*args, simplify=True, conj=False)
+.. function:: Xnor(\*args, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if the input
    parity is even.
 
-.. function:: Equal(\*args, simplify=True, conj=False)
+.. function:: Equal(\*args, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if all inputs
    are equivalent.
 
-.. function:: Unequal(\*args, simplify=True, conj=False)
+.. function:: Unequal(\*args, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if *not* all
    inputs are equivalent.

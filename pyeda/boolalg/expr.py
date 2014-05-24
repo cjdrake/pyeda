@@ -241,7 +241,7 @@ def Nand(*args, simplify=True):
     return expr
 
 # secondary functions
-def Xor(*args, simplify=True, conj=False):
+def Xor(*args, simplify=True):
     """Factory function for Boolean XOR expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprXor(*args)
@@ -249,7 +249,7 @@ def Xor(*args, simplify=True, conj=False):
         expr = expr.simplify()
     return expr
 
-def Xnor(*args, simplify=True, conj=False):
+def Xnor(*args, simplify=True):
     """Factory function for Boolean XNOR expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprXnor(*args)
@@ -257,7 +257,7 @@ def Xnor(*args, simplify=True, conj=False):
         expr = expr.simplify()
     return expr
 
-def Equal(*args, simplify=True, conj=False):
+def Equal(*args, simplify=True):
     """Factory function for Boolean EQUAL expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprEqual(*args)
@@ -265,7 +265,7 @@ def Equal(*args, simplify=True, conj=False):
         expr = expr.simplify()
     return expr
 
-def Unequal(*args, simplify=True, conj=False):
+def Unequal(*args, simplify=True):
     """Factory function for Boolean UNEQUAL expression."""
     args = [Expression.box(arg) for arg in args]
     expr = ExprUnequal(*args)
