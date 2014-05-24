@@ -45,15 +45,7 @@ Contents
    sudoku.rst
    queens.rst
    relnotes.rst
-
-Reference
----------
-
-.. toctree::
-   :maxdepth: 1
-
-   reference/util.rst
-   reference/boolalg/bdd.rst
+   reference.rst
 
 Indices and Tables
 ------------------
