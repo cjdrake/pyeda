@@ -555,6 +555,7 @@ and expression variables are instances of ``ExpressionVariable``,
 both of which inherit from ``Variable``.
 
 .. autoclass:: pyeda.boolalg.boolfunc.Variable
+   :noindex:
    :members: __lt__, name, qualname
    :member-order: bysource
 
@@ -570,7 +571,9 @@ This makes it possible to perform symbolic, algebraic manipulations using
 a Python interpreter.
 
 .. autoclass:: pyeda.boolalg.boolfunc.Function
-   :members: support, usupport, inputs, top, degree, cardinality,
+   :noindex:
+   :members: support, usupport, inputs, top,
+             degree, cardinality,
              iter_domain, iter_image, iter_relation,
              restrict, vrestrict, compose,
              satisfy_one, satisfy_all, satisfy_count,

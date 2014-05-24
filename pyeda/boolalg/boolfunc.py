@@ -1,23 +1,25 @@
 """
-Boolean Functions
+The :mod:`pyeda.boolalg.boolfunc` module ...
 
 Interface Functions:
-    num2point
-    num2upoint
-    num2term
 
-    point2upoint
-    point2term
+* :func:`num2point`
+* :func:`num2upoint`
+* :func:`num2term`
 
-    iter_points
-    iter_upoints
-    iter_terms
+* :func:`point2upoint`
+* :func:`point2term`
 
-    vpoint2point
+* :func:`iter_points`
+* :func:`iter_upoints`
+* :func:`iter_terms`
+
+* :func:`vpoint2point`
 
 Interface Classes:
-    Variable
-    Function
+
+* :class:`Variable`
+* :class:`Function`
 """
 
 import functools
@@ -33,8 +35,11 @@ VARIABLES = dict()
 def var(name, index=None):
     """Return a unique Variable instance.
 
-    .. note:: Do NOT call this function directly. It should only be used by
-              concrete Variable implementations, eg ExprVariable.
+    .. note::
+       Do **NOT** call this function directly.
+       Instead, use one of the concrete implementations:
+       :func:`pyeda.boolalg.bdd.bddvar` :func:`pyeda.boolalg.expr.exprvar`,
+       :func:`pyeda.boolalg.table.ttvar`.
     """
     tname = type(name)
     if tname is str:
@@ -86,67 +91,110 @@ def var(name, index=None):
     return v
 
 def num2point(num, vs):
-    """Convert a number into a point in an N-dimensional space.
+    """Convert *num* into a point in an N-dimensional Boolean space.
 
-    Parameters
-    ----------
-    num : int
-    vs : [Variable]
+    The *vs* argument is a sequence of :math:`N` Boolean variables.
+    There are :math:`2^N` points in the corresponding Boolean space.
+    The dimension number of each variable is its index in the sequence.
+
+    The *num* argument is an int in range :math:`[0, 2^N)`.
+
+    For example, consider the 3-dimensional space formed by variables
+    :math:`a`, :math:`b`, :math:`c`.
+    Each vertex corresponds to a 3-dimensional point as summarized by the
+    table::
+
+                6-----------7  ===== ======= =================
+               /|          /|   num   a b c        point
+              / |         / |  ===== ======= =================
+             /  |        /  |    0    0 0 0   {a:0, b:0, c:0}
+            4-----------5   |    1    1 0 0   {a:1, b:0, c:0}
+            |   |       |   |    2    0 1 0   {a:0, b:1, c:0}
+            |   |       |   |    3    1 1 0   {a:1, b:1, c:0}
+            |   2-------|---3    4    0 0 1   {a:0, b:0, c:1}
+            |  /        |  /     5    1 0 1   {a:1, b:0, c:1}
+       c b  | /         | /      6    0 1 1   {a:0, b:1, c:1}
+       |/   |/          |/       7    1 1 1   {a:1, b:1, c:1}
+       +-a  0-----------1      ===== ======= =================
+
+    .. note::
+       The ``a b c`` column is the binary representation of *num*
+       written in little-endian order.
     """
+    if type(num) is not int:
+        fstr = "expected num to be an int, got {0.__name__}"
+        raise TypeError(fstr.format(type(num)))
+    N = len(vs)
+    if not 0 <= num < 2**N:
+        fstr = "expected num to be in range [0, {}), got {}"
+        raise ValueError(fstr.format(2**N, num))
+
     return {v: bit_on(num, i) for i, v in enumerate(vs)}
 
 def num2upoint(num, vs):
-    """Convert a number into an untyped point in an N-dimensional space.
+    """Convert *num* into an untyped point in an N-dimensional space.
 
-    Parameters
-    ----------
-    num : int
-    vs : [Variable]
+    The *vs* argument is a sequence of :math:`N` Boolean variables.
+    There are :math:`2^N` points in the corresponding Boolean space.
+    The dimension number of each variable is its index in the sequence.
+
+    The *num* argument is an int in range :math:`[0, 2^N)`.
+
+    See :func:`num2point` for a description of how *num* maps onto an
+    N-dimensional point.
+    This function merely converts the output to an immutable (untyped) form.
     """
-    upoint = [set(), set()]
-    for i, v in enumerate(vs):
-        upoint[bit_on(num, i)].add(v.uniqid)
-    return frozenset(upoint[0]), frozenset(upoint[1])
+    return point2upoint(num2point(num, vs))
 
 def num2term(num, fs, conj=False):
-    """Convert a number into a min/max term.
+    """Convert *num* into a min/max term in an N-dimensional space.
 
-    Parameters
-    ----------
-    num : int
-    fs : [Function]
-    conj : bool
-        conj=False for minterms, conj=True for maxterms
+    The *fs* argument is a sequence of :math:`N` Boolean functions.
+    There are :math:`2^N` points in the corresponding Boolean space.
+    The dimension number of each function is its index in the sequence.
 
-    Examples
-    --------
+    The *num* argument is an int in range :math:`[0, 2^N)`.
 
-    Table of min/max terms for Boolean space {a, b, c}
+    If *conj* is ``False``, return a minterm.
+    Otherwise, return a maxterm.
 
-    +-----+----------+----------+
-    | num |  minterm |  maxterm |
-    +=====+==========+==========+
-    | 0   | a' b' c' | a  b  c  |
-    | 1   | a  b' c' | a' b  c  |
-    | 2   | a' b  c' | a  b' c  |
-    | 3   | a  b  c' | a' b' c  |
-    | 4   | a' b' c  | a  b  c' |
-    | 5   | a  b' c  | a' b  c' |
-    | 6   | a' b  c  | a  b' c' |
-    | 7   | a  b  c  | a' b' c' |
-    +-------+----------+----------+
+    For example, consider the 3-dimensional space formed by functions
+    :math:`f`, :math:`g`, :math:`h`.
+    Each vertex corresponds to a min/max term as summarized by the table::
+
+                6-----------7  ===== ======= ========== ==========
+               /|          /|   num   f g h    minterm    maxterm
+              / |         / |  ===== ======= ========== ==========
+             /  |        /  |    0    0 0 0   f' g' h'   f  g  h
+            4-----------5   |    1    1 0 0   f  g' h'   f' g  h
+            |   |       |   |    2    0 1 0   f' g  h'   f  g' h
+            |   |       |   |    3    1 1 0   f  g  h'   f' g' h
+            |   2-------|---3    4    0 0 1   f' g' h    f  g  h'
+            |  /        |  /     5    1 0 1   f  g' h    f' g  h'
+       h g  | /         | /      6    0 1 1   f' g  h    f  g' h'
+       |/   |/          |/       7    1 1 1   f  g  h    f' g' h'
+       +-f  0-----------1      ===== ======= ========= ===========
+
+    .. note::
+       The ``f g h`` column is the binary representation of *num*
+       written in little-endian order.
     """
+    if type(num) is not int:
+        fstr = "expected num to be an int, got {0.__name__}"
+        raise TypeError(fstr.format(type(num)))
+    N = len(fs)
+    if not 0 <= num < 2**N:
+        fstr = "expected num to be in range [0, {}), got {}"
+        raise ValueError(fstr.format(2**N, num))
+
     if conj:
         return tuple(~f if bit_on(num, i) else f for i, f in enumerate(fs))
     else:
         return tuple(f if bit_on(num, i) else ~f for i, f in enumerate(fs))
 
 def point2upoint(point):
-    """Convert a point into an untyped point.
+    """Convert *point* into an untyped point.
 
-    Parameters
-    ----------
-    point : {Variable: int}
     """
     upoint = [set(), set()]
     for v, val in point.items():
@@ -156,11 +204,10 @@ def point2upoint(point):
     return tuple(upoint)
 
 def point2term(point, conj=False):
-    """Convert a point in an N-dimension space into a min/max term.
+    """Convert *point* into a min/max term.
 
-    Parameters
-    ----------
-    point : {Variable: int}
+    If *conj* is ``False``, return a minterm.
+    Otherwise, return a maxterm.
     """
     if conj:
         return tuple(~v if val else v for v, val in point.items())
@@ -170,9 +217,7 @@ def point2term(point, conj=False):
 def iter_points(vs):
     """Iterate through all points in an N-dimensional space.
 
-    Parameters
-    ----------
-    vs : [Variable]
+    The *vs* argument is a sequence of :math:`N` Boolean variables.
     """
     for num in range(1 << len(vs)):
         yield num2point(num, vs)
@@ -180,9 +225,7 @@ def iter_points(vs):
 def iter_upoints(vs):
     """Iterate through all untyped points in an N-dimensional space.
 
-    Parameters
-    ----------
-    vs : [Variable]
+    The *vs* argument is a sequence of :math:`N` Boolean variables.
     """
     for num in range(1 << len(vs)):
         yield num2upoint(num, vs)
@@ -190,15 +233,53 @@ def iter_upoints(vs):
 def iter_terms(fs, conj=False):
     """Iterate through all min/max terms in an N-dimensional space.
 
-    Parameters
-    ----------
-    fs : [Function]
+    The *fs* argument is a sequence of :math:`N` Boolean functions.
+
+    If *conj* is ``False``, yield minterms.
+    Otherwise, yield maxterms.
     """
     for num in range(1 << len(fs)):
         yield num2term(num, fs, conj)
 
 def vpoint2point(vpoint):
-    """Convert a vector point to a point."""
+    """Convert *vpoint* into a point in an N-dimensional Boolean space.
+
+    The *vpoint* argument is a mapping from multi-dimensional arrays of
+    variables to matching arrays of :math:`{0, 1}`.
+    Elements from the values array will be converted to :math:`{0, 1}` using
+    the `int` builtin function.
+
+    For example::
+
+       >>> from pyeda.boolalg.expr import exprvar
+       >>> a = exprvar('a')
+       >>> b00, b01, b10, b11 = map(exprvar, "b00 b01 b10 b11".split())
+       >>> vpoint = {a: 0, ((b00, b01), (b10, b11)): ["01", "01"]}
+       >>> point = vpoint2point(vpoint)
+       >>> point[a], point[b00], point[b01], point[b10], point[b11]
+       (0, 0, 1, 0, 1)
+
+    The vpoint mapping is more concise if ``B`` is an farray::
+
+       >>> from pyeda.boolalg.expr import exprvar
+       >>> from pyeda.boolalg.bfarray import exprvars
+       >>> a = exprvar('a')
+       >>> B = exprvars('b', 2, 2)
+       >>> vpoint = {a: 0, B: ["01", "01"]}
+       >>> point = vpoint2point(vpoint)
+       >>> point[a], point[B[0,0]], point[B[0,1]], point[B[1,0]], point[B[1,1]]
+       (0, 0, 1, 0, 1)
+
+    The shape of the array must match the shape of its values::
+
+       >>> from pyeda.boolalg.bfarray import exprvars
+       >>> X = exprvars('x', 2, 2)
+       >>> vpoint = {X: "0101"}
+       >>> point = vpoint2point(vpoint)
+       Traceback (most recent call last):
+           ...
+       ValueError: expected 1:1 mapping from Variable => {0, 1}
+    """
     point = dict()
     for v, val in vpoint.items():
         point.update(_flatten(v, val))
@@ -219,14 +300,41 @@ _UNIQIDS = dict()
 _COUNT = 1
 
 class Variable(object):
-    """
-    Abstract base class that defines an interface for a Boolean variable.
+    r"""
+    Base class for a symbolic Boolean variable.
 
-    A Boolean variable is a numerical quantity that may assume any value in the
-    set B = {0, 1}.
+    A Boolean *variable* is an abstract numerical quantity that may assume any
+    value in the set :math:`B = \{0, 1\}`.
 
-    This implementation includes optional indices, nonnegative integers that
-    can be used to construct multi-dimensional bit vectors.
+    .. note::
+       Do **NOT** instantiate a ``Variable`` directly.
+       Instead, use one of the concrete implementations:
+       :func:`pyeda.boolalg.bdd.bddvar` :func:`pyeda.boolalg.expr.exprvar`,
+       :func:`pyeda.boolalg.table.ttvar`.
+
+    A variable is defined by one or more *names*,
+    and zero or more *indices*.
+    Multiple names establish hierarchical namespaces,
+    and multiple indices group several related variables.
+
+    Each variable has a unique, positive integer called the *uniqid*.
+    This integer may be used to identify a variable that is represented by
+    more than one data structure.
+    For example, ``bddvar('a', 0)`` and ``exprvar('a', 0)`` will refer to two
+    different Variable instances, but both will share the same uniqid.
+
+    All variables are implicitly ordered.
+    If two variable names are identical, compare their indices.
+    Otherwise, do a string comparison of their names.
+    This is only useful where variable order matters,
+    and is not meaningful in any algebraic sense.
+
+    For example, the following statements are true:
+
+    * ``a == a``
+    * ``a < b``
+    * ``a[0] < a[1]``
+    * ``a[0][1] < a[0][2]``
     """
     def __init__(self, names, indices):
         global _UNIQIDS, _COUNT
@@ -261,7 +369,7 @@ class Variable(object):
 
     @property
     def name(self):
-        """Return the variable name."""
+        """Return the innermost variable name."""
         return self.names[0]
 
     @property
@@ -272,10 +380,9 @@ class Variable(object):
 
 class Function(object):
     """
-    Abstract base class that defines an interface for a scalar Boolean function
-    of :math:`N` variables.
+    Abstract base class that defines an interface for a symbolic Boolean
+    function of :math:`N` variables.
     """
-
     # Operators
     def __invert__(self):
         """Boolean negation operator
@@ -290,7 +397,7 @@ class Function(object):
         """
         raise NotImplementedError()
 
-    def __or__(self, other):
+    def __or__(self, g):
         """Boolean disjunction (sum, OR) operator
 
         +-----------+-----------+---------------+
@@ -307,10 +414,10 @@ class Function(object):
         """
         raise NotImplementedError()
 
-    def __ror__(self, other):
-        return self.__or__(other)
+    def __ror__(self, g):
+        return self.__or__(g)
 
-    def __and__(self, other):
+    def __and__(self, g):
         r"""Boolean conjunction (product, AND) operator
 
         +-----------+-----------+-------------------+
@@ -327,10 +434,10 @@ class Function(object):
         """
         raise NotImplementedError()
 
-    def __rand__(self, other):
-        return self.__and__(other)
+    def __rand__(self, g):
+        return self.__and__(g)
 
-    def __xor__(self, other):
+    def __xor__(self, g):
         r"""Boolean exclusive or (XOR) operator
 
         +-----------+-----------+--------------------+
@@ -347,10 +454,15 @@ class Function(object):
         """
         raise NotImplementedError()
 
-    def __rxor__(self, other):
-        return self.__xor__(other)
+    def __rxor__(self, g):
+        return self.__xor__(g)
 
     def __add__(self, other):
+        """
+        Convert this Function to an farray, and concatenate *other* to the end.
+
+        The *other* argument may be a Function or an farray.
+        """
         from pyeda.boolalg.bfarray import farray
         if isinstance(other, Function):
             return farray([self] + [other])
@@ -368,16 +480,17 @@ class Function(object):
         else:
             raise TypeError("expected Function or farray")
 
-    def __mul__(self, other):
+    def __mul__(self, num):
+        """Return an farray of this variable repeated *num* times."""
         from pyeda.boolalg.bfarray import farray
-        if type(other) is not int:
+        if type(num) is not int:
             raise TypeError("expected multiplier to be an int")
-        if other < 0:
+        if num < 0:
             raise ValueError("expected multiplier to be non-negative")
-        return farray([self] * other)
+        return farray([self] * num)
 
-    def __rmul__(self, other):
-        return self.__mul__(other)
+    def __rmul__(self, num):
+        return self.__mul__(num)
 
     @property
     def support(self):
@@ -485,6 +598,8 @@ class Function(object):
     def iter_cofactors(self, vs=None):
         r"""Iterate through the cofactors of a function over N variables.
 
+        The *vs* argument is a sequence of :math:`N` Boolean variables.
+
         The *cofactor* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)`
         with respect to variable :math:`x_i` is:
         :math:`f_{x_i} = f(x_1, x_2, \dots, 1, \dots, x_n)`
@@ -500,6 +615,8 @@ class Function(object):
     def cofactors(self, vs=None):
         r"""Return a tuple of the cofactors of a function over N variables.
 
+        The *vs* argument is a sequence of :math:`N` Boolean variables.
+
         The *cofactor* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)`
         with respect to variable :math:`x_i` is:
         :math:`f_{x_i} = f(x_1, x_2, \dots, 1, \dots, x_n)`
@@ -513,6 +630,8 @@ class Function(object):
     def smoothing(self, vs=None):
         r"""Return the smoothing of a function over a sequence of N variables.
 
+        The *vs* argument is a sequence of :math:`N` Boolean variables.
+
         The *smoothing* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with
         respect to variable :math:`x_i` is:
         :math:`S_{x_i}(f) = f_{x_i} + f_{x_i'}`
@@ -524,6 +643,8 @@ class Function(object):
 
     def consensus(self, vs=None):
         r"""Return the consensus of a function over a sequence of N variables.
+
+        The *vs* argument is a sequence of :math:`N` Boolean variables.
 
         The *consensus* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with
         respect to variable :math:`x_i` is:
@@ -537,6 +658,8 @@ class Function(object):
     def derivative(self, vs=None):
         r"""Return the derivative of a function over a sequence of N variables.
 
+        The *vs* argument is a sequence of :math:`N` Boolean variables.
+
         The *derivative* of :math:`f(x_1, x_2, \dots, x_i, \dots, x_n)` with
         respect to variable :math:`x_i` is:
         :math:`\frac{\partial}{\partial x_i} f = f_{x_i} \oplus f_{x_i'}`
@@ -548,16 +671,18 @@ class Function(object):
     def is_zero(self):
         """Return whether this function is zero.
 
-        .. note:: This method will only look for a particular "zero form",
-                  and will **NOT** do a full search for a contradiction.
+        .. note::
+           This method will only look for a particular "zero form",
+           and will **NOT** do a full search for a contradiction.
         """
         raise NotImplementedError()
 
     def is_one(self):
         """Return whether this function is one.
 
-        .. note:: This method will only look for a particular "one form",
-                  and will **NOT** do a full search for a tautology.
+        .. note::
+           This method will only look for a particular "one form",
+           and will **NOT** do a full search for a tautology.
         """
         raise NotImplementedError()
 
