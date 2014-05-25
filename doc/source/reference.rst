@@ -11,4 +11,5 @@
    reference/boolalg/boolfunc.rst
    reference/boolalg/bdd.rst
    reference/boolalg/expr.rst
+   reference/boolalg/bfarray.rst
 
