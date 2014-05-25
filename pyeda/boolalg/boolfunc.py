@@ -1,5 +1,6 @@
 """
-The :mod:`pyeda.boolalg.boolfunc` module ...
+The :mod:`pyeda.boolalg.boolfunc` module implements the fundamentals of
+Boolean space, variables and functions.
 
 Interface Functions:
 
