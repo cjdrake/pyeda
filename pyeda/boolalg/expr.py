@@ -1257,7 +1257,7 @@ class ExprNot(Expression):
         if new_arg is not self.arg:
             return self.__class__(new_arg).simplify()
         else:
-            return self
+            return self.simplify()
 
     # From Expression
     def _traverse(self, visited):
@@ -1320,8 +1320,14 @@ class _ArgumentContainer(Expression):
             return self
 
     def compose(self, mapping):
-        if self.support & set(mapping.keys()):
-            args = [arg.compose(mapping) for arg in self.args]
+        modified = False
+        args = list()
+        for arg in self.args:
+            new_arg = arg.compose(mapping)
+            if new_arg is not arg:
+                modified = True
+            args.append(new_arg)
+        if modified:
             return self.__class__(*args).simplify()
         else:
             return self.simplify()
