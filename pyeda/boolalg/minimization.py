@@ -3,6 +3,7 @@ Boolean Minimization
 
 Interface Functions:
     espresso_exprs
+    espresso_tts
 """
 
 from pyeda.boolalg import boolfunc
