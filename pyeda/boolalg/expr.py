@@ -515,11 +515,15 @@ class Expression(boolfunc.Function):
                 v = _EXPRLITERALS[uniqid]
                 parts += [str(v), str(~v)]
             raise ValueError("conflicting constraints: " + ", ".join(parts))
-        return self._urestrict(upoint)
+        return self._urestrict2(upoint)
 
-    def _urestrict(self, upoint):
+    def _urestrict1(self, upoint):
         """Implementation of restrict after error-checking."""
         raise NotImplementedError()
+
+    def _urestrict2(self, upoint):
+        """Implementation of restrict after error-checking."""
+        return self._urestrict1(upoint).simplify()
 
     def satisfy_one(self):
         if self.is_cnf():
@@ -860,7 +864,7 @@ class ExprConstant(Expression, sat.DPLLInterface):
     def support(self):
         return frozenset()
 
-    def _urestrict(self, upoint):
+    def _urestrict1(self, upoint):
         return self
 
     def compose(self, mapping):
@@ -1092,7 +1096,7 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
     def support(self):
         return frozenset([self, ])
 
-    def _urestrict(self, upoint):
+    def _urestrict1(self, upoint):
         if self.uniqid in upoint[0]:
             return EXPRZERO
         elif self.uniqid in upoint[1]:
@@ -1167,7 +1171,7 @@ class ExprComplement(ExprLiteral):
     def support(self):
         return frozenset([self.exprvar, ])
 
-    def _urestrict(self, upoint):
+    def _urestrict1(self, upoint):
         if self.exprvar.uniqid in upoint[0]:
             return EXPRONE
         elif self.exprvar.uniqid in upoint[1]:
@@ -1241,10 +1245,10 @@ class ExprNot(Expression):
     def support(self):
         return self.arg.support
 
-    def _urestrict(self, upoint):
-        new_arg = self.arg._urestrict(upoint)
+    def _urestrict1(self, upoint):
+        new_arg = self.arg._urestrict1(upoint)
         if new_arg is not self.arg:
-            return self.__class__(new_arg).simplify()
+            return self.__class__(new_arg)
         else:
             return self
 
@@ -1302,12 +1306,18 @@ class _ArgumentContainer(Expression):
     def support(self):
         return frozenset.union(*[arg.support for arg in self.args])
 
-    def _urestrict(self, upoint):
-        if self.usupport & (upoint[0] | upoint[1]):
-            args = [arg._urestrict(upoint) for arg in self.args]
-            return self.__class__(*args).simplify()
+    def _urestrict1(self, upoint):
+        modified = False
+        args = list()
+        for arg in self.args:
+            new_arg = arg._urestrict1(upoint)
+            if new_arg is not arg:
+                modified = True
+            args.append(new_arg)
+        if modified:
+            return self.__class__(*args)
         else:
-            return self.simplify()
+            return self
 
     def compose(self, mapping):
         if self.support & set(mapping.keys()):
@@ -1386,16 +1396,21 @@ class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
         return id(self) < id(other)
 
     # From Function
-    def _urestrict(self, upoint):
-        if self.usupport & (upoint[0] | upoint[1]):
+    def _urestrict1(self, upoint):
+        modified = False
+        args = set()
+        for arg in self.args:
+            new_arg = arg._urestrict1(upoint)
             # speed hack
-            if self.DOMINATOR in self.args:
+            if new_arg is self.DOMINATOR:
                 return self.DOMINATOR
-            else:
-                args = {arg._urestrict(upoint) for arg in self.args}
-            return self.__class__(*args).simplify()
+            elif new_arg is not arg:
+                modified = True
+            args.add(new_arg)
+        if modified:
+            return self.__class__(*args)
         else:
-            return self.simplify()
+            return self
 
     # From Expression
     def simplify(self):
@@ -1742,7 +1757,7 @@ class ExprAnd(ExprOrAnd):
                 bcp_upnt = clause.bcp()
                 upnt = (upnt[0] | bcp_upnt[0], upnt[1] | bcp_upnt[1])
         if upnt[0] or upnt[1]:
-            bcp_upnt = self._urestrict(upnt).bcp()
+            bcp_upnt = self._urestrict2(upnt).bcp()
             if bcp_upnt is None:
                 return None
             else:
@@ -1818,16 +1833,21 @@ class ExprNor(ExprNorNand):
         return "\\overline{" + ExprOr(*self.args).to_latex() + "}"
 
     # From Function
-    def _urestrict(self, upoint):
-        if self.usupport & (upoint[0] | upoint[1]):
+    def _urestrict1(self, upoint):
+        modified = False
+        args = set()
+        for arg in self.args:
+            new_arg = arg._urestrict1(upoint)
             # speed hack
-            if EXPRONE in self.args:
+            if new_arg is EXPRONE:
                 return EXPRZERO
-            else:
-                args = {arg._urestrict(upoint) for arg in self.args}
-            return self.__class__(*args).simplify()
+            elif new_arg is not arg:
+                modified = True
+            args.add(new_arg)
+        if modified:
+            return self.__class__(*args)
         else:
-            return self.simplify()
+            return self
 
     # From Expression
     def invert(self):
@@ -1894,16 +1914,21 @@ class ExprNand(ExprNorNand):
         return "\\overline{" + ExprAnd(*self.args).to_latex() + "}"
 
     # From Function
-    def _urestrict(self, upoint):
-        if self.usupport & (upoint[0] | upoint[1]):
+    def _urestrict1(self, upoint):
+        modified = False
+        args = set()
+        for arg in self.args:
+            new_arg = arg._urestrict1(upoint)
             # speed hack
-            if EXPRZERO in self.args:
+            if new_arg is EXPRZERO:
                 return EXPRONE
-            else:
-                args = {arg._urestrict(upoint) for arg in self.args}
-            return self.__class__(*args).simplify()
+            elif new_arg is not arg:
+                modified = True
+            args.add(new_arg)
+        if modified:
+            return self.__class__(*args)
         else:
-            return self.simplify()
+            return self
 
     # From Expression
     def invert(self):
@@ -2540,7 +2565,7 @@ def _iter_zeros(expr):
         upnt0 = frozenset([v.uniqid]), frozenset()
         upnt1 = frozenset(), frozenset([v.uniqid])
         for upnt in [upnt0, upnt1]:
-            for zero_upnt in _iter_zeros(expr._urestrict(upnt)):
+            for zero_upnt in _iter_zeros(expr._urestrict2(upnt)):
                 yield (upnt[0] | zero_upnt[0], upnt[1] | zero_upnt[1])
 
 def _iter_ones(expr):
@@ -2552,7 +2577,7 @@ def _iter_ones(expr):
         upnt0 = frozenset([v.uniqid]), frozenset()
         upnt1 = frozenset(), frozenset([v.uniqid])
         for upnt in [upnt0, upnt1]:
-            for one_upnt in _iter_ones(expr._urestrict(upnt)):
+            for one_upnt in _iter_ones(expr._urestrict2(upnt)):
                 yield (upnt[0] | one_upnt[0], upnt[1] | one_upnt[1])
 
 def _tseitin(expr, auxvarname, auxvars=None):
