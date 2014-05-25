@@ -746,19 +746,19 @@ class farray(object):
 
     # Other logic
     def decode(self):
-        """
-        Return symbolic logic for an N:2^N binary decoder.
+        r"""
+        Return symbolic logic for an :math:`N \rightarrow 2^N` binary decoder.
 
         Example Truth Table for a 2:4 decoder:
 
-            +===========+=====================+
-            | A[1] A[0] | D[3] D[2] D[1] D[0] |
-            +===========+=====================+
-            |   0    0  |   0    0    0    1  |
-            |   0    1  |   0    0    1    0  |
-            |   1    0  |   0    1    0    0  |
-            |   1    1  |   1    0    0    0  |
-            +===========+=====================+
+        .. csv-table::
+           :header: :math:`A_1`, :math:`A_0`, :math:`D_3`, :math:`D_2`, :math:`D_1`, :math:`D_0`
+           :stub-columns: 2
+
+           0, 0, 0, 0, 0, 1
+           0, 1, 0, 0, 1, 0
+           1, 0, 0, 1, 0, 0
+           1, 1, 1, 0, 0, 0
         """
         # Degenerate case is just [1], but that's not a valid farray
         if self.size == 0:
