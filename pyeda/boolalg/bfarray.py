@@ -5,8 +5,8 @@ of Boolean functions.
 Interface Functions:
 
 * :func:`bddzeros`
-* :func:`bbddones`
-* :func:`bbddvars`
+* :func:`bddones`
+* :func:`bddvars`
 
 * :func:`exprzeros`
 * :func:`exprones`
