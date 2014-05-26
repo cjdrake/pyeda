@@ -94,6 +94,7 @@ Expression Tree Nodes
              complete_sum,
              equivalent,
              to_dot
+   :member-order: bysource
 
 .. autoclass:: pyeda.boolalg.expr.ExprConstant
 

@@ -91,7 +91,7 @@ def bddvar(name, index=None):
 
     .. seealso::
        For creating arrays of variables with incremental indices,
-       we recommend using the :func:`bddvars` function.
+       we recommend using the :func:`pyeda.boolalg.bfarray.bddvars` function.
     """
     bvar = boolfunc.var(name, index)
     try:

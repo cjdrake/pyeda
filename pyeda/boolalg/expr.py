@@ -128,7 +128,7 @@ def exprvar(name, index=None):
 
     .. seealso::
        For creating arrays of variables with incremental indices,
-       we recommend using the :func:`exprvars` function.
+       we recommend using the :func:`pyeda.boolalg.bfarray.exprvars` function.
     """
     bvar = boolfunc.var(name, index)
     try:
@@ -646,11 +646,14 @@ class Expression(boolfunc.Function):
         raise NotImplementedError()
 
     def flatten(self, op):
-        """Return a factored, flattened expression.
+        r"""Return a factored, flattened expression.
 
         Use the distributive law to flatten all nested expressions:
-        a | (b & c) = (a | b) & (a | c)
-        a & (b | c) = (a & b) | (a & c)
+
+        .. math::
+           a + (b \cdot c) = (a + b) \cdot (a + c)
+
+           a \cdot (b + c) = (a \cdot b) + (a \cdot c)
 
         op : ExprOr or ExprAnd
             The operator you want to flatten. For example, if you want to
@@ -721,10 +724,12 @@ class Expression(boolfunc.Function):
         raise NotImplementedError()
 
     def absorb(self):
-        """Return the DNF/CNF expression after absorption.
+        r"""Return the DNF/CNF expression after absorption.
 
-        a | (a & b) = a
-        a & (a | b) = a
+        .. math::
+           a + (a \cdot b) = a
+
+           a \cdot (a + b) = a
         """
         if self.is_dnf() or self.is_cnf():
             return self._absorb()
