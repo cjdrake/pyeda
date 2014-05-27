@@ -814,7 +814,7 @@ class farray(object):
             if fsl_type is int:
                 nsls.append(_norm_index(i, fsl, *self.shape[i]))
             elif fsl_type is slice:
-                nsls.append(_norm_slice(i, fsl, *self.shape[i]))
+                nsls.append(_norm_slice(fsl, *self.shape[i]))
             # farray
             else:
                 nsls.append(fsl)
@@ -997,10 +997,10 @@ def _check_shape(shape):
                     type(dim[0]) is int and type(dim[1]) is int):
                 if dim[0] < 0:
                     raise ValueError("expected low dimension to be >= 0")
-                if dim[1] <= 0:
-                    raise ValueError("expected high dimension to be > 0")
-                if dim[0] >= dim[1]:
-                    raise ValueError("expected low < high dimensions")
+                if dim[1] < 0:
+                    raise ValueError("expected high dimension to be >= 0")
+                if dim[0] > dim[1]:
+                    raise ValueError("expected low <= high dimensions")
             else:
                 raise TypeError("expected shape dimension to be (int, int)")
     else:
@@ -1034,37 +1034,47 @@ def _set_key2sl(key):
 
 def _norm_index(dim, index, start, stop):
     """Return an index normalized to an farray start index."""
-    if start <= index < stop:
+    length = stop - start
+    if -length <= index < 0:
+        normindex = index + length
+    elif start <= index < stop:
         normindex = index - start
-    elif -stop <= index < -start:
-        normindex = index + stop
     else:
         fstr = "expected dim {} index in range [{}, {})"
         raise IndexError(fstr.format(dim, start, stop))
     return normindex
 
-def _norm_slice(dim, sl, start, stop):
+def _norm_slice(sl, start, stop):
     """Return a slice normalized to an farray start index."""
+    length = stop - start
     if sl.start is None:
         normstart = 0
     else:
-        if start <= sl.start <= stop:
-            normstart = sl.start - start
-        elif -stop <= sl.start <= -start:
-            normstart = sl.start + stop
+        if sl.start < 0:
+            if sl.start < -length:
+                normstart = 0
+            else:
+                normstart = sl.start + length
         else:
-            fstr = "expected dim {} start index in range [{}, {}]"
-            raise IndexError(fstr.format(dim, start, stop))
+            if sl.start > stop:
+                normstart = length
+            else:
+                normstart = sl.start - start
     if sl.stop is None:
-        normstop = (stop - start)
+        normstop = length
     else:
-        if start <= sl.stop <= stop:
-            normstop = sl.stop - start
-        elif -stop <= sl.stop <= -start:
-            normstop = sl.stop + stop
+        if sl.stop < 0:
+            if sl.stop < -length:
+                normstop = 0
+            else:
+                normstop = sl.stop + length
         else:
-            fstr = "expected dim {} stop index in range [{}, {}]"
-            raise IndexError(fstr.format(dim, start, stop))
+            if sl.stop > stop:
+                normstop = length
+            else:
+                normstop = sl.stop - start
+    if normstop < normstart:
+        normstop = normstart
     return slice(normstart, normstop)
 
 def _filtdim(items, shape, dim, nsl):
