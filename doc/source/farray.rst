@@ -431,18 +431,65 @@ This works for multi-dimensional arrays as well::
             Or(And(~s, y[1,0,1]),
                And( s, y[1,1,1]))]])
 
+Operators
+=========
+
+Function arrays support several operators for algebraic manipulation.
+Some of these operators overload Python's operator symbols.
+This section will describe how you can use the ``farray`` data type and the
+Python interpreter to perform powerful symbolic computations.
+
 Unary Operators
-===============
+---------------
 
-uor, unor, uand, unand, uxor, uxnor
+A common operation is to reduce the entire contents of an array to a single
+function.
+This is supported by the OR, AND, and XOR operators because they are
+1) variadic, and 2) associative.
 
-Bit-wise Operators
-==================
+Unfortunately, Python has no appropriate symbols available,
+so unary operators are supported by the following ``farray`` methods:
+
+* :meth:`pyeda.boolalg.bfarray.farray.uor`
+* :meth:`pyeda.boolalg.bfarray.farray.unor`
+* :meth:`pyeda.boolalg.bfarray.farray.uand`
+* :meth:`pyeda.boolalg.bfarray.farray.unand`
+* :meth:`pyeda.boolalg.bfarray.farray.uxor`
+* :meth:`pyeda.boolalg.bfarray.farray.uxnor`
+
+One well-known usage of unary reduction is conversion from a binary-reflected
+gray code (BRGC) back to binary.
+In the following example, ``Y`` is a 3-bit array that contains logic to convert
+the contents of ``X`` from gray code to binary.
+See the Wikipedia `Gray Code <http://en.wikipedia.org/wiki/Gray_code>`_
+article for background.
+
+::
+
+   >>> X = exprvars('x', 3)
+   >>> Y = farray([X[i:].uxor() for i, _ in enumerate(X)])
+   >>> graycode = ['000', '100', '110', '010', '011', '111', '101', '001']
+   >>> for vpnt in graycode:
+   ...     print(Y.vrestrict({X: vpnt}).to_uint())
+   0
+   1
+   2
+   3
+   4
+   5
+   6
+   7
+
+Binary (Bit-wise) Operators
+---------------------------
 
 invert, or, and, xor, lsh, rsh, arsh
 
 Concatenation and Repetition
-============================
+----------------------------
 
 todo
+
+Miscellaneous
+-------------
 
