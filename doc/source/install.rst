@@ -1,10 +1,10 @@
 .. _install:
 
 .. _easy_install: http://pythonhosted.org/setuptools/easy_install.html
-.. _pip: http://www.pip-installer.org/en/latest
+.. _pip: https://pip.pypa.io
 
 .. _IPython: http://ipython.org
-.. _Nose: http://nose.readthedocs.org/en/latest
+.. _Nose: http://nose.readthedocs.org
 .. _PyLint: http://www.pylint.org
 .. _Sphinx: http://sphinx-doc.org
 
@@ -49,7 +49,7 @@ Distutils / Virtualenv
 The latest PyEDA release is hosted on
 `PyPI <http://pypi.python.org/pypi/pyeda>`_.
 
-To get PyEDA with `pip`_ (recommended)::
+To get PyEDA with `pip`_::
 
    $ pip3 install pyeda
 
@@ -58,9 +58,10 @@ To get PyEDA with `pip`_ (recommended)::
    most likely ``pip`` will be part of Python-2.x, which won't work.
    It's safer to always use ``pip3``.
 
-To get PyEDA with `easy_install`_ (not recommended)::
-
-   $ easy_install pyeda
+.. note::
+   If you are using a Windows wheel distribution,
+   you may need to install the
+   [Visual Studio 2012 Redistributable](http://www.microsoft.com/en-us/download/details.aspx?id=30679).
 
 We *strongly* recommend that you also install an excellent Python tool called
 `IPython`_.
@@ -68,7 +69,7 @@ For interactive use,
 it is vastly superior to using the standard Python interpreter.
 To install IPython into your virtual environment::
 
-   $ pip install ipython
+   $ pip3 install ipython
 
 Getting the Source
 ==================
