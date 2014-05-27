@@ -385,9 +385,14 @@ And example usage::
    >>> A[-3:-1]
    farray([a[1], a[2]])
 
-.. note::
-   Arrays with non-zero start indices also support negative indices,
-   but the current methodology is under review and may change.
+Arrays with non-zero start indices also support negative indices.
+For example, here is the index guide for ``A[3:7]``::
+
+    +------+------+------+------+
+    | a[3] | a[4] | a[5] | a[6] |
+    +------+------+------+------+
+    3      4      5      6      7
+   -4     -3     -2     -1
 
 Multiplexor Selects
 -------------------
