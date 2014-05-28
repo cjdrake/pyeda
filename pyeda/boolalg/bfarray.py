@@ -39,7 +39,7 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.bdd import BinaryDecisionDiagram, bddvar
 from pyeda.boolalg.expr import Expression, exprvar
 from pyeda.boolalg.table import TruthTable, ttvar
-from pyeda.util import cached_property, clog2
+from pyeda.util import clog2
 
 
 _VAR = {
@@ -535,17 +535,17 @@ class farray(object):
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    @cached_property
+    @property
     def size(self):
         """Return the size of the farray."""
         return _volume(self.shape)
 
-    @cached_property
+    @property
     def offsets(self):
         """Return a tuple of dimension offsets."""
         return tuple(start for start, _ in self.shape)
 
-    @cached_property
+    @property
     def ndim(self):
         """Return the number of dimensions."""
         return len(self.shape)
@@ -837,7 +837,7 @@ class farray(object):
             offset += size * index
         return offset
 
-    @cached_property
+    @property
     def _normshape(self):
         """Return the shape normalized to zero offsets."""
         return tuple(stop - start for start, stop in self.shape)
