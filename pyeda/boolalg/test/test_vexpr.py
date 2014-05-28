@@ -12,12 +12,12 @@ def test_bitvec():
     X = bitvec('x')
     assert X.name == 'x'
     X = bitvec('x', 4)
-    assert X.shape[0][0] == 0 and X.shape[0][1] == 4 and len(X.items) == 4
+    assert X.shape[0][0] == 0 and X.shape[0][1] == 4 and len(X._items) == 4
     X = bitvec('x', (4, 8))
-    assert X.shape[0][0] == 4 and X.shape[0][1] == 8 and len(X.items) == 4
+    assert X.shape[0][0] == 4 and X.shape[0][1] == 8 and len(X._items) == 4
     # FIXME: should we support this?
     #X = bitvec('x', (8, 4))
-    #assert X.shape[0][0] == 4 and X.shape[0][1] == 8 and len(X.items) == 4
+    #assert X.shape[0][0] == 4 and X.shape[0][1] == 8 and len(X._items) == 4
 
 def test_uint2exprs():
     assert_raises(ValueError, uint2exprs, -1)

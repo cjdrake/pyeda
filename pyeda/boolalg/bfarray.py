@@ -406,12 +406,12 @@ class farray(object):
     Array of Boolean functions
     """
     def __init__(self, objs, shape=None, ftype=None):
-        self.items, _shape, _ftype = _itemize(objs)
+        self._items, _shape, _ftype = _itemize(objs)
         if shape is None:
             self.shape = _shape
         else:
             _check_shape(shape)
-            if _volume(shape) != len(self.items):
+            if _volume(shape) != len(self._items):
                 raise ValueError("expected shape volume to match items")
             self.shape = shape
         if ftype is None:
@@ -469,10 +469,10 @@ class farray(object):
 
         if all(type(nsl) is int for nsl in nsls):
             # Speed hack for coordinates
-            return self.items[self._coord2offset(nsls)]
+            return self._items[self._coord2offset(nsls)]
         else:
             # Filter through all dimensions (right to left)
-            items, shape = self.items[:], self.shape[:]
+            items, shape = self._items[:], self.shape[:]
             for dim in range(self.ndim - 1, -1, -1):
                 items, shape = _filtdim(items, shape, dim, nsls[dim])
 
@@ -492,7 +492,7 @@ class farray(object):
         if all(type(nsl) is int for nsl in nsls):
             if not isinstance(item, boolfunc.Function):
                 raise TypeError("expected item to be a Function")
-            self.items[self._coord2offset(nsls)] = item
+            self._items[self._coord2offset(nsls)] = item
         else:
             if type(item) is not farray:
                 raise TypeError("expected item to be an farray")
@@ -502,22 +502,22 @@ class farray(object):
                 raise ValueError(fstr.format(len(coords), item.size))
             it = item.flat
             for coord in coords:
-                self.items[self._coord2offset(coord)] = next(it)
+                self._items[self._coord2offset(coord)] = next(it)
 
     def __add__(self, other):
         if isinstance(other, boolfunc.Function):
-            return self.__class__(self.items + [other], ftype=self.ftype)
+            return self.__class__(self._items + [other], ftype=self.ftype)
         elif isinstance(other, farray):
-            return self.__class__(self.items + list(other.flat),
+            return self.__class__(self._items + list(other.flat),
                                   ftype=self.ftype)
         else:
             raise TypeError("expected Function or farray")
 
     def __radd__(self, other):
         if isinstance(other, boolfunc.Function):
-            return self.__class__([other] + self.items, ftype=self.ftype)
+            return self.__class__([other] + self._items, ftype=self.ftype)
         elif isinstance(other, farray):
-            return self.__class__(list(other.flat) + self.items,
+            return self.__class__(list(other.flat) + self._items,
                                   ftype=self.ftype)
         else:
             raise TypeError("expected Function or farray")
@@ -555,19 +555,19 @@ class farray(object):
         shape = _dims2shape(*dims)
         if _volume(shape) != self.size:
             raise ValueError("expected shape with equal volume")
-        return self.__class__(self.items, shape, self.ftype)
+        return self.__class__(self._items, shape, self.ftype)
 
     @property
     def flat(self):
         """Return a 1D iterator over the farray."""
-        yield from self.items
+        yield from self._items
 
     def restrict(self, point):
         """
         Return the farray that results from applying the ``restrict`` method to
         all functions.
         """
-        items = [f.restrict(point) for f in self.items]
+        items = [f.restrict(point) for f in self._items]
         return self.__class__(items, self.shape, self.ftype)
 
     def vrestrict(self, vpoint):
@@ -577,7 +577,7 @@ class farray(object):
     def to_uint(self):
         """Convert vector to an unsigned integer, if possible."""
         num = 0
-        for i, f in enumerate(self.items):
+        for i, f in enumerate(self._items):
             if f.is_zero():
                 pass
             elif f.is_one():
@@ -590,7 +590,7 @@ class farray(object):
     def to_int(self):
         """Convert vector to an integer, if possible."""
         num = self.to_uint()
-        if num and self.items[-1].unbox():
+        if num and self._items[-1].unbox():
             return num - (1 << self.size)
         else:
             return num
@@ -598,17 +598,17 @@ class farray(object):
     def zext(self, num):
         """Return a flat copy of this array, zero-extended by N bits."""
         zero = self.ftype.box(0)
-        return self.__class__(self.items + [zero] * num, ftype=self.ftype)
+        return self.__class__(self._items + [zero] * num, ftype=self.ftype)
 
     def sext(self, num):
         """Return a flat copy of this array, sign-extended by N bits."""
-        sign = self.items[-1]
-        return self.__class__(self.items + [sign] * num, ftype=self.ftype)
+        sign = self._items[-1]
+        return self.__class__(self._items + [sign] * num, ftype=self.ftype)
 
     # Operators
     def __invert__(self):
         """Return the bit-wise NOT of the farray."""
-        return self.__class__([~x for x in self.items], self.shape, self.ftype)
+        return self.__class__([~x for x in self._items], self.shape, self.ftype)
 
     def __or__(self, other):
         """Return the bit-wise OR of the farray and *other*."""
@@ -661,7 +661,7 @@ class farray(object):
     # Unary operators
     def uor(self):
         """Return the unary OR of a array of functions."""
-        return reduce(operator.or_, self.items, self.ftype.box(0))
+        return reduce(operator.or_, self._items, self.ftype.box(0))
 
     def unor(self):
         """Return the unary NOR of a array of functions."""
@@ -669,7 +669,7 @@ class farray(object):
 
     def uand(self):
         """Return the unary AND of a array of functions."""
-        return reduce(operator.and_, self.items, self.ftype.box(1))
+        return reduce(operator.and_, self._items, self.ftype.box(1))
 
     def unand(self):
         """Return the unary NAND of a array of functions."""
@@ -677,7 +677,7 @@ class farray(object):
 
     def uxor(self):
         """Return the unary XOR of a array of functions."""
-        return reduce(operator.xor, self.items, self.ftype.box(0))
+        return reduce(operator.xor, self._items, self.ftype.box(0))
 
     def uxnor(self):
         """Return the unary XNOR of a array of functions."""
@@ -706,8 +706,9 @@ class farray(object):
         if num == 0:
             return self, self.__class__([], ftype=self.ftype)
         else:
-            fs = self.__class__(cin.items + self.items[:-num], ftype=self.ftype)
-            cout = self.__class__(self.items[-num:], ftype=self.ftype)
+            fs = self.__class__(cin._items + self._items[:-num],
+                                ftype=self.ftype)
+            cout = self.__class__(self._items[-num:], ftype=self.ftype)
             return fs, cout
 
     def rsh(self, num, cin=None):
@@ -732,8 +733,9 @@ class farray(object):
         if num == 0:
             return self, self.__class__([], ftype=self.ftype)
         else:
-            fs = self.__class__(self.items[num:] + cin.items, ftype=self.ftype)
-            cout = self.__class__(self.items[:num], ftype=self.ftype)
+            fs = self.__class__(self._items[num:] + cin._items,
+                                ftype=self.ftype)
+            cout = self.__class__(self._items[:num], ftype=self.ftype)
             return fs, cout
 
     def arsh(self, num):
@@ -748,10 +750,10 @@ class farray(object):
         if num == 0:
             return self, self.__class__([], ftype=self.ftype)
         else:
-            sign = self.items[-1]
-            fs = self.__class__(self.items[num:] + [sign] * num,
+            sign = self._items[-1]
+            fs = self.__class__(self._items[num:] + [sign] * num,
                                 ftype=self.ftype)
-            cout = self.__class__(self.items[:num], ftype=self.ftype)
+            cout = self.__class__(self._items[:num], ftype=self.ftype)
             return fs, cout
 
     # Other logic
@@ -770,7 +772,7 @@ class farray(object):
            1, 0, 0, 1, 0, 0
            1, 1, 1, 0, 0, 0
         """
-        items = [reduce(operator.and_, boolfunc.num2term(i, self.items),
+        items = [reduce(operator.and_, boolfunc.num2term(i, self._items),
                         self.ftype.box(1))
                  for i in range(2 ** self.size)]
 
@@ -1114,7 +1116,7 @@ def _filtdim(items, shape, dim, nsl):
         for i in range(num):
             groups[i % N] += items[size*i:size*(i+1)]
         for muxins in zip(*groups):
-            it = boolfunc.iter_terms(nsl.items)
+            it = boolfunc.iter_terms(nsl._items)
             args = [reduce(operator.and_, (muxin, ) + next(it))
                     for muxin in muxins]
             newitems.append(reduce(operator.or_, args))
