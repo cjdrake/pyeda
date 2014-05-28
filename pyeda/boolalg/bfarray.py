@@ -39,7 +39,7 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.bdd import BinaryDecisionDiagram, bddvar
 from pyeda.boolalg.expr import Expression, exprvar
 from pyeda.boolalg.table import TruthTable, ttvar
-from pyeda.util import bit_on, cached_property, clog2
+from pyeda.util import cached_property, clog2
 
 
 _VAR = {
