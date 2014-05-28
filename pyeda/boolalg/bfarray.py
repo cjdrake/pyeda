@@ -590,7 +590,7 @@ class farray(object):
     def to_int(self):
         """Convert vector to an integer, if possible."""
         num = self.to_uint()
-        if self.items[-1].unbox():
+        if num and self.items[-1].unbox():
             return num - (1 << self.size)
         else:
             return num
