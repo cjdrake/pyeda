@@ -115,6 +115,44 @@ It takes a tuple of *dimension* specs, which are ``(start, stop)`` tuples.
    farray([[Nor(a, b, c), Xor(a, b, c), Equal(a, b, c)],
            [Nand(a, b, c), Xnor(a, b, c), Unequal(a, b, c)]])
 
+Internally, function arrays are stored in a flat list.
+You can retrieve the items by using the *flat* iterator::
+
+   >>> list(F.flat)
+   [Nor(a, b, c),
+    Nand(a, b, c),
+    Xor(a, b, c),
+    Xnor(a, b, c),
+    Equal(a, b, c),
+    Unequal(a, b, c)]
+
+Use the *reshape* method to return a new ``farray`` with the same contents and
+size,
+but with different dimensions::
+
+   >>> F.reshape(3, 2)
+   farray([[Nor(a, b, c), Nand(a, b, c)],
+           [Xor(a, b, c), Xnor(a, b, c)],
+           [Equal(a, b, c), Unequal(a, b, c)]])
+
+Empty Arrays
+^^^^^^^^^^^^
+
+It is possible to create an empty ``farray``,
+but only if you supply the *ftype* parameter.
+That parameter is not necessary for non-empty arrays,
+because it can be automatically determined.
+
+For example::
+
+   >>> empty = farray([], ftype=Expression)
+   >>> empty
+   farray([])
+   >>> empty.shape
+   ((0, 0),)
+   >>> empty.size
+   0
+
 Irregular Shapes
 ^^^^^^^^^^^^^^^^
 
@@ -352,7 +390,7 @@ Unspecified slices at the end will default to ``:``.
    farray([b[1,2,0], b[1,2,1], b[1,2,2], b[1,2,3]])
 
 The ``...`` syntax will fill available indices left to right with ``:``.
-One one ellipsis will be recognized per slice.
+Only one ellipsis will be recognized per slice.
 
 ::
 
@@ -439,7 +477,7 @@ Some of these operators overload Python's operator symbols.
 This section will describe how you can use the ``farray`` data type and the
 Python interpreter to perform powerful symbolic computations.
 
-Unary Operators
+Unary Reduction
 ---------------
 
 A common operation is to reduce the entire contents of an array to a single
@@ -457,20 +495,26 @@ so unary operators are supported by the following ``farray`` methods:
 * :meth:`pyeda.boolalg.bfarray.farray.uxor`
 * :meth:`pyeda.boolalg.bfarray.farray.uxnor`
 
+For example, to OR the contents of an eight-bit array::
+
+   >>> X = exprvars('x', 8)
+   >>> X.uor()
+   Or(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7])
+
 One well-known usage of unary reduction is conversion from a binary-reflected
 gray code (BRGC) back to binary.
-In the following example, ``Y`` is a 3-bit array that contains logic to convert
-the contents of ``X`` from gray code to binary.
+In the following example, ``B`` is a 3-bit array that contains logic to convert
+the contents of ``G`` from gray code to binary.
 See the Wikipedia `Gray Code <http://en.wikipedia.org/wiki/Gray_code>`_
 article for background.
 
 ::
 
-   >>> X = exprvars('x', 3)
-   >>> Y = farray([X[i:].uxor() for i, _ in enumerate(X)])
+   >>> G = exprvars('g', 3)
+   >>> B = farray([G[i:].uxor() for i, _ in enumerate(G)])
    >>> graycode = ['000', '100', '110', '010', '011', '111', '101', '001']
-   >>> for vpnt in graycode:
-   ...     print(Y.vrestrict({X: vpnt}).to_uint())
+   >>> for gs in graycode:
+   ...     print(B.vrestrict({X: gs}).to_uint())
    0
    1
    2
@@ -480,16 +524,132 @@ article for background.
    6
    7
 
-Binary (Bit-wise) Operators
----------------------------
+Bit-wise Logic
+--------------
 
-invert, or, and, xor, lsh, rsh, arsh
+Arrays are an algebraic data type.
+They overload several of Python's operators to perform bit-wise logic.
+
+First, let's create a few arrays::
+
+   >>> A = exprvars('a', 4)
+   >>> B = exprvars('b', 4)
+   >>> C = exprvars('c', 2, 2)
+   >>> D = exprvars('d', 2, 2)
+
+To invert the contents of ``A``::
+
+   >>> ~A
+   farray([~a[0], ~a[1], ~a[2], ~a[3]])
+
+Inverting a multi-dimensional array will retain its shape::
+
+   >>> ~C
+   farray([[~c[0,0], ~c[0,1]],
+           [~c[1,0], ~c[1,1]]])
+
+The binary OR, AND, and XOR operators work for arrays with equal size::
+
+   >>> A | B
+   farray([Or(a[0], b[0]), Or(a[1], b[1]), Or(a[2], b[2]), Or(a[3], b[3])])
+   >>> A & B
+   farray([And(a[0], b[0]), And(a[1], b[1]), And(a[2], b[2]), And(a[3], b[3])])
+   >>> C ^ D
+   farray([[Xor(c[0,0], d[0,0]), Xor(c[0,1], d[0,1])],
+           [Xor(c[1,0], d[1,0]), Xor(c[1,1], d[1,1])]])
+
+Mismatched sizes will raise an exception::
+
+   >>> A & B[2:]
+   Traceback (most recent call last):
+       ...
+   ValueError: expected operand sizes to match
+
+For arrays of the same size but different shape,
+the resulting shape is ambiguous so by default the result is flattened::
+
+   >>> Y = ~A | C
+   >>> Y
+   farray([Or(~a[0], c[0,0]), Or(~a[1], c[0,1]), Or(~a[2], c[1,0]), Or(~a[3], c[1,1])])
+   >>> Y.size
+   4
+   >>> Y.shape
+   ((0, 4),)
+
+Shifts
+------
+
+Function array have three shift methods:
+
+* :meth:`pyeda.boolalg.bfarray.farray.lsh`: logical left shift
+* :meth:`pyeda.boolalg.bfarray.farray.rsh`: logical right shift
+* :meth:`pyeda.boolalg.bfarray.farray.arsh`: arithmetic right shift
+
+The logical left/right shift operators shift out *num* items from the array,
+and optionally shift in values from a *cin* (carry-in) parameter.
+The output is a two-tuple of the shifted array, and the "carry-out".
+
+The "left" direction in ``lsh`` shifts towards the most significant bit.
+For example::
+
+   >>> X = exprvars('x', 8)
+   >>> X.lsh(4)
+   (farray([0, 0, 0, 0, x[0], x[1], x[2], x[3]]),
+    farray([x[4], x[5], x[6], x[7]]))
+   >>> X.lsh(4, exprvars('y', 4))
+   (farray([y[0], y[1], y[2], y[3], x[0], x[1], x[2], x[3]]),
+    farray([x[4], x[5], x[6], x[7]]))
+
+Similarly,
+the "right" direction in ``rsh`` shifts towards the least significant bit.
+For example::
+
+   >>> X.rsh(4)
+   (farray([x[4], x[5], x[6], x[7], 0, 0, 0, 0]),
+    farray([x[0], x[1], x[2], x[3]]))
+   >>> X.rsh(4, exprvars('y', 4))
+   (farray([x[4], x[5], x[6], x[7], y[0], y[1], y[2], y[3]]),
+    farray([x[0], x[1], x[2], x[3]]))
+
+You can use the Python overloaded ``<<`` and ``>>`` operators for ``lsh``,
+and ``rsh``, respectively.
+The only difference is that they do not produce a carry-out.
+For example::
+
+   >>> X << 4
+   farray([0, 0, 0, 0, x[0], x[1], x[2], x[3]])
+   >>> X >> 4
+   farray([x[4], x[5], x[6], x[7], 0, 0, 0, 0])
+
+Using a somewhat awkward ``(num, farray)`` syntax,
+you can use these operators with a carry-in.
+For example::
+
+   >>> X << (4, exprvars('y', 4))
+   farray([y[0], y[1], y[2], y[3], x[0], x[1], x[2], x[3]])
+   >>> X >> (4, exprvars('y', 4))
+   farray([x[4], x[5], x[6], x[7], y[0], y[1], y[2], y[3]])
+
+An *arithmetic* right shift automatically sign-extends the array.
+Therefore, it does not take a carry-in.
+For example::
+
+   >>> X.arsh(4)
+   (farray([x[4], x[5], x[6], x[7], x[7], x[7], x[7], x[7]]),
+    farray([x[0], x[1], x[2], x[3]]))
+
+Due to its important in digital design,
+Verilog has a special ``>>>`` operator for an arithmetic right shift.
+Sadly, Python has no such indulgence.
+If you really want to use a symbol,
+you can use the *cin* parameter to achieve the same effect with ``>>``::
+
+   >>> num = 4
+   >>> X >> (num, num * X[-1])
+   farray([x[4], x[5], x[6], x[7], x[7], x[7], x[7], x[7]])
 
 Concatenation and Repetition
 ----------------------------
 
 todo
-
-Miscellaneous
--------------
 
