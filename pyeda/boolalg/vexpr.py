@@ -8,6 +8,8 @@ Interface Functions:
     bitvec
 """
 
+from warnings import warn
+
 from pyeda.boolalg import expr
 from pyeda.boolalg import bfarray
 
@@ -21,6 +23,7 @@ def bitvec(name, *dims):
         An int N means a slice from [0:N]
         A tuple (M, N) means a slice from [M:N]
     """
+    warn("The 'bitvec' function is deprecated. Use 'exprvars' instead.")
     if dims:
         return bfarray.exprvars(name, *dims)
     else:
