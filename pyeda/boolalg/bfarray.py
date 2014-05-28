@@ -853,16 +853,14 @@ def _dims2shape(*dims):
     shape = list()
     for dim in dims:
         if type(dim) is int:
-            if dim <= 0:
-                raise ValueError("expected high dimension to be > 0")
-            start, stop = 0, dim
-        elif type(dim) is tuple and len(dim) == 2:
+            dim = (0, dim)
+        if type(dim) is tuple and len(dim) == 2:
             if dim[0] < 0:
                 raise ValueError("expected low dimension to be >= 0")
-            if dim[1] <= 0:
-                raise ValueError("expected high dimension to be > 0")
-            if dim[0] >= dim[1]:
-                raise ValueError("expected low < high dimensions")
+            if dim[1] < 0:
+                raise ValueError("expected high dimension to be >= 0")
+            if dim[0] > dim[1]:
+                raise ValueError("expected low <= high dimensions")
             start, stop = dim
         else:
             raise TypeError("expected dimension to be int or (int, int)")
