@@ -405,16 +405,29 @@ class farray(object):
     """
     Array of Boolean functions
     """
-    def __init__(self, objs, shape=None):
-        self.items, _shape, self.ftype = _itemize(objs)
+    def __init__(self, objs, shape=None, ftype=None):
+        self.items, _shape, _ftype = _itemize(objs)
         if shape is None:
             self.shape = _shape
         else:
             _check_shape(shape)
-            if _volume(shape) == len(self.items):
-                self.shape = shape
-            else:
+            if _volume(shape) != len(self.items):
                 raise ValueError("expected shape volume to match items")
+            self.shape = shape
+        if ftype is None:
+            if _ftype is None:
+                raise ValueError("could not determine ftype parameter")
+            self.ftype = _ftype
+        else:
+            if type(ftype) is not type:
+                raise TypeError("expected ftype to be a type")
+            if not (_ftype is None or ftype is _ftype):
+                raise ValueError("expected ftype to match items")
+            if (not issubclass(ftype, boolfunc.Function) or
+                    ftype is boolfunc.Function):
+                fstr = "expected ftype to be a proper subclass of Function"
+                raise TypeError(fstr)
+            self.ftype = ftype
 
     def __str__(self):
         pre, post = "farray(", ")"
@@ -464,7 +477,7 @@ class farray(object):
                 items, shape = _filtdim(items, shape, dim, nsls[dim])
 
         if shape:
-            return self.__class__(items, shape)
+            return self.__class__(items, shape, self.ftype)
         else:
             return items[0]
 
@@ -493,17 +506,19 @@ class farray(object):
 
     def __add__(self, other):
         if isinstance(other, boolfunc.Function):
-            return farray(self.items + [other])
+            return self.__class__(self.items + [other], ftype=self.ftype)
         elif isinstance(other, farray):
-            return farray(self.items + list(other.flat))
+            return self.__class__(self.items + list(other.flat),
+                                  ftype=self.ftype)
         else:
             raise TypeError("expected Function or farray")
 
     def __radd__(self, other):
         if isinstance(other, boolfunc.Function):
-            return farray([other] + self.items)
+            return self.__class__([other] + self.items, ftype=self.ftype)
         elif isinstance(other, farray):
-            return farray(list(other.flat) + self.items)
+            return self.__class__(list(other.flat) + self.items,
+                                  ftype=self.ftype)
         else:
             raise TypeError("expected Function or farray")
 
@@ -515,7 +530,7 @@ class farray(object):
         items = list()
         for _ in range(other):
             items.extend(self.flat)
-        return farray(items)
+        return self.__class__(items, ftype=self.ftype)
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -540,7 +555,7 @@ class farray(object):
         shape = _dims2shape(*dims)
         if _volume(shape) != self.size:
             raise ValueError("expected shape with equal volume")
-        return self.__class__(self.items, shape)
+        return self.__class__(self.items, shape, self.ftype)
 
     @property
     def flat(self):
@@ -553,7 +568,7 @@ class farray(object):
         all functions.
         """
         items = [f.restrict(point) for f in self.items]
-        return self.__class__(items, self.shape)
+        return self.__class__(items, self.shape, self.ftype)
 
     def vrestrict(self, vpoint):
         """Expand all vectors before applying ``restrict``."""
@@ -583,35 +598,35 @@ class farray(object):
     def zext(self, num):
         """Return a flat copy of this array, zero-extended by N bits."""
         zero = self.ftype.box(0)
-        return self.__class__(self.items + [zero] * num)
+        return self.__class__(self.items + [zero] * num, ftype=self.ftype)
 
     def sext(self, num):
         """Return a flat copy of this array, sign-extended by N bits."""
         sign = self.items[-1]
-        return self.__class__(self.items + [sign] * num)
+        return self.__class__(self.items + [sign] * num, ftype=self.ftype)
 
     # Operators
     def __invert__(self):
         """Return the bit-wise NOT of the farray."""
-        return self.__class__([~x for x in self.items], self.shape)
+        return self.__class__([~x for x in self.items], self.shape, self.ftype)
 
     def __or__(self, other):
         """Return the bit-wise OR of the farray and *other*."""
         shape = self._op_shape(other)
         items = [x | y for x, y in zip(self.flat, other.flat)]
-        return self.__class__(items, shape)
+        return self.__class__(items, shape, self.ftype)
 
     def __and__(self, other):
         """Return the bit-wise AND of the farray and *other*."""
         shape = self._op_shape(other)
         items = [x & y for x, y in zip(self.flat, other.flat)]
-        return self.__class__(items, shape)
+        return self.__class__(items, shape, self.ftype)
 
     def __xor__(self, other):
         """Return the bit-wise XOR of the farray and *other*."""
         shape = self._op_shape(other)
         items = [x ^ y for x, y in zip(self.flat, other.flat)]
-        return self.__class__(items, shape)
+        return self.__class__(items, shape, self.ftype)
 
     def __lshift__(self, obj):
         """Return the farray left-shifted by *obj*.
@@ -646,32 +661,26 @@ class farray(object):
     # Unary operators
     def uor(self):
         """Return the unary OR of a array of functions."""
-        return reduce(operator.or_, self.items, 0)
+        return reduce(operator.or_, self.items, self.ftype.box(0))
 
     def unor(self):
         """Return the unary NOR of a array of functions."""
-        if self.size == 0:
-            return 1
         return ~self.uor()
 
     def uand(self):
         """Return the unary AND of a array of functions."""
-        return reduce(operator.and_, self.items, 1)
+        return reduce(operator.and_, self.items, self.ftype.box(1))
 
     def unand(self):
         """Return the unary NAND of a array of functions."""
-        if self.size == 0:
-            return 0
         return ~self.uand()
 
     def uxor(self):
         """Return the unary XOR of a array of functions."""
-        return reduce(operator.xor, self.items, 0)
+        return reduce(operator.xor, self.items, self.ftype.box(0))
 
     def uxnor(self):
         """Return the unary XNOR of a array of functions."""
-        if self.size == 0:
-            return 1
         return ~self.uxor()
 
     # Shift operators
@@ -690,15 +699,15 @@ class farray(object):
             raise ValueError("expected 0 <= num <= {0.size}".format(self))
         if cin is None:
             items = [self.ftype.box(0) for _ in range(num)]
-            cin = self.__class__(items)
+            cin = self.__class__(items, ftype=self.ftype)
         else:
             if len(cin) != num:
                 raise ValueError("expected length of cin to be equal to num")
         if num == 0:
-            return self, self.__class__([])
+            return self, self.__class__([], ftype=self.ftype)
         else:
-            fs = self.__class__(cin.items + self.items[:-num])
-            cout = self.__class__(self.items[-num:])
+            fs = self.__class__(cin.items + self.items[:-num], ftype=self.ftype)
+            cout = self.__class__(self.items[-num:], ftype=self.ftype)
             return fs, cout
 
     def rsh(self, num, cin=None):
@@ -716,15 +725,15 @@ class farray(object):
             raise ValueError("expected 0 <= num <= {0.size}".format(self))
         if cin is None:
             items = [self.ftype.box(0) for _ in range(num)]
-            cin = self.__class__(items)
+            cin = self.__class__(items, ftype=self.ftype)
         else:
             if len(cin) != num:
                 raise ValueError("expected length of cin to be equal to num")
         if num == 0:
-            return self, self.__class__([])
+            return self, self.__class__([], ftype=self.ftype)
         else:
-            fs = self.__class__(self.items[num:] + cin.items)
-            cout = self.__class__(self.items[:num])
+            fs = self.__class__(self.items[num:] + cin.items, ftype=self.ftype)
+            cout = self.__class__(self.items[:num], ftype=self.ftype)
             return fs, cout
 
     def arsh(self, num):
@@ -737,11 +746,12 @@ class farray(object):
         if num < 0 or num > self.size:
             raise ValueError("expected 0 <= num <= {0.size}".format(self))
         if num == 0:
-            return self, self.__class__([])
+            return self, self.__class__([], ftype=self.ftype)
         else:
             sign = self.items[-1]
-            fs = self.__class__(self.items[num:] + [sign] * num)
-            cout = self.__class__(self.items[:num])
+            fs = self.__class__(self.items[num:] + [sign] * num,
+                                ftype=self.ftype)
+            cout = self.__class__(self.items[:num], ftype=self.ftype)
             return fs, cout
 
     # Other logic
@@ -760,16 +770,11 @@ class farray(object):
            1, 0, 0, 1, 0, 0
            1, 1, 1, 0, 0, 0
         """
-        # Degenerate case is just [1], but that's not a valid farray
-        if self.size == 0:
-            msg = "decode method undefined for zero-sized farray"
-            raise NotImplementedError(msg)
-
-        items = [reduce(operator.and_,
-                        [f if bit_on(i, j) else ~f
-                         for j, f in enumerate(self.items)])
+        items = [reduce(operator.and_, boolfunc.num2term(i, self.items),
+                        self.ftype.box(1))
                  for i in range(2 ** self.size)]
-        return self.__class__(items)
+
+        return self.__class__(items, ftype=self.ftype)
 
     # Subroutines of __getitem__/__setitem__
     def _keys2sls(self, keys, key2sl):
@@ -881,13 +886,13 @@ def _zeros(ftype, *dims):
     """Return a new farray filled with zeros."""
     shape = _dims2shape(*dims)
     objs = [ftype.box(0) for _ in range(_volume(shape))]
-    return farray(objs, shape)
+    return farray(objs, shape, ftype)
 
 def _ones(ftype, *dims):
     """Return a new farray filled with ones."""
     shape = _dims2shape(*dims)
     objs = [ftype.box(1) for _ in range(_volume(shape))]
-    return farray(objs, shape)
+    return farray(objs, shape, ftype)
 
 def _vars(ftype, name, *dims):
     """Return a new farray filled with Boolean variables."""
@@ -896,7 +901,7 @@ def _vars(ftype, name, *dims):
     if shape:
         for indices in itertools.product(*[range(i, j) for i, j in shape]):
             objs.append(_VAR[ftype](name, indices))
-    return farray(objs, shape)
+    return farray(objs, shape, ftype)
 
 def _uint2objs(ftype, num, length=None):
     """Convert an unsigned integer to a list of constant expressions."""
@@ -953,9 +958,9 @@ def _itemize(objs):
 
     isseq = [isinstance(obj, collections.Sequence) for obj in objs]
     if not any(isseq):
-        ftype = boolfunc.Function
+        ftype = None
         for obj in objs:
-            if ftype is boolfunc.Function:
+            if ftype is None:
                 if isinstance(obj, BinaryDecisionDiagram):
                     ftype = BinaryDecisionDiagram
                 elif isinstance(obj, Expression):
@@ -970,14 +975,14 @@ def _itemize(objs):
     elif all(isseq):
         items = list()
         shape = None
-        ftype = boolfunc.Function
+        ftype = None
         for obj in objs:
             _items, _shape, _ftype = _itemize(obj)
             if shape is None:
                 shape = _shape
             elif shape != _shape:
                 raise ValueError("expected uniform farray dimensions")
-            if ftype is boolfunc.Function:
+            if ftype is None:
                 ftype = _ftype
             elif ftype != _ftype:
                 raise ValueError("expected uniform Function types")
