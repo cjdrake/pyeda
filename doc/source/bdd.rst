@@ -298,12 +298,21 @@ you can find the memory structure that holds BDD nodes::
    2
 
 The table contains two static nodes: zero and one.
-Let's define a few variables, and three simple BDDs::
+Let's define a few variables::
 
    >>> from pyeda.inter import *
    >>> a, b = map(bddvar, 'ab')
+   >>> len(_BDDNODES)
+   4
+
+Now define three simple BDDs::
+
    >>> f1 = a | b
+   >>> len(_BDDNODES)
+   5
    >>> f2 = a & b
+   >>> len(_BDDNODES)
+   6
    >>> f3 = a ^ b
    >>> len(_BDDNODES)
    8
