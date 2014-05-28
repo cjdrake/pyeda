@@ -443,6 +443,9 @@ class Expression(boolfunc.Function):
     def __init__(self):
         self._simplified = False
 
+    def __str__(self):
+        raise NotImplementedError()
+
     def __repr__(self):
         return self.__str__()
 
@@ -2476,7 +2479,7 @@ class ExprITE(_ArgumentContainer):
             return ExprOr(arg0, arg1).simplify()
 
 
-class NormalForm(object):
+class NormalForm:
     """Normal form expression"""
 
     def __init__(self, nvars, clauses):

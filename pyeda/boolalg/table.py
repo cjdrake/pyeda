@@ -111,7 +111,7 @@ def truthtable2expr(tt, conj=False):
     return outer(*[inner(*term) for term in terms])
 
 
-class PCData(object):
+class PCData:
     """
     Binary-valued positional cube data.
 

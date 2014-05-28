@@ -36,7 +36,7 @@ class LexRunError(LexError):
         super(LexRunError, self).__init__(msg, lineno, offset, text)
 
 
-class RegexLexer(object):
+class RegexLexer:
     """
     Lexer based on regular expressions.
     """

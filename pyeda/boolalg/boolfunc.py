@@ -302,7 +302,7 @@ def _flatten(v, val):
 _UNIQIDS = dict()
 _COUNT = 1
 
-class Variable(object):
+class Variable:
     r"""
     Base class for a symbolic Boolean variable.
 
@@ -381,7 +381,7 @@ class Variable(object):
         return ".".join(reversed(self.names))
 
 
-class Function(object):
+class Function:
     """
     Abstract base class that defines an interface for a symbolic Boolean
     function of :math:`N` variables.

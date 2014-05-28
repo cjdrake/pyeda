@@ -13,7 +13,7 @@ Interface Functions:
 import random
 
 
-class DPLLInterface(object):
+class DPLLInterface:
     """DPLL algorithm interface"""
 
     def bcp(self):

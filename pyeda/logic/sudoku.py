@@ -11,7 +11,7 @@ from pyeda.boolalg.bfarray import exprvars
 DIGITS = "123456789"
 
 
-class SudokuSolver(object):
+class SudokuSolver:
     """Logical constraints for 3x3 Sudoku"""
 
     def __init__(self):

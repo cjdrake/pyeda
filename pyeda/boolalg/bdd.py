@@ -37,7 +37,7 @@ _BDDNODES = weakref.WeakValueDictionary()
 _BDDS = weakref.WeakValueDictionary()
 
 
-class BDDNode(object):
+class BDDNode:
     """Binary decision diagram node
 
     .. note::

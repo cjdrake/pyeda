@@ -401,7 +401,7 @@ def fcat(*fs):
     return farray(items)
 
 
-class farray(object):
+class farray:
     """
     Array of Boolean functions
     """
