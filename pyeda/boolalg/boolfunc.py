@@ -39,8 +39,10 @@ def var(name, index=None):
     .. note::
        Do **NOT** call this function directly.
        Instead, use one of the concrete implementations:
-       :func:`pyeda.boolalg.bdd.bddvar` :func:`pyeda.boolalg.expr.exprvar`,
-       :func:`pyeda.boolalg.table.ttvar`.
+
+       * :func:`pyeda.boolalg.bdd.bddvar`
+       * :func:`pyeda.boolalg.expr.exprvar`,
+       * :func:`pyeda.boolalg.table.ttvar`.
     """
     tname = type(name)
     if tname is str:
