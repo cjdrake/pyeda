@@ -12,4 +12,5 @@
    reference/boolalg/bdd.rst
    reference/boolalg/expr.rst
    reference/boolalg/bfarray.rst
+   reference/boolalg/picosat.rst
 
