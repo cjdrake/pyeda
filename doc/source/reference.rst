@@ -13,4 +13,5 @@
    reference/boolalg/expr.rst
    reference/boolalg/bfarray.rst
    reference/boolalg/picosat.rst
+   reference/boolalg/espresso.rst
 
