@@ -640,7 +640,7 @@ For example::
    (farray([x[4], x[5], x[6], x[7], x[7], x[7], x[7], x[7]]),
     farray([x[0], x[1], x[2], x[3]]))
 
-Due to its important in digital design,
+Due to its importance in digital design,
 Verilog has a special ``>>>`` operator for an arithmetic right shift.
 Sadly, Python has no such indulgence.
 If you really want to use a symbol,
