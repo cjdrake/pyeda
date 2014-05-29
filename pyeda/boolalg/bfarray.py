@@ -505,7 +505,10 @@ class farray:
                 self._items[self._coord2offset(coord)] = next(it)
 
     def __add__(self, other):
-        if isinstance(other, boolfunc.Function):
+        if other in {0, 1}:
+            return self.__class__(self._items + [self.ftype.box(other)],
+                                  ftype=self.ftype)
+        elif isinstance(other, boolfunc.Function):
             return self.__class__(self._items + [other], ftype=self.ftype)
         elif isinstance(other, farray):
             return self.__class__(self._items + list(other.flat),
@@ -514,7 +517,10 @@ class farray:
             raise TypeError("expected Function or farray")
 
     def __radd__(self, other):
-        if isinstance(other, boolfunc.Function):
+        if other in {0, 1}:
+            return self.__class__([self.ftype.box(other)] + self._items,
+                                  ftype=self.ftype)
+        elif isinstance(other, boolfunc.Function):
             return self.__class__([other] + self._items, ftype=self.ftype)
         elif isinstance(other, farray):
             return self.__class__(list(other.flat) + self._items,
