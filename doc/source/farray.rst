@@ -190,6 +190,8 @@ The *size* property is still the same::
 
 However, the slices now have different bounds::
 
+   >>> F.shape
+   ((7, 9), (13, 16))
    >>> F[7,14]
    Nand(a, b, c)
 
@@ -651,5 +653,117 @@ you can use the *cin* parameter to achieve the same effect with ``>>``::
 Concatenation and Repetition
 ----------------------------
 
-todo
+Two very important operators in hardware description languages are
+concatenation and repetition of logic vectors.
+For example,
+in this implementation of the ``xtime`` function from the AES standard,
+``xtime[6:0]`` is concatenated with ``1'b0``,
+and ``xtime[7]`` is repeated eight times before being AND'ed with ``8'h1b``.
+
+.. code-block:: verilog
+
+   function automatic logic [7:0]
+   xtime(logic [7:0] b, int n);
+       xtime = b;
+       for (int i = 0; i < n; i++)
+           xtime = {xtime[6:0], 1'b0}       // concatenation
+                 ^ (8'h1b & {8{xtime[7]}}); // repetition
+   endfunction
+
+The ``farray`` data type resembles the Python ``tuple`` for these operations.
+
+To concatenate two arrays, use the ``+`` operator::
+
+   >>> X = exprvars('x', 4)
+   >>> Y = exprvars('y', 4)
+   >>> X + Y
+   farray([x[0], x[1], x[2], x[3], y[0], y[1], y[2], y[3]])
+
+It is also possible to prepend or append single functions::
+
+   >>> a, b = map(exprvar, 'ab')
+   >>> a + X
+   farray([a, x[0], x[1], x[2], x[3]])
+   >>> X + b
+   farray([x[0], x[1], x[2], x[3], b])
+   >>> a + X + b
+   farray([a, x[0], x[1], x[2], x[3], b])
+   >>> a + b
+   farray([a, b])
+
+Even ``0`` (or ``False``) and ``1`` (or ``True``) work::
+
+   >>> 0 + X
+   farray([0, x[0], x[1], x[2], x[3]])
+   >>> X + True
+   farray([x[0], x[1], x[2], x[3], 1])
+
+To repeat arrays, use the ``*`` operator::
+
+   >>> X * 2
+   farray([x[0], x[1], x[2], x[3], x[0], x[1], x[2], x[3]])
+   >>> 0 * X
+   farray([])
+
+Similarly, this works for single functions as well::
+
+   >>> a * 3
+   farray([a, a, a])
+   >>> 2 * a + b * 3
+   farray([a, a, b, b, b])
+
+Multi-dimensional arrays are automatically flattened during either
+concatenation or repetition::
+
+   >>> Z = exprvars('z', 2, 2)
+   >>> X + Z
+   farray([x[0], x[1], x[2], x[3], z[0,0], z[0,1], z[1,0], z[1,1]])
+   >>> Z * 2
+   farray([z[0,0], z[0,1], z[1,0], z[1,1], z[0,0], z[0,1], z[1,0], z[1,1]])
+
+If you require a more subtle treatment of the shapes,
+use the ``reshape`` method to unflatten things::
+
+   >>> (Z*2).reshape(2, 4)
+   farray([[z[0,0], z[0,1], z[1,0], z[1,1]],
+           [z[0,0], z[0,1], z[1,0], z[1,1]]])
+
+Function arrays also support the "in-place" ``+=`` and ``*=`` operators.
+The ``farray`` behaves like an immutable object.
+That is, it behaves more like the Python ``tuple`` than a ``list``.
+
+For example, when you concatenate/repeat an ``farray``,
+it returns a new ``farray``::
+
+   >>> A = exprvars('a', 4)
+   >>> B = exprvars('b', 4)
+   >>> id(A)
+   3050928972
+   >>> id(B)
+   3050939660
+   >>> A += B
+   >>> id(A)
+   3050939948
+   >>> B *= 2
+   >>> id(B)
+   3050940716
+
+The ``A += B`` implementation is just syntactic sugar for::
+
+   >>> A = A + B
+
+And the ``A *= 2`` implementation is just syntactic sugar for::
+
+   >>> A = A * 2
+
+To wrap up,
+let's re-write the ``xtime`` function using PyEDA function arrays.
+
+.. code-block:: python
+
+   def xtime(b, n):
+       """Return b^n using polynomial multiplication in GF(2^8)."""
+       for _ in range(n):
+           b = exprzeros(1) + b[:7] ^ uint2exprs(0x1b, 8) & b[7]*8
+       return b
 
