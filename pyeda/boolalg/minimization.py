@@ -1,18 +1,26 @@
 """
-Boolean Minimization
+The :mod:`pyeda.boolalg.minimization` module contains interface functions for
+two-level logic minimization.
 
 Interface Functions:
-    espresso_exprs
-    espresso_tts
+
+* :func:`espresso_exprs`
+* :func:`espresso_tts`
 """
 
 from pyeda.boolalg import boolfunc
-from pyeda.boolalg.espresso import (
-    FTYPE, DTYPE, RTYPE,
-    set_config, espresso,
-)
 from pyeda.boolalg.expr import exprvar, Expression, Or, And
 from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC
+
+# FIXME: This is a hack for readthedocs Sphinx autodoc
+try:
+    from pyeda.boolalg.espresso import (
+        FTYPE, DTYPE, RTYPE,
+        set_config, espresso,
+    )
+except ImportError:
+    pass
+
 
 CONFIG = dict(
     single_expand=False,
@@ -24,7 +32,22 @@ CONFIG = dict(
 )
 
 def espresso_exprs(*exprs):
-    """Return a tuple of expressions optimized using Espresso."""
+    """Return a tuple of expressions optimized using Espresso.
+
+    The variadic *exprs* argument is a sequence of expressions.
+
+    For example::
+
+       >>> from pyeda.boolalg.expr import exprvar
+       >>> a, b, c = map(exprvar, 'abc')
+       >>> f1 = ~a & ~b & ~c | ~a & ~b & c | a & ~b & c | a & b & c | a & b & ~c
+       >>> f2 = f2 = ~a & ~b & c | a & ~b & c
+       >>> f1m, f2m = espresso_exprs(f1, f2)
+       >>> f1m
+       Or(And(~a, ~b), And(a, b), And(~b, c))
+       >>> f2m
+       And(~b, c)
+    """
     for f in exprs:
         if not (isinstance(f, Expression) and f.is_dnf()):
             raise ValueError("expected a DNF expression")
@@ -67,7 +90,23 @@ def espresso_exprs(*exprs):
     return _cover2exprs(inputs, noutputs, cover)
 
 def espresso_tts(*tts):
-    """Return a tuple of expressions optimized using Espresso."""
+    """Return a tuple of expressions optimized using Espresso.
+
+    The variadic *tts* argument is a sequence of truth tables.
+
+    For example::
+
+       >>> from pyeda.boolalg.bfarray import ttvars
+       >>> from pyeda.boolalg.table import truthtable
+       >>> X = ttvars('x', 4)
+       >>> f1 = truthtable(X, "0000011111------")
+       >>> f2 = truthtable(X, "0001111100------")
+       >>> f1m, f2m = espresso_tts(f1, f2)
+       >>> f1m
+       Or(x[3], And(x[0], x[2]), And(x[1], x[2]))
+       >>> f2m
+       Or(x[2], And(x[0], x[1]))
+    """
     for f in tts:
         if not isinstance(f, TruthTable):
             raise ValueError("expected a TruthTable instance")

@@ -100,7 +100,7 @@ and returns a sequence of DNF expression instances.
 
 ::
 
-   >>> X = exprvars('x', 4)
+   >>> X = ttvars('x', 4)
    >>> f1 = truthtable(X, "0000011111------")
    >>> f2 = truthtable(X, "0001111100------")
    >>> f1m, f2m = espresso_tts(f1, f2)
