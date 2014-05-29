@@ -12,13 +12,13 @@ default: test
 init:
 	@$(PIP) install $(PIP_INSTALL_FLAGS)
 
-.PHONY: html
-html:
-	@cd doc && $(MAKE) html
-
 .PHONY: lint
 lint:
 	@$(PYLINT) pyeda --rcfile .pylintrc
+
+.PHONY: html
+html:
+	@$(PYTHON) setup.py build_sphinx
 
 .PHONY: test
 test:
