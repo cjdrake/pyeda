@@ -17,6 +17,8 @@ Interface Functions
 
 .. autofunction:: pyeda.boolalg.bdd.upoint2bddpoint
 
+.. autofunction:: pyeda.boolalg.bdd.ite
+
 Interface Classes
 -----------------
 

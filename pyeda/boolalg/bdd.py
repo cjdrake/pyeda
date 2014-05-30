@@ -4,10 +4,11 @@ Boolean functions represented as binary decision diagrams.
 
 Interface Functions:
 
-* :func:`bddvar`
-* :func:`expr2bdd`
-* :func:`bdd2expr`
-* :func:`upoint2bddpoint`
+* :func:`bddvar` --- Return a unique BDD variable
+* :func:`expr2bdd` --- Convert an expression into a binary decision diagram
+* :func:`bdd2expr` --- Convert a binary decision diagram into an expression
+* :func:`upoint2bddpoint` --- Convert an untyped point into a BDD point
+* :func:`ite` --- BDD if-then-else operator
 
 Interface Classes:
 
@@ -16,9 +17,6 @@ Interface Classes:
 * :class:`BDDConstant`
 * :class:`BDDVariable`
 """
-
-# Disable "redefining name from outer scope"
-# pylint: disable=W0621
 
 import collections
 import random
@@ -40,10 +38,21 @@ _BDDS = weakref.WeakValueDictionary()
 class BDDNode:
     """Binary decision diagram node
 
-    .. note::
-       Never construct a ``BDDNode`` instance directly.
-       They will automically be created and destroyed during symbolic
-       manipulation.
+    A BDD node represents one cofactor in the decomposition of a Boolean
+    function.
+    Nodes are uniquely identified by a ``root`` integer,
+    ``lo`` child node, and ``hi`` child node:
+
+    * ``root`` is the cofactor variable's ``uniqid`` attribute
+    * ``lo`` is the zero cofactor node
+    * ``hi`` is the one cofactor node
+
+    The ``root`` of the zero node is -2,
+    and the ``root`` of the one node is -1.
+    Both zero/one nodes have ``lo=None`` and ``hi=None``.
+
+    Do **NOT** create BDD nodes using the ``BDDNode`` constructor.
+    BDD node instances are managed internally.
     """
     def __init__(self, root, lo, hi):
         self.root = root
@@ -82,7 +91,7 @@ def bddvar(name, index=None):
 
     To create several single-letter variables:
 
-    >>> a, b, c, d = map(bddvar, "abcd")
+    >>> a, b, c, d = map(bddvar, 'abcd')
 
     To create variables with multiple names (inner-most first):
 
@@ -91,7 +100,7 @@ def bddvar(name, index=None):
 
     .. seealso::
        For creating arrays of variables with incremental indices,
-       we recommend using the :func:`pyeda.boolalg.bfarray.bddvars` function.
+       use the :func:`pyeda.boolalg.bfarray.bddvars` function.
     """
     bvar = boolfunc.var(name, index)
     try:
@@ -123,7 +132,18 @@ def expr2bdd(expr):
     return _bdd(_expr2bddnode(expr))
 
 def bdd2expr(bdd, conj=False):
-    """Convert a binary decision diagram into an expression."""
+    """Convert a binary decision diagram into an expression.
+
+    This function will always return an expression in two-level form.
+    If *conj* is ``False``, return a sum of products (SOP).
+    Otherwise, return a product of sums (POS).
+
+    For example::
+
+       >>> a, b = map(bddvar, 'ab')
+       >>> bdd2expr(~a & b | a & ~b)
+       Or(And(~a, b), And(a, ~b))
+    """
     if conj:
         outer, inner = (And, Or)
         paths = _iter_all_paths(bdd.node, BDDNODEZERO)
@@ -138,13 +158,34 @@ def bdd2expr(bdd, conj=False):
     return outer(*[inner(*term) for term in terms])
 
 def upoint2bddpoint(upoint):
-    """Convert an untyped point into a BDD point."""
+    """Convert an untyped point into a BDD point.
+
+    .. seealso::
+       For definitions of points an untyped points,
+       see the :mod:`pyeda.boolalg.boolfunc` module.
+    """
     point = dict()
     for uniqid in upoint[0]:
         point[_BDDVARIABLES[uniqid]] = 0
     for uniqid in upoint[1]:
         point[_BDDVARIABLES[uniqid]] = 1
     return point
+
+def ite(f, g, h):
+    r"""BDD if-then-else (ITE) operator
+
+    The *f*, *g*, and *h* arguments are BDDs.
+
+    The ITE(f, g, h) operator means
+    "if *f* is true, return *g*, else return *h*".
+
+    It is equivalent to:
+
+    * DNF form: f & g | ~f & h
+    * CNF form: (~f | g) & (f | h)
+    """
+    f, g, h = map(BinaryDecisionDiagram.box, (f, g, h))
+    return _bdd(_ite(f.node, g.node, h.node))
 
 def _bddnode(root, lo, hi):
     """Return a unique BDD node."""
@@ -175,12 +216,33 @@ def _path2point(path):
 class BinaryDecisionDiagram(boolfunc.Function):
     """Boolean function represented by a binary decision diagram
 
-    .. note::
-       Never construct a ``BinaryDecisionDiagram`` instance directly.
-       They will automatically be created and destroyed during symbolic
-       manipulation.
-    """
+    .. seealso::
+       This is a subclass of :class:`pyeda.boolalg.boolfunc.Function`
 
+    BDDs have a single attribute, ``node``,
+    that points to a node in the managed unique table.
+
+    There are two ways to construct a BDD:
+
+    * Convert an expression using the ``expr2bdd`` function.
+    * Use operators on existing BDDs.
+
+    Use the ``bddvar`` function to create BDD variables,
+    and use the Python ``~|&^`` operators for NOT, OR, AND, XOR.
+
+    For example::
+
+       >>> a, b, c, d = map(bddvar, 'abcd')
+       >>> f = ~a | b & c ^ d
+
+    The ``BinaryDecisionDiagram`` class is useful for type checking,
+    e.g. ``isinstance(f, BinaryDecisionDiagram)``.
+
+    Do **NOT** create a BDD using the ``BinaryDecisionDiagram`` constructor.
+    BDD instances are managed internally,
+    and you will not be able to use the Python ``is`` operator to establish
+    formal equivalence with manually constructed BDDs.
+    """
     def __init__(self, node):
         self.node = node
 
@@ -258,24 +320,40 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     # Specific to BinaryDecisionDiagram
     def dfs_preorder(self):
-        """Iterate through nodes in DFS pre-order."""
+        """Iterate through nodes in depth first search (DFS) pre-order."""
         yield from _dfs_preorder(self.node, set())
 
     def dfs_postorder(self):
-        """Iterate through nodes in DFS post-order."""
+        """Iterate through nodes in depth first search (DFS) post-order."""
         yield from _dfs_postorder(self.node, set())
 
     def bfs(self):
-        """Iterate through nodes in BFS order."""
+        """Iterate through nodes in breadth first search (BFS) order."""
         yield from _bfs(self.node, set())
 
     def equivalent(self, other):
-        """Return whether this BDD is equivalent to another."""
+        """Return whether this BDD is equivalent to *other*.
+
+        You can also use Python's ``is`` operator for BDD equivalency testing.
+
+        For example::
+
+           >>> a, b, c = map(bddvar, 'abc')
+           >>> f1 = a ^ b ^ c
+           >>> f2 = a & ~b & ~c | ~a & b & ~c | ~a & ~b & c | a & b & c
+           >>> f1 is f2
+           True
+        """
         other = self.box(other)
         return self.node is other.node
 
     def to_dot(self, name='BDD'): # pragma: no cover
-        """Convert to DOT language representation."""
+        """Convert to DOT language representation.
+
+        See the
+        `DOT language reference <http://www.graphviz.org/content/dot-language>`_
+        for details.
+        """
         parts = ['graph', name, '{']
         for node in self.dfs_postorder():
             if node is BDDNODEZERO:
@@ -299,13 +377,15 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
 
 class BDDConstant(BinaryDecisionDiagram):
-    """Binary decision diagram constant
+    """Binary decision diagram constant zero/one
 
-    .. note::
-       Never construct a ``BDDConstant`` instance directly.
-       Use the ``int`` values ``0`` and ``1`` instead.
+    The ``BDDConstant`` class is useful for type checking,
+    e.g. ``isinstance(f, BDDConstant)``.
+
+    Do **NOT** create a BDD using the ``BDDConstant`` constructor.
+    BDD instances are managed internally,
+    and the BDD zero/one instances are singletons.
     """
-
     VALUE = NotImplemented
 
     def __bool__(self):
@@ -345,11 +425,12 @@ CONSTANTS = [BDDZERO, BDDONE]
 class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
     """Binary decision diagram variable
 
-    .. note::
-       Never construct a ``BDDVariable`` instance directly.
-       Use the :func:`bddvar` function instead.
-    """
+    The ``BDDVariable`` class is useful for type checking,
+    e.g. ``isinstance(f, BDDVariable)``.
 
+    Do **NOT** create a BDD using the ``BDDVariable`` constructor.
+    Use the :func:`bddvar` function instead.
+    """
     def __init__(self, bvar):
         boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         node = _bddnode(bvar.uniqid, BDDNODEZERO, BDDNODEONE)
@@ -357,7 +438,7 @@ class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):
 
 
 def _neg(node):
-    """Return the node that is the inverse of the input node."""
+    """Return the inverse of *node*."""
     if node is BDDNODEZERO:
         return BDDNODEONE
     elif node is BDDNODEONE:
