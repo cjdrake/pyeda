@@ -181,8 +181,8 @@ def ite(f, g, h):
 
     It is equivalent to:
 
-    * DNF form: f & g | ~f & h
-    * CNF form: (~f | g) & (f | h)
+    * DNF form: ``f & g | ~f & h``
+    * CNF form: ``(~f | g) & (f | h)``
     """
     f, g, h = map(BinaryDecisionDiagram.box, (f, g, h))
     return _bdd(_ite(f.node, g.node, h.node))
