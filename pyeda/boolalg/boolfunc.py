@@ -467,7 +467,9 @@ class Function:
         The *other* argument may be a Function or an farray.
         """
         from pyeda.boolalg.bfarray import farray
-        if isinstance(other, Function):
+        if other in {0, 1}:
+            return farray([self] + [self.box(other)])
+        elif isinstance(other, Function):
             return farray([self] + [other])
         elif isinstance(other, farray):
             return farray([self] + list(other.flat))
@@ -476,10 +478,8 @@ class Function:
 
     def __radd__(self, other):
         from pyeda.boolalg.bfarray import farray
-        if isinstance(other, Function):
-            return farray([other] + [self])
-        elif isinstance(other, farray):
-            return farray(list(other.flat) + [self])
+        if other in {0, 1}:
+            return farray([self.box(other)] + [self])
         else:
             raise TypeError("expected Function or farray")
 

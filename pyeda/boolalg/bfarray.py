@@ -449,15 +449,11 @@ class farray:
         return self.__str__()
 
     def __iter__(self):
-        if self.shape:
-            for i in range(self.shape[0][0], self.shape[0][1]):
-                yield self[i]
+        for i in range(self.shape[0][0], self.shape[0][1]):
+            yield self[i]
 
     def __len__(self):
-        if self.shape:
-            return self.shape[0][1] - self.shape[0][0]
-        else:
-            return 0
+        return self.shape[0][1] - self.shape[0][0]
 
     def __getitem__(self, key):
         # Process input key
@@ -476,10 +472,7 @@ class farray:
             for dim in range(self.ndim - 1, -1, -1):
                 items, shape = _filtdim(items, shape, dim, nsls[dim])
 
-        if shape:
-            return self.__class__(items, shape, self.ftype)
-        else:
-            return items[0]
+        return self.__class__(items, shape, self.ftype)
 
     def __setitem__(self, key, item):
         # Process input key
@@ -519,11 +512,6 @@ class farray:
     def __radd__(self, other):
         if other in {0, 1}:
             return self.__class__([self.ftype.box(other)] + self._items,
-                                  ftype=self.ftype)
-        elif isinstance(other, boolfunc.Function):
-            return self.__class__([other] + self._items, ftype=self.ftype)
-        elif isinstance(other, farray):
-            return self.__class__(list(other.flat) + self._items,
                                   ftype=self.ftype)
         else:
             raise TypeError("expected Function or farray")
