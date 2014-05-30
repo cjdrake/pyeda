@@ -46,9 +46,10 @@ Interface Classes
 
 .. autoclass:: pyeda.boolalg.bfarray.farray
    :members: __invert__, __or__, __and__, __xor__,
-             __lshift__, __rshift__, __add__, __mul__,
+             __lshift__, __rshift__,
+             __add__, __mul__,
+             restrict, vrestrict, compose,
              size, offsets, ndim, reshape, flat,
-             restrict, vrestrict,
              to_uint, to_int,
              zext, sext,
              uor, unor, uand, unand, uxor, uxnor,

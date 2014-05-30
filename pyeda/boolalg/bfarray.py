@@ -4,26 +4,26 @@ of Boolean functions.
 
 Interface Functions:
 
-* :func:`bddzeros`
-* :func:`bddones`
-* :func:`bddvars`
+* :func:`bddzeros` --- Return a multi-dimensional array of BDD zeros
+* :func:`bddones` --- Return a multi-dimensional array of BDD ones
+* :func:`bddvars` --- Return a multi-dimensional array of BDD variables
 
-* :func:`exprzeros`
-* :func:`exprones`
-* :func:`exprvars`
+* :func:`exprzeros` --- Return a multi-dimensional array of expression zeros
+* :func:`exprones` --- Return a multi-dimensional array of expression ones
+* :func:`exprvars` --- Return a multi-dimensional array of expression variables
 
-* :func:`ttzeros`
-* :func:`ttones`
-* :func:`ttvars`
+* :func:`ttzeros` --- Return a multi-dimensional array of truth table zeros
+* :func:`ttones` --- Return a multi-dimensional array of truth table ones
+* :func:`ttvars` --- Return a multi-dimensional array of truth table variables
 
-* :func:`uint2bdds`
-* :func:`uint2exprs`
-* :func:`uint2tts`
-* :func:`int2bdds`
-* :func:`int2exprs`
-* :func:`int2tts`
+* :func:`uint2bdds` --- Convert unsigned *num* to an array of BDDs
+* :func:`uint2exprs` --- Convert unsigned *num* to an array of expressions
+* :func:`uint2tts` --- Convert unsigned *num* to an array of truth tables
+* :func:`int2bdds` --- Convert *num* to an array of BDDs
+* :func:`int2exprs` --- Convert *num* to an array of expressions
+* :func:`int2tts` --- Convert *num* to an array of truth tables
 
-* :func:`fcat`
+* :func:`fcat` --- Concatenate a sequence of farrays
 
 Interface Classes:
 
@@ -50,9 +50,7 @@ _VAR = {
 
 
 def bddzeros(*dims):
-    """Return a multi-dimensional farray of BDDZERO.
-
-    BDDZERO is the BDD representation of the number zero.
+    """Return a multi-dimensional array of BDD zeros.
 
     The variadic *dims* input is a sequence of dimension specs.
     A dimension spec is a two-tuple: (start index, stop index).
@@ -63,7 +61,7 @@ def bddzeros(*dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of BDD zeros::
+    For example, to create a 4x4 array of BDD zeros::
 
        >>> zeros = bddzeros(4, 4)
        >>> zeros
@@ -75,9 +73,7 @@ def bddzeros(*dims):
     return _zeros(BinaryDecisionDiagram, *dims)
 
 def bddones(*dims):
-    """Return a multi-dimensional farray of BDDONE.
-
-    BDDONE is the BDD representation of the number one.
+    """Return a multi-dimensional array of BDD ones.
 
     The variadic *dims* input is a sequence of dimension specs.
     A dimension spec is a two-tuple: (start index, stop index).
@@ -88,7 +84,7 @@ def bddones(*dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of BDD ones::
+    For example, to create a 4x4 array of BDD ones::
 
        >>> ones = bddones(4, 4)
        >>> ones
@@ -100,7 +96,7 @@ def bddones(*dims):
     return _ones(BinaryDecisionDiagram, *dims)
 
 def bddvars(name, *dims):
-    """Return a multi-dimensional farray of BDD variables.
+    """Return a multi-dimensional array of BDD variables.
 
     The *name* argument is passed directly to the
     :func:`pyeda.boolalg.bdd.bddvar` function,
@@ -115,7 +111,7 @@ def bddvars(name, *dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of BDD variables::
+    For example, to create a 4x4 array of BDD variables::
 
        >>> vs = bddvars('a', 4, 4)
        >>> vs
@@ -127,9 +123,7 @@ def bddvars(name, *dims):
     return _vars(BinaryDecisionDiagram, name, *dims)
 
 def exprzeros(*dims):
-    """Return a multi-dimensional farray of EXPRZERO.
-
-    EXPRZERO is the expression representation of the number zero.
+    """Return a multi-dimensional array of expression zeros.
 
     The variadic *dims* input is a sequence of dimension specs.
     A dimension spec is a two-tuple: (start index, stop index).
@@ -140,7 +134,7 @@ def exprzeros(*dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of expression zeros::
+    For example, to create a 4x4 array of expression zeros::
 
        >>> zeros = exprzeros(4, 4)
        >>> zeros
@@ -152,9 +146,7 @@ def exprzeros(*dims):
     return _zeros(Expression, *dims)
 
 def exprones(*dims):
-    """Return a multi-dimensional farray of EXPRONE.
-
-    EXPRONE is the expression representation of the number one.
+    """Return a multi-dimensional array of expression ones.
 
     The variadic *dims* input is a sequence of dimension specs.
     A dimension spec is a two-tuple: (start index, stop index).
@@ -165,7 +157,7 @@ def exprones(*dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of expression ones::
+    For example, to create a 4x4 array of expression ones::
 
        >>> ones = exprones(4, 4)
        >>> ones
@@ -177,7 +169,7 @@ def exprones(*dims):
     return _ones(Expression, *dims)
 
 def exprvars(name, *dims):
-    """Return a multi-dimensional farray of expression variables.
+    """Return a multi-dimensional array of expression variables.
 
     The *name* argument is passed directly to the
     :func:`pyeda.boolalg.expr.exprvar` function,
@@ -192,7 +184,7 @@ def exprvars(name, *dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of expression variables::
+    For example, to create a 4x4 array of expression variables::
 
        >>> vs = exprvars('a', 4, 4)
        >>> vs
@@ -204,9 +196,7 @@ def exprvars(name, *dims):
     return _vars(Expression, name, *dims)
 
 def ttzeros(*dims):
-    """Return a multi-dimensional farray of TTZERO.
-
-    TTZERO is the truth table representation of the number zero.
+    """Return a multi-dimensional array of truth table zeros.
 
     The variadic *dims* input is a sequence of dimension specs.
     A dimension spec is a two-tuple: (start index, stop index).
@@ -217,7 +207,7 @@ def ttzeros(*dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of truth table zeros::
+    For example, to create a 4x4 array of truth table zeros::
 
        >>> zeros = ttzeros(4, 4)
        >>> zeros
@@ -229,9 +219,7 @@ def ttzeros(*dims):
     return _zeros(TruthTable, *dims)
 
 def ttones(*dims):
-    """Return a multi-dimensional farray of TTONE.
-
-    TTONE is the truth table representation of the number one.
+    """Return a multi-dimensional array of truth table ones.
 
     The variadic *dims* input is a sequence of dimension specs.
     A dimension spec is a two-tuple: (start index, stop index).
@@ -242,7 +230,7 @@ def ttones(*dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of truth table ones::
+    For example, to create a 4x4 array of truth table ones::
 
        >>> ones = ttones(4, 4)
        >>> ones
@@ -254,7 +242,7 @@ def ttones(*dims):
     return _ones(TruthTable, *dims)
 
 def ttvars(name, *dims):
-    """Return a multi-dimensional farray of truth table variables.
+    """Return a multi-dimensional array of truth table variables.
 
     The *name* argument is passed directly to the
     :func:`pyeda.boolalg.table.ttvar` function,
@@ -269,7 +257,7 @@ def ttvars(name, *dims):
     and increments by one up to, but not including, ``stop``.
     This follows the Python slice convention.
 
-    For example, to create a 4x4 farray of truth table variables::
+    For example, to create a 4x4 array of truth table variables::
 
        >>> vs = ttvars('a', 4, 4)
        >>> vs
@@ -281,7 +269,7 @@ def ttvars(name, *dims):
     return _vars(TruthTable, name, *dims)
 
 def uint2bdds(num, length=None):
-    """Convert *num* to an farray of BDDs.
+    """Convert unsigned *num* to an array of BDDs.
 
     The *num* argument is a non-negative integer.
 
@@ -297,7 +285,7 @@ def uint2bdds(num, length=None):
     return _uint2farray(BinaryDecisionDiagram, num, length)
 
 def uint2exprs(num, length=None):
-    """Convert *num* to an farray of expressions.
+    """Convert unsigned *num* to an array of expressions.
 
     The *num* argument is a non-negative integer.
 
@@ -313,7 +301,7 @@ def uint2exprs(num, length=None):
     return _uint2farray(Expression, num, length)
 
 def uint2tts(num, length=None):
-    """Convert *num* to an farray of truth tables.
+    """Convert unsigned *num* to an array of truth tables.
 
     The *num* argument is a non-negative integer.
 
@@ -329,7 +317,7 @@ def uint2tts(num, length=None):
     return _uint2farray(TruthTable, num, length)
 
 def int2bdds(num, length=None):
-    """Convert *num* to an farray of BDDs.
+    """Convert *num* to an array of BDDs.
 
     The *num* argument is an ``int``.
     Negative numbers will be converted using twos-complement notation.
@@ -349,7 +337,7 @@ def int2bdds(num, length=None):
     return _int2farray(BinaryDecisionDiagram, num, length)
 
 def int2exprs(num, length=None):
-    """Convert *num* to an farray of expressions.
+    """Convert *num* to an array of expressions.
 
     The *num* argument is an ``int``.
     Negative numbers will be converted using twos-complement notation.
@@ -369,7 +357,7 @@ def int2exprs(num, length=None):
     return _int2farray(Expression, num, length)
 
 def int2tts(num, length=None):
-    """Convert *num* to an farray of truth tables.
+    """Convert *num* to an array of truth tables.
 
     The *num* argument is an ``int``.
     Negative numbers will be converted using twos-complement notation.
@@ -388,8 +376,12 @@ def int2tts(num, length=None):
     """
     return _int2farray(TruthTable, num, length)
 
+# FIXME: Should this function allow {0, 1} inputs?
 def fcat(*fs):
-    """Concatenate a sequence of farrays."""
+    """Concatenate a sequence of farrays.
+
+    The variadic *fs* input is a homogeneous sequence of functions or arrays.
+    """
     items = list()
     for f in fs:
         if isinstance(f, boolfunc.Function):
@@ -402,26 +394,40 @@ def fcat(*fs):
 
 
 class farray:
-    """
-    Array of Boolean functions
+    """Multi-dimensional array of Boolean functions
+
+    The *objs* argument is a nested sequence of homogeneous Boolean functions.
+    That is, both [a, b, c, d] and [[a, b], [c, d]] are valid inputs.
+
+    The optional *shape* parameter is a tuple of dimension specs,
+    which are ``(int, int)`` tuples.
+    It must match the volume of *objs*.
+    The shape can always be automatically determined from *objs*,
+    but you can supply it to automatically reshape a flat input.
+
+    The optional *ftype* parameter is a proper subclass of ``Function``.
+    It must match the homogeneous type of *objs*.
+    In most cases, *ftype* can automatically be determined from *objs*.
+    The one exception is that you must provide *ftype* for ``objs=[]``
+    (an empty array).
     """
     def __init__(self, objs, shape=None, ftype=None):
-        self._items, _shape, _ftype = _itemize(objs)
+        self._items, autoshape, autoftype = _itemize(objs)
         if shape is None:
-            self.shape = _shape
+            self.shape = autoshape
         else:
             _check_shape(shape)
             if _volume(shape) != len(self._items):
                 raise ValueError("expected shape volume to match items")
             self.shape = shape
         if ftype is None:
-            if _ftype is None:
+            if autoftype is None:
                 raise ValueError("could not determine ftype parameter")
-            self.ftype = _ftype
+            self.ftype = autoftype
         else:
             if type(ftype) is not type:
                 raise TypeError("expected ftype to be a type")
-            if not (_ftype is None or ftype is _ftype):
+            if not (autoftype is None or ftype is autoftype):
                 raise ValueError("expected ftype to match items")
             if (not issubclass(ftype, boolfunc.Function) or
                     ftype is boolfunc.Function):
@@ -472,7 +478,10 @@ class farray:
             for dim in range(self.ndim - 1, -1, -1):
                 items, shape = _filtdim(items, shape, dim, nsls[dim])
 
-        return self.__class__(items, shape, self.ftype)
+        if shape:
+            return self.__class__(items, shape, self.ftype)
+        else:
+            return items[0]
 
     def __setitem__(self, key, item):
         # Process input key
@@ -497,7 +506,64 @@ class farray:
             for coord in coords:
                 self._items[self._coord2offset(coord)] = next(it)
 
+    # Operators
+    def __invert__(self):
+        """Bit-wise NOT operator"""
+        return self.__class__([~x for x in self._items], self.shape, self.ftype)
+
+    def __or__(self, other):
+        """Bit-wise OR operator"""
+        shape = self._op_shape(other)
+        items = [x | y for x, y in zip(self.flat, other.flat)]
+        return self.__class__(items, shape, self.ftype)
+
+    def __and__(self, other):
+        """Bit-wise AND operator"""
+        shape = self._op_shape(other)
+        items = [x & y for x, y in zip(self.flat, other.flat)]
+        return self.__class__(items, shape, self.ftype)
+
+    def __xor__(self, other):
+        """Bit-wise XOR operator"""
+        shape = self._op_shape(other)
+        items = [x ^ y for x, y in zip(self.flat, other.flat)]
+        return self.__class__(items, shape, self.ftype)
+
+    def __lshift__(self, obj):
+        """Left shift operator
+
+        The *obj* argument may either be an ``int``, or ``(int, farray)``.
+        The ``int`` argument is *num*, and the ``farray`` argument is *cin*.
+
+        .. seealso:: :meth:`lsh`
+        """
+        if type(obj) is tuple and len(obj) == 2:
+            return self.lsh(obj[0], obj[1])[0]
+        elif type(obj) is int:
+            return self.lsh(obj)[0]
+        else:
+            raise TypeError("expected int or (int, farray)")
+
+    def __rshift__(self, obj):
+        """Right shift operator
+
+        The *obj* argument may either be an ``int``, or ``(int, farray)``.
+        The ``int`` argument is *num*, and the ``farray`` argument is *cin*.
+
+        .. seealso:: :meth:`rsh`
+        """
+        if type(obj) is tuple and len(obj) == 2:
+            return self.rsh(obj[0], obj[1])[0]
+        elif type(obj) is int:
+            return self.rsh(obj)[0]
+        else:
+            raise TypeError("expected int or (int, farray)")
+
     def __add__(self, other):
+        """Concatenation operator
+
+        The *other* argument may be a Function or farray.
+        """
         if other in {0, 1}:
             return self.__class__(self._items + [self.ftype.box(other)],
                                   ftype=self.ftype)
@@ -516,22 +582,49 @@ class farray:
         else:
             raise TypeError("expected Function or farray")
 
-    def __mul__(self, other):
-        if type(other) is not int:
+    def __mul__(self, num):
+        """Repetition operator"""
+        if type(num) is not int:
             raise TypeError("expected multiplier to be an int")
-        if other < 0:
+        if num < 0:
             raise ValueError("expected multiplier to be non-negative")
         items = list()
-        for _ in range(other):
+        for _ in range(num):
             items.extend(self.flat)
         return self.__class__(items, ftype=self.ftype)
 
-    def __rmul__(self, other):
-        return self.__mul__(other)
+    def __rmul__(self, num):
+        return self.__mul__(num)
 
+    # Function stuff
+    def restrict(self, point):
+        """Apply the ``restrict`` method to all functions.
+
+        Returns a new farray.
+        """
+        items = [f.restrict(point) for f in self._items]
+        return self.__class__(items, self.shape, self.ftype)
+
+    def vrestrict(self, vpoint):
+        """Expand all vectors in *vpoint* before applying ``restrict``."""
+        return self.restrict(boolfunc.vpoint2point(vpoint))
+
+    def compose(self, mapping):
+        """Apply the ``compose`` method to all functions.
+
+        Returns a new farray.
+        """
+        items = [f.compose(mapping) for f in self._items]
+        return self.__class__(items, self.shape, self.ftype)
+
+    # farray stuff
     @property
     def size(self):
-        """Return the size of the farray."""
+        """Return the size of the array.
+
+        The *size* of a multi-dimensional array is the product of the sizes
+        of its dimensions.
+        """
         return _volume(self.shape)
 
     @property
@@ -545,7 +638,7 @@ class farray:
         return len(self.shape)
 
     def reshape(self, *dims):
-        """Return an equivalent farray with modified dimensions."""
+        """Return an equivalent farray with a modified shape."""
         shape = _dims2shape(*dims)
         if _volume(shape) != self.size:
             raise ValueError("expected shape with equal volume")
@@ -556,20 +649,11 @@ class farray:
         """Return a 1D iterator over the farray."""
         yield from self._items
 
-    def restrict(self, point):
-        """
-        Return the farray that results from applying the ``restrict`` method to
-        all functions.
-        """
-        items = [f.restrict(point) for f in self._items]
-        return self.__class__(items, self.shape, self.ftype)
-
-    def vrestrict(self, vpoint):
-        """Expand all vectors before applying ``restrict``."""
-        return self.restrict(boolfunc.vpoint2point(vpoint))
-
     def to_uint(self):
-        """Convert vector to an unsigned integer, if possible."""
+        """Convert vector to an unsigned integer, if possible.
+
+        This is only useful for arrays filled with zero/one entries.
+        """
         num = 0
         for i, f in enumerate(self._items):
             if f.is_zero():
@@ -582,7 +666,10 @@ class farray:
         return num
 
     def to_int(self):
-        """Convert vector to an integer, if possible."""
+        """Convert vector to an integer, if possible.
+
+        This is only useful for arrays filled with zero/one entries.
+        """
         num = self.to_uint()
         if num and self._items[-1].unbox():
             return num - (1 << self.size)
@@ -590,96 +677,49 @@ class farray:
             return num
 
     def zext(self, num):
-        """Return a flat copy of this array, zero-extended by N bits."""
+        """Zero-extend this farray by *num* bits.
+
+        Returns a new farray.
+        """
         zero = self.ftype.box(0)
         return self.__class__(self._items + [zero] * num, ftype=self.ftype)
 
     def sext(self, num):
-        """Return a flat copy of this array, sign-extended by N bits."""
+        """Sign-extend this farray by *num* bits.
+
+        Returns a new farray.
+        """
         sign = self._items[-1]
         return self.__class__(self._items + [sign] * num, ftype=self.ftype)
 
-    # Operators
-    def __invert__(self):
-        """Return the bit-wise NOT of the farray."""
-        return self.__class__([~x for x in self._items], self.shape, self.ftype)
-
-    def __or__(self, other):
-        """Return the bit-wise OR of the farray and *other*."""
-        shape = self._op_shape(other)
-        items = [x | y for x, y in zip(self.flat, other.flat)]
-        return self.__class__(items, shape, self.ftype)
-
-    def __and__(self, other):
-        """Return the bit-wise AND of the farray and *other*."""
-        shape = self._op_shape(other)
-        items = [x & y for x, y in zip(self.flat, other.flat)]
-        return self.__class__(items, shape, self.ftype)
-
-    def __xor__(self, other):
-        """Return the bit-wise XOR of the farray and *other*."""
-        shape = self._op_shape(other)
-        items = [x ^ y for x, y in zip(self.flat, other.flat)]
-        return self.__class__(items, shape, self.ftype)
-
-    def __lshift__(self, obj):
-        """Return the farray left-shifted by *obj*.
-
-        The *obj* argument may either be an ``int``, or ``(int, farray)``.
-        The ``int`` argument is *num*, and the ``farray`` argument is *cin*.
-
-        .. seealso:: :meth:`lsh`
-        """
-        if type(obj) is tuple and len(obj) == 2:
-            return self.lsh(obj[0], obj[1])[0]
-        elif type(obj) is int:
-            return self.lsh(obj)[0]
-        else:
-            raise TypeError("expected int or (int, farray)")
-
-    def __rshift__(self, obj):
-        """Return the farray right-shifted by *obj*.
-
-        The *obj* argument may either be an ``int``, or ``(int, farray)``.
-        The ``int`` argument is *num*, and the ``farray`` argument is *cin*.
-
-        .. seealso:: :meth:`rsh`
-        """
-        if type(obj) is tuple and len(obj) == 2:
-            return self.rsh(obj[0], obj[1])[0]
-        elif type(obj) is int:
-            return self.rsh(obj)[0]
-        else:
-            raise TypeError("expected int or (int, farray)")
-
     # Unary operators
     def uor(self):
-        """Return the unary OR of a array of functions."""
+        """Unary OR reduction operator"""
         return reduce(operator.or_, self._items, self.ftype.box(0))
 
     def unor(self):
-        """Return the unary NOR of a array of functions."""
+        """Unary NOR reduction operator"""
         return ~self.uor()
 
     def uand(self):
-        """Return the unary AND of a array of functions."""
+        """Unary AND reduction operator"""
         return reduce(operator.and_, self._items, self.ftype.box(1))
 
     def unand(self):
-        """Return the unary NAND of a array of functions."""
+        """Unary NAND reduction operator"""
         return ~self.uand()
 
     def uxor(self):
-        """Return the unary XOR of a array of functions."""
+        """Unary XOR reduction operator"""
         return reduce(operator.xor, self._items, self.ftype.box(0))
 
     def uxnor(self):
-        """Return the unary XNOR of a array of functions."""
+        """Unary XNOR reduction operator"""
         return ~self.uxor()
 
     # Shift operators
     def lsh(self, num, cin=None):
-        """Return the farray left-shifted by *num* places.
+        """Left shift the farray by *num* places.
 
         The *num* argument must be a non-negative ``int``.
 
@@ -688,6 +728,8 @@ class farray:
 
         Returns a two-tuple (farray fs, farray cout),
         where *fs* is the shifted vector, and *cout* is the "carry out".
+
+        Returns a new farray.
         """
         if num < 0 or num > self.size:
             raise ValueError("expected 0 <= num <= {0.size}".format(self))
@@ -706,7 +748,7 @@ class farray:
             return fs, cout
 
     def rsh(self, num, cin=None):
-        """Return the farray right-shifted by *num* places.
+        """Right shift the farray by *num* places.
 
         The *num* argument must be a non-negative ``int``.
 
@@ -715,6 +757,8 @@ class farray:
 
         Returns a two-tuple (farray fs, farray cout),
         where *fs* is the shifted vector, and *cout* is the "carry out".
+
+        Returns a new farray.
         """
         if num < 0 or num > self.size:
             raise ValueError("expected 0 <= num <= {0.size}".format(self))
@@ -733,11 +777,13 @@ class farray:
             return fs, cout
 
     def arsh(self, num):
-        """Return the farray arithmetically right-shifted by *num* places.
+        """Arithmetically right shift the farray by *num* places.
 
         The *num* argument must be a non-negative ``int``.
 
         The carry-in will be the value of the most significant bit.
+
+        Returns a new farray.
         """
         if num < 0 or num > self.size:
             raise ValueError("expected 0 <= num <= {0.size}".format(self))
@@ -752,8 +798,7 @@ class farray:
 
     # Other logic
     def decode(self):
-        r"""
-        Return symbolic logic for an :math:`N \rightarrow 2^N` binary decoder.
+        r"""Return a :math:`N \rightarrow 2^N` decoder.
 
         Example Truth Table for a 2:4 decoder:
 
@@ -851,6 +896,8 @@ class farray:
 
 def _dims2shape(*dims):
     """Convert input dimensions to a shape."""
+    if not dims:
+        raise ValueError("expected at least one dimension spec")
     shape = list()
     for dim in dims:
         if type(dim) is int:
@@ -870,13 +917,10 @@ def _dims2shape(*dims):
 
 def _volume(shape):
     """Return the volume of a shape."""
-    if shape:
-        prod = 1
-        for start, stop in shape:
-            prod *= stop - start
-        return prod
-    else:
-        return 0
+    prod = 1
+    for start, stop in shape:
+        prod *= stop - start
+    return prod
 
 def _zeros(ftype, *dims):
     """Return a new farray filled with zeros."""
@@ -894,9 +938,8 @@ def _vars(ftype, name, *dims):
     """Return a new farray filled with Boolean variables."""
     shape = _dims2shape(*dims)
     objs = list()
-    if shape:
-        for indices in itertools.product(*[range(i, j) for i, j in shape]):
-            objs.append(_VAR[ftype](name, indices))
+    for indices in itertools.product(*[range(i, j) for i, j in shape]):
+        objs.append(_VAR[ftype](name, indices))
     return farray(objs, shape, ftype)
 
 def _uint2objs(ftype, num, length=None):
@@ -964,7 +1007,7 @@ def _itemize(objs):
                 elif isinstance(obj, TruthTable):
                     ftype = TruthTable
                 else:
-                    raise ValueError("expected valid Function inputs")
+                    raise TypeError("expected valid Function inputs")
             elif not isinstance(obj, ftype):
                 raise ValueError("expected uniform Function types")
         return list(objs), ((0, len(objs)), ), ftype

@@ -461,8 +461,7 @@ class Function:
         return self.__xor__(g)
 
     def __add__(self, other):
-        """
-        Convert this Function to an farray, and concatenate *other* to the end.
+        """Concatenation operator
 
         The *other* argument may be a Function or an farray.
         """
@@ -484,7 +483,7 @@ class Function:
             raise TypeError("expected Function or farray")
 
     def __mul__(self, num):
-        """Return an farray of this variable repeated *num* times."""
+        """Repetition operator"""
         from pyeda.boolalg.bfarray import farray
         if type(num) is not int:
             raise TypeError("expected multiplier to be an int")
@@ -558,8 +557,9 @@ class Function:
 
     def restrict(self, point):
         r"""
-        Return the Boolean function that results after restricting a subset of
-        its input variables to :math:`\{0, 1\}`.
+        Restrict a subset of support variables to :math:`\{0, 1\}`.
+
+        Returns a new function: :math:`f(x_i, \ldots)`
 
         :math:`f \: | \: x_i = b`
         """
@@ -570,13 +570,14 @@ class Function:
         raise NotImplementedError()
 
     def vrestrict(self, vpoint):
-        """Expand all vectors before applying 'restrict'."""
+        """Expand all vectors in *vpoint* before applying ``restrict``."""
         return self.restrict(vpoint2point(vpoint))
 
     def compose(self, mapping):
         r"""
-        Return the Boolean function that results after substituting a subset of
-        its input variables for other Boolean functions.
+        Substitute a subset of support variables with other Boolean functions.
+
+        Returns a new function: :math:`f(g_i, \ldots)`
 
         :math:`f_1 \: | \: x_i = f_2`
         """
