@@ -5,7 +5,6 @@
 
 .. _IPython: http://ipython.org
 .. _Nose: http://nose.readthedocs.org
-.. _PyLint: http://www.pylint.org
 .. _Sphinx: http://sphinx-doc.org
 
 ********************
@@ -36,12 +35,6 @@ There were several reasons to drop support for Python 2:
   used to great effect by logic expression factory functions.
 * It is too arduous to research and support all the C API changes from version
   2 to version 3. Preprocessor is evil.
-
-That said, the source code does not yet utilize several new Python 3 features.
-For example, classes are still declared using the Python 2.7 syntax for
-"new-style" classes, ie ``class ClassName(object)``.
-The primary reason is that `PyLint`_ is a little slow to support some of the
-latest and greatest language features.
 
 Distutils / Virtualenv
 ======================
