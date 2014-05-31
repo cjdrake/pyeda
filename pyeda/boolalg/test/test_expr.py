@@ -206,7 +206,6 @@ def test_ops():
     assert a >> 1 is EXPRONE
     assert 1 >> a == a
     assert (a >> b).equivalent(~a | b)
-    assert s.ite(a, b).equivalent(s & a | ~s & b)
 
 def test_const():
     assert bool(EXPRZERO) is False

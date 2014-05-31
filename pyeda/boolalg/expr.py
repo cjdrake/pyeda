@@ -2,26 +2,58 @@
 The :mod:`pyeda.boolalg.expr` module implements
 Boolean functions represented as expressions.
 
+Data Types:
+
+abstract syntax tree
+   A nested tuple of entries that represents an expression.
+   It is defined recursively::
+
+      ast := ('const', bool)
+           | ('var', names, indices)
+           | ('not', ast)
+           | ('implies', ast, ast)
+           | ('ite', ast, ast, ast)
+           | (func, ast, ...)
+
+      bool := 0 | 1
+
+      names := (name, ...)
+
+      indices := (index, ...)
+
+      func := 'or'
+            | 'nor'
+            | 'and'
+            | 'nand'
+            | 'xor'
+            | 'xnor'
+            | 'equal'
+            | 'unequal'
+            | 'onehot0'
+            | 'onehot'
+            | 'majority'
+            | 'achillesheel'
+
 Interface Functions:
 
-* :func:`exprvar`
-* :func:`expr`
-* :func:`ast2expr`
-* :func:`expr2dimacscnf`
-* :func:`upoint2exprpoint`
+* :func:`exprvar` --- Return a unique expression variable
+* :func:`expr` --- Convert an arbitrary object into an Expression
+* :func:`ast2expr` --- Convert an abstract syntax tree to an Expression
+* :func:`expr2dimacscnf` --- Convert an expression into an equivalent DIMACS CNF
+* :func:`upoint2exprpoint` --- Convert an untyped point to an Expression point
 
-* :func:`Not`
-* :func:`Or`
-* :func:`And`
+* :func:`Not` --- Expression negation operator
+* :func:`Or` --- Expression disjunction (sum, OR) operator
+* :func:`And` --- Expression conjunction (product, AND) operator
 
-* :func:`Nor`
-* :func:`Nand`
-* :func:`Xor`
-* :func:`Xnor`
-* :func:`Equal`
-* :func:`Unequal`
-* :func:`Implies`
-* :func:`ITE`
+* :func:`Nor` --- Expression NOR (not OR) operator
+* :func:`Nand` --- Expression NAND (not AND) operator
+* :func:`Xor` --- Expression exclusive or (XOR) operator
+* :func:`Xnor` --- Expression exclusive nor (XNOR) operator
+* :func:`Equal` --- Expression equality operator
+* :func:`Unequal` --- Expression inequality operator
+* :func:`Implies` --- Expression implication operator
+* :func:`ITE` --- Expression If-Then-Else (ITE) operator
 
 * :func:`OneHot0`
 * :func:`OneHot`
@@ -32,30 +64,43 @@ Interface Functions:
 Interface Classes:
 
 * :class:`Expression`
-* :class:`ExprConstant`
-* :class:`ExprLiteral`
-* :class:`ExprVariable`
-* :class:`ExprComplement`
-* :class:`ExprNot`
-* :class:`ExprOrAnd`
-* :class:`ExprOr`
-* :class:`ExprAnd`
-* :class:`ExprNorNand`
-* :class:`ExprNor`
-* :class:`ExprNand`
-* :class:`ExprExclusive`
-* :class:`ExprXor`
-* :class:`ExprXnor`
-* :class:`ExprEqualBase`
-* :class:`ExprEqual`
-* :class:`ExprUnequal`
-* :class:`ExprImplies`
-* :class:`ExprITE`
+
+  * :class:`ExprConstant`
+  * :class:`ExprLiteral`
+
+    * :class:`ExprVariable`
+    * :class:`ExprComplement`
+
+  * :class:`ExprNot`
+  * :class:`ExprOrAnd`
+
+    * :class:`ExprOr`
+    * :class:`ExprAnd`
+
+  * :class:`ExprNorNand`
+
+    * :class:`ExprNor`
+    * :class:`ExprNand`
+
+  * :class:`ExprExclusive`
+
+    * :class:`ExprXor`
+    * :class:`ExprXnor`
+
+  * :class:`ExprEqualBase`
+
+    * :class:`ExprEqual`
+    * :class:`ExprUnequal`
+
+  * :class:`ExprImplies`
+  * :class:`ExprITE`
 
 * :class:`NormalForm`
-* :class:`DisjNormalForm`
-* :class:`ConjNormalForm`
-* :class:`DimacsCNF`
+
+  * :class:`DisjNormalForm`
+  * :class:`ConjNormalForm`
+
+    * :class:`DimacsCNF`
 """
 
 # Disable "redefining name from outer scope"
@@ -71,7 +116,7 @@ from pyeda.util import bit_on, clog2, parity, cached_property
 # FIXME: This is a hack for readthedocs Sphinx autodoc
 try:
     from pyeda.boolalg import picosat
-except ImportError:
+except ImportError: # pragma: no cover
     pass
 
 
@@ -119,7 +164,7 @@ def exprvar(name, index=None):
 
     To create several single-letter variables:
 
-    >>> a, b, c, d = map(exprvar, "abcd")
+    >>> a, b, c, d = map(exprvar, 'abcd')
 
     To create variables with multiple names (inner-most first):
 
@@ -128,7 +173,7 @@ def exprvar(name, index=None):
 
     .. seealso::
        For creating arrays of variables with incremental indices,
-       we recommend using the :func:`pyeda.boolalg.bfarray.exprvars` function.
+       use the :func:`pyeda.boolalg.bfarray.exprvars` function.
     """
     bvar = boolfunc.var(name, index)
     try:
@@ -179,7 +224,7 @@ def expr2dimacscnf(expr):
     litmap, nvars, clauses = expr.encode_cnf()
     return litmap, DimacsCNF(nvars, clauses)
 
-def expr2dimacssat(expr):
+def expr2dimacssat(expr): # pragma: no cover
     """Convert an expression into an equivalent DIMACS SAT string."""
     if not isinstance(expr, Expression):
         fstr = "expected expr to be an Expression, got {0.__name__}"
@@ -202,7 +247,7 @@ def expr2dimacssat(expr):
 
     return "p {} {}\n{}".format(fmt, nvars, formula)
 
-def _expr2sat(expr, litmap):
+def _expr2sat(expr, litmap): # pragma: no cover
     """Convert an expression to a DIMACS SAT string."""
     if isinstance(expr, ExprLiteral):
         return str(litmap[expr])
@@ -236,7 +281,10 @@ def upoint2exprpoint(upoint):
 
 # primitive functions
 def Not(arg, simplify=True):
-    """Factory function for Boolean NOT expression."""
+    """Expression negation operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     arg = Expression.box(arg)
     expr = ExprNot(arg)
     if simplify:
@@ -244,7 +292,10 @@ def Not(arg, simplify=True):
     return expr
 
 def Or(*args, simplify=True):
-    """Factory function for Boolean OR expression."""
+    """Expression disjunction (sum, OR) operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     args = [Expression.box(arg) for arg in args]
     expr = ExprOr(*args)
     if simplify:
@@ -252,15 +303,22 @@ def Or(*args, simplify=True):
     return expr
 
 def And(*args, simplify=True):
-    """Factory function for Boolean AND expression."""
+    """Expression conjunction (product, AND) operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     args = [Expression.box(arg) for arg in args]
     expr = ExprAnd(*args)
     if simplify:
         expr = expr.simplify()
     return expr
 
+# secondary functions
 def Nor(*args, simplify=True):
-    """Alias for Not(Or(...))"""
+    """Expression NOR (not OR) operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     args = [Expression.box(arg) for arg in args]
     expr = ExprNor(*args)
     if simplify:
@@ -268,16 +326,21 @@ def Nor(*args, simplify=True):
     return expr
 
 def Nand(*args, simplify=True):
-    """Alias for Not(And(...))"""
+    """Expression NAND (not AND) operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     args = [Expression.box(arg) for arg in args]
     expr = ExprNand(*args)
     if simplify:
         expr = expr.simplify()
     return expr
 
-# secondary functions
 def Xor(*args, simplify=True):
-    """Factory function for Boolean XOR expression."""
+    """Expression exclusive or (XOR) operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     args = [Expression.box(arg) for arg in args]
     expr = ExprXor(*args)
     if simplify:
@@ -285,7 +348,10 @@ def Xor(*args, simplify=True):
     return expr
 
 def Xnor(*args, simplify=True):
-    """Factory function for Boolean XNOR expression."""
+    """Expression exclusive nor (XNOR) operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     args = [Expression.box(arg) for arg in args]
     expr = ExprXnor(*args)
     if simplify:
@@ -293,7 +359,10 @@ def Xnor(*args, simplify=True):
     return expr
 
 def Equal(*args, simplify=True):
-    """Factory function for Boolean EQUAL expression."""
+    """Expression equality operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     args = [Expression.box(arg) for arg in args]
     expr = ExprEqual(*args)
     if simplify:
@@ -301,7 +370,10 @@ def Equal(*args, simplify=True):
     return expr
 
 def Unequal(*args, simplify=True):
-    """Factory function for Boolean UNEQUAL expression."""
+    """Expression inequality operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     args = [Expression.box(arg) for arg in args]
     expr = ExprUnequal(*args)
     if simplify:
@@ -309,7 +381,10 @@ def Unequal(*args, simplify=True):
     return expr
 
 def Implies(p, q, simplify=True):
-    """Factory function for Boolean implication expression."""
+    """Expression implication operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     p = Expression.box(p)
     q = Expression.box(q)
     expr = ExprImplies(p, q)
@@ -318,7 +393,10 @@ def Implies(p, q, simplify=True):
     return expr
 
 def ITE(s, d1, d0, simplify=True):
-    """Factory function for Boolean If-Then-Else expression."""
+    """Expression If-Then-Else (ITE) operator
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
     s = Expression.box(s)
     d1 = Expression.box(d1)
     d0 = Expression.box(d0)
@@ -330,8 +408,13 @@ def ITE(s, d1, d0, simplify=True):
 # high order functions
 def OneHot0(*args, simplify=True, conj=True):
     """
-    Return an expression that means:
-        At most one input variable is true.
+    Return an expression that means
+    "at most one input function is true".
+
+    If *simplify* is ``True``, return a simplified expression.
+
+    If *conj* is ``True``, return a CNF.
+    Otherwise, return a DNF.
     """
     args = [Expression.box(arg) for arg in args]
     terms = list()
@@ -349,14 +432,22 @@ def OneHot0(*args, simplify=True, conj=True):
 
 def OneHot(*args, simplify=True, conj=True):
     """
-    Return an expression that means:
-        Exactly one input variable is true.
+    Return an expression that means
+    "exactly one input function is true".
+
+    If *simplify* is ``True``, return a simplified expression.
+
+    If *conj* is ``True``, return a CNF.
+    Otherwise, return a DNF.
     """
     args = [Expression.box(arg) for arg in args]
+    terms = list()
     if conj:
-        expr = ExprAnd(ExprOr(*args), OneHot0(*args, simplify=False))
+        for arg1, arg2 in itertools.combinations(args, 2):
+            terms.append(ExprOr(ExprNot(arg1), ExprNot(arg2)))
+        terms.append(ExprOr(*args))
+        expr = ExprAnd(*terms)
     else:
-        terms = list()
         for i, arg in enumerate(args):
             zeros = [ExprNot(x) for x in args[:i] + args[i+1:]]
             terms.append(ExprAnd(arg, *zeros))
@@ -367,8 +458,13 @@ def OneHot(*args, simplify=True, conj=True):
 
 def Majority(*args, simplify=True, conj=False):
     """
-    Return an expression that means:
-        The majority of the input variables are true.
+    Return an expression that means
+    "the majority of input functions are true".
+
+    If *simplify* is ``True``, return a simplified expression.
+
+    If *conj* is ``True``, return a CNF.
+    Otherwise, return a DNF.
     """
     args = [Expression.box(arg) for arg in args]
     if conj:
@@ -387,8 +483,10 @@ def Majority(*args, simplify=True, conj=False):
 
 def AchillesHeel(*args, simplify=True):
     r"""
-    Return the Achille's Heel function, defined as
+    Return the Achille's Heel function, defined as:
     :math:`\prod_{i=0}^{n/2-1}{X_{2i} + X_{2i+1}}`.
+
+    If *simplify* is ``True``, return a simplified expression.
     """
     nargs = len(args)
     if nargs & 1:
@@ -419,24 +517,60 @@ def Mux(fs, sel, simplify=True):
         expr = expr.simplify()
     return expr
 
-def ForAll(vs, expr):
+def ForAll(vs, expr): # pragma: no cover
     """
-    Return an expression that means:
-        For all variables in 'vs', the expression is true.
+    Return an expression that means
+    "for all variables in *vs*, *expr* is true".
     """
     return And(*expr.cofactors(vs))
 
-def Exists(vs, expr):
+def Exists(vs, expr): # pragma: no cover
     """
-    Return an expression that means:
-        There exists a variable in 'vs' such that the expression is true.
+    Return an expression that means
+    "there exists a variable in *vs* such that *expr* is true".
     """
     return Or(*expr.cofactors(vs))
 
 
 class Expression(boolfunc.Function):
-    """Boolean function represented by a logic expression"""
+    """Boolean function represented by a logic expression
 
+    .. seealso::
+       This is a subclass of :class:`pyeda.boolalg.boolfunc.Function`
+
+    An expression is a tree data structure with operators at the branches,
+    and constants/literals at the leaves.
+    A literal is a variable or its complement.
+
+    There are two ways to construct an expression:
+
+    * Convert another function representation.
+    * Use operators on existing expressions.
+
+    Use the ``exprvar`` function to create expression variables,
+    and use the Python ``~|&^`` operators for NOT, OR, AND, XOR.
+    Additionally, expressions overload ``>>`` for IMPLIES.
+
+    For example::
+
+       >>> a, b, c, d, p, q = map(exprvar, 'abcdpq')
+       >>> f = ~a | b & c ^ d
+       >>> g = p >> q
+
+    To create unsimplified expressions, use class constructors::
+
+       >>> ExprOr(0, a)
+       Or(0, a)
+
+    To create simplified expressions,
+    use function form operators with ``simplify=True``,
+    or Python ``~|&^`` operators::
+
+       >>> Or(0, a)
+       a
+       >>> 0 | a
+       a
+    """
     ASTOP = NotImplemented
     PRECEDENCE = -1
 
@@ -449,7 +583,7 @@ class Expression(boolfunc.Function):
     def __repr__(self):
         return self.__str__()
 
-    def __lt__(self, other):
+    def __lt__(self, other): # pragma: no cover
         return id(self) < id(other)
 
     def to_unicode(self):
@@ -464,46 +598,35 @@ class Expression(boolfunc.Function):
     def __invert__(self):
         return ExprNot(self).simplify()
 
-    def __or__(self, other):
-        return ExprOr(self, self.box(other)).simplify()
+    def __or__(self, g):
+        return ExprOr(self, self.box(g)).simplify()
 
-    def __and__(self, other):
-        return ExprAnd(self, self.box(other)).simplify()
+    def __and__(self, g):
+        return ExprAnd(self, self.box(g)).simplify()
 
-    def __xor__(self, other):
-        return ExprXor(self, self.box(other)).simplify()
+    def __xor__(self, g):
+        return ExprXor(self, self.box(g)).simplify()
 
-    def __rshift__(self, other):
-        """Boolean implication
+    def __rshift__(self, g):
+        r"""Boolean implication operator
 
-        +---+---+--------+
-        | f | g | f => g |
-        +---+---+--------+
-        | 0 | 0 |    1   |
-        | 0 | 1 |    1   |
-        | 1 | 0 |    0   |
-        | 1 | 1 |    1   |
-        +---+---+--------+
+        +-----------+-----------+----------------------+
+        | :math:`f` | :math:`g` | :math:`f \implies g` |
+        +===========+===========+======================+
+        |         0 |         0 |                    1 |
+        +-----------+-----------+----------------------+
+        |         0 |         1 |                    1 |
+        +-----------+-----------+----------------------+
+        |         1 |         0 |                    0 |
+        +-----------+-----------+----------------------+
+        |         1 |         1 |                    1 |
+        +-----------+-----------+----------------------+
         """
-        return Implies(self, other)
+        return ExprImplies(self, self.box(g)).simplify()
 
-    def __rrshift__(self, other):
-        """Reverse Boolean implication
-
-        +---+---+--------+
-        | f | g | f <= g |
-        +---+---+--------+
-        | 0 | 0 |    1   |
-        | 0 | 1 |    0   |
-        | 1 | 0 |    1   |
-        | 1 | 1 |    1   |
-        +---+---+--------+
-        """
-        return Implies(other, self)
-
-    def ite(self, d1, d0):
-        """If-then-else operator"""
-        return ITE(self, d1, d0)
+    def __rrshift__(self, g):
+        """Reverse Boolean implication operator"""
+        return ExprImplies(self.box(g), self).simplify()
 
     # From Function
     @cached_property
@@ -568,7 +691,8 @@ class Expression(boolfunc.Function):
     def box(obj):
         if isinstance(obj, Expression):
             return obj
-        elif obj in {0, 1}:
+        # False, True, 0, 1
+        elif isinstance(obj, int) and obj in {0, 1}:
             return CONSTANTS[obj]
         elif type(obj) is str:
             return ast2expr(pyeda.parsing.boolexpr.parse(obj))

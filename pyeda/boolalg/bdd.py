@@ -14,8 +14,9 @@ Interface Classes:
 
 * :class:`BDDNode`
 * :class:`BinaryDecisionDiagram`
-* :class:`BDDConstant`
-* :class:`BDDVariable`
+
+  * :class:`BDDConstant`
+  * :class:`BDDVariable`
 """
 
 import collections

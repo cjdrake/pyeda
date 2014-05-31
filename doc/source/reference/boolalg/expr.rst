@@ -19,8 +19,8 @@ Interface Functions
 
 .. autofunction:: pyeda.boolalg.expr.upoint2exprpoint
 
-Logic Factory Functions
------------------------
+Operators
+---------
 
 Primary Operators
 ^^^^^^^^^^^^^^^^^
@@ -70,8 +70,8 @@ Expression Tree Nodes
 ---------------------
 
 .. autoclass:: pyeda.boolalg.expr.Expression
-   :members: to_unicode,
-             to_latex,
+   :members: __rshift__,
+             to_unicode, to_latex,
              invert,
              simplify,
              simplified,
