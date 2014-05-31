@@ -307,12 +307,8 @@ ZOM_NAME := '.' NAME ZOM_NAME
 
 INDICES := INT ZOM_INDEX
 
-ZOM_INDEX := SEP INT ZOM_INDEX
+ZOM_INDEX := ',' INT ZOM_INDEX
            | null
-
-# FIXME: this requires LL(2)
-SEP := ','
-     | ']' '['
 """
 
 OPN_TOKS = {
