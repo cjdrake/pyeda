@@ -88,7 +88,7 @@ def cached_property(func):
 
        import math
 
-       class RightTriangle
+       class RightTriangle:
            def __init__(self, a, b):
                self.a = a
                self.b = b
