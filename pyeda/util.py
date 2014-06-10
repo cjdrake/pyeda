@@ -4,9 +4,9 @@ such as fundamental functions and decorators.
 
 Interface Functions:
 
-* :func:`bit_on`
-* :func:`clog2`
-* :func:`parity`
+* :func:`bit_on` --- Return the value of a number's bit position
+* :func:`clog2` --- Return the ceiling log base two of an integer
+* :func:`parity` --- Return the parity of an integer
 
 Decorators:
 

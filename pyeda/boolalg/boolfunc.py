@@ -2,20 +2,43 @@
 The :mod:`pyeda.boolalg.boolfunc` module implements the fundamentals of
 Boolean space, variables and functions.
 
+Data Types:
+
+point
+    A dictionary of ``Variable => {0, 1}`` mappings.
+    For example, ``{a: 0, b: 1, c: 0, d: 1}``.
+    An N-dimensional *point* corresponds to one vertex of an N-dimensional
+    *cube*.
+
+untyped point
+    An untyped, immutable representation of a *point*,
+    represented as ``(frozenset([int]), frozenset([int]))``.
+    The integers are Variable uniqids.
+    Index zero contains a frozenset of variables mapped to zero,
+    and index one contains a frozenset of variables mapped to one.
+    This representation is easier to manipulate than the *point*,
+    and it is hashable for caching purposes.
+
+term
+    A tuple of :math:`N` Boolean functions,
+    intended to be used as the input of either an OR or AND function.
+    An OR term is called a *maxterm* (product of sums),
+    and an AND term is called a *minterm* (sum of products).
+
 Interface Functions:
 
-* :func:`num2point`
-* :func:`num2upoint`
-* :func:`num2term`
+* :func:`num2point` --- Convert an integer into a point in an N-dimensional Boolean space
+* :func:`num2upoint` --- Convert an integer into an untyped point in an N-dimensional Boolean space.
+* :func:`num2term` --- Convert an integer into a min/max term in an N-dimensional Boolean space
 
-* :func:`point2upoint`
-* :func:`point2term`
+* :func:`point2upoint` --- Convert a point into an untyped point
+* :func:`point2term` --- Convert a point into a min/max term
 
-* :func:`iter_points`
-* :func:`iter_upoints`
-* :func:`iter_terms`
+* :func:`iter_points` --- Iterate through all points in an N-dimensional Boolean space
+* :func:`iter_upoints` --- Iterate through all untyped points in an N-dimensional Boolean space
+* :func:`iter_terms` --- Iterate through all min/max terms in an N-dimensional Boolean space
 
-* :func:`vpoint2point`
+* :func:`vpoint2point` --- Convert a vector point into a point in an N-dimensional Boolean space
 
 Interface Classes:
 
@@ -135,7 +158,7 @@ def num2point(num, vs):
     return {v: bit_on(num, i) for i, v in enumerate(vs)}
 
 def num2upoint(num, vs):
-    """Convert *num* into an untyped point in an N-dimensional space.
+    """Convert *num* into an untyped point in an N-dimensional Boolean space.
 
     The *vs* argument is a sequence of :math:`N` Boolean variables.
     There are :math:`2^N` points in the corresponding Boolean space.
@@ -150,7 +173,7 @@ def num2upoint(num, vs):
     return point2upoint(num2point(num, vs))
 
 def num2term(num, fs, conj=False):
-    """Convert *num* into a min/max term in an N-dimensional space.
+    """Convert *num* into a min/max term in an N-dimensional Boolean space.
 
     The *fs* argument is a sequence of :math:`N` Boolean functions.
     There are :math:`2^N` points in the corresponding Boolean space.
@@ -196,9 +219,7 @@ def num2term(num, fs, conj=False):
         return tuple(f if bit_on(num, i) else ~f for i, f in enumerate(fs))
 
 def point2upoint(point):
-    """Convert *point* into an untyped point.
-
-    """
+    """Convert *point* into an untyped point."""
     upoint = [set(), set()]
     for v, val in point.items():
         upoint[val].add(v.uniqid)
@@ -218,7 +239,7 @@ def point2term(point, conj=False):
         return tuple(v if val else ~v for v, val in point.items())
 
 def iter_points(vs):
-    """Iterate through all points in an N-dimensional space.
+    """Iterate through all points in an N-dimensional Boolean space.
 
     The *vs* argument is a sequence of :math:`N` Boolean variables.
     """
@@ -226,7 +247,7 @@ def iter_points(vs):
         yield num2point(num, vs)
 
 def iter_upoints(vs):
-    """Iterate through all untyped points in an N-dimensional space.
+    """Iterate through all untyped points in an N-dimensional Boolean space.
 
     The *vs* argument is a sequence of :math:`N` Boolean variables.
     """
@@ -234,7 +255,7 @@ def iter_upoints(vs):
         yield num2upoint(num, vs)
 
 def iter_terms(fs, conj=False):
-    """Iterate through all min/max terms in an N-dimensional space.
+    """Iterate through all min/max terms in an N-dimensional Boolean space.
 
     The *fs* argument is a sequence of :math:`N` Boolean functions.
 
