@@ -26,5 +26,5 @@ test:
 
 .PHONY: cover
 cover:
-	@$(PYTHON) setup.py nosetests --with-doctest --with-coverage --cover-html
+	@$(PYTHON) setup.py nosetests --with-doctest --with-coverage --cover-html --cover-package=pyeda
 
