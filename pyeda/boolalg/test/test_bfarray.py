@@ -118,6 +118,19 @@ farray([[[z[0,0,0], z[0,0,1]],
     assert_raises(TypeError, X.__add__, 42)
     assert_raises(TypeError, X.__radd__, 42)
 
+    A = exprvars('a', 2, 5, 6)
+    B = exprvars('b', 2, 5, 6)
+    C = exprvars('c', (1, 3), 5, 6)
+    # regular MDA will retain shape
+    assert (A+B).shape == ((0, 4), (0, 5), (0, 6))
+    # irregular MDA will not
+    assert (A+C).shape == ((0, 4*5*6), )
+
+    # regular MDA will retain shape
+    assert (A*2).shape == ((0, 4), (0, 5), (0, 6))
+    # irregular MDA will not
+    assert (C*2).shape == ((0, 4*5*6), )
+
     # __mul__
     # expected multiplier to be an int
     assert_raises(TypeError, X.__mul__, 'foo')

@@ -565,15 +565,22 @@ class farray:
         The *other* argument may be a Function or farray.
         """
         if other in {0, 1}:
-            return self.__class__(self._items + [self.ftype.box(other)],
-                                  ftype=self.ftype)
+            other = farray([self.ftype.box(other)])
         elif isinstance(other, boolfunc.Function):
-            return self.__class__(self._items + [other], ftype=self.ftype)
-        elif isinstance(other, farray):
-            return self.__class__(self._items + list(other.flat),
-                                  ftype=self.ftype)
-        else:
+            other = farray([other])
+        elif not isinstance(other, farray):
             raise TypeError("expected Function or farray")
+
+        items = self._items + list(other.flat)
+        shape = None
+        # Multi-dimensional arrays
+        if (self.ndim == other.ndim > 1 and
+                self.shape[1:] == other.shape[1:]):
+            # (0,x), ... + (0,y), ... = (0,x+y), ...
+            if self.shape[0][0] == other.shape[0][0] == 0:
+                shape0 = ((0, self.shape[0][1] + other.shape[0][1]), )
+                shape = shape0 + self.shape[1:]
+        return self.__class__(items, shape, self.ftype)
 
     def __radd__(self, other):
         if other in {0, 1}:
@@ -588,10 +595,16 @@ class farray:
             raise TypeError("expected multiplier to be an int")
         if num < 0:
             raise ValueError("expected multiplier to be non-negative")
-        items = list()
-        for _ in range(num):
-            items.extend(self.flat)
-        return self.__class__(items, ftype=self.ftype)
+
+        items = self._items * num
+        shape = None
+        # Multi-dimensional arrays
+        if self.ndim > 1:
+            # (0,x), ... * N = (0,N*x), ...
+            if self.shape[0][0] == 0:
+                shape0 = ((0, self.shape[0][1] * num), )
+                shape = shape0 + self.shape[1:]
+        return self.__class__(items, shape, self.ftype)
 
     def __rmul__(self, num):
         return self.__mul__(num)
