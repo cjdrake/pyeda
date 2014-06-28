@@ -44,19 +44,14 @@ visit PyEDA's page at the
 Installation
 ============
 
-Latest released version using
-`setuptools <http://pythonhosted.org/setuptools>`_::
-
-   $ easy_install pyeda
-
 Latest release version using
 `pip <http://www.pip-installer.org/en/latest>`_::
 
-   $ pip install pyeda
+   $ pip3 install pyeda
 
 Installation from the repository::
 
-   $ python setup.py install
+   $ python3 setup.py install
 
 Logic Expressions
 =================
@@ -151,53 +146,53 @@ Test function formal equivalence::
 
 Investigate Boolean identities::
 
-   # Law of double complement
+   # Double complement
    >>> ~~a
    a
 
-   # Idempotent laws
+   # Idempotence
    >>> a | a
    a
    >>> a & a
    a
 
-   # Identity laws
+   # Identity
    >>> a | 0
    a
    >>> a & 1
    a
 
-   # Dominance laws
+   # Dominance
    >>> a | 1
    1
    >>> a & 0
    0
 
-   # Commutative laws
+   # Commutativity
    >>> (a | b).equivalent(b | a)
    True
    >>> (a & b).equivalent(b & a)
    True
 
-   # Associative laws
+   # Associativity
    >>> a | (b | c)
    Or(a, b, c)
    >>> a & (b & c)
    And(a, b, c)
 
-   # Distributive laws
+   # Distributive
    >>> (a | (b & c)).to_cnf()
    And(Or(a, b), Or(a, c))
    >>> (a & (b | c)).to_dnf()
    Or(And(a, b), And(a, c))
 
-   # De Morgan's laws
+   # De Morgan's
    >>> Not(a | b).factor()
    And(~a, ~b)
    >>> Not(a & b).factor()
    Or(~a, ~b)
 
-   # Absorption laws
+   # Absorption
    >>> (a | (a & b)).absorb()
    a
    >>> (a & (a | b)).absorb()
