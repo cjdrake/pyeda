@@ -22,7 +22,7 @@ Got rid of ``a[0][1][2]`` expression parsing syntax.
 Use ``a[0,1,2]`` instead.
 Also got rid of the ``bitvec`` function.
 Use the ``exprvars`` function (or ``bddvars``, ``ttvars``) instead.
-Finally all vestiges of the legacy ``BitVector`` MDA methodology is gone.
+Finally all vestiges of the legacy ``BitVector`` MDA methodology are gone.
 
 Everything else was just miscellaneous code/test/documentation cleanup.
 
