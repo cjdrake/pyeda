@@ -4,6 +4,28 @@
   Release Notes
 *****************
 
+Version 0.25
+============
+
+This is a small, incremental release.
+I recently changed jobs and moved,
+so development will definitely slow down for a while.
+
+Function array concatenation and repetition for MDAs is now a bit smarter
+(`Issue 96 <https://github.com/cjdrake/pyeda/issues/96>`_).
+Rather than simply flattening,
+the operators will attempt to retain the shape of the MDAs if possible.
+For example, a ``2x6x7 + 2x6x7`` concatenation will return ``4x6x7``,
+and ``2x6x7 * 2`` repetition will return ``4x6x7``.
+
+Got rid of ``a[0][1][2]`` expression parsing syntax.
+Use ``a[0,1,2]`` instead.
+Also got rid of the ``bitvec`` function.
+Use the ``exprvars`` function (or ``bddvars``, ``ttvars``) instead.
+Finally all vestiges of the legacy ``BitVector`` MDA methodology is gone.
+
+Everything else was just miscellaneous code/test/documentation cleanup.
+
 Version 0.24
 ============
 
