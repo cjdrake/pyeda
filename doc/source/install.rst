@@ -35,6 +35,7 @@ There were several reasons to drop support for Python 2:
   used to great effect by logic expression factory functions.
 * It is too arduous to research and support all the C API changes from version
   2 to version 3. Preprocessor is evil.
+* I am quite fond of the new ``yield from ...`` syntax.
 
 Distutils / Virtualenv
 ======================
