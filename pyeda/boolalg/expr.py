@@ -2495,7 +2495,7 @@ class ExprImplies(_ArgumentContainer):
             return EXPRONE
         # 1 => q = q
         elif p is EXPRONE:
-            return q.simplify()
+            return q
         # p => 0 = ~p
         elif q is EXPRZERO:
             return ExprNot(p).simplify()
@@ -2504,7 +2504,7 @@ class ExprImplies(_ArgumentContainer):
             return EXPRONE
         # ~p => p = p
         elif isinstance(p, ExprLiteral) and ~p is q:
-            return q.simplify()
+            return q
 
         obj = self.__class__(p, q)
         obj._simplified = True
@@ -2552,10 +2552,10 @@ class ExprITE(_ArgumentContainer):
 
         # 0 ? d1 : d0 = d0
         if s is EXPRZERO:
-            return d0.simplify()
+            return d0
         # 1 ? d1 : d0 = d1
         elif s is EXPRONE:
-            return d1.simplify()
+            return d1
         elif d1 is EXPRZERO:
             # s ? 0 : 0 = 0
             if d0 is EXPRZERO:
@@ -2569,7 +2569,7 @@ class ExprITE(_ArgumentContainer):
         elif d1 is EXPRONE:
             # s ? 1 : 0 = s
             if d0 is EXPRZERO:
-                return s.simplify()
+                return s
             # s ? 1 : 1 = 1
             elif d0 is EXPRONE:
                 return EXPRONE
@@ -2584,7 +2584,7 @@ class ExprITE(_ArgumentContainer):
             return ExprOr(ExprNot(s), d1).simplify()
         # s ? d1 : d1 = d1
         elif d1 is d0:
-            return d1.simplify()
+            return d1
 
         obj = self.__class__(s, d1, d0)
         obj._simplified = True
