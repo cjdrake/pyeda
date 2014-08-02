@@ -17,7 +17,7 @@ The conventional way of labeling the input variables is
 :math:`a_0, a_1, a_2, \ldots`, and :math:`b_0, b_1, b_2, \ldots`.
 
 Furthermore, you can extend the symbolic algebra of Boolean functions to arrays.
-For example, the element-wise XOR or :math:`A` and :math:`B` is also an array 
+For example, the element-wise XOR of :math:`A` and :math:`B` is also an array 
 
 This chapter will explain how to construct and manipulate arrays of Boolean
 functions.
