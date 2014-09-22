@@ -965,7 +965,7 @@ class Expression(boolfunc.Function):
                           'n' + str(id(expr)), '[label=d1]']
                 parts += ['n' + str(id(expr.args[2])), '--',
                           'n' + str(id(expr)), '[label=d0]']
-            elif isinstance(expr, _ArgumentContainer):
+            elif isinstance(expr, _NaryOperator):
                 for arg in expr.args:
                     parts += ['n' + str(id(arg)), '--', 'n' + str(id(expr))]
         parts.append('}')
@@ -1398,11 +1398,11 @@ class ExprNot(Expression):
         return self.arg.splitvar
 
 
-class _ArgumentContainer(Expression):
-    """Common methods for expressions that are argument containers."""
+class _NaryOperator(Expression):
+    """Common methods for N-ary expression operators."""
 
     def __init__(self, *args):
-        super(_ArgumentContainer, self).__init__()
+        super(_NaryOperator, self).__init__()
         self.args = args
 
     # From Function
@@ -1451,7 +1451,7 @@ class _ArgumentContainer(Expression):
     def to_ast(self):
         return (self.ASTOP, ) + tuple(arg.to_ast() for arg in self.args)
 
-    # Specific to _ArgumentContainer
+    # Specific to _NaryOperator
     def _joinargs(self, sep):
         """Return arguments as a string, joined by a separator."""
         return sep.join(str(arg) for arg in sorted(self.args))
@@ -1469,7 +1469,7 @@ class _ArgumentContainer(Expression):
         return cnt.most_common(1)[0][0]
 
 
-class ExprOrAnd(_ArgumentContainer):
+class ExprOrAnd(_NaryOperator):
     """Base class for Expression OR/AND expressions"""
 
     IDENTITY = NotImplemented
@@ -1883,7 +1883,7 @@ class ExprAnd(ExprOrAnd):
         return term.expand(vs, conj=True).args
 
 
-class ExprNorNand(_ArgumentContainer):
+class ExprNorNand(_NaryOperator):
     """Base class for Expression NOR/NAND expressions"""
 
 
@@ -2049,7 +2049,7 @@ class ExprNand(ExprNorNand):
         return ExprOr(*args).simplify()
 
 
-class ExprExclusive(_ArgumentContainer):
+class ExprExclusive(_NaryOperator):
     """Expression exclusive (XOR, XNOR) operator"""
 
     IDENTITY = NotImplemented
@@ -2208,7 +2208,7 @@ class ExprXnor(ExprExclusive):
         return obj
 
 
-class ExprEqualBase(_ArgumentContainer):
+class ExprEqualBase(_NaryOperator):
     """Expression equality (EQUAL, UNEQUAL) operators"""
 
 
@@ -2382,7 +2382,7 @@ class ExprUnequal(ExprEqualBase):
             return ExprOr(*args).simplify()
 
 
-class ExprImplies(_ArgumentContainer):
+class ExprImplies(Expression):
     """Expression implication operator"""
 
     ASTOP = 'implies'
@@ -2392,14 +2392,16 @@ class ExprImplies(_ArgumentContainer):
     PRECEDENCE = 3
 
     def __init__(self, p, q):
-        super(ExprImplies, self).__init__(p, q)
+        super(ExprImplies, self).__init__()
+        self.p = p
+        self.q = q
 
     def __str__(self):
-        return "Implies({0[0]}, {0[1]})".format(self.args)
+        return "Implies({0.p}, {0.q})".format(self)
 
     def to_unicode(self):
         parts = list()
-        for arg in self.args:
+        for arg in (self.p, self.q):
             # lower precedence: equal
             if arg.PRECEDENCE >= self.PRECEDENCE:
                 parts.append('(' + arg.to_unicode() + ')')
@@ -2410,7 +2412,7 @@ class ExprImplies(_ArgumentContainer):
 
     def to_latex(self):
         parts = list()
-        for arg in self.args:
+        for arg in (self.p, self.q):
             # lower precedence: equal
             if arg.PRECEDENCE >= self.PRECEDENCE:
                 parts.append('(' + arg.to_latex() + ')')
@@ -2419,14 +2421,34 @@ class ExprImplies(_ArgumentContainer):
         sep = " " + self.LATEX_SYMBOL + " "
         return sep.join(parts)
 
+    # From Function
+    @cached_property
+    def support(self):
+        return frozenset.union(self.p.support, self.q.support)
+
+    def _urestrict1(self, upoint):
+        p = self.p._urestrict1(upoint)
+        q = self.q._urestrict1(upoint)
+        if p is self.p and q is self.q:
+            return self
+        else:
+            return self.__class__(p, q)
+
+    def compose(self, mapping):
+        p = self.p.compose(mapping)
+        q = self.q.compose(mapping)
+        if p is self.p and q is self.q:
+            return self.simplify()
+        else:
+            return self.__class__(p, q).simplify()
+
     # From Expression
     def invert(self):
-        args = (self.args[0], self.args[1].invert())
-        return ExprAnd(*args).simplify()
+        return ExprAnd(self.p, self.q.invert()).simplify()
 
     def simplify(self):
-        p = self.args[0].simplify()
-        q = self.args[1].simplify()
+        p = self.p.simplify()
+        q = self.q.simplify()
 
         # 0 => q = 1; p => 1 = 1
         if p is EXPRZERO or q is EXPRONE:
@@ -2449,44 +2471,67 @@ class ExprImplies(_ArgumentContainer):
         return obj
 
     def factor(self, conj=False):
-        # pylint: disable=W0632
-        p, q = self.args
-        args = list()
-        args.append(p.invert().factor())
-        args.append(q.factor())
-        return ExprOr(*args).simplify()
+        return ExprOr(self.p.invert().factor(), self.q.factor()).simplify()
+
+    @cached_property
+    def depth(self):
+        return max([self.p.depth, self.q.depth]) + 1
 
 
-class ExprITE(_ArgumentContainer):
+class ExprITE(Expression):
     """Expression if-then-else ternary operator"""
 
     ASTOP = 'ite'
 
     def __init__(self, s, d1, d0):
-        super(ExprITE, self).__init__(s, d1, d0)
+        super(ExprITE, self).__init__()
+        self.s = s
+        self.d1 = d1
+        self.d0 = d0
 
     def __str__(self):
-        return "ITE({0[0]}, {0[1]}, {0[2]})".format(self.args)
+        return "ITE({0.s}, {0.d1}, {0.d0})".format(self)
 
     def to_unicode(self):
-        unicode_args = [arg.to_unicode() for arg in self.args]
+        unicode_args = [self.s.to_unicode(),
+                        self.d1.to_unicode(), self.d0.to_unicode()]
         return "ite({}, {}, {})".format(*unicode_args)
 
     def to_latex(self):
-        latex_args = [arg.to_latex() for arg in self.args]
+        latex_args = [self.s.to_latex(), self.d1.to_latex(), self.d0.to_latex()]
         return "ite({}, {}, {})".format(*latex_args)
+
+    # From Function
+    @cached_property
+    def support(self):
+        return frozenset.union(self.s.support, self.d1.support, self.d0.support)
+
+    def _urestrict1(self, upoint):
+        s = self.s._urestrict1(upoint)
+        d1 = self.d1._urestrict1(upoint)
+        d0 = self.d0._urestrict1(upoint)
+        if s is self.s and d1 is self.d1 and d0 is self.d0:
+            return self
+        else:
+            return self.__class__(s, d1, d0)
+
+    def compose(self, mapping):
+        s = self.s.compose(mapping)
+        d1 = self.d1.compose(mapping)
+        d0 = self.d0.compose(mapping)
+        if s is self.s and d1 is self.d1 and d0 is self.d0:
+            return self.simplify()
+        else:
+            return self.__class__(s, d1, d0).simplify()
 
     # From Expression
     def invert(self):
-        s = self.args[0]
-        d1 = self.args[1].invert()
-        d0 = self.args[2].invert()
-        return ExprITE(s, d1, d0).simplify()
+        return ExprITE(self.s, self.d1.invert(), self.d0.invert()).simplify()
 
     def simplify(self):
-        s = self.args[0].simplify()
-        d1 = self.args[1].simplify()
-        d0 = self.args[2].simplify()
+        s = self.s.simplify()
+        d1 = self.d1.simplify()
+        d0 = self.d0.simplify()
 
         # 0 ? d1 : d0 = d0
         if s is EXPRZERO:
@@ -2530,15 +2575,18 @@ class ExprITE(_ArgumentContainer):
 
     def factor(self, conj=False):
         # pylint: disable=W0632
-        s, d1, d0 = self.args
         if conj:
-            arg0 = ExprOr(s.invert().factor(), d1.factor())
-            arg1 = ExprOr(s.factor(), d0.factor())
+            arg0 = ExprOr(self.s.invert().factor(), self.d1.factor())
+            arg1 = ExprOr(self.s.factor(), self.d0.factor())
             return ExprAnd(arg0, arg1).simplify()
         else:
-            arg0 = ExprAnd(s.factor(), d1.factor())
-            arg1 = ExprAnd(s.invert().factor(), d0.factor())
+            arg0 = ExprAnd(self.s.factor(), self.d1.factor())
+            arg1 = ExprAnd(self.s.invert().factor(), self.d0.factor())
             return ExprOr(arg0, arg1).simplify()
+
+    @cached_property
+    def depth(self):
+        return max([self.s.depth, self.d1.depth, self.d0.depth]) + 1
 
 
 class NormalForm:
