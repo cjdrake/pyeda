@@ -115,11 +115,11 @@ def test_traverse():
     path2 = [node.root for node in f.dfs_postorder()]
     path3 = [node.root for node in f.bfs()]
     # a, b(0, c), 0, c, 1, b(c, 1)
-    assert path1 == [a.uniqid, b.uniqid, -2, c.uniqid, -1, b.uniqid]
+    assert path1 == [a.uniqid, b.uniqid, -1, c.uniqid, -2, b.uniqid]
     # 0, 1, c, b(0, c), b(c, 1), a
-    assert path2 == [-2, -1, c.uniqid, b.uniqid, b.uniqid, a.uniqid]
+    assert path2 == [-1, -2, c.uniqid, b.uniqid, b.uniqid, a.uniqid]
     # a, b(0, c), b(c, 1), 0, c, 1
-    assert path3 == [a.uniqid, b.uniqid, b.uniqid, -2, c.uniqid, -1]
+    assert path3 == [a.uniqid, b.uniqid, b.uniqid, -1, c.uniqid, -2]
 
 def test_equivalent():
     f = a & b | ~a & c

@@ -48,8 +48,8 @@ class BDDNode:
     * ``lo`` is the zero cofactor node
     * ``hi`` is the one cofactor node
 
-    The ``root`` of the zero node is -2,
-    and the ``root`` of the one node is -1.
+    The ``root`` of the zero node is -1,
+    and the ``root`` of the one node is -2.
     Both zero/one nodes have ``lo=None`` and ``hi=None``.
 
     Do **NOT** create BDD nodes using the ``BDDNode`` constructor.
@@ -60,8 +60,8 @@ class BDDNode:
         self.lo = lo
         self.hi = hi
 
-BDDNODEZERO = _BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
-BDDNODEONE = _BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
+BDDNODEZERO = _BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
+BDDNODEONE = _BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
 
 
 def bddvar(name, index=None):
