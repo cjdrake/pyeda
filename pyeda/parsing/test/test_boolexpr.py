@@ -7,20 +7,20 @@ from pyeda.boolalg.expr import (
     Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel,
 )
-from pyeda.parsing.boolexpr import BoolExprParseError
+from pyeda.parsing import boolexpr
 
 from nose.tools import assert_raises
 
 def test_expr_error():
     # lexical error
-    assert_raises(BoolExprParseError, expr, "#a")
+    assert_raises(boolexpr.Error, expr, "#a")
     # incomplete expression
-    assert_raises(BoolExprParseError, expr, "a &")
+    assert_raises(boolexpr.Error, expr, "a &")
     # unexpected token
-    assert_raises(BoolExprParseError, expr, "a ,")
-    assert_raises(BoolExprParseError, expr, "a a")
-    assert_raises(BoolExprParseError, expr, "a ? b ,")
-    assert_raises(BoolExprParseError, expr, "a | 42")
+    assert_raises(boolexpr.Error, expr, "a ,")
+    assert_raises(boolexpr.Error, expr, "a a")
+    assert_raises(boolexpr.Error, expr, "a ? b ,")
+    assert_raises(boolexpr.Error, expr, "a | 42")
 
 def test_basic():
     a, b, c, d, p, q, s = map(exprvar, 'abcdpqs')

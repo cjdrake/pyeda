@@ -2,7 +2,7 @@
 Boolean Expression Parsing
 
 Exceptions:
-    BoolExprParseError
+    Error
 
 Interface Functions:
     parse
@@ -16,7 +16,7 @@ from pyeda.parsing.token import (
     KeywordToken, NameToken, IntegerToken, OperatorToken, PunctuationToken,
 )
 
-class BoolExprParseError(Exception):
+class Error(Exception):
     """An error happened during parsing a Boolean expression."""
 
 
@@ -380,7 +380,7 @@ def parse(s):
     except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
-        raise BoolExprParseError(fstr.format(exc))
+        raise Error(fstr.format(exc))
 
     # Check for end of buffer
     _expect_token(lexer, {EndToken})
@@ -393,7 +393,7 @@ def _expect_token(lexer, types):
     if any(type(tok) is t for t in types):
         return tok
     else:
-        raise BoolExprParseError("unexpected token: " + str(tok))
+        raise Error("unexpected token: " + str(tok))
 
 def _expr(lexer):
     """Return an expression."""
@@ -565,7 +565,7 @@ def _factor(lexer):
     # '0' | '1'
     else:
         if tok.value not in {0, 1}:
-            raise BoolExprParseError("unexpected token: " + str(tok))
+            raise Error("unexpected token: " + str(tok))
         return ('const', tok.value)
 
 def _args(lexer):
