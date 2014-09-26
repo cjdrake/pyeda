@@ -954,16 +954,16 @@ class Expression(boolfunc.Function):
                 parts += ['n' + str(id(expr.arg)), '--',
                           'n' + str(id(expr))]
             elif isinstance(expr, ExprImplies):
-                parts += ['n' + str(id(expr.args[0])), '--',
+                parts += ['n' + str(id(expr.p)), '--',
                           'n' + str(id(expr)), '[label=p]']
-                parts += ['n' + str(id(expr.args[1])), '--',
+                parts += ['n' + str(id(expr.q)), '--',
                           'n' + str(id(expr)), '[label=q]']
             elif isinstance(expr, ExprITE):
-                parts += ['n' + str(id(expr.args[0])), '--',
+                parts += ['n' + str(id(expr.s)), '--',
                           'n' + str(id(expr)), '[label=s]']
-                parts += ['n' + str(id(expr.args[1])), '--',
+                parts += ['n' + str(id(expr.d1)), '--',
                           'n' + str(id(expr)), '[label=d1]']
-                parts += ['n' + str(id(expr.args[2])), '--',
+                parts += ['n' + str(id(expr.d0)), '--',
                           'n' + str(id(expr)), '[label=d0]']
             elif isinstance(expr, _NaryOperator):
                 for arg in expr.args:
