@@ -204,7 +204,7 @@ because all constraints must be true for the puzzle to be solved.
 ::
 
    >>> S = And(V, R, C, B)
-   >>> len(S.args)
+   >>> len(S.xs)
    10530
 
 As you can see, the constraints formula is *quite* large.

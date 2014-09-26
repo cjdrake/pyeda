@@ -34,17 +34,17 @@ def test_issue81():
     # Or(x) = x
     assert str(Or(Or(a, b))) == "Or(a, b)"
     assert str(Or(And(a, b))) == "And(a, b)"
-    assert str(Or(Nor(a, b))) == "Nor(a, b)"
-    assert str(Or(Nand(a, b))) == "Nand(a, b)"
+    assert str(Or(Nor(a, b))) == "Not(Or(a, b))"
+    assert str(Or(Nand(a, b))) == "Not(And(a, b))"
     assert str(Or(Xor(a, b))) == "Xor(a, b)"
-    assert str(Or(Xnor(a, b))) == "Xnor(a, b)"
+    assert str(Or(Xnor(a, b))) == "Not(Xor(a, b))"
     # And(x) = x
     assert str(And(Or(a, b))) == "Or(a, b)"
     assert str(And(And(a, b))) == "And(a, b)"
-    assert str(And(Nor(a, b))) == "Nor(a, b)"
-    assert str(And(Nand(a, b))) == "Nand(a, b)"
+    assert str(And(Nor(a, b))) == "Not(Or(a, b))"
+    assert str(And(Nand(a, b))) == "Not(And(a, b))"
     assert str(And(Xor(a, b))) == "Xor(a, b)"
-    assert str(And(Xnor(a, b))) == "Xnor(a, b)"
+    assert str(And(Xnor(a, b))) == "Not(Xor(a, b))"
     # Nor(x) = ~x
     assert str(Nor(Or(a, b))) == "Not(Or(a, b))"
     assert str(Nor(And(a, b))) == "Not(And(a, b))"
@@ -62,10 +62,10 @@ def test_issue81():
     # Xor(x) = x
     assert str(Xor(Or(a, b))) == "Or(a, b)"
     assert str(Xor(And(a, b))) == "And(a, b)"
-    assert str(Xor(Nor(a, b))) == "Nor(a, b)"
-    assert str(Xor(Nand(a, b))) == "Nand(a, b)"
+    assert str(Xor(Nor(a, b))) == "Not(Or(a, b))"
+    assert str(Xor(Nand(a, b))) == "Not(And(a, b))"
     assert str(Xor(Xor(a, b))) == "Xor(a, b)"
-    assert str(Xor(Xnor(a, b))) == "Xnor(a, b)"
+    assert str(Xor(Xnor(a, b))) == "Not(Xor(a, b))"
     # Xnor(x) = ~x
     assert str(Xnor(Or(a, b))) == "Not(Or(a, b))"
     assert str(Xnor(And(a, b))) == "Not(And(a, b))"
@@ -92,7 +92,6 @@ def test_expr():
 def test_expr2dimacssat():
     assert_raises(TypeError, expr2dimacssat, 'foo')
     assert_raises(ValueError, expr2dimacssat, Xor(0, a, simplify=False))
-    assert_raises(ValueError, expr2dimacssat, Nor(a, ~b))
     ret = expr2dimacssat(a ^ ~b)
     assert ret in {'p satx 2\nxor(-2 1)', 'p satx 2\nxor(1 -2)'}
     ret = expr2dimacssat(a ^ Equal(b, ~c))
@@ -538,7 +537,7 @@ def test_xnor():
     assert Xnor(a, ~a) is EXPRZERO
     assert Xnor(~a, a) is EXPRZERO
 
-    assert str(Xnor(a, 0, simplify=False)) == "Xnor(0, a)"
+    assert str(Xnor(a, 0, simplify=False)) == "Not(Xor(0, a))"
 
 def test_equal():
     # Function
@@ -700,18 +699,18 @@ def test_expand():
     assert a.expand() == a
 
     f = a.expand(b)
-    assert len(f.args) == 2 and f.equivalent(a)
+    assert len(f.xs) == 2 and f.equivalent(a)
 
     f = a.expand([b, c])
-    assert len(f.args) == 4 and f.equivalent(a)
+    assert len(f.xs) == 4 and f.equivalent(a)
 
     assert a.expand(conj=True) == a
 
     f = a.expand(b, conj=True)
-    assert len(f.args) == 2 and f.equivalent(a)
+    assert len(f.xs) == 2 and f.equivalent(a)
 
     f = a.expand([b, c], conj=True)
-    assert len(f.args) == 4 and f.equivalent(a)
+    assert len(f.xs) == 4 and f.equivalent(a)
 
 def test_satisfy():
     # Typical cases

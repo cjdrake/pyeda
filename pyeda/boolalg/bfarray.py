@@ -1167,9 +1167,9 @@ def _filtdim(items, shape, dim, nsl):
             groups[i % N] += items[size*i:size*(i+1)]
         for muxins in zip(*groups):
             it = boolfunc.iter_terms(nsl._items)
-            args = [reduce(operator.and_, (muxin, ) + next(it))
-                    for muxin in muxins]
-            newitems.append(reduce(operator.or_, args))
+            xs = [reduce(operator.and_, (muxin, ) + next(it))
+                  for muxin in muxins]
+            newitems.append(reduce(operator.or_, xs))
         # Collapse dimension
         newshape = shape[:dim] + shape[dim+1:]
     return newitems, newshape

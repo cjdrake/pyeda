@@ -270,7 +270,7 @@ PRODTERM' := '&' FACTOR PRODTERM'
 FACTOR := '~' FACTOR
         | '(' EXPR ')'
         | OPN '(' ')'
-        | OPN '(' ARGS ')'
+        | OPN '(' XS ')'
         | 'ITE' '(' EXPR ',' EXPR ',' EXPR ')'
         | 'Implies' '(' EXPR ',' EXPR ')'
         | 'Not' '(' EXPR ')'
@@ -291,10 +291,10 @@ OPN := 'Or'
      | 'Majority'
      | 'AchillesHeel'
 
-ARGS := EXPR ZOM_ARG
+XS := EXPR ZOM_X
       | null
 
-ZOM_ARG := ',' EXPR ZOM_ARG
+ZOM_X := ',' EXPR ZOM_X
           | null
 
 VARIABLE := NAMES '[' INDICES ']'
@@ -527,13 +527,13 @@ def _factor(lexer):
         tok = next(lexer)
         # OPN '(' ')'
         if type(tok) is RPAREN:
-            args = tuple()
-        # OPN '(' ARGS ')'
+            xs = tuple()
+        # OPN '(' XS ')'
         else:
             lexer.unpop_token(tok)
-            args = _args(lexer)
+            xs = _args(lexer)
             _expect_token(lexer, {RPAREN})
-        return (op, ) + args
+        return (op, ) + xs
     # ITE '(' EXPR ',' EXPR ',' EXPR ')'
     elif toktype is KW_ite:
         _expect_token(lexer, {LPAREN})
@@ -555,9 +555,9 @@ def _factor(lexer):
     # Not '(' EXPR ')'
     elif toktype is KW_not:
         _expect_token(lexer, {LPAREN})
-        arg = _expr(lexer)
+        x = _expr(lexer)
         _expect_token(lexer, {RPAREN})
-        return ('not', arg)
+        return ('not', x)
     # VARIABLE
     elif toktype is NameToken:
         lexer.unpop_token(tok)
@@ -575,7 +575,7 @@ def _args(lexer):
 def _zom_arg(lexer):
     """Return zero or more arguments."""
     tok = next(lexer)
-    # ',' EXPR ZOM_ARG
+    # ',' EXPR ZOM_X
     if type(tok) is COMMA:
         return (_expr(lexer), ) + _zom_arg(lexer)
     # null

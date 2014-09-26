@@ -115,7 +115,7 @@ Verify the formula is in CNF form, and show how large it is::
 
    >>> S.is_cnf()
    True
-   >>> len(S.args)
+   >>> len(S.xs)
    744
 
 Display Method

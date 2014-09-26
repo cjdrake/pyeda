@@ -259,7 +259,7 @@ This section will describe all the factory functions that can be used to create
 arbitrary Boolean expressions.
 
 The general form of these functions is
-``OP(arg [, arg], simplify=True)``.
+``OP(x [, x], simplify=True)``.
 The function is an operator name, followed by one or more arguments,
 followed by the ``simplify`` parameter.
 Some functions also have a ``conj`` parameter,
@@ -288,16 +288,16 @@ Primary Operators
 Since NOT, OR, and AND form a complete basis for a Boolean algebra,
 these three operators are *primary*.
 
-.. function:: Not(arg, simplify=True)
+.. function:: Not(x, simplify=True)
 
    Return an expression that is the inverse of the input.
 
-.. function:: Or(\*args, simplify=True)
+.. function:: Or(\*xs, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if *any* inputs
    are :math:`1`.
 
-.. function:: And(\*args, simplify=True)
+.. function:: And(\*xs, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if *all* inputs
    are :math:`1`.
@@ -316,19 +316,7 @@ but contains more information than the primary operators.
 That is, these expressions always increase in tree size when converted to
 primary operators.
 
-.. function:: Nor(\*args, simplify=True)
-
-   Return an expression that evaluates to :math:`0` if and only if *any* inputs
-   are :math:`1`.
-   The inverse of `Or`.
-
-.. function:: Nand(\*args, simplify=True)
-
-   Return an expression that evaluates to :math:`0` if an only if *all* inputs
-   are :math:`1`.
-   The inverse of `And`.
-
-.. function:: Xor(\*args, simplify=True)
+.. function:: Xor(\*xs, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if the input
    parity is odd.
@@ -344,20 +332,10 @@ use the ``Xor`` operator::
    >>> s = Xor('a', 'b', 'ci')
    >>> co = Or(And('a', 'b'), And('a', 'ci'), And('b', 'ci'))
 
-.. function:: Xnor(\*args, simplify=True)
-
-   Return an expression that evaluates to :math:`1` if and only if the input
-   parity is even.
-
-.. function:: Equal(\*args, simplify=True)
+.. function:: Equal(\*xs, simplify=True)
 
    Return an expression that evaluates to :math:`1` if and only if all inputs
    are equivalent.
-
-.. function:: Unequal(\*args, simplify=True)
-
-   Return an expression that evaluates to :math:`1` if and only if *not* all
-   inputs are equivalent.
 
 .. function:: Implies(p, q, simplify=True)
 
@@ -414,19 +392,41 @@ represented as a PyEDA expression.
 That is, these factory functions will always return expressions composed from
 primary and/or secondary operators.
 
-.. function:: OneHot0(\*args, simplify=True, conj=True)
+.. function:: Nor(\*xs, simplify=True)
+
+   Return an expression that evaluates to :math:`0` if and only if *any* inputs
+   are :math:`1`.
+   The inverse of `Or`.
+
+.. function:: Nand(\*xs, simplify=True)
+
+   Return an expression that evaluates to :math:`0` if an only if *all* inputs
+   are :math:`1`.
+   The inverse of `And`.
+
+.. function:: Xnor(\*xs, simplify=True)
+
+   Return an expression that evaluates to :math:`1` if and only if the input
+   parity is even.
+
+.. function:: Unequal(\*xs, simplify=True)
+
+   Return an expression that evaluates to :math:`1` if and only if *not* all
+   inputs are equivalent.
+
+.. function:: OneHot0(\*xs, simplify=True, conj=True)
 
    Return an expression that evaluates to :math:`1` if and only if the number
    of inputs equal to :math:`1` is at most :math:`1`.
    That is, return true when at most one input is "hot".
 
-.. function:: OneHot(\*args, simplify=True, conj=True)
+.. function:: OneHot(\*xs, simplify=True, conj=True)
 
    Return an expression that evaluates to :math:`1` if and only if exactly one
    input is equal to :math:`1`.
    That is, return true when exactly one input is "hot".
 
-.. function:: Majority(\*args, simplify=True, conj=False)
+.. function:: Majority(\*xs, simplify=True, conj=False)
 
    Return an expression that evaluates to :math:`1` if and only if the majority
    of inputs equal :math:`1`.
@@ -437,7 +437,7 @@ use both the ``Xor`` and ``Majority`` operators::
    >>> s = Xor('a', 'b', 'ci')
    >>> co = Majority('a', 'b', 'ci')
 
-.. function:: AchillesHeel(\*args, simplify=True)
+.. function:: AchillesHeel(\*xs, simplify=True)
 
    Return the Achille's Heel function, defined as
    :math:`\prod_{i=0}^{N-1}{(x_{i/2} + x_{i/2+1})}`.
@@ -567,7 +567,7 @@ For example, :math:`a + (b + c)` is equivalent to :math:`a + b + c`.
 The depth of the unsimplified expression is two::
 
    >>> f = Or('a', Or('b', 'c'), simplify=False)
-   >>> f.args
+   >>> f.xs
    (a, Or(b, c))
    >>> f.depth
    2
@@ -575,7 +575,7 @@ The depth of the unsimplified expression is two::
 The depth of the simplified expression is one::
 
    >>> g = f.simplify()
-   >>> g.args
+   >>> g.xs
    (b, a, c)
    >>> g.depth
    1
@@ -591,18 +591,15 @@ expressions::
 
 Notice that there are no unsimplified representations for:
 
-* degenerate forms
 * negated literals
 * double negation
 
 For example::
 
-   >>> ExprOr()
-   0
    >>> ExprNot(a)
    ~a
-   >>> ExprNot(ExprNand(a, b))
-   And(a, b)
+   >>> ExprNot(ExprNot(ExprOr(a, b)))
+   Or(a, b)
 
 Simplifed
 ---------
