@@ -2,9 +2,9 @@
 Lexical Analysis Utilities
 
 Exceptions:
-    LexError
-    LexCompileError
-    LexRunError
+    Error
+    CompileError
+    RunError
 
 Interface Classes:
     RegexLexer
@@ -15,17 +15,17 @@ import re
 
 from pyeda.parsing.token import EndToken
 
-class LexError(Exception):
+class Error(Exception):
     """
     Base class for all lexical analysis errors
     """
 
-class LexCompileError(LexError):
+class CompileError(Error):
     """
     Errors raised during compilation of lexical analysis rules.
     """
 
-class LexRunError(LexError):
+class RunError(Error):
     """
     Errors raised during lexical analysis of the source text.
     """
@@ -33,7 +33,7 @@ class LexRunError(LexError):
         self.lineno = lineno
         self.offset = offset
         self.text = text
-        super(LexRunError, self).__init__(msg, lineno, offset, text)
+        super(RunError, self).__init__(msg, lineno, offset, text)
 
 
 class RegexLexer:
@@ -92,7 +92,7 @@ class RegexLexer:
                     pattern, _action, nextstate = row
                 else:
                     fstr = "invalid RULES: state {}, row {}"
-                    raise LexCompileError(fstr.format(state, i))
+                    raise CompileError(fstr.format(state, i))
                 patterns.append(pattern)
                 actions.append(_action)
                 nextstates.append(nextstate)
@@ -131,7 +131,7 @@ class RegexLexer:
         if self.pos != len(self.string):
             msg = "unexpected character"
             text = self.string[self.pos]
-            raise LexRunError(msg, self.lineno, self.offset, text)
+            raise RunError(msg, self.lineno, self.offset, text)
 
         yield EndToken("", self.lineno, self.offset)
 

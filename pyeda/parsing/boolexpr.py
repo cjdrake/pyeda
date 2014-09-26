@@ -10,7 +10,7 @@ Interface Functions:
 
 # pylint: disable=C0103
 
-from pyeda.parsing.lex import LexRunError, RegexLexer, action
+from pyeda.parsing import lex
 from pyeda.parsing.token import (
     EndToken,
     KeywordToken, NameToken, IntegerToken, OperatorToken, PunctuationToken,
@@ -128,7 +128,7 @@ class DOT(PunctuationToken):
     """Expression '.' token"""
 
 
-class BoolExprLexer(RegexLexer):
+class BoolExprLexer(lex.RegexLexer):
     """Lexical analysis of SAT strings"""
 
     def ignore(self, text):
@@ -149,12 +149,12 @@ class BoolExprLexer(RegexLexer):
         cls = self.PUNCTUATION[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
-    @action(NameToken)
+    @lex.action(NameToken)
     def name(self, text):
         """Push a variable name onto the token queue."""
         return text
 
-    @action(IntegerToken)
+    @lex.action(IntegerToken)
     def integer(self, text):
         """Push an integer onto the token queue."""
         return int(text)
@@ -374,267 +374,267 @@ def parse(s):
           | 'onehot0' | 'onehot'
           | 'majority' | 'achillesheel'
     """
-    lex = iter(BoolExprLexer(s))
+    lexer = iter(BoolExprLexer(s))
     try:
-        expr = _expr(lex)
-    except LexRunError as exc:
+        expr = _expr(lexer)
+    except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
         raise BoolExprParseError(fstr.format(exc))
 
     # Check for end of buffer
-    _expect_token(lex, {EndToken})
+    _expect_token(lexer, {EndToken})
 
     return expr
 
-def _expect_token(lex, types):
+def _expect_token(lexer, types):
     """Return the next token, or raise an exception."""
-    tok = next(lex)
+    tok = next(lexer)
     if any(type(tok) is t for t in types):
         return tok
     else:
         raise BoolExprParseError("unexpected token: " + str(tok))
 
-def _expr(lex):
+def _expr(lexer):
     """Return an expression."""
-    return _ite(lex)
+    return _ite(lexer)
 
-def _ite(lex):
+def _ite(lexer):
     """Return an ITE expression."""
-    s = _impl(lex)
+    s = _impl(lexer)
 
-    tok = next(lex)
+    tok = next(lexer)
     # IMPL '?' ITE ':' ITE
     if type(tok) is OP_question:
-        d1 = _ite(lex)
-        _expect_token(lex, {OP_colon})
-        d0 = _ite(lex)
+        d1 = _ite(lexer)
+        _expect_token(lexer, {OP_colon})
+        d0 = _ite(lexer)
         return ('ite', s, d1, d0)
     # IMPL
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return s
 
-def _impl(lex):
+def _impl(lexer):
     """Return an Implies expression."""
-    p = _sumterm(lex)
+    p = _sumterm(lexer)
 
-    tok = next(lex)
+    tok = next(lexer)
     # SUMTERM '=>' IMPL
     if type(tok) is OP_rarrow:
-        q = _impl(lex)
+        q = _impl(lexer)
         return ('implies', p, q)
     # SUMTERM '<=>' IMPL
     elif type(tok) is OP_lrarrow:
-        q = _impl(lex)
+        q = _impl(lexer)
         return ('equal', p, q)
     # SUMTERM
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return p
 
-def _sumterm(lex):
+def _sumterm(lexer):
     """Return a sum term expresssion."""
-    xorterm = _xorterm(lex)
-    sumterm_prime = _sumterm_prime(lex)
+    xorterm = _xorterm(lexer)
+    sumterm_prime = _sumterm_prime(lexer)
     if sumterm_prime is None:
         return xorterm
     else:
         return ('or', xorterm, sumterm_prime)
 
-def _sumterm_prime(lex):
+def _sumterm_prime(lexer):
     """Return a sum term' expression, eliminates left recursion."""
-    tok = next(lex)
+    tok = next(lexer)
     # '|' XORTERM SUMTERM'
     if type(tok) is OP_or:
-        xorterm = _xorterm(lex)
-        sumterm_prime = _sumterm_prime(lex)
+        xorterm = _xorterm(lexer)
+        sumterm_prime = _sumterm_prime(lexer)
         if sumterm_prime is None:
             return xorterm
         else:
             return ('or', xorterm, sumterm_prime)
     # null
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return None
 
-def _xorterm(lex):
+def _xorterm(lexer):
     """Return an xor term expresssion."""
-    prodterm = _prodterm(lex)
-    xorterm_prime = _xorterm_prime(lex)
+    prodterm = _prodterm(lexer)
+    xorterm_prime = _xorterm_prime(lexer)
     if xorterm_prime is None:
         return prodterm
     else:
         return ('xor', prodterm, xorterm_prime)
 
-def _xorterm_prime(lex):
+def _xorterm_prime(lexer):
     """Return an xor term' expression, eliminates left recursion."""
-    tok = next(lex)
+    tok = next(lexer)
     # '^' PRODTERM XORTERM'
     if type(tok) is OP_xor:
-        prodterm = _prodterm(lex)
-        xorterm_prime = _xorterm_prime(lex)
+        prodterm = _prodterm(lexer)
+        xorterm_prime = _xorterm_prime(lexer)
         if xorterm_prime is None:
             return prodterm
         else:
             return ('xor', prodterm, xorterm_prime)
     # null
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return None
 
-def _prodterm(lex):
+def _prodterm(lexer):
     """Return a product term expression."""
-    factor = _factor(lex)
-    prodterm_prime = _prodterm_prime(lex)
+    factor = _factor(lexer)
+    prodterm_prime = _prodterm_prime(lexer)
     if prodterm_prime is None:
         return factor
     else:
         return ('and', factor, prodterm_prime)
 
-def _prodterm_prime(lex):
+def _prodterm_prime(lexer):
     """Return a product term' expression, eliminates left recursion."""
-    tok = next(lex)
+    tok = next(lexer)
     # '&' FACTOR PRODTERM'
     if type(tok) is OP_and:
-        factor = _factor(lex)
-        prodterm_prime = _prodterm_prime(lex)
+        factor = _factor(lexer)
+        prodterm_prime = _prodterm_prime(lexer)
         if prodterm_prime is None:
             return factor
         else:
             return ('and', factor, prodterm_prime)
     # null
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return None
 
-def _factor(lex):
+def _factor(lexer):
     """Return a factor expression."""
-    tok = _expect_token(lex, FACTOR_TOKS)
+    tok = _expect_token(lexer, FACTOR_TOKS)
     # '~' F
     toktype = type(tok)
     if toktype is OP_not:
-        return ('not', _factor(lex))
+        return ('not', _factor(lexer))
     # '(' EXPR ')'
     elif toktype is LPAREN:
-        expr = _expr(lex)
-        _expect_token(lex, {RPAREN})
+        expr = _expr(lexer)
+        _expect_token(lexer, {RPAREN})
         return expr
     # OPN '(' ... ')'
     elif any(toktype is t for t in OPN_TOKS):
         op = tok.ASTOP
-        _expect_token(lex, {LPAREN})
-        tok = next(lex)
+        _expect_token(lexer, {LPAREN})
+        tok = next(lexer)
         # OPN '(' ')'
         if type(tok) is RPAREN:
             args = tuple()
         # OPN '(' ARGS ')'
         else:
-            lex.unpop_token(tok)
-            args = _args(lex)
-            _expect_token(lex, {RPAREN})
+            lexer.unpop_token(tok)
+            args = _args(lexer)
+            _expect_token(lexer, {RPAREN})
         return (op, ) + args
     # ITE '(' EXPR ',' EXPR ',' EXPR ')'
     elif toktype is KW_ite:
-        _expect_token(lex, {LPAREN})
-        s = _expr(lex)
-        _expect_token(lex, {COMMA})
-        d1 = _expr(lex)
-        _expect_token(lex, {COMMA})
-        d0 = _expr(lex)
-        _expect_token(lex, {RPAREN})
+        _expect_token(lexer, {LPAREN})
+        s = _expr(lexer)
+        _expect_token(lexer, {COMMA})
+        d1 = _expr(lexer)
+        _expect_token(lexer, {COMMA})
+        d0 = _expr(lexer)
+        _expect_token(lexer, {RPAREN})
         return ('ite', s, d1, d0)
     # Implies '(' EXPR ',' EXPR ')'
     elif toktype is KW_implies:
-        _expect_token(lex, {LPAREN})
-        p = _expr(lex)
-        _expect_token(lex, {COMMA})
-        q = _expr(lex)
-        _expect_token(lex, {RPAREN})
+        _expect_token(lexer, {LPAREN})
+        p = _expr(lexer)
+        _expect_token(lexer, {COMMA})
+        q = _expr(lexer)
+        _expect_token(lexer, {RPAREN})
         return ('implies', p, q)
     # Not '(' EXPR ')'
     elif toktype is KW_not:
-        _expect_token(lex, {LPAREN})
-        arg = _expr(lex)
-        _expect_token(lex, {RPAREN})
+        _expect_token(lexer, {LPAREN})
+        arg = _expr(lexer)
+        _expect_token(lexer, {RPAREN})
         return ('not', arg)
     # VARIABLE
     elif toktype is NameToken:
-        lex.unpop_token(tok)
-        return _variable(lex)
+        lexer.unpop_token(tok)
+        return _variable(lexer)
     # '0' | '1'
     else:
         if tok.value not in {0, 1}:
             raise BoolExprParseError("unexpected token: " + str(tok))
         return ('const', tok.value)
 
-def _args(lex):
+def _args(lexer):
     """Return a tuple of arguments."""
-    return (_expr(lex), ) + _zom_arg(lex)
+    return (_expr(lexer), ) + _zom_arg(lexer)
 
-def _zom_arg(lex):
+def _zom_arg(lexer):
     """Return zero or more arguments."""
-    tok = next(lex)
+    tok = next(lexer)
     # ',' EXPR ZOM_ARG
     if type(tok) is COMMA:
-        return (_expr(lex), ) + _zom_arg(lex)
+        return (_expr(lexer), ) + _zom_arg(lexer)
     # null
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return tuple()
 
-def _variable(lex):
+def _variable(lexer):
     """Return a variable expression."""
-    names = _names(lex)
+    names = _names(lexer)
 
-    tok = next(lex)
+    tok = next(lexer)
     # NAMES '[' ... ']'
     if type(tok) is LBRACK:
-        indices = _indices(lex)
-        _expect_token(lex, {RBRACK})
+        indices = _indices(lexer)
+        _expect_token(lexer, {RBRACK})
     # NAMES
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         indices = tuple()
 
     return ('var', names, indices)
 
-def _names(lex):
+def _names(lexer):
     """Return a tuple of names."""
-    first = _expect_token(lex, {NameToken}).value
-    rest = _zom_name(lex)
+    first = _expect_token(lexer, {NameToken}).value
+    rest = _zom_name(lexer)
     rnames = (first, ) + rest
     return rnames[::-1]
 
-def _zom_name(lex):
+def _zom_name(lexer):
     """Return zero or more names."""
-    tok = next(lex)
+    tok = next(lexer)
     # '.' NAME ZOM_NAME
     if type(tok) is DOT:
-        first = _expect_token(lex, {NameToken}).value
-        rest = _zom_name(lex)
+        first = _expect_token(lexer, {NameToken}).value
+        rest = _zom_name(lexer)
         return (first, ) + rest
     # null
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return tuple()
 
-def _indices(lex):
+def _indices(lexer):
     """Return a tuple of indices."""
-    first = _expect_token(lex, {IntegerToken}).value
-    rest = _zom_index(lex)
+    first = _expect_token(lexer, {IntegerToken}).value
+    rest = _zom_index(lexer)
     return (first, ) + rest
 
-def _zom_index(lex):
+def _zom_index(lexer):
     """Return zero or more indices."""
-    tok = next(lex)
+    tok = next(lexer)
     # ',' INT
     if type(tok) is COMMA:
-        first = _expect_token(lex, {IntegerToken}).value
-        rest = _zom_index(lex)
+        first = _expect_token(lexer, {IntegerToken}).value
+        rest = _zom_index(lexer)
         return (first, ) + rest
     # null
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return tuple()
 

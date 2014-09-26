@@ -18,7 +18,7 @@ Interface Functions:
 
 # pylint: disable=C0103
 
-from pyeda.parsing.lex import LexRunError, RegexLexer, action
+from pyeda.parsing import lex
 from pyeda.parsing.token import (
     EndToken,
     KeywordToken, IntegerToken, OperatorToken, PunctuationToken,
@@ -78,7 +78,7 @@ class RPAREN(PunctuationToken):
     """DIMACS ')' token"""
 
 
-class CNFLexer(RegexLexer):
+class CNFLexer(lex.RegexLexer):
     """Lexical analysis of CNF strings"""
 
     def ignore(self, text):
@@ -94,7 +94,7 @@ class CNFLexer(RegexLexer):
         cls = self.OPERATORS[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
-    @action(IntegerToken)
+    @lex.action(IntegerToken)
     def integer(self, text):
         """Push an integer onto the token queue."""
         return int(text)
@@ -127,9 +127,9 @@ class CNFLexer(RegexLexer):
     }
 
 
-def _expect_token(lex, types):
+def _expect_token(lexer, types):
     """Return the next token, or raise an exception."""
-    tok = next(lex)
+    tok = next(lexer)
     if any(type(tok) is t for t in types):
         return tok
     else:
@@ -162,30 +162,30 @@ def parse_cnf(s, varname='x'):
 
     indices := (index, ...)
     """
-    lex = iter(CNFLexer(s))
+    lexer = iter(CNFLexer(s))
     try:
-        ast = _cnf(lex, varname)
-    except LexRunError as exc:
+        ast = _cnf(lexer, varname)
+    except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
         raise DIMACSError(fstr.format(exc))
 
     # Check for end of buffer
-    _expect_token(lex, {EndToken})
+    _expect_token(lexer, {EndToken})
 
     return ast
 
-def _cnf(lex, varname):
+def _cnf(lexer, varname):
     """Return a DIMACS CNF."""
-    _expect_token(lex, {KW_p})
-    _expect_token(lex, {KW_cnf})
-    nvars = _expect_token(lex, {IntegerToken}).value
-    nclauses = _expect_token(lex, {IntegerToken}).value
-    return _cnf_formula(lex, varname, nvars, nclauses)
+    _expect_token(lexer, {KW_p})
+    _expect_token(lexer, {KW_cnf})
+    nvars = _expect_token(lexer, {IntegerToken}).value
+    nclauses = _expect_token(lexer, {IntegerToken}).value
+    return _cnf_formula(lexer, varname, nvars, nclauses)
 
-def _cnf_formula(lex, varname, nvars, nclauses):
+def _cnf_formula(lexer, varname, nvars, nclauses):
     """Return a DIMACS CNF formula."""
-    clauses = _clauses(lex, varname, nvars)
+    clauses = _clauses(lexer, varname, nvars)
 
     if len(clauses) < nclauses:
         fstr = "formula has fewer than {} clauses"
@@ -196,33 +196,33 @@ def _cnf_formula(lex, varname, nvars, nclauses):
 
     return ('and', ) + clauses
 
-def _clauses(lex, varname, nvars):
+def _clauses(lexer, varname, nvars):
     """Return a tuple of DIMACS CNF clauses."""
-    tok = next(lex)
+    tok = next(lexer)
     toktype = type(tok)
     if toktype is OP_not or toktype is IntegerToken:
-        lex.unpop_token(tok)
-        first = _clause(lex, varname, nvars)
-        rest = _clauses(lex, varname, nvars)
+        lexer.unpop_token(tok)
+        first = _clause(lexer, varname, nvars)
+        rest = _clauses(lexer, varname, nvars)
         return (first, ) + rest
     # null
     else:
-        lex.unpop_token(tok)
+        lexer.unpop_token(tok)
         return tuple()
 
-def _clause(lex, varname, nvars):
+def _clause(lexer, varname, nvars):
     """Return a DIMACS CNF clause."""
-    return ('or', ) + _lits(lex, varname, nvars)
+    return ('or', ) + _lits(lexer, varname, nvars)
 
-def _lits(lex, varname, nvars):
+def _lits(lexer, varname, nvars):
     """Return a tuple of DIMACS CNF clause literals."""
-    tok = _expect_token(lex, {OP_not, IntegerToken})
+    tok = _expect_token(lexer, {OP_not, IntegerToken})
     if type(tok) is IntegerToken and tok.value == 0:
         return tuple()
     else:
         if type(tok) is OP_not:
             neg = True
-            tok = _expect_token(lex, {IntegerToken})
+            tok = _expect_token(lexer, {IntegerToken})
         else:
             neg = False
         index = tok.value
@@ -235,10 +235,10 @@ def _lits(lex, varname, nvars):
         if neg:
             lit = ('not', lit)
 
-        return (lit, ) + _lits(lex, varname, nvars)
+        return (lit, ) + _lits(lexer, varname, nvars)
 
 
-class SATLexer(RegexLexer):
+class SATLexer(lex.RegexLexer):
     """Lexical analysis of SAT strings"""
 
     def ignore(self, text):
@@ -259,7 +259,7 @@ class SATLexer(RegexLexer):
         cls = self.PUNCTUATION[text]
         self.push_token(cls(text, self.lineno, self.offset))
 
-    @action(IntegerToken)
+    @lex.action(IntegerToken)
     def integer(self, text):
         """Push an integer onto the token queue."""
         return int(text)
@@ -349,31 +349,31 @@ def parse_sat(s, varname='x'):
     Parse an input string in DIMACS SAT format,
     and return an expression.
     """
-    lex = iter(SATLexer(s))
+    lexer = iter(SATLexer(s))
 
     try:
-        ast = _sat(lex, varname)
-    except LexRunError as exc:
+        ast = _sat(lexer, varname)
+    except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
         raise DIMACSError(fstr.format(exc))
 
     # Check for end of buffer
-    _expect_token(lex, {EndToken})
+    _expect_token(lexer, {EndToken})
 
     return ast
 
-def _sat(lex, varname):
+def _sat(lexer, varname):
     """Return a DIMACS SAT."""
-    _expect_token(lex, {KW_p})
-    fmt = _expect_token(lex, {KW_sat, KW_satx, KW_sate, KW_satex}).value
-    nvars = _expect_token(lex, {IntegerToken}).value
-    return _sat_formula(lex, varname, fmt, nvars)
+    _expect_token(lexer, {KW_p})
+    fmt = _expect_token(lexer, {KW_sat, KW_satx, KW_sate, KW_satex}).value
+    nvars = _expect_token(lexer, {IntegerToken}).value
+    return _sat_formula(lexer, varname, fmt, nvars)
 
-def _sat_formula(lex, varname, fmt, nvars):
+def _sat_formula(lexer, varname, fmt, nvars):
     """Return a DIMACS SAT formula."""
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
-    tok = _expect_token(lex, types)
+    tok = _expect_token(lexer, types)
     # INT
     if type(tok) is IntegerToken:
         index = tok.value
@@ -383,7 +383,7 @@ def _sat_formula(lex, varname, fmt, nvars):
         return ('var', (varname, ), (index, ))
     # '-'
     elif type(tok) is OP_not:
-        tok = _expect_token(lex, {IntegerToken, LPAREN})
+        tok = _expect_token(lexer, {IntegerToken, LPAREN})
         # '-' INT
         if type(tok) is IntegerToken:
             index = tok.value
@@ -393,28 +393,28 @@ def _sat_formula(lex, varname, fmt, nvars):
             return ('not', ('var', (varname, ), (index, )))
         # '-' '(' FORMULA ')'
         else:
-            formula = _sat_formula(lex, varname, fmt, nvars)
-            _expect_token(lex, {RPAREN})
+            formula = _sat_formula(lexer, varname, fmt, nvars)
+            _expect_token(lexer, {RPAREN})
             return ('not', formula)
     # '(' FORMULA ')'
     elif type(tok) is LPAREN:
-        formula = _sat_formula(lex, varname, fmt, nvars)
-        _expect_token(lex, {RPAREN})
+        formula = _sat_formula(lexer, varname, fmt, nvars)
+        _expect_token(lexer, {RPAREN})
         return formula
     # OP '(' FORMULAS ')'
     else:
-        _expect_token(lex, {LPAREN})
-        formulas = _formulas(lex, varname, fmt, nvars)
-        _expect_token(lex, {RPAREN})
+        _expect_token(lexer, {LPAREN})
+        formulas = _formulas(lexer, varname, fmt, nvars)
+        _expect_token(lexer, {RPAREN})
         return (tok.ASTOP, ) + formulas
 
-def _formulas(lex, varname, fmt, nvars):
+def _formulas(lexer, varname, fmt, nvars):
     """Return a tuple of DIMACS SAT formulas."""
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
-    tok = lex.peek_token()
+    tok = lexer.peek_token()
     if any(type(tok) is t for t in types):
-        first = _sat_formula(lex, varname, fmt, nvars)
-        rest = _formulas(lex, varname, fmt, nvars)
+        first = _sat_formula(lexer, varname, fmt, nvars)
+        rest = _formulas(lexer, varname, fmt, nvars)
         return (first, ) + rest
     # null
     else:

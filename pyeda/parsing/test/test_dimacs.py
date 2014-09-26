@@ -2,7 +2,6 @@
 Test DIMACS load/dump methods
 """
 
-from pyeda.parsing.lex import LexError
 from pyeda.parsing.dimacs import (
     DIMACSError, parse_cnf, parse_sat,
 )
