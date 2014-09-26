@@ -1224,7 +1224,7 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
 
     def compose(self, mapping):
         try:
-            return mapping[self]
+            return mapping[self].simplify()
         except KeyError:
             return self
 
