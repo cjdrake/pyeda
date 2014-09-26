@@ -9,7 +9,7 @@ Also, see the proceedings of the International SAT Competition
 (http://www.satcompetition.org) for information and CNF examples.
 
 Exceptions:
-    DIMACSError
+    Error
 
 Interface Functions:
     parse_cnf
@@ -24,7 +24,7 @@ from pyeda.parsing.token import (
     KeywordToken, IntegerToken, OperatorToken, PunctuationToken,
 )
 
-class DIMACSError(Exception):
+class Error(Exception):
     """An error happened during parsing a DIMACS file"""
 
 
@@ -133,7 +133,7 @@ def _expect_token(lexer, types):
     if any(type(tok) is t for t in types):
         return tok
     else:
-        raise DIMACSError("unexpected token: " + str(tok))
+        raise Error("unexpected token: " + str(tok))
 
 def parse_cnf(s, varname='x'):
     """
@@ -168,7 +168,7 @@ def parse_cnf(s, varname='x'):
     except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
-        raise DIMACSError(fstr.format(exc))
+        raise Error(fstr.format(exc))
 
     # Check for end of buffer
     _expect_token(lexer, {EndToken})
@@ -189,10 +189,10 @@ def _cnf_formula(lexer, varname, nvars, nclauses):
 
     if len(clauses) < nclauses:
         fstr = "formula has fewer than {} clauses"
-        raise DIMACSError(fstr.format(nclauses))
+        raise Error(fstr.format(nclauses))
     if len(clauses) > nclauses:
         fstr = "formula has more than {} clauses"
-        raise DIMACSError(fstr.format(nclauses))
+        raise Error(fstr.format(nclauses))
 
     return ('and', ) + clauses
 
@@ -229,7 +229,7 @@ def _lits(lexer, varname, nvars):
 
         if index > nvars:
             fstr = "formula literal {} is greater than {}"
-            raise DIMACSError(fstr.format(index, nvars))
+            raise Error(fstr.format(index, nvars))
 
         lit = ('var', (varname, ), (index, ))
         if neg:
@@ -356,7 +356,7 @@ def parse_sat(s, varname='x'):
     except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
-        raise DIMACSError(fstr.format(exc))
+        raise Error(fstr.format(exc))
 
     # Check for end of buffer
     _expect_token(lexer, {EndToken})
@@ -379,7 +379,7 @@ def _sat_formula(lexer, varname, fmt, nvars):
         index = tok.value
         if not 0 < index <= nvars:
             fstr = "formula literal {} outside valid range: (0, {}]"
-            raise DIMACSError(fstr.format(index, nvars))
+            raise Error(fstr.format(index, nvars))
         return ('var', (varname, ), (index, ))
     # '-'
     elif type(tok) is OP_not:
@@ -389,7 +389,7 @@ def _sat_formula(lexer, varname, fmt, nvars):
             index = tok.value
             if not 0 < index <= nvars:
                 fstr = "formula literal {} outside valid range: (0, {}]"
-                raise DIMACSError(fstr.format(index, nvars))
+                raise Error(fstr.format(index, nvars))
             return ('not', ('var', (varname, ), (index, )))
         # '-' '(' FORMULA ')'
         else:

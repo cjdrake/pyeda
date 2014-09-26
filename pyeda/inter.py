@@ -57,5 +57,5 @@ from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
 
 from pyeda.parsing.boolexpr import parse as parse_expr
 
-from pyeda.parsing.dimacs import DIMACSError, parse_cnf, parse_sat
+from pyeda.parsing.dimacs import parse_cnf, parse_sat
 

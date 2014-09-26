@@ -11,7 +11,7 @@ from pyeda.boolalg.expr import ast2expr
 from pyeda.boolalg.picosat import (
     VERSION, satisfy_one, satisfy_all, PicosatError
 )
-from pyeda.parsing.dimacs import parse_cnf, DIMACSError
+from pyeda.parsing import dimacs
 
 # Return values (standardized by http://www.satcompetition.org):
 UNKNOWN, SATISFIABLE, UNSATISFIABLE = 0, 10, 20
@@ -83,8 +83,8 @@ def main():
     opts = PARSER.parse_args()
 
     try:
-        ast = parse_cnf(opts.file.read())
-    except DIMACSError as exc:
+        ast = dimacs.parse_cnf(opts.file.read())
+    except dimacs.Error as exc:
         print("error parsing file:", opts.file.name)
         print(exc)
         return UNKNOWN
