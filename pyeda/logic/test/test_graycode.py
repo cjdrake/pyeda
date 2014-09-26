@@ -5,6 +5,7 @@ Test logic functions for gray code
 from pyeda.boolalg.bfarray import exprvars, uint2exprs
 from pyeda.logic.graycode import bin2gray, gray2bin
 
+
 def test_bin2gray():
     B = exprvars('B', 4)
     G = bin2gray(B)

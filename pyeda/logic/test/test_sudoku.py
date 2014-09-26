@@ -7,6 +7,7 @@ import random
 
 from pyeda.logic.sudoku import SudokuSolver
 
+
 SOLVER = SudokuSolver()
 
 cwd, _ = os.path.split(__file__)

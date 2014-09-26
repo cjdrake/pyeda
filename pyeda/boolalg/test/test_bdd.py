@@ -9,6 +9,7 @@ from pyeda.boolalg.bdd import (
 )
 from pyeda.boolalg.expr import expr, ExprOr, ExprAnd
 
+
 zero = BinaryDecisionDiagram.box(0)
 one = BinaryDecisionDiagram.box(1)
 a, b, c, d, w, x, y, z = map(bddvar, 'abcdwxyz')

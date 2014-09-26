@@ -2,10 +2,10 @@
 Test table Boolean functions
 """
 
+from pyeda.boolalg.expr import exprvar, Xor
 from pyeda.boolalg.table import (
     ttvar, truthtable, expr2truthtable, truthtable2expr
 )
-from pyeda.boolalg.expr import exprvar, Xor
 
 a, b, c, d, e = map(exprvar, 'abcde')
 aa, bb, cc, dd, ee = map(ttvar, 'abcde')

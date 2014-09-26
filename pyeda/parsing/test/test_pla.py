@@ -2,10 +2,11 @@
 Test PLA parsing functions
 """
 
+from nose.tools import assert_raises
+
 from pyeda.boolalg.espresso import FTYPE, DTYPE, RTYPE
 from pyeda.parsing.pla import PLAError, parse_pla
 
-from nose.tools import assert_raises
 
 BASIC = """
 # Filename: basic.pla

@@ -2,17 +2,18 @@
 Test Boolean Function arrays
 """
 
+from nose.tools import assert_raises
+
+from pyeda.boolalg.bdd import bddvar, BinaryDecisionDiagram
 from pyeda.boolalg.bfarray import (
     exprzeros, exprvars,
     fcat, farray,
     uint2exprs, int2exprs,
 )
 from pyeda.boolalg.boolfunc import Function
-from pyeda.boolalg.bdd import bddvar, BinaryDecisionDiagram
 from pyeda.boolalg.expr import exprvar, Expression
 from pyeda.boolalg.table import ttvar
 
-from nose.tools import assert_raises
 
 X = exprvars('x', 4)
 Y = exprvars('y', 4)

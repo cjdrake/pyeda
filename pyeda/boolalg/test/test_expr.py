@@ -2,7 +2,10 @@
 Test expression Boolean functions
 """
 
+from nose.tools import assert_raises
+
 from pyeda.boolalg import boolfunc
+from pyeda.boolalg.bfarray import exprvars
 from pyeda.boolalg.expr import (
     exprvar, expr,
     expr2dimacscnf, expr2dimacssat,
@@ -11,9 +14,7 @@ from pyeda.boolalg.expr import (
     OneHot0, OneHot, Majority, AchillesHeel, Mux,
     EXPRZERO, EXPRONE,
 )
-from pyeda.boolalg.bfarray import exprvars
 
-from nose.tools import assert_raises
 
 a, b, c, d, e, p, q, s = map(exprvar, 'abcdepqs')
 

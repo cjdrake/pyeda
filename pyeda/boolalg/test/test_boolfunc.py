@@ -2,6 +2,8 @@
 Test Boolean functions
 """
 
+from nose.tools import assert_raises
+
 from pyeda.boolalg.boolfunc import (
     num2point,
     num2upoint,
@@ -15,7 +17,6 @@ from pyeda.boolalg.boolfunc import (
 )
 from pyeda.boolalg.expr import exprvar
 
-from nose.tools import assert_raises
 
 a, b, c, d = map(exprvar, 'abcd')
 aa, bb, cc, dd = a.uniqid, b.uniqid, c.uniqid, d.uniqid

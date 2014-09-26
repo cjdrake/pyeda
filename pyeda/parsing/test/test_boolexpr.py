@@ -2,6 +2,8 @@
 Test Boolean expression parsing
 """
 
+from nose.tools import assert_raises
+
 from pyeda.boolalg.expr import (
     exprvar, expr,
     Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE,
@@ -9,7 +11,6 @@ from pyeda.boolalg.expr import (
 )
 from pyeda.parsing.boolexpr import Error
 
-from nose.tools import assert_raises
 
 def test_expr_error():
     # lexical error

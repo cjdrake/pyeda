@@ -2,19 +2,19 @@
 Test the Espresso interface
 """
 
+import multiprocessing as mp
 import os
-from multiprocessing import Pool
+
+from nose.tools import assert_raises
 
 from pyeda.boolalg import espresso
-from pyeda.boolalg.table import truthtable2expr, truthtable
 from pyeda.boolalg.bfarray import exprvars
 from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
+from pyeda.boolalg.table import truthtable2expr, truthtable
+from pyeda.inter import exprvar
 from pyeda.logic.addition import ripple_carry_add
 from pyeda.parsing.pla import parse_pla
 
-from pyeda.inter import exprvar
-
-from nose.tools import assert_raises
 
 BOOM_PLAS = [
     'bb_50x5x50_20%_0.pla',
@@ -66,7 +66,7 @@ def _do_espresso(fname):
     return espresso.espresso(pla['ninputs'], pla['noutputs'], pla['cover'], intype=pla['intype'])
 
 def test_boom():
-    p = Pool(4)
+    p = mp.Pool(4)
     # Espresso has an internal 'verify' function
     p.map(_do_espresso, BOOM_PLAS)
 

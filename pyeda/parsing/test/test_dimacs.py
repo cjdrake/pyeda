@@ -2,9 +2,10 @@
 Test DIMACS load/dump methods
 """
 
+from nose.tools import assert_raises
+
 from pyeda.parsing.dimacs import Error, parse_cnf, parse_sat
 
-from nose.tools import assert_raises
 
 def test_cnf_errors():
     # lexical error

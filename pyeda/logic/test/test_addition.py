@@ -4,14 +4,15 @@ Test logic functions for addition
 
 import random
 
+from nose.tools import assert_raises
+
+from pyeda.boolalg.bfarray import farray, exprvars, uint2exprs, int2exprs, fcat
 from pyeda.logic.addition import (
     ripple_carry_add as rca,
     kogge_stone_add as ksa,
     brent_kung_add as bka,
 )
-from pyeda.boolalg.bfarray import farray, exprvars, uint2exprs, int2exprs, fcat
 
-from nose.tools import assert_raises
 
 NVECS = 100
 

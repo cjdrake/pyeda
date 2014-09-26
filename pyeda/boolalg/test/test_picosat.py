@@ -1,10 +1,10 @@
 # Filename: test_picosat.py
 
-from pyeda.boolalg.expr import expr, expr2dimacscnf
+from nose.tools import assert_raises
 
 from pyeda.boolalg import picosat
+from pyeda.boolalg.expr import expr, expr2dimacscnf
 
-from nose.tools import assert_raises
 
 def test_basic():
     assert picosat.COPYRIGHT == "Copyright (c) 2006 - 2014 Armin Biere JKU Linz"
