@@ -54,12 +54,6 @@ disable=similarities,C0302,W0142,W0212,W0223,W0602,R0903,R0904,R0923
 # mypackage.mymodule.MyReporterClass.
 output-format=colorized
 
-# Include message's id in output
-include-ids=yes
-
-# Include symbolic ids of messages in output
-symbols=no
-
 # Put messages in a separate file for each module / package specified on the
 # command line instead of printing them on stdout. Reports (if any) will be
 # written in a file name "pylint_global.[txt|html]".
