@@ -786,12 +786,6 @@ def test_is_nf():
     assert (a & (b | c) & (c | d)).is_cnf()
     assert not ((a | b) & (b | c & d)).is_cnf()
 
-def test_dpllif():
-    assert a.bcp() == (frozenset(), frozenset([a.uniqid]))
-    assert a.ple() == (frozenset(), frozenset([a.uniqid]))
-    assert (~a).bcp() == (frozenset([a.uniqid]), frozenset())
-    assert (~a).ple() == (frozenset([a.uniqid]), frozenset())
-
 def test_complete_sum():
     v, w, x, y, z = map(exprvar, 'vwxyz')
     f = ~v&x&y&z | ~v&~w&x | ~v&~x&~z | ~v&w&x&z | ~w&y&~z | v&~w&z | v&w&~x&z

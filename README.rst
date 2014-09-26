@@ -21,7 +21,6 @@ Features
 * SAT solvers:
 
   * Backtracking
-  * DPLL
   * `PicoSAT <http://fmv.jku.at/picosat>`_
 
 * `Espresso <http://embedded.eecs.berkeley.edu/pubs/downloads/espresso/index.htm>`_ logic minimization

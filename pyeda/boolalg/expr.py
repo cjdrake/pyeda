@@ -972,7 +972,7 @@ class Expression(boolfunc.Function):
         return " ".join(parts)
 
 
-class ExprConstant(Expression, sat.DPLLInterface):
+class ExprConstant(Expression):
     """Expression constant"""
 
     ASTOP = 'const'
@@ -1066,13 +1066,6 @@ class _ExprZero(ExprConstant):
         clauses = set()
         return litmap, nvars, clauses
 
-    # DPLL IF
-    def bcp(self):
-        return None
-
-    def ple(self):
-        return None
-
 
 class _ExprOne(ExprConstant):
     """
@@ -1106,13 +1099,6 @@ class _ExprOne(ExprConstant):
         clauses = set()
         return litmap, nvars, clauses
 
-    # DPLL IF
-    def bcp(self):
-        return frozenset(), frozenset()
-
-    def ple(self):
-        return frozenset(), frozenset()
-
 
 EXPRZERO = _ExprZero()
 EXPRONE = _ExprOne()
@@ -1120,7 +1106,7 @@ EXPRONE = _ExprOne()
 CONSTANTS = [EXPRZERO, EXPRONE]
 
 
-class ExprLiteral(Expression, sat.DPLLInterface):
+class ExprLiteral(Expression):
     """An instance of a variable or of its complement"""
 
     def __init__(self):
@@ -1249,13 +1235,6 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
     def to_ast(self):
         return (self.ASTOP, self.names, self.indices)
 
-    # DPLL IF
-    def bcp(self):
-        return frozenset(), frozenset([self.uniqid])
-
-    def ple(self):
-        return frozenset(), frozenset([self.uniqid])
-
     minterm_index = 1
     maxterm_index = 0
 
@@ -1323,13 +1302,6 @@ class ExprComplement(ExprLiteral):
 
     def to_ast(self):
         return (ExprNot.ASTOP, self.exprvar.to_ast())
-
-    # DPLL IF
-    def bcp(self):
-        return frozenset([self.exprvar.uniqid]), frozenset()
-
-    def ple(self):
-        return frozenset([self.exprvar.uniqid]), frozenset()
 
     minterm_index = 0
     maxterm_index = 1
@@ -1497,7 +1469,7 @@ class _ArgumentContainer(Expression):
         return cnt.most_common(1)[0][0]
 
 
-class ExprOrAnd(_ArgumentContainer, sat.DPLLInterface):
+class ExprOrAnd(_ArgumentContainer):
     """Base class for Expression OR/AND expressions"""
 
     IDENTITY = NotImplemented
@@ -1760,17 +1732,6 @@ class ExprOr(ExprOrAnd):
         clauses = {self._encode_clause(litmap)}
         return litmap, nvars, clauses
 
-    # DPLL IF
-    def bcp(self):
-        return frozenset(), frozenset()
-
-    def ple(self):
-        upnt = frozenset(), frozenset()
-        for lit in self.args:
-            ple_upnt = lit.ple()
-            upnt = (upnt[0] | ple_upnt[0], upnt[1] | ple_upnt[1])
-        return upnt
-
     # Specific to ExprOrAnd
     @staticmethod
     def get_dual():
@@ -1886,29 +1847,6 @@ class ExprAnd(ExprOrAnd):
         litmap, nvars = self.encode_inputs()
         clauses = {arg._encode_clause(litmap) for arg in self.args}
         return litmap, nvars, clauses
-
-    # DPLL IF
-    def bcp(self):
-        upnt = frozenset(), frozenset()
-        for clause in self.args:
-            if isinstance(clause, ExprLiteral):
-                bcp_upnt = clause.bcp()
-                upnt = (upnt[0] | bcp_upnt[0], upnt[1] | bcp_upnt[1])
-        if upnt[0] or upnt[1]:
-            bcp_upnt = self._urestrict2(upnt).bcp()
-            if bcp_upnt is None:
-                return None
-            else:
-                return (upnt[0] | bcp_upnt[0], upnt[1] | bcp_upnt[1])
-        else:
-            return frozenset(), frozenset()
-
-    def ple(self):
-        upnt = frozenset(), frozenset()
-        for clause in self.args:
-            ple_upnt = clause.ple()
-            upnt = (upnt[0] | ple_upnt[0], upnt[1] | ple_upnt[1])
-        return upnt[0] - upnt[1], upnt[1] - upnt[0]
 
     # From ExprOrAnd
     @staticmethod
