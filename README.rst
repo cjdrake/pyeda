@@ -365,5 +365,5 @@ It is **NOT** compatible with Python 2.7, or Python 3.2.
 Contact the Authors
 ===================
 
-* Chris Drake (cjdrake AT gmail DOT com), http://cjdrake.blogspot.com
+* Chris Drake (cjdrake AT gmail DOT com), http://cjdrake.github.io
 
