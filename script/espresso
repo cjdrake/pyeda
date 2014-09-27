@@ -25,7 +25,8 @@ PARSER.add_argument(
 
 PARSER.add_argument(
     '--fast', action='store_true',
-    help="stop after the first EXPAND and IRREDUNDANT operations (i.e., do not iterate over the solution)"
+    help=("stop after the first EXPAND and IRREDUNDANT operations "
+          "(i.e., do not iterate over the solution)")
 )
 PARSER.add_argument(
     '--no-ess', action='store_false', dest='ess',
@@ -33,7 +34,8 @@ PARSER.add_argument(
 )
 PARSER.add_argument(
     '--no-irr', action='store_false', dest='irr',
-    help="the result will not necessarily be made irredundant in the final step which removes redundant literals"
+    help=("the result will not necessarily be made irredundant in the final "
+          "step which removes redundant literals")
 )
 PARSER.add_argument(
     '--no-unwrap', action='store_false', dest='unwrap',
@@ -41,11 +43,15 @@ PARSER.add_argument(
 )
 PARSER.add_argument(
     '--onset', action='store_true',
-    help="recompute the ON-set before the minimization; useful when the PLA has a large number of product terms (e.g., an exhaustive list of minterms)"
+    help=("recompute the ON-set before the minimization; "
+          "useful when the PLA has a large number of product terms "
+          "(e.g., an exhaustive list of minterms)")
 )
 PARSER.add_argument(
     '--strong', action='store_true',
-    help="uses the alternate strategy SUPER_GASP (as a replacement for LAST_ GASP) which is more expensive, but occasionally provides better results"
+    help=("uses the alternate strategy SUPER_GASP "
+          "(as a replacement for LAST_ GASP) which is more expensive, "
+          "but occasionally provides better results")
 )
 
 PARSER.add_argument('file', nargs='?', type=argparse.FileType('r'),
