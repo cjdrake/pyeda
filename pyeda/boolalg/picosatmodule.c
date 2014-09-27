@@ -8,7 +8,7 @@
 **     COPYRIGHT
 **
 ** Exceptions:
-**     PicosatError
+**     Error
 **
 ** Interface Functions:
 **     satisfy_one
@@ -21,11 +21,11 @@
 #include "picosat.h"
 
 /*
-** Python exception definition: picosat.PicosatError
+** Python exception definition: picosat.Error
 */
-PyDoc_STRVAR(_picosat_error_docstring, "PicoSAT Error");
+PyDoc_STRVAR(_error_docstring, "PicoSAT Error");
 
-static PyObject *_picosat_error;
+static PyObject *_error;
 
 /* Pass these functions to picosat_minit to use Python's memory manager. */
 inline static void *
@@ -336,7 +336,7 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
 
     picosat = picosat_minit(NULL, _pymalloc, _pyrealloc, _pyfree);
     if (picosat == NULL) {
-        PyErr_SetString(_picosat_error, "could not initialize PicoSAT");
+        PyErr_SetString(_error, "could not initialize PicoSAT");
         goto done;
     }
 
@@ -370,10 +370,10 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
         pyret = _get_soln(picosat);
     }
     else if (result == PICOSAT_UNKNOWN) {
-        PyErr_SetString(_picosat_error, "PicoSAT returned UNKNOWN");
+        PyErr_SetString(_error, "PicoSAT returned UNKNOWN");
     }
     else {
-        PyErr_Format(_picosat_error, "PicoSAT returned: %d", result);
+        PyErr_Format(_error, "PicoSAT returned: %d", result);
     }
 
 reset_picosat:
@@ -476,7 +476,7 @@ _satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
 
     picosat = picosat_minit(NULL, _pymalloc, _pyrealloc, _pyfree);
     if (picosat == NULL) {
-        PyErr_SetString(_picosat_error, "could not initialize PicoSAT");
+        PyErr_SetString(_error, "could not initialize PicoSAT");
         goto error;
     }
 
@@ -557,7 +557,7 @@ _satisfy_all_next(_satisfy_all_state *state)
         /* No more solutions */
     }
     else {
-        PyErr_Format(_picosat_error, "PicoSAT returned: %d", result);
+        PyErr_Format(_error, "PicoSAT returned: %d", result);
     }
 
     return pyret;
@@ -619,7 +619,7 @@ Constants:\n\
     COPYRIGHT\n\
 \n\
 Exceptions:\n\
-    PicosatError\n\
+    Error\n\
 \n\
 Interface Functions:\n\
     satisfy_one\n\
@@ -660,16 +660,16 @@ PyInit_picosat(void)
     if (PyModule_AddStringConstant(pymodule, "COPYRIGHT", picosat_copyright()) < 0)
         goto error;
 
-    /* Create PicosatError */
-    _picosat_error = PyErr_NewExceptionWithDoc("picosat.PicosatError",
-                                               _picosat_error_docstring,
-                                               NULL, NULL);
-    if (_picosat_error == NULL)
+    /* Create Error */
+    _error = PyErr_NewExceptionWithDoc("picosat.Error",
+                                       _error_docstring,
+                                       NULL, NULL);
+    if (_error == NULL)
         goto error;
 
-    Py_INCREF(_picosat_error);
-    if (PyModule_AddObject(pymodule, "PicosatError", _picosat_error) < 0) {
-        Py_DECREF(_picosat_error);
+    Py_INCREF(_error);
+    if (PyModule_AddObject(pymodule, "Error", _error) < 0) {
+        Py_DECREF(_error);
         goto error;
     }
 

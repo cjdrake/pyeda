@@ -8,9 +8,7 @@ import argparse
 import sys
 
 from pyeda.boolalg.expr import ast2expr
-from pyeda.boolalg.picosat import (
-    VERSION, satisfy_one, satisfy_all, PicosatError
-)
+from pyeda.boolalg import picosat
 from pyeda.parsing import dimacs
 
 # Return values (standardized by http://www.satcompetition.org):
@@ -42,7 +40,7 @@ def _nonzero(s):
     return value
 
 PARSER.add_argument(
-    '--version', action='version', version=VERSION,
+    '--version', action='version', version=picosat.VERSION,
     help="print version and exit"
 )
 PARSER.add_argument(
@@ -107,7 +105,7 @@ def main():
 
     try:
         if opts.all:
-            gen = satisfy_all(nvars, clauses, **config)
+            gen = picosat.satisfy_all(nvars, clauses, **config)
             cnt = 0
             for soln in gen:
                 if opts.printsoln:
@@ -118,9 +116,9 @@ def main():
             # This unexpected result matches PicoSAT
             return UNSATISFIABLE
         else:
-            soln = satisfy_one(nvars, clauses,
-                               assumptions=opts.assumptions,
-                               **config)
+            soln = picosat.satisfy_one(nvars, clauses,
+                                       assumptions=opts.assumptions,
+                                       **config)
             if soln is None:
                 print('s', 'UNSATISFIABLE')
                 return UNSATISFIABLE
@@ -129,7 +127,7 @@ def main():
                 if opts.printsoln:
                     print('v', *_soln2values(soln))
                 return SATISFIABLE
-    except PicosatError as exc:
+    except picosat.Error as exc:
         print(exc)
         return UNKNOWN
 
