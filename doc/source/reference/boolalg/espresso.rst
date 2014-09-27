@@ -16,7 +16,7 @@ Constants
 Exceptions
 ==========
 
-.. exception:: EspressoError
+.. exception:: Error
 
    An error happened inside Espresso.
 

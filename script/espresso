@@ -7,7 +7,7 @@ Minimize a PLA file
 import argparse
 import sys
 
-from pyeda.boolalg.espresso import set_config, espresso, EspressoError
+from pyeda.boolalg import espresso
 from pyeda.parsing.pla import parse_pla, PLAError
 
 PARSER = argparse.ArgumentParser(description=__doc__)
@@ -54,7 +54,7 @@ PARSER.add_argument('file', nargs='?', type=argparse.FileType('r'),
 def main():
     opts = PARSER.parse_args()
 
-    set_config(
+    espresso.set_config(
         single_expand=opts.fast,
         remove_essential=opts.ess,
         force_irredundant=opts.irr,
@@ -71,9 +71,9 @@ def main():
         return 1
 
     try:
-        cover = espresso(pla['ninputs'], pla['noutputs'], pla['cover'],
-                         intype=pla['intype'])
-    except EspressoError as exc:
+        cover = espresso.espresso(pla['ninputs'], pla['noutputs'],
+                                  pla['cover'], intype=pla['intype'])
+    except espresso.Error as exc:
         print("espresso failed:", exc)
         return 1
 

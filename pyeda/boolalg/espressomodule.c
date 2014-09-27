@@ -9,7 +9,7 @@
 **     RTYPE
 **
 ** Exceptions:
-**     EspressoError
+**     Error
 **
 ** Interface Functions:
 **     get_config
@@ -22,11 +22,11 @@
 #include "espresso.h"
 
 /*
-** Python exception definition: espresso.EspressoError
+** Python exception definition: espresso.Error
 */
-PyDoc_STRVAR(_espresso_error_docstring, "Espresso Error");
+PyDoc_STRVAR(_error_docstring, "Espresso Error");
 
-static PyObject *_espresso_error;
+static PyObject *_error;
 
 /*
 ** Convert a Python set(((int), (int))) to an Espresso cover
@@ -443,7 +443,7 @@ _espresso(PyObject *self, PyObject *args, PyObject *kwargs)
     F = espresso(F, D, R);
     err = verify(F, Fsave, D);
     if (err) {
-        PyErr_SetString(_espresso_error, "Espresso result verify failed");
+        PyErr_SetString(_error, "Espresso result verify failed");
         sf_free(Fsave);
         goto free_espresso;
     }
@@ -479,7 +479,7 @@ Constants:\n\
     RTYPE\n\
 \n\
 Exceptions:\n\
-    EspressoError\n\
+    Error\n\
 \n\
 Interface Functions:\n\
     espresso\n\
@@ -522,16 +522,16 @@ PyInit_espresso(void)
     if (PyModule_AddIntConstant(pymodule, "RTYPE", R_type))
         goto error;
 
-    /* Create EspressoError */
-    _espresso_error = PyErr_NewExceptionWithDoc("espresso.EspressoError",
-                                                _espresso_error_docstring,
-                                                NULL, NULL);
-    if (_espresso_error == NULL)
+    /* Create Error */
+    _error = PyErr_NewExceptionWithDoc("espresso.Error",
+                                       _error_docstring,
+                                       NULL, NULL);
+    if (_error == NULL)
         goto error;
 
-    Py_INCREF(_espresso_error);
-    if (PyModule_AddObject(pymodule, "EspressoError", _espresso_error) < 0) {
-        Py_DECREF(_espresso_error);
+    Py_INCREF(_error);
+    if (PyModule_AddObject(pymodule, "Error", _error) < 0) {
+        Py_DECREF(_error);
         goto error;
     }
 
