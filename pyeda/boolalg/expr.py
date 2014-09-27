@@ -699,7 +699,7 @@ class Expression(boolfunc.Function):
 
     def invert(self):
         """Return the inverse expression."""
-        warnings.warn("Expression.invert is deprecated")
+        warn("Expression.invert is deprecated")
         return self._inv
 
     @property
