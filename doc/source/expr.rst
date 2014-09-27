@@ -469,7 +469,7 @@ For example::
 From the ``expr`` Function
 --------------------------
 
-.. function:: expr(arg, simplify=True)
+.. function:: expr(obj, simplify=True)
 
 The ``expr`` function is very special.
 It will attempt to convert the input argument to an ``Expression`` object.
