@@ -8,7 +8,8 @@ import argparse
 import sys
 
 from pyeda.boolalg import espresso
-from pyeda.parsing.pla import parse_pla, PLAError
+from pyeda.parsing import pla
+
 
 PARSER = argparse.ArgumentParser(description=__doc__)
 
@@ -70,25 +71,25 @@ def main():
     )
 
     try:
-        pla = parse_pla(opts.file.read())
-    except PLAError as exc:
+        d = pla.parse(opts.file.read())
+    except pla.Error as exc:
         print("error parsing file:", opts.file.name)
         print(exc)
         return 1
 
     try:
-        cover = espresso.espresso(pla['ninputs'], pla['noutputs'],
-                                  pla['cover'], intype=pla['intype'])
+        cover = espresso.espresso(d['ninputs'], d['noutputs'],
+                                  d['cover'], intype=d['intype'])
     except espresso.Error as exc:
         print("espresso failed:", exc)
         return 1
 
-    print(".i", pla['ninputs'])
-    print(".o", pla['noutputs'])
-    if pla['input_labels']:
-        print(".ilb", " ".join(pla['input_labels']))
-    if pla['output_labels']:
-        print(".ob", " ".join(pla['output_labels']))
+    print(".i", d['ninputs'])
+    print(".o", d['noutputs'])
+    if d['input_labels']:
+        print(".ilb", " ".join(d['input_labels']))
+    if d['output_labels']:
+        print(".ob", " ".join(d['output_labels']))
     print(".p", len(cover))
     for invec, outvec in cover:
         print("".join({1: '0', 2: '1', 3: '-'}[n] for n in invec),

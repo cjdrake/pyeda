@@ -5,10 +5,10 @@ This is a partial implementation of the Berkeley PLA format.
 See extension/espresso/html/espresso.5.html for details.
 
 Exceptions:
-    PLAError
+    Error
 
 Interface Functions:
-    parse_pla
+    parse
 """
 
 import re
@@ -38,11 +38,11 @@ _INCODE = {'0': 1, '1': 2, '-': 3}
 _OUTCODE = {'0': 0, '1': 1, '-': 2}
 
 
-class PLAError(Exception):
+class Error(Exception):
     """An error happened during parsing a PLA file"""
 
 
-def parse_pla(s):
+def parse(s):
     """
     Parse an input string in PLA format,
     and return an intermediate representation dict.
@@ -67,9 +67,9 @@ def parse_pla(s):
          cover            set           Implicant table
         ===============  ============  =================================
     """
-    pla = dict(ninputs=None, noutputs=None,
-               input_labels=None, output_labels=None,
-               intype=None, cover=set())
+    d = dict(ninputs=None, noutputs=None,
+             input_labels=None, output_labels=None,
+             intype=None, cover=set())
 
     lines = [line.strip() for line in s.splitlines()]
     for i, line in enumerate(lines, start=1):
@@ -80,20 +80,20 @@ def parse_pla(s):
         # .i
         m_in = _NINS.match(line)
         if m_in:
-            if pla['ninputs'] is None:
-                pla['ninputs'] = int(m_in.group(1))
+            if d['ninputs'] is None:
+                d['ninputs'] = int(m_in.group(1))
                 continue
             else:
-                raise PLAError(".i declared more than once")
+                raise Error(".i declared more than once")
 
         # .o
         m_out = _NOUTS.match(line)
         if m_out:
-            if pla['noutputs'] is None:
-                pla['noutputs'] = int(m_out.group(1))
+            if d['noutputs'] is None:
+                d['noutputs'] = int(m_out.group(1))
                 continue
             else:
-                raise PLAError(".o declared more than once")
+                raise Error(".o declared more than once")
 
         # ignore .p
         m_prod = _PROD.match(line)
@@ -103,29 +103,29 @@ def parse_pla(s):
         # .ilb
         m_ilb = _ILB.match(line)
         if m_ilb:
-            if pla['input_labels'] is None:
-                pla['input_labels'] = m_ilb.group(1).split()
+            if d['input_labels'] is None:
+                d['input_labels'] = m_ilb.group(1).split()
                 continue
             else:
-                raise PLAError(".ilb declared more than once")
+                raise Error(".ilb declared more than once")
 
         # .ob
         m_ob = _OB.match(line)
         if m_ob:
-            if pla['output_labels'] is None:
-                pla['output_labels'] = m_ob.group(1).split()
+            if d['output_labels'] is None:
+                d['output_labels'] = m_ob.group(1).split()
                 continue
             else:
-                raise PLAError(".ob declared more than once")
+                raise Error(".ob declared more than once")
 
         # .type
         m_type = _TYPE.match(line)
         if m_type:
-            if pla['intype'] is None:
-                pla['intype'] = _TYPES[m_type.group(1)]
+            if d['intype'] is None:
+                d['intype'] = _TYPES[m_type.group(1)]
                 continue
             else:
-                raise PLAError(".type declared more tha once")
+                raise Error(".type declared more tha once")
 
         # cube
         m_cube = _CUBE.match(line)
@@ -133,7 +133,7 @@ def parse_pla(s):
             inputs, outputs = m_cube.groups()
             invec = tuple(_INCODE[c] for c in inputs)
             outvec = tuple(_OUTCODE[c] for c in outputs)
-            pla['cover'].add((invec, outvec))
+            d['cover'].add((invec, outvec))
             continue
 
         # ignore .e
@@ -141,7 +141,7 @@ def parse_pla(s):
         if m_end:
             continue
 
-        raise PLAError("syntax error on line {}: {}".format(i, line))
+        raise Error("syntax error on line {}: {}".format(i, line))
 
-    return pla
+    return d
 

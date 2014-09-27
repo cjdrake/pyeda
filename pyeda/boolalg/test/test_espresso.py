@@ -13,7 +13,7 @@ from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
 from pyeda.boolalg.table import truthtable2expr, truthtable
 from pyeda.inter import exprvar
 from pyeda.logic.addition import ripple_carry_add
-from pyeda.parsing.pla import parse_pla
+from pyeda.parsing import pla
 
 
 BOOM_PLAS = [
@@ -62,8 +62,8 @@ def test_issue75():
 def _do_espresso(fname):
     fpath = os.path.join('extension', 'espresso', 'test', 'bb_all', fname)
     with open(fpath) as fin:
-        pla = parse_pla(fin.read())
-    return espresso.espresso(pla['ninputs'], pla['noutputs'], pla['cover'], intype=pla['intype'])
+        d = pla.parse(fin.read())
+    return espresso.espresso(d['ninputs'], d['noutputs'], d['cover'], intype=d['intype'])
 
 def test_boom():
     p = mp.Pool(4)
