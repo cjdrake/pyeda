@@ -109,6 +109,7 @@ if sys.platform == 'win32':
         ('inline', '__inline'),
     ]
 
+# Espresso extension
 ESPRESSO = dict(
     define_macros = [],
     include_dirs = [
