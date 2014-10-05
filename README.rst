@@ -111,21 +111,22 @@ Investigate a function's properties::
    >>> f0.depth
    2
 
-Factor complex expressions into only OR/AND and literals::
+Convert expressions to negation normal form (NNF),
+with only OR/AND and literals::
 
-   >>> f11.factor()
+   >>> f11.to_nnf()
    Or(~a, b)
-   >>> f12.factor()
+   >>> f12.to_nnf()
    Or(And(~a, b), And(a, ~b))
-   >>> f13.factor()
+   >>> f13.to_nnf()
    Or(And(~a, ~b), And(a, b))
-   >>> f14.factor()
+   >>> f14.to_nnf()
    Or(And(~a, ~b, ~c), And(a, b, c))
-   >>> f15.factor()
+   >>> f15.to_nnf()
    Or(And(a, b), And(~a, c))
-   >>> f16.factor()
+   >>> f16.to_nnf()
    And(~a, ~b, ~c)
-   >>> f17.factor()
+   >>> f17.to_nnf()
    Or(~a, ~b, ~c)
 
 Restrict a function's input variables to fixed values,
@@ -186,9 +187,9 @@ Investigate Boolean identities::
    Or(And(a, b), And(a, c))
 
    # De Morgan's
-   >>> Not(a | b).factor()
+   >>> Not(a | b).to_nnf()
    And(~a, ~b)
-   >>> Not(a & b).factor()
+   >>> Not(a & b).to_nnf()
    Or(~a, ~b)
 
    # Absorption

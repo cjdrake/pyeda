@@ -648,44 +648,44 @@ attribute::
    >>> g.simplified
    True
 
-Factored
---------
+Negation Normal Form
+--------------------
 
-A factored expression consists of the following components:
+An expression in Negation Normal Form (NNF) consists of the following
+components:
 
 * Literals
 * Primary operators: ``Or``, ``And``
 
-That is, the act of *factoring* an expression converts all secondary operators
-to primary operators,
+That is, convert all secondary operators to primary operators,
 and uses DeMorgan's transform to eliminate ``Not`` operators.
 
-You can factor all secondary operators::
+You can convert all secondary operators to NNF::
 
-   >>> Xor(a, b, c).factor()
+   >>> Xor(a, b, c).to_nnf()
    Or(And(~a, ~b, c), And(~a, b, ~c), And(a, ~b, ~c), And(a, b, c))
-   >>> Implies(p, q).factor()
+   >>> Implies(p, q).to_nnf()
    Or(~p, q)
-   >>> Equal(a, b, c).factor()
+   >>> Equal(a, b, c).to_nnf()
    Or(And(~a, ~b, ~c), And(a, b, c))
-   >>> ITE(s, a, b).factor()
+   >>> ITE(s, a, b).to_nnf()
    Or(And(b, Or(a, b, ~ci), Or(a, ~b, ci)), And(a, Or(And(~a, ~b, ci), And(~a, b, ~ci))))
 
 Factoring also eliminates all ``Not`` operators,
 by using DeMorgan's law::
 
-   >>> Not(a | b).factor()
+   >>> Not(a | b).to_nnf()
    And(~a, ~b)
-   >>> Not(a & b).factor()
+   >>> Not(a & b).to_nnf()
    Or(~a, ~b)
 
 Normal Form
 -----------
 
-A normal form expression is a factored expression with depth less than or
+A normal form expression is an NNF expression with depth less than or
 equal to two.
 
-That is, a normal form expression has been factored, and *flattened*.
+That is, a normal form expression is a *flattened* NNF.
 
 There are two types of normal forms:
 
@@ -708,8 +708,7 @@ A canonical normal form expression is a normal form expression with the
 additional property that all terms in the expression have the same degree as
 the expression itself.
 
-That is, a canonical normal form expression has been factored, flattened,
-and *reduced*.
+That is, a canonical normal form expression is a *flattened*, *reduced* NNF.
 
 The preferred method for creating canonical normal form expressions is to use
 the ``to_cdnf`` and ``to_ccnf`` methods.

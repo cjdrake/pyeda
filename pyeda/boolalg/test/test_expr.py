@@ -86,7 +86,7 @@ def test_expr():
     assert expr(1) is EXPRONE
     assert expr('1') is EXPRONE
     assert expr(['foo', 'bar']) is EXPRONE
-    assert str(expr("a ^ b").factor()) == "Or(And(~a, b), And(a, ~b))"
+    assert str(expr("a ^ b").to_nnf()) == "Or(And(~a, b), And(a, ~b))"
     assert str(expr("a ^ 0", simplify=False)) == "Xor(0, a)"
 
 def test_expr2dimacssat():
@@ -229,8 +229,8 @@ def test_const():
 
     assert EXPRZERO.simplify() is EXPRZERO
     assert EXPRONE.simplify() is EXPRONE
-    assert EXPRZERO.factor() is EXPRZERO
-    assert EXPRONE.factor() is EXPRONE
+    assert EXPRZERO.to_nnf() is EXPRZERO
+    assert EXPRONE.to_nnf() is EXPRONE
 
     assert EXPRZERO.depth == 0
     assert EXPRONE.depth == 0
@@ -253,7 +253,7 @@ def test_var():
     assert str(Y[1][2][3]) == 'y[1,2,3]'
 
     assert a.simplify() == a
-    assert a.factor() == a
+    assert a.to_nnf() == a
     assert a.depth == 0
     assert a.is_cnf()
 
@@ -273,7 +273,7 @@ def test_comp():
 
     # Expression
     assert (~a).simplify() == ~a
-    assert (~a).factor() == ~a
+    assert (~a).to_nnf() == ~a
     assert (~a).depth == 0
     assert (~a).is_cnf()
 
@@ -570,8 +570,8 @@ def test_equal():
     assert Equal(a, ~a) is EXPRZERO
     assert Equal(~a, a) is EXPRZERO
 
-    assert Equal(a, b, c).factor(conj=False).equivalent(~a & ~b & ~c | a & b & c)
-    assert Equal(a, b, c).factor(conj=True).equivalent(~a & ~b & ~c | a & b & c)
+    assert Equal(a, b, c).to_nnf(conj=False).equivalent(~a & ~b & ~c | a & b & c)
+    assert Equal(a, b, c).to_nnf(conj=True).equivalent(~a & ~b & ~c | a & b & c)
 
 def test_unequal():
     # Function
@@ -604,8 +604,8 @@ def test_unequal():
     assert Unequal(a, ~a) is EXPRONE
     assert Unequal(~a, a) is EXPRONE
 
-    assert Unequal(a, b, c).factor(conj=False).equivalent((~a | ~b | ~c) & (a | b | c))
-    assert Unequal(a, b, c).factor(conj=True).equivalent((~a | ~b | ~c) & (a | b | c))
+    assert Unequal(a, b, c).to_nnf(conj=False).equivalent((~a | ~b | ~c) & (a | b | c))
+    assert Unequal(a, b, c).to_nnf(conj=True).equivalent((~a | ~b | ~c) & (a | b | c))
 
 def test_implies():
     # Function

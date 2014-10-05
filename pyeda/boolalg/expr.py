@@ -730,11 +730,8 @@ class Expression(boolfunc.Function):
         conj : bool
             Always choose a conjunctive form when there's a choice
         """
-        raise NotImplementedError()
-
-    def _inv_factor(self, conj=False):
-        """Return an inverted factored expression."""
-        raise NotImplementedError()
+        warn("Expression.factor is deprecated. Use Expression.to_nnf instead")
+        return self.to_nnf()
 
     @property
     def depth(self):
@@ -768,6 +765,25 @@ class Expression(boolfunc.Function):
         else:
             return self
 
+    def to_nnf(self, conj=False):
+        """Return the expression in negation normal form (NNF).
+
+        An NNF expression is one of the following:
+
+        * A literal.
+        * A disjunction / conjunction of NNF expressions.
+
+        Parameters
+
+        conj : bool
+            Always choose a conjunctive form when there's a choice
+        """
+        raise NotImplementedError()
+
+    def _inv_nnf(self, conj=False):
+        """Return an inverted factored expression."""
+        raise NotImplementedError()
+
     def _flatten(self, op):
         """Return a factored, flattened expression."""
         raise NotImplementedError()
@@ -787,14 +803,14 @@ class Expression(boolfunc.Function):
             produce an ExprOr expression, flatten all the nested ExprAnds.
         """
         if op is ExprOr or op is ExprAnd:
-            return self.factor()._flatten(op)
+            return self.to_nnf()._flatten(op)
         else:
             raise ValueError("expected op to be ExprOr or ExprAnd")
 
     def to_dnf(self, flatten=True):
         """Return the expression in disjunctive normal form."""
         if flatten:
-            return self.factor()._flatten(ExprAnd)
+            return self.to_nnf()._flatten(ExprAnd)
         else:
             terms = list()
             for upnt in _iter_ones(self):
@@ -815,7 +831,7 @@ class Expression(boolfunc.Function):
     def to_cnf(self, flatten=True):
         """Return the expression in conjunctive normal form."""
         if flatten:
-            return self.factor()._flatten(ExprOr)
+            return self.to_nnf()._flatten(ExprOr)
         else:
             terms = list()
             for upnt in _iter_zeros(self):
@@ -917,7 +933,7 @@ class Expression(boolfunc.Function):
         if self.is_cnf():
             return self
 
-        _, constraints = _tseitin(self.factor(), auxvarname)
+        _, constraints = _tseitin(self.to_nnf(), auxvarname)
         fst = constraints[-1][1]
         rst = [ExprEqual(f, expr).to_cnf() for f, expr in constraints[:-1]]
         return ExprAnd(fst, *rst).simplify()
@@ -1011,18 +1027,18 @@ class ExprConstant(Expression):
     def simplify(self):
         return self
 
-    def factor(self, conj=False):
-        return self
-
-    def _inv_factor(self, conj=False):
-        return self._inv
-
     @property
     def depth(self):
         return 0
 
     def to_ast(self):
         return (self.ASTOP, self.VALUE)
+
+    def to_nnf(self, conj=False):
+        return self
+
+    def _inv_nnf(self, conj=False):
+        return self._inv
 
     # FactoredExpression
     def _flatten(self, op):
@@ -1128,15 +1144,15 @@ class ExprLiteral(Expression):
     def simplify(self):
         return self
 
-    def factor(self, conj=False):
-        return self
-
-    def _inv_factor(self, conj=False):
-        return self._inv
-
     @property
     def depth(self):
         return 0
+
+    def to_nnf(self, conj=False):
+        return self
+
+    def _inv_nnf(self, conj=False):
+        return self._inv
 
     def is_dnf(self):
         return True
@@ -1380,15 +1396,15 @@ class ExprNot(Expression):
 
         return self.x.simplify()._inv
 
-    def factor(self, conj=False):
-        return self.x._inv_factor()
-
-    def _inv_factor(self, conj=False):
-        return self.x.factor()
-
     @property
     def depth(self):
         return self.x.depth + 1
+
+    def to_nnf(self, conj=False):
+        return self.x._inv_nnf()
+
+    def _inv_nnf(self, conj=False):
+        return self.x.to_nnf()
 
     def to_ast(self):
         return (self.ASTOP, self.x.to_ast())
@@ -1553,12 +1569,12 @@ class ExprOrAnd(_NaryOperator):
             obj._simplified = True
         return obj
 
-    def factor(self, conj=False):
-        xs = [x.factor() for x in self.xs]
+    def to_nnf(self, conj=False):
+        xs = [x.to_nnf() for x in self.xs]
         return self.__class__(*xs).simplify()
 
-    def _inv_factor(self, conj=False):
-        xs = [x._inv_factor() for x in self.xs]
+    def _inv_nnf(self, conj=False):
+        xs = [x._inv_nnf() for x in self.xs]
         return self.get_dual()(*xs).simplify()
 
     # Specific to ExprOrAnd
@@ -1945,7 +1961,7 @@ class ExprXor(_NaryOperator):
             obj._simplified = True
         return obj if par else obj._inv
 
-    def factor(self, conj=False):
+    def to_nnf(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
         terms = list()
         # Walk through all entries in the truth table
@@ -1955,22 +1971,22 @@ class ExprXor(_NaryOperator):
                     term = list()
                     for i, xi in enumerate(self.xs):
                         if bit_on(num, i):
-                            term.append(xi._inv_factor())
+                            term.append(xi._inv_nnf())
                         else:
-                            term.append(xi.factor())
+                            term.append(xi.to_nnf())
                     terms.append(inner(*term))
             else:
                 if parity(num) == 1:
                     term = list()
                     for i, xi in enumerate(self.xs):
                         if bit_on(num, i):
-                            term.append(xi.factor())
+                            term.append(xi.to_nnf())
                         else:
-                            term.append(xi._inv_factor())
+                            term.append(xi._inv_nnf())
                     terms.append(inner(*term))
         return outer(*terms).simplify()
 
-    def _inv_factor(self, conj=False):
+    def _inv_nnf(self, conj=False):
         outer, inner = (ExprAnd, ExprOr) if conj else (ExprOr, ExprAnd)
         terms = list()
         # Walk through all entries in the truth table
@@ -1980,18 +1996,18 @@ class ExprXor(_NaryOperator):
                     term = list()
                     for i, xi in enumerate(self.xs):
                         if bit_on(num, i):
-                            term.append(xi._inv_factor())
+                            term.append(xi._inv_nnf())
                         else:
-                            term.append(xi.factor())
+                            term.append(xi.to_nnf())
                     terms.append(inner(*term))
             else:
                 if parity(num) == 0:
                     term = list()
                     for i, xi in enumerate(self.xs):
                         if bit_on(num, i):
-                            term.append(xi.factor())
+                            term.append(xi.to_nnf())
                         else:
-                            term.append(xi._inv_factor())
+                            term.append(xi._inv_nnf())
                     terms.append(inner(*term))
         return outer(*terms).simplify()
 
@@ -2070,28 +2086,28 @@ class ExprEqual(_NaryOperator):
             obj._simplified = True
         return obj
 
-    def factor(self, conj=False):
+    def to_nnf(self, conj=False):
         if conj:
             xs = list()
             for x0, x1 in itertools.combinations(self.xs, 2):
-                xs.append(ExprOr(x0._inv_factor(), x1.factor()))
-                xs.append(ExprOr(x0.factor(), x1._inv_factor()))
+                xs.append(ExprOr(x0._inv_nnf(), x1.to_nnf()))
+                xs.append(ExprOr(x0.to_nnf(), x1._inv_nnf()))
             return ExprAnd(*xs).simplify()
         else:
-            all0 = ExprAnd(*[x._inv_factor() for x in self.xs])
-            all1 = ExprAnd(*[x.factor() for x in self.xs])
+            all0 = ExprAnd(*[x._inv_nnf() for x in self.xs])
+            all1 = ExprAnd(*[x.to_nnf() for x in self.xs])
             return ExprOr(all0, all1).simplify()
 
-    def _inv_factor(self, conj=False):
+    def _inv_nnf(self, conj=False):
         if conj:
-            any0 = ExprOr(*[x._inv_factor() for x in self.xs])
-            any1 = ExprOr(*[x.factor() for x in self.xs])
+            any0 = ExprOr(*[x._inv_nnf() for x in self.xs])
+            any1 = ExprOr(*[x.to_nnf() for x in self.xs])
             return ExprAnd(any0, any1).simplify()
         else:
             xs = list()
             for x0, x1 in itertools.combinations(self.xs, 2):
-                xs.append(ExprAnd(x0._inv_factor(), x1.factor()))
-                xs.append(ExprAnd(x0.factor(), x1._inv_factor()))
+                xs.append(ExprAnd(x0._inv_nnf(), x1.to_nnf()))
+                xs.append(ExprAnd(x0.to_nnf(), x1._inv_nnf()))
             return ExprOr(*xs).simplify()
 
 
@@ -2185,15 +2201,15 @@ class ExprImplies(Expression):
         obj._simplified = True
         return obj
 
-    def factor(self, conj=False):
-        return ExprOr(self.p._inv_factor(), self.q.factor()).simplify()
-
-    def _inv_factor(self, conj=False):
-        return ExprAnd(self.p.factor(), self.q._inv_factor()).simplify()
-
     @cached_property
     def depth(self):
         return max([self.p.depth, self.q.depth]) + 1
+
+    def to_nnf(self, conj=False):
+        return ExprOr(self.p._inv_nnf(), self.q.to_nnf()).simplify()
+
+    def _inv_nnf(self, conj=False):
+        return ExprAnd(self.p.to_nnf(), self.q._inv_nnf()).simplify()
 
 
 class ExprITE(Expression):
@@ -2293,35 +2309,35 @@ class ExprITE(Expression):
         obj._simplified = True
         return obj
 
-    def factor(self, conj=False):
-        # pylint: disable=W0632
-        if conj:
-            # (~s | d1) & (s | d0)
-            x0 = ExprOr(self.s._inv_factor(), self.d1.factor())
-            x1 = ExprOr(self.s.factor(), self.d0.factor())
-            return ExprAnd(x0, x1).simplify()
-        else:
-            # s & d1 | ~s & d0
-            x0 = ExprAnd(self.s.factor(), self.d1.factor())
-            x1 = ExprAnd(self.s._inv_factor(), self.d0.factor())
-            return ExprOr(x0, x1).simplify()
-
-    def _inv_factor(self, conj=False):
-        # pylint: disable=W0632
-        if conj:
-            # (~s | ~d1) & (s | ~d1)
-            x0 = ExprOr(self.s._inv_factor(), self.d1._inv_factor())
-            x1 = ExprOr(self.s.factor(), self.d0._inv_factor())
-            return ExprAnd(x0, x1).simplify()
-        else:
-            # s & ~d1 | ~s & ~d0
-            x0 = ExprAnd(self.s.factor(), self.d1._inv_factor())
-            x1 = ExprAnd(self.s._inv_factor(), self.d0._inv_factor())
-            return ExprOr(x0, x1).simplify()
-
     @cached_property
     def depth(self):
         return max([self.s.depth, self.d1.depth, self.d0.depth]) + 1
+
+    def to_nnf(self, conj=False):
+        # pylint: disable=W0632
+        if conj:
+            # (~s | d1) & (s | d0)
+            x0 = ExprOr(self.s._inv_nnf(), self.d1.to_nnf())
+            x1 = ExprOr(self.s.to_nnf(), self.d0.to_nnf())
+            return ExprAnd(x0, x1).simplify()
+        else:
+            # s & d1 | ~s & d0
+            x0 = ExprAnd(self.s.to_nnf(), self.d1.to_nnf())
+            x1 = ExprAnd(self.s._inv_nnf(), self.d0.to_nnf())
+            return ExprOr(x0, x1).simplify()
+
+    def _inv_nnf(self, conj=False):
+        # pylint: disable=W0632
+        if conj:
+            # (~s | ~d1) & (s | ~d1)
+            x0 = ExprOr(self.s._inv_nnf(), self.d1._inv_nnf())
+            x1 = ExprOr(self.s.to_nnf(), self.d0._inv_nnf())
+            return ExprAnd(x0, x1).simplify()
+        else:
+            # s & ~d1 | ~s & ~d0
+            x0 = ExprAnd(self.s.to_nnf(), self.d1._inv_nnf())
+            x1 = ExprAnd(self.s._inv_nnf(), self.d0._inv_nnf())
+            return ExprOr(x0, x1).simplify()
 
 
 class NormalForm:
