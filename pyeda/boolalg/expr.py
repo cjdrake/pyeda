@@ -2314,7 +2314,6 @@ class ExprITE(Expression):
         return max([self.s.depth, self.d1.depth, self.d0.depth]) + 1
 
     def to_nnf(self, conj=False):
-        # pylint: disable=W0632
         if conj:
             # (~s | d1) & (s | d0)
             x0 = ExprOr(self.s._inv_nnf(), self.d1.to_nnf())
@@ -2327,7 +2326,6 @@ class ExprITE(Expression):
             return ExprOr(x0, x1).simplify()
 
     def _inv_nnf(self, conj=False):
-        # pylint: disable=W0632
         if conj:
             # (~s | ~d1) & (s | ~d1)
             x0 = ExprOr(self.s._inv_nnf(), self.d1._inv_nnf())
