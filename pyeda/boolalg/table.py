@@ -233,11 +233,14 @@ class TruthTable(boolfunc.Function):
         self.pcdata = pcdata
 
     def __str__(self):
-        parts = ["inputs: "]
-        parts.append(" ".join(str(v) for v in reversed(self._inputs)))
-        parts.append("\n")
+        line = " ".join(str(v) for v in reversed(self._inputs)) + "\n"
+        widths = [len(str(v)) for v in reversed(self._inputs)]
+        parts = [line]
         for num, item in enumerate(self.pcdata):
-            parts += [_bin_zfill(num, self.degree), " ", _PC2STR[item], "\n"]
+            s = _bin_zfill(num, self.degree)
+            line = (" ".join(" " * (w - 1) + s[i] for i, w in enumerate(widths))
+                    + " : " + _PC2STR[item] + "\n")
+            parts.append(line)
         return "".join(parts)
 
     def __repr__(self):

@@ -11,23 +11,24 @@ a, b, c, d, e = map(exprvar, 'abcde')
 aa, bb, cc, dd, ee = map(ttvar, 'abcde')
 
 XOR_STR = \
-"""inputs: d c b a
-0000 0
-0001 1
-0010 1
-0011 0
-0100 1
-0101 0
-0110 0
-0111 1
-1000 1
-1001 0
-1010 0
-1011 1
-1100 0
-1101 1
-1110 1
-1111 0
+"""\
+d c b a
+0 0 0 0 : 0
+0 0 0 1 : 1
+0 0 1 0 : 1
+0 0 1 1 : 0
+0 1 0 0 : 1
+0 1 0 1 : 0
+0 1 1 0 : 0
+0 1 1 1 : 1
+1 0 0 0 : 1
+1 0 0 1 : 0
+1 0 1 0 : 0
+1 0 1 1 : 1
+1 1 0 0 : 0
+1 1 0 1 : 1
+1 1 1 0 : 1
+1 1 1 1 : 0
 """
 
 def test_unate():
@@ -100,34 +101,34 @@ def test_table():
 
 def test_ops():
     f = truthtable([aa, bb], "0001")
-    assert str(f) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(~f) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
+    assert str(f) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 1\n"
+    assert str(~f) == "b a\n0 0 : 1\n0 1 : 1\n1 0 : 1\n1 1 : 0\n"
 
-    assert str(f | 0) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(f | 1) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
-    assert str(0 | f) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(1 | f) == "inputs: b a\n00 1\n01 1\n10 1\n11 1\n"
+    assert str(f | 0) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 1\n"
+    assert str(f | 1) == "b a\n0 0 : 1\n0 1 : 1\n1 0 : 1\n1 1 : 1\n"
+    assert str(0 | f) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 1\n"
+    assert str(1 | f) == "b a\n0 0 : 1\n0 1 : 1\n1 0 : 1\n1 1 : 1\n"
 
-    assert str(f & 0) == "inputs: b a\n00 0\n01 0\n10 0\n11 0\n"
-    assert str(f & 1) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(0 & f) == "inputs: b a\n00 0\n01 0\n10 0\n11 0\n"
-    assert str(1 & f) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
+    assert str(f & 0) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 0\n"
+    assert str(f & 1) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 1\n"
+    assert str(0 & f) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 0\n"
+    assert str(1 & f) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 1\n"
 
-    assert str(f ^ 0) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(f ^ 1) == "inputs: b a\n00 1\n01 1\n10 1\n11 0\n"
+    assert str(f ^ 0) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 1\n"
+    assert str(f ^ 1) == "b a\n0 0 : 1\n0 1 : 1\n1 0 : 1\n1 1 : 0\n"
 
     f = truthtable([aa, bb], "01-0")
-    assert str(~f) == "inputs: b a\n00 1\n01 0\n10 -\n11 1\n"
+    assert str(~f) == "b a\n0 0 : 1\n0 1 : 0\n1 0 : -\n1 1 : 1\n"
 
     f = truthtable([aa, bb], "0011")
     g = truthtable([aa, bb], "0101")
-    assert str(f | g) == "inputs: b a\n00 0\n01 1\n10 1\n11 1\n"
-    assert str(f & g) == "inputs: b a\n00 0\n01 0\n10 0\n11 1\n"
-    assert str(f ^ g) == "inputs: b a\n00 0\n01 1\n10 1\n11 0\n"
+    assert str(f | g) == "b a\n0 0 : 0\n0 1 : 1\n1 0 : 1\n1 1 : 1\n"
+    assert str(f & g) == "b a\n0 0 : 0\n0 1 : 0\n1 0 : 0\n1 1 : 1\n"
+    assert str(f ^ g) == "b a\n0 0 : 0\n0 1 : 1\n1 0 : 1\n1 1 : 0\n"
 
     f = truthtable([a, b, c], "00011-00")
     g = truthtable([a, b, c], "01-1--00")
-    assert str(f | g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 1\n100 1\n101 -\n110 0\n111 0\n"
-    assert str(f & g) == "inputs: c b a\n000 0\n001 0\n010 0\n011 1\n100 -\n101 -\n110 0\n111 0\n"
-    assert str(f ^ g) == "inputs: c b a\n000 0\n001 1\n010 -\n011 0\n100 -\n101 -\n110 0\n111 0\n"
+    assert str(f | g) == "c b a\n0 0 0 : 0\n0 0 1 : 1\n0 1 0 : -\n0 1 1 : 1\n1 0 0 : 1\n1 0 1 : -\n1 1 0 : 0\n1 1 1 : 0\n"
+    assert str(f & g) == "c b a\n0 0 0 : 0\n0 0 1 : 0\n0 1 0 : 0\n0 1 1 : 1\n1 0 0 : -\n1 0 1 : -\n1 1 0 : 0\n1 1 1 : 0\n"
+    assert str(f ^ g) == "c b a\n0 0 0 : 0\n0 0 1 : 1\n0 1 0 : -\n0 1 1 : 0\n1 0 0 : -\n1 0 1 : -\n1 1 0 : 0\n1 1 1 : 0\n"
 
