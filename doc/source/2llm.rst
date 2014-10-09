@@ -113,33 +113,33 @@ You can test whether the resulting expressions are equivalent to the original
 truth tables by visual inspection (or some smarter method)::
 
    >>> expr2truthtable(f1m)
-   inputs: x[3] x[2] x[1] x[0]
-   0000 0
-   0001 0
-   0010 0
-   0011 0
-   0100 0
-   0101 1
-   0110 1
-   0111 1
-   1000 1
-   1001 1
-   1010 1
-   1011 1
-   1100 1
-   1101 1
-   1110 1
-   1111 1
+   x[3] x[2] x[1] x[0]
+      0    0    0    0 : 0
+      0    0    0    1 : 0
+      0    0    1    0 : 0
+      0    0    1    1 : 0
+      0    1    0    0 : 0
+      0    1    0    1 : 1
+      0    1    1    0 : 1
+      0    1    1    1 : 1
+      1    0    0    0 : 1
+      1    0    0    1 : 1
+      1    0    1    0 : 1
+      1    0    1    1 : 1
+      1    1    0    0 : 1
+      1    1    0    1 : 1
+      1    1    1    0 : 1
+      1    1    1    1 : 1
    >>> expr2truthtable(f2m)
-   inputs: x[2] x[1] x[0]
-   000 0
-   001 0
-   010 0
-   011 1
-   100 1
-   101 1
-   110 1
-   111 1
+   x[2] x[1] x[0]
+      0    0    0 : 0
+      0    0    1 : 0
+      0    1    0 : 0
+      0    1    1 : 1
+      1    0    0 : 1
+      1    0    1 : 1
+      1    1    0 : 1
+      1    1    1 : 1
 
 Espresso Script
 ===============

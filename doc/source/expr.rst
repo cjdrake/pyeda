@@ -225,28 +225,28 @@ You can use the ``expr2truthtable`` function to do a quick check that the
 sum logic is correct::
 
    >>> expr2truthtable(s)
-   inputs: ci b a
-   000 0
-   001 1
-   010 1
-   011 0
-   100 1
-   101 0
-   110 0
-   111 1
+   ci b a
+    0 0 0 : 0
+    0 0 1 : 1
+    0 1 0 : 1
+    0 1 1 : 0
+    1 0 0 : 1
+    1 0 1 : 0
+    1 1 0 : 0
+    1 1 1 : 1
 
 Similarly for the carry out logic::
 
    >>> expr2truthtable(co)
-   inputs: ci b a
-   000 0
-   001 0
-   010 0
-   011 1
-   100 0
-   101 1
-   110 1
-   111 1
+   ci b a
+    0 0 0 : 0
+    0 0 1 : 0
+    0 1 0 : 0
+    0 1 1 : 1
+    1 0 0 : 0
+    1 0 1 : 1
+    1 1 0 : 1
+    1 1 1 : 1
 
 From Factory Functions
 ----------------------

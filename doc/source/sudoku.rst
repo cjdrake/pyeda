@@ -107,15 +107,15 @@ You can use PyEDA to automatically produce the truth table.
 ::
 
    >>> expr2truthtable(f)
-   inputs: c b a
-   000 0
-   001 1
-   010 1
-   011 0
-   100 1
-   101 0
-   110 0
-   111 0
+   c b a
+   0 0 0 : 0
+   0 0 1 : 1
+   0 1 0 : 1
+   0 1 1 : 0
+   1 0 0 : 1
+   1 0 1 : 0
+   1 1 0 : 0
+   1 1 1 : 0
 
 By default, the ``OneHot`` function returns a formula in conjunctive normal
 (product-of-sums) form.
