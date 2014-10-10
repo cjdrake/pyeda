@@ -454,15 +454,15 @@ You can create the equivalent truth table with PyEDA like so::
    >>> X = exprvars('x', 3)
    >>> f = truthtable(X, "00000001")
    >>> f
-   inputs: x[2] x[1] x[0]
-   000 0
-   001 0
-   010 0
-   011 0
-   100 0
-   101 0
-   110 0
-   111 1
+   x[2] x[1] x[0]
+      0    0    0 : 0
+      0    0    1 : 0
+      0    1    0 : 0
+      0    1    1 : 0
+      1    0    0 : 0
+      1    0    1 : 0
+      1    1    0 : 0
+      1    1    1 : 1
 
 Don't be alarmed that the inputs are displayed most-significant-bit first.
 That can actually come in handy sometimes.
@@ -499,15 +499,15 @@ You can express it as a truth table::
 
    >>> f = truthtable(X, "00010111")
    >>> f
-   inputs: x[2] x[1] x[0]
-   000 0
-   001 0
-   010 0
-   011 1
-   100 0
-   101 1
-   110 1
-   111 1
+   x[2] x[1] x[0]
+      0    0    0 : 0
+      0    0    1 : 0
+      0    1    0 : 0
+      0    1    1 : 1
+      1    0    0 : 0
+      1    0    1 : 1
+      1    1    0 : 1
+      1    1    1 : 1
 
 or as an expression::
 
