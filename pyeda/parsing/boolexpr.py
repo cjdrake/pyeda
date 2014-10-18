@@ -16,6 +16,7 @@ from pyeda.parsing.token import (
     KeywordToken, NameToken, IntegerToken, OperatorToken, PunctuationToken,
 )
 
+
 class Error(Exception):
     """An error happened during parsing a Boolean expression."""
 
@@ -130,7 +131,6 @@ class DOT(PunctuationToken):
 
 class BoolExprLexer(lex.RegexLexer):
     """Lexical analysis of SAT strings"""
-
     def ignore(self, text):
         """Ignore this text."""
 
@@ -332,6 +332,7 @@ FACTOR_TOKS = {
     NameToken, IntegerToken,
 } | OPN_TOKS
 
+
 def parse(s):
     """
     Parse a Boolean expression string,
@@ -387,6 +388,7 @@ def parse(s):
 
     return expr
 
+
 def _expect_token(lexer, types):
     """Return the next token, or raise an exception."""
     tok = next(lexer)
@@ -395,9 +397,11 @@ def _expect_token(lexer, types):
     else:
         raise Error("unexpected token: " + str(tok))
 
+
 def _expr(lexer):
     """Return an expression."""
     return _ite(lexer)
+
 
 def _ite(lexer):
     """Return an ITE expression."""
@@ -414,6 +418,7 @@ def _ite(lexer):
     else:
         lexer.unpop_token(tok)
         return s
+
 
 def _impl(lexer):
     """Return an Implies expression."""
@@ -433,6 +438,7 @@ def _impl(lexer):
         lexer.unpop_token(tok)
         return p
 
+
 def _sumterm(lexer):
     """Return a sum term expresssion."""
     xorterm = _xorterm(lexer)
@@ -441,6 +447,7 @@ def _sumterm(lexer):
         return xorterm
     else:
         return ('or', xorterm, sumterm_prime)
+
 
 def _sumterm_prime(lexer):
     """Return a sum term' expression, eliminates left recursion."""
@@ -458,6 +465,7 @@ def _sumterm_prime(lexer):
         lexer.unpop_token(tok)
         return None
 
+
 def _xorterm(lexer):
     """Return an xor term expresssion."""
     prodterm = _prodterm(lexer)
@@ -466,6 +474,7 @@ def _xorterm(lexer):
         return prodterm
     else:
         return ('xor', prodterm, xorterm_prime)
+
 
 def _xorterm_prime(lexer):
     """Return an xor term' expression, eliminates left recursion."""
@@ -483,6 +492,7 @@ def _xorterm_prime(lexer):
         lexer.unpop_token(tok)
         return None
 
+
 def _prodterm(lexer):
     """Return a product term expression."""
     factor = _factor(lexer)
@@ -491,6 +501,7 @@ def _prodterm(lexer):
         return factor
     else:
         return ('and', factor, prodterm_prime)
+
 
 def _prodterm_prime(lexer):
     """Return a product term' expression, eliminates left recursion."""
@@ -507,6 +518,7 @@ def _prodterm_prime(lexer):
     else:
         lexer.unpop_token(tok)
         return None
+
 
 def _factor(lexer):
     """Return a factor expression."""
@@ -568,9 +580,11 @@ def _factor(lexer):
             raise Error("unexpected token: " + str(tok))
         return ('const', tok.value)
 
+
 def _args(lexer):
     """Return a tuple of arguments."""
     return (_expr(lexer), ) + _zom_arg(lexer)
+
 
 def _zom_arg(lexer):
     """Return zero or more arguments."""
@@ -582,6 +596,7 @@ def _zom_arg(lexer):
     else:
         lexer.unpop_token(tok)
         return tuple()
+
 
 def _variable(lexer):
     """Return a variable expression."""
@@ -599,12 +614,14 @@ def _variable(lexer):
 
     return ('var', names, indices)
 
+
 def _names(lexer):
     """Return a tuple of names."""
     first = _expect_token(lexer, {NameToken}).value
     rest = _zom_name(lexer)
     rnames = (first, ) + rest
     return rnames[::-1]
+
 
 def _zom_name(lexer):
     """Return zero or more names."""
@@ -619,11 +636,13 @@ def _zom_name(lexer):
         lexer.unpop_token(tok)
         return tuple()
 
+
 def _indices(lexer):
     """Return a tuple of indices."""
     first = _expect_token(lexer, {IntegerToken}).value
     rest = _zom_index(lexer)
     return (first, ) + rest
+
 
 def _zom_index(lexer):
     """Return zero or more indices."""

@@ -19,6 +19,7 @@ import collections
 
 Token = collections.namedtuple('Token', ['value', 'lineno', 'offset'])
 
+
 class EndToken(Token):
     """Special token for end of buffer"""
 

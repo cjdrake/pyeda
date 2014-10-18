@@ -15,15 +15,18 @@ import re
 
 from pyeda.parsing.token import EndToken
 
+
 class Error(Exception):
     """
     Base class for all lexical analysis errors
     """
 
+
 class CompileError(Error):
     """
     Errors raised during compilation of lexical analysis rules.
     """
+
 
 class RunError(Error):
     """
@@ -40,7 +43,6 @@ class RegexLexer:
     """
     Lexer based on regular expressions.
     """
-
     RULES = {
         'root': []
     }

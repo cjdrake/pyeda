@@ -7,6 +7,7 @@ Logic function for AES cipher
 
 from pyeda.boolalg.bfarray import exprzeros, uint2exprs, fcat
 
+
 _SBOX = [
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -105,6 +106,7 @@ RCON = fcat(*[uint2exprs(x, 8) for x in _RCON]).reshape(255, 8)
 MA = fcat(*[uint2exprs(x, 16) for x in _MA]).reshape(4, 16)
 IMA = fcat(*[uint2exprs(x, 16) for x in _IMA]).reshape(4, 16)
 
+
 def subword(w):
     """
     Function used in the Key Expansion routine that takes a four-byte input word
@@ -113,12 +115,14 @@ def subword(w):
     w = w.reshape(4, 8)
     return SBOX[w[0]] + SBOX[w[1]] + SBOX[w[2]] + SBOX[w[3]]
 
+
 def invsubword(w):
     """
     Transformation in the Inverse Cipher that is the inverse of SubBytes().
     """
     w = w.reshape(4, 8)
     return ISBOX[w[0]] + ISBOX[w[1]] + ISBOX[w[2]] + ISBOX[w[3]]
+
 
 def rotword(w):
     """
@@ -127,6 +131,7 @@ def rotword(w):
     """
     w = w.reshape(4, 8)
     return w[1] + w[2] + w[3] + w[0]
+
 
 def multiply(a, col):
     """Multiply a matrix by one column."""
@@ -139,6 +144,7 @@ def multiply(a, col):
         rowxcol(a[3], col),
     )
 
+
 def rowxcol(row, col):
     """Multiply one row and one column."""
     row = row.reshape(4, 4)
@@ -150,12 +156,14 @@ def rowxcol(row, col):
                 ret ^= xtime(col[i], j)
     return ret
 
+
 def xtime(b, n):
     """Repeated polynomial multiplication in GF(2^8)."""
     b = b.reshape(8)
     for _ in range(n):
         b = exprzeros(1) + b[:7] ^ uint2exprs(0x1b, 8) & b[7]*8
     return b
+
 
 def add_round_key(state, rkey):
     """
@@ -173,6 +181,7 @@ def add_round_key(state, rkey):
         state[3] ^ rkey[3],
     )
 
+
 def sub_bytes(state):
     """
     Transformation in the Cipher that processes the State using a non­linear
@@ -187,6 +196,7 @@ def sub_bytes(state):
         subword(state[3]),
     )
 
+
 def inv_sub_bytes(state):
     """
     Transformation in the Inverse Cipher that is the inverse of SubBytes().
@@ -198,6 +208,7 @@ def inv_sub_bytes(state):
         invsubword(state[2]),
         invsubword(state[3]),
     )
+
 
 def shift_rows(state):
     """
@@ -212,6 +223,7 @@ def shift_rows(state):
         state[3][0], state[0][1], state[1][2], state[2][3]
     )
 
+
 def inv_shift_rows(state):
     """
     Transformation in the Inverse Cipher that is the inverse of ShiftRows().
@@ -223,6 +235,7 @@ def inv_shift_rows(state):
         state[2][0], state[1][1], state[0][2], state[3][3],
         state[3][0], state[2][1], state[1][2], state[0][3]
     )
+
 
 def mix_columns(state):
     """
@@ -237,6 +250,7 @@ def mix_columns(state):
         multiply(MA, state[3]),
     )
 
+
 def inv_mix_columns(state):
     """
     Transformation in the Inverse Cipher that is the inverse of MixColumns().
@@ -248,6 +262,7 @@ def inv_mix_columns(state):
         multiply(IMA, state[2]),
         multiply(IMA, state[3]),
     )
+
 
 def key_expand(key, Nk=4):
     """Expand the key into the round key."""
@@ -269,6 +284,7 @@ def key_expand(key, Nk=4):
             rkey[i] = rkey[i-Nk] ^ rkey[i-1]
 
     return rkey
+
 
 def cipher(rkey, pt, Nk=4):
     """AES encryption cipher."""
@@ -294,6 +310,7 @@ def cipher(rkey, pt, Nk=4):
 
     return state
 
+
 def inv_cipher(rkey, ct, Nk=4):
     """AES decryption cipher."""
     assert Nk in {4, 6, 8}
@@ -318,6 +335,7 @@ def inv_cipher(rkey, ct, Nk=4):
 
     return state
 
+
 def encrypt(key, pt, Nk=4):
     """Encrypt a plain text block."""
     assert Nk in {4, 6, 8}
@@ -325,6 +343,7 @@ def encrypt(key, pt, Nk=4):
     ct = cipher(rkey, pt, Nk)
 
     return ct
+
 
 def decrypt(key, ct, Nk=4):
     """Decrypt a plain text block."""

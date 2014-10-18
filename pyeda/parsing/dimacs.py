@@ -24,6 +24,7 @@ from pyeda.parsing.token import (
     KeywordToken, IntegerToken, OperatorToken, PunctuationToken,
 )
 
+
 class Error(Exception):
     """An error happened during parsing a DIMACS file"""
 
@@ -80,7 +81,6 @@ class RPAREN(PunctuationToken):
 
 class CNFLexer(lex.RegexLexer):
     """Lexical analysis of CNF strings"""
-
     def ignore(self, text):
         """Ignore this text."""
 
@@ -135,6 +135,7 @@ def _expect_token(lexer, types):
     else:
         raise Error("unexpected token: " + str(tok))
 
+
 def parse_cnf(s, varname='x'):
     """
     Parse an input string in DIMACS CNF format,
@@ -175,6 +176,7 @@ def parse_cnf(s, varname='x'):
 
     return ast
 
+
 def _cnf(lexer, varname):
     """Return a DIMACS CNF."""
     _expect_token(lexer, {KW_p})
@@ -182,6 +184,7 @@ def _cnf(lexer, varname):
     nvars = _expect_token(lexer, {IntegerToken}).value
     nclauses = _expect_token(lexer, {IntegerToken}).value
     return _cnf_formula(lexer, varname, nvars, nclauses)
+
 
 def _cnf_formula(lexer, varname, nvars, nclauses):
     """Return a DIMACS CNF formula."""
@@ -195,6 +198,7 @@ def _cnf_formula(lexer, varname, nvars, nclauses):
         raise Error(fstr.format(nclauses))
 
     return ('and', ) + clauses
+
 
 def _clauses(lexer, varname, nvars):
     """Return a tuple of DIMACS CNF clauses."""
@@ -210,9 +214,11 @@ def _clauses(lexer, varname, nvars):
         lexer.unpop_token(tok)
         return tuple()
 
+
 def _clause(lexer, varname, nvars):
     """Return a DIMACS CNF clause."""
     return ('or', ) + _lits(lexer, varname, nvars)
+
 
 def _lits(lexer, varname, nvars):
     """Return a tuple of DIMACS CNF clause literals."""
@@ -240,7 +246,6 @@ def _lits(lexer, varname, nvars):
 
 class SATLexer(lex.RegexLexer):
     """Lexical analysis of SAT strings"""
-
     def ignore(self, text):
         """Ignore this text."""
 
@@ -344,6 +349,7 @@ _SAT_TOKS = {
     'satex': {OP_not, OP_or, OP_and, OP_xor, OP_equal},
 }
 
+
 def parse_sat(s, varname='x'):
     """
     Parse an input string in DIMACS SAT format,
@@ -363,12 +369,14 @@ def parse_sat(s, varname='x'):
 
     return ast
 
+
 def _sat(lexer, varname):
     """Return a DIMACS SAT."""
     _expect_token(lexer, {KW_p})
     fmt = _expect_token(lexer, {KW_sat, KW_satx, KW_sate, KW_satex}).value
     nvars = _expect_token(lexer, {IntegerToken}).value
     return _sat_formula(lexer, varname, fmt, nvars)
+
 
 def _sat_formula(lexer, varname, fmt, nvars):
     """Return a DIMACS SAT formula."""
@@ -407,6 +415,7 @@ def _sat_formula(lexer, varname, fmt, nvars):
         formulas = _formulas(lexer, varname, fmt, nvars)
         _expect_token(lexer, {RPAREN})
         return (tok.ASTOP, ) + formulas
+
 
 def _formulas(lexer, varname, fmt, nvars):
     """Return a tuple of DIMACS SAT formulas."""
