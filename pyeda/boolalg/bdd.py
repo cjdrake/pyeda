@@ -60,6 +60,7 @@ class BDDNode:
         self.lo = lo
         self.hi = hi
 
+
 BDDNODEZERO = _BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
 BDDNODEONE = _BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
 
@@ -111,6 +112,7 @@ def bddvar(name, index=None):
         _BDDS[var.node] = var
     return var
 
+
 def _expr2bddnode(expr):
     """Convert an expression into a BDD node."""
     if expr.is_zero():
@@ -128,9 +130,11 @@ def _expr2bddnode(expr):
         hi = _expr2bddnode(expr.restrict({top: 1}))
         return _bddnode(root, lo, hi)
 
+
 def expr2bdd(expr):
     """Convert an expression into a binary decision diagram."""
     return _bdd(_expr2bddnode(expr))
+
 
 def bdd2expr(bdd, conj=False):
     """Convert a binary decision diagram into an expression.
@@ -158,6 +162,7 @@ def bdd2expr(bdd, conj=False):
         terms.append(boolfunc.point2term(expr_point, conj))
     return outer(*[inner(*term) for term in terms])
 
+
 def upoint2bddpoint(upoint):
     """Convert an untyped point into a BDD point.
 
@@ -171,6 +176,7 @@ def upoint2bddpoint(upoint):
     for uniqid in upoint[1]:
         point[_BDDVARIABLES[uniqid]] = 1
     return point
+
 
 def ite(f, g, h):
     r"""BDD if-then-else (ITE) operator
@@ -188,6 +194,7 @@ def ite(f, g, h):
     f, g, h = map(BinaryDecisionDiagram.box, (f, g, h))
     return _bdd(_ite(f.node, g.node, h.node))
 
+
 def _bddnode(root, lo, hi):
     """Return a unique BDD node."""
     if lo is hi:
@@ -200,6 +207,7 @@ def _bddnode(root, lo, hi):
             node = _BDDNODES[key] = BDDNode(*key)
     return node
 
+
 def _bdd(node):
     """Return a unique BDD."""
     try:
@@ -207,6 +215,7 @@ def _bdd(node):
     except KeyError:
         bdd = _BDDS[node] = BinaryDecisionDiagram(node)
     return bdd
+
 
 def _path2point(path):
     """Convert a BDD path to a BDD point."""
@@ -447,6 +456,7 @@ def _neg(node):
     else:
         return _bddnode(node.root, _neg(node.lo), _neg(node.hi))
 
+
 def _ite(f, g, h):
     """Return node that results from recursively applying ITE(f, g, h)."""
     # ITE(f, 1, 0) = f
@@ -473,6 +483,7 @@ def _ite(f, g, h):
         fv1, gv1, hv1 = [_urestrict(node, upoint1) for node in (f, g, h)]
         return _bddnode(root, _ite(fv0, gv0, hv0), _ite(fv1, gv1, hv1))
 
+
 def _urestrict(node, upoint, cache=None):
     """Return node that results from untyped point restriction."""
     if node is BDDNODEZERO or node is BDDNODEONE:
@@ -495,6 +506,7 @@ def _urestrict(node, upoint, cache=None):
         cache[node] = ret
     return ret
 
+
 def _find_path(start, end, path=tuple()):
     """Return the path from start to end.
 
@@ -511,6 +523,7 @@ def _find_path(start, end, path=tuple()):
             ret = _find_path(start.hi, end, path)
         return ret
 
+
 def _iter_all_paths(start, end, rand=False, path=tuple()):
     """Iterate through all paths from start to end."""
     path = path + (start, )
@@ -524,6 +537,7 @@ def _iter_all_paths(start, end, rand=False, path=tuple()):
             if node is not None:
                 yield from _iter_all_paths(node, end, rand, path)
 
+
 def _dfs_preorder(node, visited):
     """Iterate through nodes in DFS pre-order."""
     if node not in visited:
@@ -534,6 +548,7 @@ def _dfs_preorder(node, visited):
     if node.hi is not None:
         yield from _dfs_preorder(node.hi, visited)
 
+
 def _dfs_postorder(node, visited):
     """Iterate through nodes in DFS post-order."""
     if node.lo is not None:
@@ -543,6 +558,7 @@ def _dfs_postorder(node, visited):
     if node not in visited:
         visited.add(node)
         yield node
+
 
 def _bfs(node, visited):
     """Iterate through nodes in BFS order."""

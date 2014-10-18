@@ -13,6 +13,7 @@ Decorators:
 * :func:`cached_property`
 """
 
+
 def bit_on(num: int, bit: int) -> int:
     """Return the value of a number's bit position.
 
@@ -23,6 +24,7 @@ def bit_on(num: int, bit: int) -> int:
     [0, 1, 0, 1, 0, 1]
     """
     return (num >> bit) & 1
+
 
 def clog2(num: int) -> int:
     r"""Return the ceiling log base two of an integer :math:`\ge 1`.
@@ -50,6 +52,7 @@ def clog2(num: int) -> int:
         accum += 1
     return accum
 
+
 def parity(num: int) -> int:
     """Return the parity of a non-negative integer.
 
@@ -72,6 +75,7 @@ def parity(num: int) -> int:
         par ^= (num & 1)
         num >>= 1
     return par
+
 
 def cached_property(func):
     """Return a cached property calculated by the input function.

@@ -72,6 +72,7 @@ def bddzeros(*dims):
     """
     return _zeros(BinaryDecisionDiagram, *dims)
 
+
 def bddones(*dims):
     """Return a multi-dimensional array of BDD ones.
 
@@ -94,6 +95,7 @@ def bddones(*dims):
                [1, 1, 1, 1]])
     """
     return _ones(BinaryDecisionDiagram, *dims)
+
 
 def bddvars(name, *dims):
     """Return a multi-dimensional array of BDD variables.
@@ -122,6 +124,7 @@ def bddvars(name, *dims):
     """
     return _vars(BinaryDecisionDiagram, name, *dims)
 
+
 def exprzeros(*dims):
     """Return a multi-dimensional array of expression zeros.
 
@@ -145,6 +148,7 @@ def exprzeros(*dims):
     """
     return _zeros(Expression, *dims)
 
+
 def exprones(*dims):
     """Return a multi-dimensional array of expression ones.
 
@@ -167,6 +171,7 @@ def exprones(*dims):
                [1, 1, 1, 1]])
     """
     return _ones(Expression, *dims)
+
 
 def exprvars(name, *dims):
     """Return a multi-dimensional array of expression variables.
@@ -195,6 +200,7 @@ def exprvars(name, *dims):
     """
     return _vars(Expression, name, *dims)
 
+
 def ttzeros(*dims):
     """Return a multi-dimensional array of truth table zeros.
 
@@ -218,6 +224,7 @@ def ttzeros(*dims):
     """
     return _zeros(TruthTable, *dims)
 
+
 def ttones(*dims):
     """Return a multi-dimensional array of truth table ones.
 
@@ -240,6 +247,7 @@ def ttones(*dims):
                [1, 1, 1, 1]])
     """
     return _ones(TruthTable, *dims)
+
 
 def ttvars(name, *dims):
     """Return a multi-dimensional array of truth table variables.
@@ -268,6 +276,7 @@ def ttvars(name, *dims):
     """
     return _vars(TruthTable, name, *dims)
 
+
 def uint2bdds(num, length=None):
     """Convert unsigned *num* to an array of BDDs.
 
@@ -283,6 +292,7 @@ def uint2bdds(num, length=None):
        farray([0, 1, 0, 1, 0, 1, 0, 0])
     """
     return _uint2farray(BinaryDecisionDiagram, num, length)
+
 
 def uint2exprs(num, length=None):
     """Convert unsigned *num* to an array of expressions.
@@ -300,6 +310,7 @@ def uint2exprs(num, length=None):
     """
     return _uint2farray(Expression, num, length)
 
+
 def uint2tts(num, length=None):
     """Convert unsigned *num* to an array of truth tables.
 
@@ -315,6 +326,7 @@ def uint2tts(num, length=None):
        farray([0, 1, 0, 1, 0, 1, 0, 0])
     """
     return _uint2farray(TruthTable, num, length)
+
 
 def int2bdds(num, length=None):
     """Convert *num* to an array of BDDs.
@@ -336,6 +348,7 @@ def int2bdds(num, length=None):
     """
     return _int2farray(BinaryDecisionDiagram, num, length)
 
+
 def int2exprs(num, length=None):
     """Convert *num* to an array of expressions.
 
@@ -356,6 +369,7 @@ def int2exprs(num, length=None):
     """
     return _int2farray(Expression, num, length)
 
+
 def int2tts(num, length=None):
     """Convert *num* to an array of truth tables.
 
@@ -375,6 +389,7 @@ def int2tts(num, length=None):
        farray([0, 1, 1, 0, 1, 0, 1, 1])
     """
     return _int2farray(TruthTable, num, length)
+
 
 # FIXME: Should this function allow {0, 1} inputs?
 def fcat(*fs):
@@ -928,6 +943,7 @@ def _dims2shape(*dims):
         shape.append((start, stop))
     return tuple(shape)
 
+
 def _volume(shape):
     """Return the volume of a shape."""
     prod = 1
@@ -935,17 +951,20 @@ def _volume(shape):
         prod *= stop - start
     return prod
 
+
 def _zeros(ftype, *dims):
     """Return a new farray filled with zeros."""
     shape = _dims2shape(*dims)
     objs = [ftype.box(0) for _ in range(_volume(shape))]
     return farray(objs, shape, ftype)
 
+
 def _ones(ftype, *dims):
     """Return a new farray filled with ones."""
     shape = _dims2shape(*dims)
     objs = [ftype.box(1) for _ in range(_volume(shape))]
     return farray(objs, shape, ftype)
+
 
 def _vars(ftype, name, *dims):
     """Return a new farray filled with Boolean variables."""
@@ -954,6 +973,7 @@ def _vars(ftype, name, *dims):
     for indices in itertools.product(*[range(i, j) for i, j in shape]):
         objs.append(_VAR[ftype](name, indices))
     return farray(objs, shape, ftype)
+
 
 def _uint2objs(ftype, num, length=None):
     """Convert an unsigned integer to a list of constant expressions."""
@@ -976,6 +996,7 @@ def _uint2objs(ftype, num, length=None):
 
     return objs
 
+
 def _uint2farray(ftype, num, length=None):
     """Convert an unsigned integer to an farray."""
     if num < 0:
@@ -983,6 +1004,7 @@ def _uint2farray(ftype, num, length=None):
     else:
         objs = _uint2objs(ftype, num, length)
         return farray(objs)
+
 
 def _int2farray(ftype, num, length=None):
     """Convert a signed integer to an farray."""
@@ -1002,6 +1024,7 @@ def _int2farray(ftype, num, length=None):
             objs += [sign] * (length - req_length)
 
     return farray(objs)
+
 
 def _itemize(objs):
     """Recursive helper function for farray."""
@@ -1044,6 +1067,7 @@ def _itemize(objs):
     else:
         raise ValueError("expected uniform farray dimensions")
 
+
 def _check_shape(shape):
     """Verify that a shape has the right format."""
     if type(shape) is tuple:
@@ -1061,6 +1085,7 @@ def _check_shape(shape):
     else:
         raise TypeError("expected shape to be tuple of (int, int)")
 
+
 def _get_key2sl(key):
     """Convert a key part to a slice part."""
     if type(key) in {int, farray} or key is Ellipsis:
@@ -1075,6 +1100,7 @@ def _get_key2sl(key):
     else:
         raise TypeError("expected int, slice, Function, farray, or ...")
 
+
 def _set_key2sl(key):
     """Convert a key part to a slice part."""
     if type(key) is int or key is Ellipsis:
@@ -1087,6 +1113,7 @@ def _set_key2sl(key):
     else:
         raise TypeError("expected int, slice, or ...")
 
+
 def _norm_index(dim, index, start, stop):
     """Return an index normalized to an farray start index."""
     length = stop - start
@@ -1098,6 +1125,7 @@ def _norm_index(dim, index, start, stop):
         fstr = "expected dim {} index in range [{}, {})"
         raise IndexError(fstr.format(dim, start, stop))
     return normindex
+
 
 def _norm_slice(sl, start, stop):
     """Return a slice normalized to an farray start index."""
@@ -1131,6 +1159,7 @@ def _norm_slice(sl, start, stop):
     if normstop < normstart:
         normstop = normstart
     return slice(normstart, normstop)
+
 
 def _filtdim(items, shape, dim, nsl):
     """Return items, shape filtered by a dimension slice."""
@@ -1173,6 +1202,7 @@ def _filtdim(items, shape, dim, nsl):
         # Collapse dimension
         newshape = shape[:dim] + shape[dim+1:]
     return newitems, newshape
+
 
 def _iter_coords(nsls):
     """Iterate through all matching coordinates in a sequence of slices."""

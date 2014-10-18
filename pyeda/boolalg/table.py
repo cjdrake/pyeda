@@ -58,6 +58,7 @@ def ttvar(name, index=None):
         var = _TTVARIABLES[bvar.uniqid] = TTVariable(bvar)
     return var
 
+
 def truthtable(inputs, outputs):
     """Return a truth table."""
     def items():
@@ -81,6 +82,7 @@ def truthtable(inputs, outputs):
         raise ValueError(fstr.format(1 << len(inputs), len(pcdata)))
     return _truthtable(inputs, pcdata)
 
+
 def _truthtable(inputs, pcdata):
     """Return a truth table."""
     if len(inputs) == 0 and pcdata[0] in {PC_ZERO, PC_ONE}:
@@ -93,10 +95,12 @@ def _truthtable(inputs, pcdata):
     else:
         return TruthTable(inputs, pcdata)
 
+
 def expr2truthtable(expr):
     """Convert an expression into a truth table."""
     inputs = [ttvar(v.names, v.indices) for v in expr.inputs]
     return truthtable(inputs, expr.iter_image())
+
 
 def truthtable2expr(tt, conj=False):
     """Convert a truth table into an expression."""
@@ -227,7 +231,6 @@ class PCData:
 
 class TruthTable(boolfunc.Function):
     """Boolean function represented by a truth table."""
-
     def __init__(self, inputs, pcdata):
         self._inputs = tuple(inputs)
         self.pcdata = pcdata
@@ -437,7 +440,6 @@ class TruthTable(boolfunc.Function):
 
 class TTConstant(TruthTable):
     """Truth table constant"""
-
     VAL = NotImplemented
 
     def __bool__(self):
@@ -456,7 +458,6 @@ class _TTZero(TTConstant):
 
     .. note:: Never use this class. Use TTZERO instead.
     """
-
     VAL = 0
 
     def __init__(self):
@@ -469,7 +470,6 @@ class _TTOne(TTConstant):
 
     .. note:: Never use this class. Use TTONE instead.
     """
-
     VAL = 1
 
     def __init__(self):
@@ -484,7 +484,6 @@ CONSTANTS = [TTZERO, TTONE]
 
 class TTVariable(boolfunc.Variable, TruthTable):
     """Truth table variable"""
-
     def __init__(self, bvar):
         boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         pcdata = PCData((PC_ZERO, PC_ONE))

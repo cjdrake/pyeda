@@ -32,6 +32,7 @@ def backtrack(bf):
             ret = None
     return ret
 
+
 def iter_backtrack(bf, rand=False):
     """Iterate through all satisfying points using backtrack algorithm."""
     if bf.is_one():

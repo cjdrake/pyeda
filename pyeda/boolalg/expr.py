@@ -124,6 +124,7 @@ def _assume2upoint():
                   if isinstance(lit, ExprVariable))
     )
 
+
 def exprvar(name, index=None):
     r"""Return a unique Expression variable.
 
@@ -170,6 +171,7 @@ def exprvar(name, index=None):
         var = _EXPRLITERALS[bvar.uniqid] = ExprVariable(bvar)
     return var
 
+
 def _exprcomp(exprvar):
     """Return an Expression Complement."""
     uniqid = -exprvar.uniqid
@@ -178,6 +180,7 @@ def _exprcomp(exprvar):
     except KeyError:
         comp = _EXPRLITERALS[uniqid] = ExprComplement(exprvar)
     return comp
+
 
 def expr(obj, simplify=True):
     """Convert an arbitrary object into an Expression."""
@@ -194,6 +197,7 @@ def expr(obj, simplify=True):
     else:
         return CONSTANTS[bool(obj)]
 
+
 def ast2expr(ast):
     """Convert an abstract syntax tree to an Expression."""
     if ast[0] == 'const':
@@ -204,6 +208,7 @@ def ast2expr(ast):
         xs = [ast2expr(x) for x in ast[1:]]
         return ASTOPS[ast[0]](*xs)
 
+
 def expr2dimacscnf(expr):
     """Convert an expression into an equivalent DIMACS CNF."""
     if not isinstance(expr, Expression):
@@ -211,6 +216,7 @@ def expr2dimacscnf(expr):
         raise TypeError(fstr.format(type(expr)))
     litmap, nvars, clauses = expr.encode_cnf()
     return litmap, DimacsCNF(nvars, clauses)
+
 
 def expr2dimacssat(expr): # pragma: no cover
     """Convert an expression into an equivalent DIMACS SAT string."""
@@ -235,6 +241,7 @@ def expr2dimacssat(expr): # pragma: no cover
 
     return "p {} {}\n{}".format(fmt, nvars, formula)
 
+
 def _expr2sat(expr, litmap): # pragma: no cover
     """Convert an expression to a DIMACS SAT string."""
     if isinstance(expr, ExprLiteral):
@@ -258,6 +265,7 @@ def _expr2sat(expr, litmap): # pragma: no cover
                 "got {0.__name__}")
         raise ValueError(fstr.format(type(expr)))
 
+
 def upoint2exprpoint(upoint):
     """Convert an untyped point to an Expression point."""
     point = dict()
@@ -266,6 +274,7 @@ def upoint2exprpoint(upoint):
     for uniqid in upoint[1]:
         point[_EXPRLITERALS[uniqid]] = 1
     return point
+
 
 # primitive functions
 def Not(x, simplify=True):
@@ -279,6 +288,7 @@ def Not(x, simplify=True):
         expr = expr.simplify()
     return expr
 
+
 def Or(*xs, simplify=True):
     """Expression disjunction (sum, OR) operator
 
@@ -290,6 +300,7 @@ def Or(*xs, simplify=True):
         expr = expr.simplify()
     return expr
 
+
 def And(*xs, simplify=True):
     """Expression conjunction (product, AND) operator
 
@@ -300,6 +311,7 @@ def And(*xs, simplify=True):
     if simplify:
         expr = expr.simplify()
     return expr
+
 
 # secondary functions
 def Xor(*xs, simplify=True):
@@ -313,6 +325,7 @@ def Xor(*xs, simplify=True):
         expr = expr.simplify()
     return expr
 
+
 def Equal(*xs, simplify=True):
     """Expression equality operator
 
@@ -323,6 +336,7 @@ def Equal(*xs, simplify=True):
     if simplify:
         expr = expr.simplify()
     return expr
+
 
 def Implies(p, q, simplify=True):
     """Expression implication operator
@@ -335,6 +349,7 @@ def Implies(p, q, simplify=True):
     if simplify:
         expr = expr.simplify()
     return expr
+
 
 def ITE(s, d1, d0, simplify=True):
     """Expression If-Then-Else (ITE) operator
@@ -349,6 +364,7 @@ def ITE(s, d1, d0, simplify=True):
         expr = expr.simplify()
     return expr
 
+
 # high order functions
 def Nor(*xs, simplify=True):
     """Expression NOR (not OR) operator
@@ -361,6 +377,7 @@ def Nor(*xs, simplify=True):
         expr = expr.simplify()
     return expr
 
+
 def Nand(*xs, simplify=True):
     """Expression NAND (not AND) operator
 
@@ -371,6 +388,7 @@ def Nand(*xs, simplify=True):
     if simplify:
         expr = expr.simplify()
     return expr
+
 
 def Xnor(*xs, simplify=True):
     """Expression exclusive nor (XNOR) operator
@@ -383,6 +401,7 @@ def Xnor(*xs, simplify=True):
         expr = expr.simplify()
     return expr
 
+
 def Unequal(*xs, simplify=True):
     """Expression inequality operator
 
@@ -393,6 +412,7 @@ def Unequal(*xs, simplify=True):
     if simplify:
         expr = expr.simplify()
     return expr
+
 
 def OneHot0(*xs, simplify=True, conj=True):
     """
@@ -417,6 +437,7 @@ def OneHot0(*xs, simplify=True, conj=True):
     if simplify:
         expr = expr.simplify()
     return expr
+
 
 def OneHot(*xs, simplify=True, conj=True):
     """
@@ -444,6 +465,7 @@ def OneHot(*xs, simplify=True, conj=True):
         expr = expr.simplify()
     return expr
 
+
 def Majority(*xs, simplify=True, conj=False):
     """
     Return an expression that means
@@ -469,6 +491,7 @@ def Majority(*xs, simplify=True, conj=False):
         expr = expr.simplify()
     return expr
 
+
 def AchillesHeel(*xs, simplify=True):
     r"""
     Return the Achille's Heel function, defined as:
@@ -485,6 +508,7 @@ def AchillesHeel(*xs, simplify=True):
     if simplify:
         expr = expr.simplify()
     return expr
+
 
 def Mux(fs, sel, simplify=True):
     """
@@ -505,12 +529,14 @@ def Mux(fs, sel, simplify=True):
         expr = expr.simplify()
     return expr
 
+
 def ForAll(vs, expr): # pragma: no cover
     """
     Return an expression that means
     "for all variables in *vs*, *expr* is true".
     """
     return And(*expr.cofactors(vs))
+
 
 def Exists(vs, expr): # pragma: no cover
     """
@@ -1124,7 +1150,6 @@ CONSTANTS = [EXPRZERO, EXPRONE]
 
 class ExprLiteral(Expression):
     """An instance of a variable or of its complement"""
-
     def __init__(self):
         super(ExprLiteral, self).__init__()
         self._simplified = True
@@ -1203,7 +1228,6 @@ class ExprLiteral(Expression):
 
 class ExprVariable(boolfunc.Variable, ExprLiteral):
     """Expression variable"""
-
     ASTOP = 'var'
 
     def __init__(self, bvar):
@@ -1263,7 +1287,6 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
 
 class ExprComplement(ExprLiteral):
     """Expression complement"""
-
     # Prime - U2032
     SYMBOL = '′'
 
@@ -1329,7 +1352,6 @@ class ExprComplement(ExprLiteral):
 
 class ExprNot(Expression):
     """Expression NOT operator"""
-
     ASTOP = 'not'
     # Logical NOT - U00AC
     SYMBOL = '¬'
@@ -1417,7 +1439,6 @@ class ExprNot(Expression):
 
 class _NaryOperator(Expression):
     """Common methods for N-ary expression operators."""
-
     def __init__(self, *xs):
         super(_NaryOperator, self).__init__()
         self.xs = xs
@@ -1493,7 +1514,6 @@ class _NaryOperator(Expression):
 
 class ExprOrAnd(_NaryOperator):
     """Base class for Expression OR/AND expressions"""
-
     IDENTITY = NotImplemented
     DOMINATOR = NotImplemented
 
@@ -1681,7 +1701,6 @@ class ExprOrAnd(_NaryOperator):
 
 class ExprOr(ExprOrAnd):
     """Expression OR operator"""
-
     ASTOP = 'or'
     SYMBOL = '+'
     LATEX_SYMBOL = '+'
@@ -1777,7 +1796,6 @@ class ExprOr(ExprOrAnd):
 
 class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
-
     ASTOP = 'and'
     # Middle dot - U00B7
     SYMBOL = '·'
@@ -1893,7 +1911,6 @@ class ExprAnd(ExprOrAnd):
 
 class ExprXor(_NaryOperator):
     """Expression exclusive OR (XOR) operator"""
-
     ASTOP = 'xor'
     # Circled plus - U2295
     SYMBOL = '⊕'
@@ -2014,7 +2031,6 @@ class ExprXor(_NaryOperator):
 
 class ExprEqual(_NaryOperator):
     """Expression EQUAL operator"""
-
     ASTOP = 'equal'
     # Left right double arrow - 21D4
     SYMBOL = '⇔'
@@ -2113,7 +2129,6 @@ class ExprEqual(_NaryOperator):
 
 class ExprImplies(Expression):
     """Expression implication operator"""
-
     ASTOP = 'implies'
     # Rightwards double arrow - 21D2
     SYMBOL = '⇒'
@@ -2214,7 +2229,6 @@ class ExprImplies(Expression):
 
 class ExprITE(Expression):
     """Expression if-then-else ternary operator"""
-
     ASTOP = 'ite'
 
     def __init__(self, s, d1, d0):
@@ -2340,7 +2354,6 @@ class ExprITE(Expression):
 
 class NormalForm:
     """Normal form expression"""
-
     def __init__(self, nvars, clauses):
         self.nvars = nvars
         self.clauses = clauses
@@ -2379,7 +2392,6 @@ class NormalForm:
 
 class DisjNormalForm(NormalForm):
     """Disjunctive normal form expression"""
-
     def decode(self, litmap):
         """Convert the DNF to an expression."""
         return Or(*[And(*[litmap[idx] for idx in clause])
@@ -2392,7 +2404,6 @@ class DisjNormalForm(NormalForm):
 
 class ConjNormalForm(NormalForm):
     """Conjunctive normal form expression"""
-
     def decode(self, litmap):
         """Convert the CNF to an expression."""
         return And(*[Or(*[litmap[idx] for idx in clause])
@@ -2423,7 +2434,6 @@ class ConjNormalForm(NormalForm):
 
 class DimacsCNF(ConjNormalForm):
     """Wrapper class for a DIMACS CNF representation"""
-
     def __str__(self):
         formula = super(DimacsCNF, self).__str__()
         return "p cnf {0.nvars} {0.nclauses}\n{1}".format(self, formula)

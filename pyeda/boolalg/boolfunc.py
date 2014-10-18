@@ -116,6 +116,7 @@ def var(name, index=None):
         VARIABLES[(names, indices)] = v
     return v
 
+
 def num2point(num, vs):
     """Convert *num* into a point in an N-dimensional Boolean space.
 
@@ -157,6 +158,7 @@ def num2point(num, vs):
 
     return {v: bit_on(num, i) for i, v in enumerate(vs)}
 
+
 def num2upoint(num, vs):
     """Convert *num* into an untyped point in an N-dimensional Boolean space.
 
@@ -171,6 +173,7 @@ def num2upoint(num, vs):
     This function merely converts the output to an immutable (untyped) form.
     """
     return point2upoint(num2point(num, vs))
+
 
 def num2term(num, fs, conj=False):
     """Convert *num* into a min/max term in an N-dimensional Boolean space.
@@ -218,6 +221,7 @@ def num2term(num, fs, conj=False):
     else:
         return tuple(f if bit_on(num, i) else ~f for i, f in enumerate(fs))
 
+
 def point2upoint(point):
     """Convert *point* into an untyped point."""
     upoint = [set(), set()]
@@ -226,6 +230,7 @@ def point2upoint(point):
     upoint[0] = frozenset(upoint[0])
     upoint[1] = frozenset(upoint[1])
     return tuple(upoint)
+
 
 def point2term(point, conj=False):
     """Convert *point* into a min/max term.
@@ -238,6 +243,7 @@ def point2term(point, conj=False):
     else:
         return tuple(v if val else ~v for v, val in point.items())
 
+
 def iter_points(vs):
     """Iterate through all points in an N-dimensional Boolean space.
 
@@ -246,6 +252,7 @@ def iter_points(vs):
     for num in range(1 << len(vs)):
         yield num2point(num, vs)
 
+
 def iter_upoints(vs):
     """Iterate through all untyped points in an N-dimensional Boolean space.
 
@@ -253,6 +260,7 @@ def iter_upoints(vs):
     """
     for num in range(1 << len(vs)):
         yield num2upoint(num, vs)
+
 
 def iter_terms(fs, conj=False):
     """Iterate through all min/max terms in an N-dimensional Boolean space.
@@ -264,6 +272,7 @@ def iter_terms(fs, conj=False):
     """
     for num in range(1 << len(fs)):
         yield num2term(num, fs, conj)
+
 
 def vpoint2point(vpoint):
     """Convert *vpoint* into a point in an N-dimensional Boolean space.
@@ -309,6 +318,7 @@ def vpoint2point(vpoint):
         point.update(_flatten(v, val))
     return point
 
+
 def _flatten(v, val):
     """Recursively flatten vectorized var => {0, 1} mappings."""
     if isinstance(v, Variable):
@@ -322,6 +332,7 @@ def _flatten(v, val):
 
 _UNIQIDS = dict()
 _COUNT = 1
+
 
 class Variable:
     r"""

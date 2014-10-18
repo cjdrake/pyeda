@@ -31,6 +31,7 @@ CONFIG = dict(
     use_super_gasp=False,
 )
 
+
 def espresso_exprs(*exprs):
     """Return a tuple of expressions optimized using Espresso.
 
@@ -89,6 +90,7 @@ def espresso_exprs(*exprs):
     cover = espresso(ninputs, noutputs, cover, intype=FTYPE)
     return _cover2exprs(inputs, noutputs, cover)
 
+
 def espresso_tts(*tts):
     """Return a tuple of expressions optimized using Espresso.
 
@@ -138,6 +140,7 @@ def espresso_tts(*tts):
     cover = espresso(ninputs, noutputs, cover, intype=FTYPE|DTYPE|RTYPE)
     inputs = [exprvar(v.names, v.indices) for v in inputs]
     return _cover2exprs(inputs, noutputs, cover)
+
 
 def _cover2exprs(inputs, noutputs, cover):
     """Convert a cover to a tuple of Expression instances."""
