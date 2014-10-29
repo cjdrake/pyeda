@@ -1374,7 +1374,6 @@ class ExprNot(Expression):
 
     @property
     def arg(self):
-        warn("Not.arg attribute is deprecated. Use x instead.")
         return self.x
 
     def __str__(self):
@@ -1445,7 +1444,6 @@ class _NaryOperator(Expression):
 
     @property
     def args(self):
-        warn("_NaryOperator.args attribute is deprecated. Use xs instead.")
         return self.xs
 
     # From Function
@@ -2142,7 +2140,6 @@ class ExprImplies(Expression):
 
     @property
     def args(self):
-        warn("Implies.args attribute is deprecated. Use (p, q) instead.")
         return self.p, self.q
 
     def __str__(self):
@@ -2239,7 +2236,6 @@ class ExprITE(Expression):
 
     @property
     def args(self):
-        warn("ITE.args attribute is deprecated. Use (s, d1, d0) instead.")
         return self.s, self.d1, self.d0
 
     def __str__(self):
