@@ -363,6 +363,15 @@ Python Versions Supported
 PyEDA is developed using Python 3.3+.
 It is **NOT** compatible with Python 2.7, or Python 3.2.
 
+Citations
+=========
+
+I recently discovered that people actually use this software in the real world.
+Feel free to send me a pull request if you would like your project listed here
+as well.
+
+* `A Model-Based Approach for Reliability Assessment in Component-Based Systems <https://www.phmsociety.org/sites/phmsociety.org/files/phm_submission/2014/phmc_14_025.pdf>`_
+
 Contact the Authors
 ===================
 
