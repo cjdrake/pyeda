@@ -371,6 +371,8 @@ Feel free to send me a pull request if you would like your project listed here
 as well.
 
 * `A Model-Based Approach for Reliability Assessment in Component-Based Systems <https://www.phmsociety.org/sites/phmsociety.org/files/phm_submission/2014/phmc_14_025.pdf>`_
+* `bunsat <http://www.react.uni-saarland.de/tools/bunsat>`_,
+  used for the SAT paper `Fast DQBF Refutation <http://www.react.uni-saarland.de/publications/sat14.pdf>`_.
 
 Contact the Authors
 ===================
