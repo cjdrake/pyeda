@@ -977,7 +977,7 @@ class Expression(boolfunc.Function):
         f = ExprXor(self, self.box(other)).simplify()
         return f.satisfy_one() is None
 
-    def to_dot(self, name='EXPR'):
+    def to_dot(self, name='EXPR'): # pragma: no cover
         """Convert to DOT language representation."""
         parts = ['graph', name, '{', 'rankdir=BT;']
         for expr in self.traverse():

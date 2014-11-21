@@ -30,6 +30,10 @@ def test_misc():
 
     assert_raises(TypeError, expr2dimacscnf, 'foo')
 
+    # conflicting constraints
+    upoint = (frozenset((a.uniqid, b.uniqid)), frozenset((a.uniqid, c.uniqid)))
+    assert_raises(ValueError, f.urestrict, upoint)
+
 def test_issue81():
     # Or(x) = x
     assert str(Or(Or(a, b))) == "Or(a, b)"
@@ -163,7 +167,8 @@ def test_onehot0():
     assert OneHot0(1, 0, 1) is EXPRZERO
     assert OneHot0(1, 1, 0) is EXPRZERO
     assert OneHot0(1, 1, 1) is EXPRZERO
-    assert OneHot0(a, b, c).equivalent((~a | ~b) & (~a | ~c) & (~b | ~c))
+    assert OneHot0(a, b, c, conj=False).equivalent((~a | ~b) & (~a | ~c) & (~b | ~c))
+    assert OneHot0(a, b, c, conj=True).equivalent((~a | ~b) & (~a | ~c) & (~b | ~c))
 
 def test_onehot():
     assert OneHot(0, 0, 0) is EXPRZERO
@@ -174,7 +179,8 @@ def test_onehot():
     assert OneHot(1, 0, 1) is EXPRZERO
     assert OneHot(1, 1, 0) is EXPRZERO
     assert OneHot(1, 1, 1) is EXPRZERO
-    assert OneHot(a, b, c).equivalent((~a | ~b) & (~a | ~c) & (~b | ~c) & (a | b | c))
+    assert OneHot(a, b, c, conj=False).equivalent((~a | ~b) & (~a | ~c) & (~b | ~c) & (a | b | c))
+    assert OneHot(a, b, c, conj=True).equivalent((~a | ~b) & (~a | ~c) & (~b | ~c) & (a | b | c))
 
 def test_majority():
     assert Majority(0, 0, 0) is EXPRZERO
@@ -185,17 +191,22 @@ def test_majority():
     assert Majority(1, 0, 1) is EXPRONE
     assert Majority(1, 1, 0) is EXPRONE
     assert Majority(1, 1, 1) is EXPRONE
-    assert Majority(a, b, c).equivalent(a & b | a & c | b & c)
+    assert Majority(a, b, c, conj=False).equivalent(a & b | a & c | b & c)
+    assert Majority(a, b, c, conj=True).equivalent(a & b | a & c | b & c)
 
 def test_achilles_heel():
     assert AchillesHeel(a, b).equivalent(a | b)
     assert AchillesHeel(a, b, c, d).equivalent((a | b) & (c | d))
+    # expected an even number of arguments
     assert_raises(ValueError, AchillesHeel, a, b, c)
 
 def test_mux():
     assert Mux([EXPRONE] * 4, [a,b]).equivalent(EXPRONE)
     assert Mux([EXPRZERO] * 4, [a,b]).equivalent(EXPRZERO)
     assert Mux(X[:4], [a,b]).equivalent(~a&~b&X[0] | a&~b&X[1] | ~a&b&X[2] | a&b&X[3])
+    assert Mux(X[:2], a).equivalent(~a & X[0] | a & X[1])
+    # Expected at least ? select bits
+    assert_raises(ValueError, Mux, X, [a,b])
 
 def test_ops():
     # __xor__
@@ -637,6 +648,9 @@ def test_implies():
     f = Implies(p, 1, simplify=False)
     assert str(f) == "Implies(p, 1)"
 
+    assert Implies(p, q).to_nnf(conj=False).equivalent(~p | q)
+    assert Implies(p, q).to_nnf(conj=True).equivalent(~p | q)
+
 def test_ite():
     # Function
     assert ITE(s, ~a, b).support == {s, a, b}
@@ -732,6 +746,13 @@ def test_satisfy():
     ]
     assert Xor(a, b, c).satisfy_count() == 4
 
+    # CNF SAT UNSAT
+    sat = Majority(a, b, c, conj=True)
+    unsat = EXPRZERO.expand([a, b, c], conj=True)
+    assert unsat.satisfy_one() is None
+    assert not list(unsat.satisfy_all())
+    assert list(sat.satisfy_all())
+
     # Assumptions
     f = OneHot(a, b, c)
     g = Xor(a, b, c)
@@ -775,8 +796,15 @@ def test_nf():
     f = a ^ b ^ c
     g = a & b | a & c | b & c
 
-    assert str(f.to_dnf()) == "Or(And(~a, ~b, c), And(~a, b, ~c), And(a, ~b, ~c), And(a, b, c))"
-    assert str(f.to_cnf()) == "And(Or(a, b, c), Or(a, ~b, ~c), Or(~a, b, ~c), Or(~a, ~b, c))"
+    f_dnf_0 = f.to_dnf(flatten=False)
+    f_dnf_1 = f.to_dnf(flatten=True)
+    f_cnf_0 = f.to_cnf(flatten=False)
+    f_cnf_1 = f.to_cnf(flatten=True)
+
+    assert str(f_dnf_0) == "Or(And(~a, ~b, c), And(~a, b, ~c), And(a, ~b, ~c), And(a, b, c))"
+    assert str(f_dnf_1) == "Or(And(~a, ~b, c), And(~a, b, ~c), And(a, ~b, ~c), And(a, b, c))"
+    assert str(f_cnf_0) == "And(Or(a, b, c), Or(a, ~b, ~c), Or(~a, b, ~c), Or(~a, ~b, c))"
+    assert str(f_cnf_1) == "And(Or(a, b, c), Or(a, ~b, ~c), Or(~a, b, ~c), Or(~a, ~b, c))"
 
     assert str(g.to_cdnf()) == "Or(And(~a, b, c), And(a, ~b, c), And(a, b, ~c), And(a, b, c))"
     assert str(g.to_ccnf()) == "And(Or(a, b, c), Or(a, b, ~c), Or(a, ~b, c), Or(~a, b, c))"
