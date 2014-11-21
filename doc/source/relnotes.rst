@@ -4,6 +4,59 @@
   Release Notes
 *****************
 
+Version 0.26
+============
+
+Another small, incremental release.
+
+The most important changes were related to `Issue 99 <https://github.com/cjdrake/pyeda/issues/99>`_.
+Simplified the expression class hierarchy a bit.
+Got rid of Nor, Nand, and Xnor expression classes,
+because they're not all that useful.
+Eliminated auto-simplification of degenerate forms.
+
+Updated to `PicoSAT <http://fmv.jku.at/picosat/>`_ version 960.
+
+Got rid of some old DPLL cruft.
+The PicoSAT extension is so superior to my amateurish Python implementation,
+no point in keeping it around anymore.
+
+Changed the names of various exceptions from something like ``LexError``
+to ``lex.Error``.
+I was influenced by `the Exceptions section <https://google-styleguide.googlecode.com/svn/trunk/pyguide.html#Exceptions>`_
+from the `Google Python Style Guide <https://google-styleguide.googlecode.com/svn/trunk/pyguide.html>`_.
+
+Deprecated expression ``factor`` methods in favor of the more hip
+*negation normal form* (NNF) terminology.
+See `Issue 101 <https://github.com/cjdrake/pyeda/issues/101>`_ for details.
+
+Updated the formatting of truth table strings.
+Now the inputs are aligned beneath their variable names.
+
+Previously::
+
+   inputs: x2 x1 x0
+   000 0
+   001 0
+   010 0
+   011 1
+   100 0
+   101 1
+   110 1
+   111 1
+
+Now::
+
+   x2 x1 x0
+    0  0  0 : 0
+    0  0  1 : 0
+    0  1  0 : 0
+    0  1  1 : 1
+    1  0  0 : 0
+    1  0  1 : 1
+    1  1  0 : 1
+    1  1  1 : 1
+
 Version 0.25
 ============
 
