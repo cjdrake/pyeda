@@ -293,8 +293,8 @@ This is best illustrated with an example.
 If you look directly into the ``pyeda.boolalg.bdd`` module,
 you can find the memory structure that holds BDD nodes::
 
-   >>> from pyeda.boolalg.bdd import _BDDNODES
-   >>> len(_BDDNODES)
+   >>> from pyeda.boolalg.bdd import _NODES
+   >>> len(_NODES)
    2
 
 The table contains two static nodes: zero and one.
@@ -302,32 +302,32 @@ Let's define a few variables::
 
    >>> from pyeda.inter import *
    >>> a, b = map(bddvar, 'ab')
-   >>> len(_BDDNODES)
+   >>> len(_NODES)
    4
 
 Now define three simple BDDs::
 
    >>> f1 = a | b
-   >>> len(_BDDNODES)
+   >>> len(_NODES)
    5
    >>> f2 = a & b
-   >>> len(_BDDNODES)
+   >>> len(_NODES)
    6
    >>> f3 = a ^ b
-   >>> len(_BDDNODES)
+   >>> len(_NODES)
    8
 
 Now there are eight nodes.
 Let's count the remaining nodes as we delete functions::
 
    >>> del f1
-   >>> len(_BDDNODES)
+   >>> len(_NODES)
    7
    >>> del f2
-   >>> len(_BDDNODES)
+   >>> len(_NODES)
    6
    >>> del f3
-   >>> len(_BDDNODES)
+   >>> len(_NODES)
    4
 
 References

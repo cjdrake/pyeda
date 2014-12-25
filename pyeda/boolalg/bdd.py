@@ -29,10 +29,10 @@ from pyeda.util import cached_property
 
 
 # existing BDDVariable references
-_BDDVARIABLES = dict()
+_VARS = dict()
 
 # node/bdd cache
-_BDDNODES = weakref.WeakValueDictionary()
+_NODES = weakref.WeakValueDictionary()
 _BDDS = weakref.WeakValueDictionary()
 
 
@@ -61,8 +61,8 @@ class BDDNode:
         self.hi = hi
 
 
-BDDNODEZERO = _BDDNODES[(-1, None, None)] = BDDNode(-1, None, None)
-BDDNODEONE = _BDDNODES[(-2, None, None)] = BDDNode(-2, None, None)
+BDDNODEZERO = _NODES[(-1, None, None)] = BDDNode(-1, None, None)
+BDDNODEONE = _NODES[(-2, None, None)] = BDDNode(-2, None, None)
 
 
 def bddvar(name, index=None):
@@ -106,9 +106,9 @@ def bddvar(name, index=None):
     """
     bvar = boolfunc.var(name, index)
     try:
-        var = _BDDVARIABLES[bvar.uniqid]
+        var = _VARS[bvar.uniqid]
     except KeyError:
-        var = _BDDVARIABLES[bvar.uniqid] = BDDVariable(bvar)
+        var = _VARS[bvar.uniqid] = BDDVariable(bvar)
         _BDDS[var.node] = var
     return var
 
@@ -172,9 +172,9 @@ def upoint2bddpoint(upoint):
     """
     point = dict()
     for uniqid in upoint[0]:
-        point[_BDDVARIABLES[uniqid]] = 0
+        point[_VARS[uniqid]] = 0
     for uniqid in upoint[1]:
-        point[_BDDVARIABLES[uniqid]] = 1
+        point[_VARS[uniqid]] = 1
     return point
 
 
@@ -202,9 +202,9 @@ def _bddnode(root, lo, hi):
     else:
         key = (root, lo, hi)
         try:
-            node = _BDDNODES[key]
+            node = _NODES[key]
         except KeyError:
-            node = _BDDNODES[key] = BDDNode(*key)
+            node = _NODES[key] = BDDNode(*key)
     return node
 
 
@@ -219,7 +219,7 @@ def _bdd(node):
 
 def _path2point(path):
     """Convert a BDD path to a BDD point."""
-    return {_BDDVARIABLES[node.root]: int(node.hi is path[i+1])
+    return {_VARS[node.root]: int(node.hi is path[i+1])
             for i, node in enumerate(path[:-1])}
 
 
@@ -285,7 +285,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         _inputs = list()
         for node in self.dfs_postorder():
             if node.root > 0:
-                v = _BDDVARIABLES[node.root]
+                v = _VARS[node.root]
                 if v not in _inputs:
                     _inputs.append(v)
         return tuple(reversed(_inputs))
@@ -371,7 +371,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
             elif node is BDDNODEONE:
                 parts += ['n' + str(id(node)), '[label=1,shape=box];']
             else:
-                v = _BDDVARIABLES[node.root]
+                v = _VARS[node.root]
                 parts.append('n' + str(id(node)))
                 parts.append('[label="{}",shape=circle];'.format(v))
         for node in self.dfs_postorder():
