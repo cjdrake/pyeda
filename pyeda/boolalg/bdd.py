@@ -326,7 +326,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
         elif obj == 1 or obj == '1':
             return BDDONE
         else:
-            return CONSTANTS[bool(obj)]
+            return BDDONE if bool(obj) else BDDZERO
 
     # Specific to BinaryDecisionDiagram
     def dfs_preorder(self):
@@ -396,40 +396,25 @@ class BDDConstant(BinaryDecisionDiagram):
     BDD instances are managed internally,
     and the BDD zero/one instances are singletons.
     """
-    VALUE = NotImplemented
+    def __init__(self, node, value):
+        super(BDDConstant, self).__init__(node)
+        self.value = value
 
     def __bool__(self):
-        return bool(self.VALUE)
+        return bool(self.value)
 
     def __int__(self):
-        return self.VALUE
+        return self.value
+
+    def __repr__(self):
+        return self.__str__()
 
     def __str__(self):
-        return str(self.VALUE)
+        return str(self.value)
 
 
-class _BDDZero(BDDConstant):
-    """Binary decision diagram zero"""
-
-    VALUE = 0
-
-    def __init__(self):
-        super(_BDDZero, self).__init__(BDDNODEZERO)
-
-
-class _BDDOne(BDDConstant):
-    """Binary decision diagram one"""
-
-    VALUE = 1
-
-    def __init__(self):
-        super(_BDDOne, self).__init__(BDDNODEONE)
-
-
-BDDZERO = _BDDS[BDDNODEZERO] = _BDDZero()
-BDDONE = _BDDS[BDDNODEONE] = _BDDOne()
-
-CONSTANTS = [BDDZERO, BDDONE]
+BDDZERO = _BDDS[BDDNODEZERO] = BDDConstant(BDDNODEZERO, 0)
+BDDONE = _BDDS[BDDNODEONE] = BDDConstant(BDDNODEONE, 1)
 
 
 class BDDVariable(boolfunc.Variable, BinaryDecisionDiagram):

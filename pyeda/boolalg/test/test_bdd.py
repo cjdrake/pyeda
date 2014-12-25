@@ -67,6 +67,8 @@ def test_const():
     assert int(one) == 1
     assert str(zero) == '0'
     assert str(one) == '1'
+    assert repr(zero) == '0'
+    assert repr(one) == '1'
 
 def test_boolfunc():
     # __invert__, __or__, __and__, __xor__
