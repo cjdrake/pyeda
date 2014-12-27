@@ -645,8 +645,8 @@ class Function:
         :math:`f_{x_i'} = f(x_1, x_2, \dots, 0, \dots, x_n)`
         """
         vs = self._expect_vars(vs)
-        for upoint in iter_upoints(vs):
-            yield self.urestrict(upoint)
+        for point in iter_points(vs):
+            yield self.restrict(point)
 
     def cofactors(self, vs=None):
         r"""Return a tuple of the cofactors of a function over N variables.
