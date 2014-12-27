@@ -30,7 +30,7 @@ from pyeda.util import cached_property
 PC_VOID, PC_ZERO, PC_ONE, PC_DC = range(4)
 
 # existing TTVariable references
-_TTVARIABLES = dict()
+_VARS = dict()
 
 _PC2STR = {
     PC_VOID : '?',
@@ -53,9 +53,9 @@ def ttvar(name, index=None):
     """
     bvar = boolfunc.var(name, index)
     try:
-        var = _TTVARIABLES[bvar.uniqid]
+        var = _VARS[bvar.uniqid]
     except KeyError:
-        var = _TTVARIABLES[bvar.uniqid] = TTVariable(bvar)
+        var = _VARS[bvar.uniqid] = TTVariable(bvar)
     return var
 
 
@@ -264,9 +264,9 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def items():
             """Iterate through OR'ed items."""
-            for upoint in boolfunc.iter_upoints(inputs):
-                ab = self.urestrict(upoint).pcdata[0]
-                cd = other.urestrict(upoint).pcdata[0]
+            for point in boolfunc.iter_points(inputs):
+                ab = self.restrict(point).pcdata[0]
+                cd = other.restrict(point).pcdata[0]
                 # a | c, b & d
                 yield ((ab | cd) & 2) | ((ab & cd) & 1)
         pcdata = PCData(items())
@@ -277,9 +277,9 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def items():
             """Iterate through AND'ed items."""
-            for upoint in boolfunc.iter_upoints(inputs):
-                ab = self.urestrict(upoint).pcdata[0]
-                cd = other.urestrict(upoint).pcdata[0]
+            for point in boolfunc.iter_points(inputs):
+                ab = self.restrict(point).pcdata[0]
+                cd = other.restrict(point).pcdata[0]
                 # a & c, b | d
                 yield ((ab & cd) & 2) | ((ab | cd) & 1)
         pcdata = PCData(items())
@@ -291,9 +291,9 @@ class TruthTable(boolfunc.Function):
         def items():
             """Iterate through XOR'ed items."""
             # pylint: disable=C0103
-            for upoint in boolfunc.iter_upoints(inputs):
-                ab = self.urestrict(upoint).pcdata[0]
-                cd = other.urestrict(upoint).pcdata[0]
+            for point in boolfunc.iter_points(inputs):
+                ab = self.restrict(point).pcdata[0]
+                cd = other.restrict(point).pcdata[0]
                 # a & d | b & c, a & c | b & d
                 a, b, c, d = ab >> 1, ab & 1, cd >> 1, cd & 1
                 yield ((a & d | b & c) << 1) | (a & c | b & d)
@@ -309,13 +309,20 @@ class TruthTable(boolfunc.Function):
     def inputs(self):
         return self._inputs
 
-    def urestrict(self, upoint):
-        usupport = {v.uniqid for v in self.support}
-        zeros = usupport & upoint[0]
-        ones = usupport & upoint[1]
-        others = usupport - upoint[0] - upoint[1]
+    def restrict(self, point):
+        zeros = set()
+        ones = set()
+        for v, val in point.items():
+            if v in self.support:
+                val = self.box(val)
+                if val is TTZERO:
+                    zeros.add(v)
+                elif val is TTONE:
+                    ones.add(v)
+        others = self.support - zeros - ones
+
         if zeros or ones:
-            inputs = sorted(_TTVARIABLES[uniqid] for uniqid in others)
+            inputs = sorted(others)
             def items():
                 """Iterate through restricted outputs."""
                 for i in self._iter_restrict(zeros, ones):
@@ -425,9 +432,9 @@ class TruthTable(boolfunc.Function):
         inputs = list(self.inputs)
         unmapped = dict()
         for i, v in enumerate(self.inputs):
-            if v.uniqid in zeros:
+            if v in zeros:
                 inputs[i] = 0
-            elif v.uniqid in ones:
+            elif v in ones:
                 inputs[i] = 1
             else:
                 unmapped[v] = i

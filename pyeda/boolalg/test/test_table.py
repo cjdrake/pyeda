@@ -82,8 +82,8 @@ def test_table():
     assert tt.support == {aa, bb, cc, dd}
     assert tt.inputs == (aa, bb, cc, dd)
 
-    assert truthtable2expr(tt.restrict({a: 0})).equivalent(Xor(b, c, d))
-    assert tt.restrict({e: 0}) == tt
+    assert truthtable2expr(tt.restrict({aa: 0})).equivalent(Xor(b, c, d))
+    assert tt.restrict({ee: 0}) == tt
 
     assert tt.satisfy_one() == {aa: 1, bb: 0, cc: 0, dd: 0}
     assert [p for p in tt.satisfy_all()] == [{aa: 1, bb: 0, cc: 0, dd: 0},
