@@ -374,7 +374,7 @@ class TruthTable(boolfunc.Function):
         elif obj == 1 or obj == '1':
             return TTONE
         else:
-            return CONSTANTS[bool(obj)]
+            return TTONE if bool(obj) else TTZERO
 
     # Specific to TruthTable
     def is_neg_unate(self, vs=None):
@@ -440,46 +440,25 @@ class TruthTable(boolfunc.Function):
 
 class TTConstant(TruthTable):
     """Truth table constant"""
-    VAL = NotImplemented
+    def __init__(self, pcval, value):
+        super(TTConstant, self).__init__([], PCData([pcval]))
+        self.value = value
 
     def __bool__(self):
-        return bool(self.VAL)
+        return bool(self.value)
 
     def __int__(self):
-        return self.VAL
+        return self.value
+
+    def __repr__(self):
+        return self.__str__()
 
     def __str__(self):
-        return str(self.VAL)
+        return str(self.value)
 
 
-class _TTZero(TTConstant):
-    """
-    Truth table zero
-
-    .. note:: Never use this class. Use TTZERO instead.
-    """
-    VAL = 0
-
-    def __init__(self):
-        super(_TTZero, self).__init__([], PCData([PC_ZERO]))
-
-
-class _TTOne(TTConstant):
-    """
-    Truth table one
-
-    .. note:: Never use this class. Use TTONE instead.
-    """
-    VAL = 1
-
-    def __init__(self):
-        super(_TTOne, self).__init__([], PCData([PC_ONE]))
-
-
-TTZERO = _TTZero()
-TTONE = _TTOne()
-
-CONSTANTS = [TTZERO, TTONE]
+TTZERO = TTConstant(PC_ZERO, 0)
+TTONE = TTConstant(PC_ONE, 1)
 
 
 class TTVariable(boolfunc.Variable, TruthTable):
