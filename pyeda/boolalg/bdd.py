@@ -290,8 +290,9 @@ class BinaryDecisionDiagram(boolfunc.Function):
                     _inputs.append(v)
         return tuple(reversed(_inputs))
 
-    def urestrict(self, upoint):
-        return _bdd(_urestrict(self.node, upoint))
+    def restrict(self, point):
+        npoint = {v.node.root: self.box(val).node for v, val in point.items()}
+        return _bdd(_restrict(self.node, npoint))
 
     def compose(self, mapping):
         node = self.node
@@ -462,15 +463,15 @@ def _ite(f, g, h):
     else:
         # ITE(f, g, h) = ITE(x, ITE(fx', gx', hx'), ITE(fx, gx, hx))
         root = min(node.root for node in (f, g, h) if node.root > 0)
-        upoint0 = frozenset([root]), frozenset()
-        upoint1 = frozenset(), frozenset([root])
-        fv0, gv0, hv0 = [_urestrict(node, upoint0) for node in (f, g, h)]
-        fv1, gv1, hv1 = [_urestrict(node, upoint1) for node in (f, g, h)]
+        npoint0 = {root: BDDNODEZERO}
+        npoint1 = {root: BDDNODEONE}
+        fv0, gv0, hv0 = [_restrict(node, npoint0) for node in (f, g, h)]
+        fv1, gv1, hv1 = [_restrict(node, npoint1) for node in (f, g, h)]
         return _bddnode(root, _ite(fv0, gv0, hv0), _ite(fv1, gv1, hv1))
 
 
-def _urestrict(node, upoint, cache=None):
-    """Return node that results from untyped point restriction."""
+def _restrict(node, npoint, cache=None):
+    """Restrict a subset of support variables to {0, 1}."""
     if node is BDDNODEZERO or node is BDDNODEONE:
         return node
 
@@ -480,14 +481,15 @@ def _urestrict(node, upoint, cache=None):
     try:
         ret = cache[node]
     except KeyError:
-        if node.root in upoint[0]:
-            ret = _urestrict(node.lo, upoint, cache)
-        elif node.root in upoint[1]:
-            ret = _urestrict(node.hi, upoint, cache)
-        else:
-            lo = _urestrict(node.lo, upoint, cache)
-            hi = _urestrict(node.hi, upoint, cache)
+        try:
+            val = npoint[node.root]
+        except KeyError:
+            lo = _restrict(node.lo, npoint, cache)
+            hi = _restrict(node.hi, npoint, cache)
             ret = _bddnode(node.root, lo, hi)
+        else:
+            child = {BDDNODEZERO: node.lo, BDDNODEONE: node.hi}[val]
+            ret = _restrict(child, npoint, cache)
         cache[node] = ret
     return ret
 
