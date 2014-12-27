@@ -109,7 +109,7 @@ except ImportError: # pragma: no cover
 
 
 # existing ExprVariable/ExprLiteral references
-_EXPRLITERALS = dict()
+_LITS = dict()
 
 # satisfy_one literal assumptions
 _ASSUMPTIONS = set()
@@ -166,9 +166,9 @@ def exprvar(name, index=None):
     """
     bvar = boolfunc.var(name, index)
     try:
-        var = _EXPRLITERALS[bvar.uniqid]
+        var = _LITS[bvar.uniqid]
     except KeyError:
-        var = _EXPRLITERALS[bvar.uniqid] = ExprVariable(bvar)
+        var = _LITS[bvar.uniqid] = ExprVariable(bvar)
     return var
 
 
@@ -176,9 +176,9 @@ def _exprcomp(exprvar):
     """Return an Expression Complement."""
     uniqid = -exprvar.uniqid
     try:
-        comp = _EXPRLITERALS[uniqid]
+        comp = _LITS[uniqid]
     except KeyError:
-        comp = _EXPRLITERALS[uniqid] = ExprComplement(exprvar)
+        comp = _LITS[uniqid] = ExprComplement(exprvar)
     return comp
 
 
@@ -270,9 +270,9 @@ def upoint2exprpoint(upoint):
     """Convert an untyped point to an Expression point."""
     point = dict()
     for uniqid in upoint[0]:
-        point[_EXPRLITERALS[uniqid]] = 0
+        point[_LITS[uniqid]] = 0
     for uniqid in upoint[1]:
-        point[_EXPRLITERALS[uniqid]] = 1
+        point[_LITS[uniqid]] = 1
     return point
 
 
@@ -653,7 +653,7 @@ class Expression(boolfunc.Function):
         if intersect:
             parts = list()
             for uniqid in intersect:
-                v = _EXPRLITERALS[uniqid]
+                v = _LITS[uniqid]
                 parts += [str(v), str(~v)]
             raise ValueError("conflicting constraints: " + ", ".join(parts))
         return self._urestrict2(upoint)
@@ -840,8 +840,8 @@ class Expression(boolfunc.Function):
         else:
             terms = list()
             for upnt in _iter_ones(self):
-                lits = [~_EXPRLITERALS[uniqid] for uniqid in upnt[0]]
-                lits += [_EXPRLITERALS[uniqid] for uniqid in upnt[1]]
+                lits = [~_LITS[uniqid] for uniqid in upnt[0]]
+                lits += [_LITS[uniqid] for uniqid in upnt[1]]
                 terms.append(ExprAnd(*lits).simplify())
             return ExprOr(*terms).simplify()
 
@@ -861,8 +861,8 @@ class Expression(boolfunc.Function):
         else:
             terms = list()
             for upnt in _iter_zeros(self):
-                lits = [_EXPRLITERALS[uniqid] for uniqid in upnt[0]]
-                lits += [~_EXPRLITERALS[uniqid] for uniqid in upnt[1]]
+                lits = [_LITS[uniqid] for uniqid in upnt[0]]
+                lits += [~_LITS[uniqid] for uniqid in upnt[1]]
                 terms.append(ExprOr(*lits).simplify())
             return ExprAnd(*terms).simplify()
 
