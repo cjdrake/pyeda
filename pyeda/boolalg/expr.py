@@ -743,22 +743,6 @@ class Expression(boolfunc.Function):
         """Return True if the expression is simplified."""
         return self._simplified
 
-    def factor(self, conj=False):
-        """Return a factored expression.
-
-        A factored expression is one and only one of the following:
-
-        * A literal.
-        * A disjunction / conjunction of factored expressions.
-
-        Parameters
-
-        conj : bool
-            Always choose a conjunctive form when there's a choice
-        """
-        warn("Expression.factor is deprecated. Use Expression.to_nnf instead")
-        return self.to_nnf()
-
     @property
     def depth(self):
         """Return the depth of the expression tree.
