@@ -133,11 +133,8 @@ error:
 static int
 _add_assumptions(PicoSAT *picosat, PyObject *assumptions)
 {
-    int nvars;
     PyObject *pylits, *pylit;
     int lit;
-
-    nvars = picosat_variables(picosat);
 
     pylits = PyObject_GetIter(assumptions);
     if (pylits == NULL)
