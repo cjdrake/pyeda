@@ -7,7 +7,7 @@ from pyeda.boolalg.bdd import (
     BinaryDecisionDiagram,
     BDDNODEZERO, BDDNODEONE,
 )
-from pyeda.boolalg.expr import expr, ExprOr, ExprAnd
+from pyeda.boolalg.expr import expr, OrOp, AndOp
 
 
 zero = BinaryDecisionDiagram.box(0)
@@ -47,11 +47,11 @@ def test_expr2bdd():
 def test_bdd2expr():
     ex = bdd2expr(a ^ b ^ c, conj=False)
     assert ex.equivalent(expr("a ^ b ^ c"))
-    assert type(ex) is ExprOr and ex.depth == 2
+    assert type(ex) is OrOp and ex.depth == 2
 
     ex = bdd2expr(a ^ b ^ c, conj=True)
     assert ex.equivalent(expr("a ^ b ^ c"))
-    assert type(ex) is ExprAnd and ex.depth == 2
+    assert type(ex) is AndOp and ex.depth == 2
 
 def test_upoint2bddpoint():
     upoint = (frozenset([a.uniqid, c.uniqid]), frozenset([b.uniqid, d.uniqid]))
