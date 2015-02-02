@@ -42,7 +42,7 @@ def espresso_exprs(*exprs):
        >>> from pyeda.boolalg.expr import exprvar
        >>> a, b, c = map(exprvar, 'abc')
        >>> f1 = ~a & ~b & ~c | ~a & ~b & c | a & ~b & c | a & b & c | a & b & ~c
-       >>> f2 = f2 = ~a & ~b & c | a & ~b & c
+       >>> f2 = ~a & ~b & c | a & ~b & c
        >>> f1m, f2m = espresso_exprs(f1, f2)
        >>> f1m
        Or(And(~a, ~b), And(a, b), And(~b, c))
