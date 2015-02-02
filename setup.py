@@ -156,9 +156,36 @@ ESPRESSO = dict(
     ],
 )
 
+# exprnode C extension
+EXPRNODE = dict(
+    define_macros = [
+    ],
+    include_dirs = [
+        pjoin('extension', 'boolexpr'),
+    ],
+    sources = [
+        pjoin('extension', 'boolexpr', 'array.c'),
+        pjoin('extension', 'boolexpr', 'array2.c'),
+        pjoin('extension', 'boolexpr', 'binary.c'),
+        pjoin('extension', 'boolexpr', 'boolexpr.c'),
+        pjoin('extension', 'boolexpr', 'bubble.c'),
+        pjoin('extension', 'boolexpr', 'compose.c'),
+        pjoin('extension', 'boolexpr', 'dict.c'),
+        pjoin('extension', 'boolexpr', 'flatten.c'),
+        pjoin('extension', 'boolexpr', 'nnf.c'),
+        #pjoin('extension', 'boolexpr', 'set.c'),
+        pjoin('extension', 'boolexpr', 'simple.c'),
+        pjoin('extension', 'boolexpr', 'util.c'),
+        pjoin('extension', 'boolexpr', 'vector.c'),
+        pjoin('pyeda', 'boolalg', 'exprnodemodule.c'),
+    ],
+    extra_compile_args = ['--std=c99'],
+)
+
 EXT_MODULES = [
     Extension('pyeda.boolalg.picosat', **PICOSAT),
     Extension('pyeda.boolalg.espresso', **ESPRESSO),
+    Extension('pyeda.boolalg.exprnode', **EXPRNODE),
 ]
 
 SCRIPTS = [

@@ -1,0 +1,15 @@
+# Filename: .gitignore
+
+# C/C++ compilation
+*.o
+*.a
+
+# Binaries
+a.out
+
+# Coverage
+*.gcda
+*.gcno
+coverage.info
+coverage/
+

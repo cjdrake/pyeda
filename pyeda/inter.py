@@ -30,11 +30,7 @@ from pyeda.boolalg.expr import (
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
     Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel,
     Mux, ForAll, Exists,
-    Expression, ExprConstant, ExprLiteral, ExprVariable, ExprComplement,
-    ExprNot, ExprOrAnd, ExprOr, ExprAnd,
-    ExprXor, ExprEqual,
-    ExprImplies, ExprITE,
-
+    Expression,
     NormalForm, DisjNormalForm, ConjNormalForm, DimacsCNF,
 )
 

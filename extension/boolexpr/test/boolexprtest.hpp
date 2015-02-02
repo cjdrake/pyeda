@@ -1,0 +1,40 @@
+/*
+** Filename: boolexprtest.hpp
+*/
+
+
+#include <gtest/gtest.h>
+
+#include "boolexpr.h"
+
+
+/*
+** Return true if two expressions are similar.
+**
+** This is just a cheap way to check expression transformations against
+** expected values.
+** It does not check function equality or isomorphism.
+*/
+bool Similar(BoolExpr * const, BoolExpr * const);
+
+
+class BoolExprTest: public ::testing::Test
+{
+
+protected:
+
+    virtual void SetUp();
+    virtual void TearDown();
+
+    static const int N = 1024;
+
+    BoolExprVector *lits;
+
+    BoolExpr *xns[N];
+    BoolExpr *xs[N];
+
+    BoolExpr *ops[N];
+
+    BoolExpr *exps[N];
+};
+
