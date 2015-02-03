@@ -10,9 +10,7 @@ from pyeda.boolalg.bfarray import (
     fcat, farray,
     uint2exprs, int2exprs,
 )
-from pyeda.boolalg.boolfunc import Function
 from pyeda.boolalg.expr import exprvar, Expression
-from pyeda.boolalg.table import ttvar
 
 
 X = exprvars('x', 4)
