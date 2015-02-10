@@ -1003,6 +1003,35 @@ class Expression(boolfunc.Function):
 class Atom(Expression):
     """Atomic Expression"""
 
+    # From Expression
+    def _traverse(self, visited):
+        if self not in visited:
+            visited.add(self)
+            yield self
+
+    def simplify(self):
+        return self
+
+    @property
+    def depth(self):
+        return 0
+
+    def to_nnf(self, conj=False):
+        return self
+
+    def _inv_nnf(self, conj=False):
+        return self._inv
+
+    # FactoredExpression
+    def _flatten(self, op):
+        return self
+
+    def _absorb(self):
+        return self
+
+    def _reduce(self):
+        return self
+
 
 class ExprConstant(Atom):
     """Expression constant"""
@@ -1035,36 +1064,8 @@ class ExprConstant(Atom):
         return self
 
     # From Expression
-    def _traverse(self, visited):
-        if self not in visited:
-            visited.add(self)
-            yield self
-
-    def simplify(self):
-        return self
-
-    @property
-    def depth(self):
-        return 0
-
     def to_ast(self):
         return (self.ASTOP, self.VALUE)
-
-    def to_nnf(self, conj=False):
-        return self
-
-    def _inv_nnf(self, conj=False):
-        return self._inv
-
-    # FactoredExpression
-    def _flatten(self, op):
-        return self
-
-    def _absorb(self):
-        return self
-
-    def _reduce(self):
-        return self
 
 
 class _ExprZero(ExprConstant):
@@ -1151,33 +1152,11 @@ class ExprLiteral(Atom):
         _ASSUMPTIONS.discard(self)
 
     # From Expression
-    def _traverse(self, visited):
-        if self not in visited:
-            visited.add(self)
-            yield self
-
-    def simplify(self):
-        return self
-
-    @property
-    def depth(self):
-        return 0
-
-    def to_nnf(self, conj=False):
-        return self
-
-    def _inv_nnf(self, conj=False):
-        return self._inv
-
     def is_dnf(self):
         return True
 
     def is_cnf(self):
         return True
-
-    # FactoredExpression
-    def _flatten(self, op):
-        return self
 
     # FlattenedExpression
     @cached_property
@@ -1193,12 +1172,6 @@ class ExprLiteral(Atom):
     @cached_property
     def _cover(self):
         return {self._cube}
-
-    def _absorb(self):
-        return self
-
-    def _reduce(self):
-        return self
 
     def _encode_clause(self, litmap):
         return frozenset([litmap[self]])
