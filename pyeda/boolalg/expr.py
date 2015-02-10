@@ -125,7 +125,7 @@ _ASSUMPTIONS = set()
 def _assume2upoint():
     """Convert global assumptions to an untyped point."""
     return (
-        frozenset(lit.exprvar.uniqid for lit in _ASSUMPTIONS
+        frozenset(lit.v.uniqid for lit in _ASSUMPTIONS
                   if isinstance(lit, ExprComplement)),
         frozenset(lit.uniqid for lit in _ASSUMPTIONS
                   if isinstance(lit, ExprVariable))
@@ -179,13 +179,13 @@ def exprvar(name, index=None):
     return var
 
 
-def _exprcomp(exprvar):
+def _exprcomp(v):
     """Return an Expression Complement."""
-    uniqid = -exprvar.uniqid
+    uniqid = -v.uniqid
     try:
         comp = _LITS[uniqid]
     except KeyError:
-        comp = _LITS[uniqid] = ExprComplement(exprvar)
+        comp = _LITS[uniqid] = ExprComplement(v)
     return comp
 
 
@@ -1211,7 +1211,7 @@ class ExprVariable(boolfunc.Variable, ExprLiteral):
         if isinstance(other, ExprVariable):
             return boolfunc.Variable.__lt__(self, other)
         if isinstance(other, ExprComplement):
-            return boolfunc.Variable.__lt__(self, other.exprvar)
+            return boolfunc.Variable.__lt__(self, other.v)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
@@ -1253,30 +1253,30 @@ class ExprComplement(ExprLiteral):
     # Prime - U2032
     SYMBOL = '′'
 
-    def __init__(self, exprvar):
+    def __init__(self, v):
         super(ExprComplement, self).__init__()
-        self._inverse = exprvar
-        self.exprvar = exprvar
-        self.uniqid = -exprvar.uniqid
+        self._inverse = v
+        self.v = v
+        self.uniqid = -v.uniqid
 
     def __str__(self):
-        return '~' + str(self.exprvar)
+        return '~' + str(self.v)
 
     def to_unicode(self):
-        return str(self.exprvar) + self.SYMBOL
+        return str(self.v) + self.SYMBOL
 
     def to_latex(self):
-        return "\\bar{" + self.exprvar.to_latex() + "}"
+        return "\\bar{" + self.v.to_latex() + "}"
 
     def __lt__(self, other):
         if isinstance(other, ExprConstant):
             return False
         if isinstance(other, ExprVariable):
-            return (self.exprvar.names < other.names or
-                    self.exprvar.names == other.names and
-                    self.exprvar.indices <= other.indices)
+            return (self.v.names < other.names or
+                    self.v.names == other.names and
+                    self.v.indices <= other.indices)
         if isinstance(other, ExprComplement):
-            return boolfunc.Variable.__lt__(self.exprvar, other.exprvar)
+            return boolfunc.Variable.__lt__(self.v, other.v)
         if isinstance(other, Expression):
             return True
         return id(self) < id(other)
@@ -1284,25 +1284,25 @@ class ExprComplement(ExprLiteral):
     # From Function
     @cached_property
     def support(self):
-        return frozenset([self.exprvar, ])
+        return frozenset([self.v, ])
 
     def _urestrict1(self, upoint):
-        if self.exprvar.uniqid in upoint[0]:
+        if self.v.uniqid in upoint[0]:
             return EXPRONE
-        elif self.exprvar.uniqid in upoint[1]:
+        elif self.v.uniqid in upoint[1]:
             return EXPRZERO
         else:
             return self
 
     def compose(self, mapping):
         try:
-            return mapping[self.exprvar].simplify()._inv
+            return mapping[self.v].simplify()._inv
         except KeyError:
             return self
 
     # From Expression
     def to_ast(self):
-        return (ExprNot.ASTOP, self.exprvar.to_ast())
+        return (ExprNot.ASTOP, self.v.to_ast())
 
     minterm_index = 0
     maxterm_index = 1
@@ -1310,7 +1310,7 @@ class ExprComplement(ExprLiteral):
     @property
     def splitvar(self):
         """Return a good splitting variable."""
-        return self.exprvar
+        return self.v
 
 
 class Operator(Expression):
