@@ -730,11 +730,6 @@ class Expression(boolfunc.Function):
         """Iterate through all nodes in this expression in DFS order."""
         raise NotImplementedError()
 
-    def invert(self):
-        """Return the inverse expression."""
-        warn("Expression.invert is deprecated")
-        return self._inv
-
     @property
     def _inv(self):
         if self._inverse is None:
