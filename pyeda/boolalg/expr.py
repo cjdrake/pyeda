@@ -65,22 +65,29 @@ Interface Classes:
 
 * :class:`Expression`
 
-  * :class:`ExprConstant`
-  * :class:`ExprLiteral`
+  * :class:`Atom`
 
-    * :class:`ExprVariable`
-    * :class:`ExprComplement`
+    * :class:`ExprConstant`
+    * :class:`ExprLiteral`
 
-  * :class:`ExprNot`
-  * :class:`ExprOrAnd`
+      * :class:`ExprVariable`
+      * :class:`ExprComplement`
 
-    * :class:`ExprOr`
-    * :class:`ExprAnd`
+  * :class:`Operator`
 
-  * :class:`ExprXor`
-  * :class:`ExprEqual`
-  * :class:`ExprImplies`
-  * :class:`ExprITE`
+    * :class:`NaryOp`
+
+      * :class:`OrAndOp`
+
+        * :class:`ExprOr`
+        * :class:`ExprAnd`
+
+      * :class:`ExprXor`
+      * :class:`ExprEqual`
+
+    * :class:`ExprNot`
+    * :class:`ExprImplies`
+    * :class:`ExprITE`
 
 * :class:`NormalForm`
 
@@ -998,7 +1005,11 @@ class Expression(boolfunc.Function):
         return " ".join(parts)
 
 
-class ExprConstant(Expression):
+class Atom(Expression):
+    """Atomic Expression"""
+
+
+class ExprConstant(Atom):
     """Expression constant"""
 
     ASTOP = 'const'
@@ -1132,7 +1143,7 @@ EXPRONE._inverse = EXPRZERO
 CONSTANTS = [EXPRZERO, EXPRONE]
 
 
-class ExprLiteral(Expression):
+class ExprLiteral(Atom):
     """An instance of a variable or of its complement"""
     def __init__(self):
         super(ExprLiteral, self).__init__()
@@ -1334,93 +1345,11 @@ class ExprComplement(ExprLiteral):
         return self.exprvar
 
 
-class ExprNot(Expression):
-    """Expression NOT operator"""
-    ASTOP = 'not'
-    # Logical NOT - U00AC
-    SYMBOL = '¬'
-
-    def __new__(cls, x):
-        # Primitives
-        if isinstance(x, ExprConstant) or isinstance(x, ExprLiteral):
-            return x._inv
-        # Auto-eliminate double negatives
-        elif isinstance(x, ExprNot):
-            return x.x
-        else:
-            return super(ExprNot, cls).__new__(cls)
-
-    def __init__(self, x):
-        super(ExprNot, self).__init__()
-        self._simplified = x._simplified
-        self._inverse = x
-        self.x = x
-
-    @property
-    def arg(self):
-        return self.x
-
-    def __str__(self):
-        return "Not(" + str(self.x) + ")"
-
-    def to_unicode(self):
-        return self.SYMBOL + "(" + str(self.x.to_unicode()) + ")"
-
-    def to_latex(self):
-        return "\\overline{" + self.x.to_latex() + "}"
-
-    # From Function
-    @property
-    def support(self):
-        return self.x.support
-
-    def _urestrict1(self, upoint):
-        _x = self.x._urestrict1(upoint)
-        if _x is not self.x:
-            return self.__class__(_x)
-        else:
-            return self
-
-    def compose(self, mapping):
-        _x = self.x.compose(mapping)
-        if _x is not self.x:
-            return self.__class__(_x).simplify()
-        else:
-            return self.simplify()
-
-    # From Expression
-    def _traverse(self, visited):
-        yield from self.x._traverse(visited)
-        if self not in visited:
-            visited.add(self)
-            yield self
-
-    def simplify(self):
-        if self._simplified:
-            return self
-
-        return self.x.simplify()._inv
-
-    @property
-    def depth(self):
-        return self.x.depth + 1
-
-    def to_nnf(self, conj=False):
-        return self.x._inv_nnf()
-
-    def _inv_nnf(self, conj=False):
-        return self.x.to_nnf()
-
-    def to_ast(self):
-        return (self.ASTOP, self.x.to_ast())
-
-    @property
-    def splitvar(self):
-        """Return a good splitting variable."""
-        return self.x.splitvar
+class Operator(Expression):
+    """Operator Expression"""
 
 
-class _NaryOperator(Expression):
+class _NaryOperator(Operator):
     """Common methods for N-ary expression operators."""
     def __init__(self, *xs):
         super(_NaryOperator, self).__init__()
@@ -2109,7 +2038,93 @@ class ExprEqual(_NaryOperator):
             return ExprOr(*xs).simplify()
 
 
-class ExprImplies(Expression):
+class ExprNot(Operator):
+    """Expression NOT operator"""
+    ASTOP = 'not'
+    # Logical NOT - U00AC
+    SYMBOL = '¬'
+
+    def __new__(cls, x):
+        # Primitives
+        if isinstance(x, ExprConstant) or isinstance(x, ExprLiteral):
+            return x._inv
+        # Auto-eliminate double negatives
+        elif isinstance(x, ExprNot):
+            return x.x
+        else:
+            return super(ExprNot, cls).__new__(cls)
+
+    def __init__(self, x):
+        super(ExprNot, self).__init__()
+        self._simplified = x._simplified
+        self._inverse = x
+        self.x = x
+
+    @property
+    def arg(self):
+        return self.x
+
+    def __str__(self):
+        return "Not(" + str(self.x) + ")"
+
+    def to_unicode(self):
+        return self.SYMBOL + "(" + str(self.x.to_unicode()) + ")"
+
+    def to_latex(self):
+        return "\\overline{" + self.x.to_latex() + "}"
+
+    # From Function
+    @property
+    def support(self):
+        return self.x.support
+
+    def _urestrict1(self, upoint):
+        _x = self.x._urestrict1(upoint)
+        if _x is not self.x:
+            return self.__class__(_x)
+        else:
+            return self
+
+    def compose(self, mapping):
+        _x = self.x.compose(mapping)
+        if _x is not self.x:
+            return self.__class__(_x).simplify()
+        else:
+            return self.simplify()
+
+    # From Expression
+    def _traverse(self, visited):
+        yield from self.x._traverse(visited)
+        if self not in visited:
+            visited.add(self)
+            yield self
+
+    def simplify(self):
+        if self._simplified:
+            return self
+
+        return self.x.simplify()._inv
+
+    @property
+    def depth(self):
+        return self.x.depth + 1
+
+    def to_nnf(self, conj=False):
+        return self.x._inv_nnf()
+
+    def _inv_nnf(self, conj=False):
+        return self.x.to_nnf()
+
+    def to_ast(self):
+        return (self.ASTOP, self.x.to_ast())
+
+    @property
+    def splitvar(self):
+        """Return a good splitting variable."""
+        return self.x.splitvar
+
+
+class ExprImplies(Operator):
     """Expression implication operator"""
     ASTOP = 'implies'
     # Rightwards double arrow - 21D2
@@ -2208,7 +2223,7 @@ class ExprImplies(Expression):
         return ExprAnd(self.p.to_nnf(), self.q._inv_nnf()).simplify()
 
 
-class ExprITE(Expression):
+class ExprITE(Operator):
     """Expression if-then-else ternary operator"""
     ASTOP = 'ite'
 

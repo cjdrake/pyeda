@@ -104,8 +104,6 @@ Expression Tree Nodes
 
 .. autoclass:: pyeda.boolalg.expr.ExprComplement
 
-.. autoclass:: pyeda.boolalg.expr.ExprNot
-
 .. autoclass:: pyeda.boolalg.expr.ExprOrAnd
 
 .. autoclass:: pyeda.boolalg.expr.ExprOr
@@ -115,6 +113,8 @@ Expression Tree Nodes
 .. autoclass:: pyeda.boolalg.expr.ExprXor
 
 .. autoclass:: pyeda.boolalg.expr.ExprEqual
+
+.. autoclass:: pyeda.boolalg.expr.ExprNot
 
 .. autoclass:: pyeda.boolalg.expr.ExprImplies
 
