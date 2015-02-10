@@ -1336,30 +1336,12 @@ class Operator(Expression):
         return frozenset.union(*[x.support for x in self.xs])
 
     def _urestrict1(self, upoint):
-        modified = False
-        ys = list()
-        for x in self.xs:
-            y = x._urestrict1(upoint)
-            if y is not x:
-                modified = True
-            ys.append(y)
-        if modified:
-            return self.__class__(*ys)
-        else:
-            return self
+        f = lambda x: x._urestrict1(upoint)
+        return _op_transform(self, f)
 
     def compose(self, mapping):
-        modified = False
-        ys = list()
-        for x in self.xs:
-            y = x.compose(mapping)
-            if y is not x:
-                modified = True
-            ys.append(y)
-        if modified:
-            return self.__class__(*ys).simplify()
-        else:
-            return self.simplify()
+        f = lambda x: x.compose(mapping)
+        return _op_transform(self, f).simplify()
 
     # From Expression
     def _traverse(self, visited):
@@ -1519,25 +1501,14 @@ class ExprOrAnd(NaryOp):
 
     # FactoredExpression
     def _flatten(self, op):
-        modified = False
-        ys = list()
-        for x in self.xs:
-            y = x._flatten(op)
-            if y is not x:
-                modified = True
-            ys.append(y)
-        if modified:
-            f = self.__class__(*ys).simplify()._absorb()
+        f = lambda x: x._flatten(op)
+        ex = _op_transform(self, f).simplify()._absorb()
+        if ex.depth < 2 or isinstance(ex, op.get_dual()):
+            return ex
         else:
-            f = self
-
-        if f.depth < 2 or isinstance(f, op.get_dual()):
-            return f
-        else:
-            args = [x._lits for x in f.xs]
+            args = {x._lits for x in ex.xs}
             prod = {frozenset(t) for t in itertools.product(*args)}
-            g = op.get_dual()(*[op(*t) for t in prod]).simplify()
-            return g
+            return op.get_dual()(*[op(*t) for t in prod]).simplify()
 
     # FlattenedExpression
     @cached_property
@@ -2315,6 +2286,20 @@ class DimacsCNF(ConjNormalForm):
     def __str__(self):
         formula = super(DimacsCNF, self).__str__()
         return "p cnf {0.nvars} {0.nclauses}\n{1}".format(self, formula)
+
+
+def _op_transform(op, f):
+    modified = False
+    ys = list()
+    for x in op.xs:
+        y = f(x)
+        if y is not x:
+            modified = True
+        ys.append(y)
+    if modified:
+        return op.__class__(*ys)
+    else:
+        return op
 
 
 def _iter_zeros(expr):
