@@ -20,7 +20,7 @@ Constants
 Exceptions
 ==========
 
-.. exception:: Error
+.. exception:: picosat.Error
 
    An error happened inside PicoSAT.
    Examples include initialization errors, and unexpected return codes.

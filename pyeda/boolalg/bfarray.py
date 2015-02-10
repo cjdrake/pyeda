@@ -831,7 +831,8 @@ class farray:
         Example Truth Table for a 2:4 decoder:
 
         .. csv-table::
-           :header: :math:`A_1`, :math:`A_0`, :math:`D_3`, :math:`D_2`, :math:`D_1`, :math:`D_0`
+           :header: :math:`A_1`, :math:`A_0`, \
+                    :math:`D_3`, :math:`D_2`, :math:`D_1`, :math:`D_0`
            :stub-columns: 2
 
            0, 0, 0, 0, 0, 1

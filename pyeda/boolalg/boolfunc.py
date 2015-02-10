@@ -27,18 +27,25 @@ term
 
 Interface Functions:
 
-* :func:`num2point` --- Convert an integer into a point in an N-dimensional Boolean space
-* :func:`num2upoint` --- Convert an integer into an untyped point in an N-dimensional Boolean space.
-* :func:`num2term` --- Convert an integer into a min/max term in an N-dimensional Boolean space
+* :func:`num2point` --- Convert an integer into a point in an N-dimensional
+  Boolean space.
+* :func:`num2upoint` --- Convert an integer into an untyped point in an
+  N-dimensional Boolean space.
+* :func:`num2term` --- Convert an integer into a min/max term in an
+  N-dimensional Boolean space.
 
-* :func:`point2upoint` --- Convert a point into an untyped point
-* :func:`point2term` --- Convert a point into a min/max term
+* :func:`point2upoint` --- Convert a point into an untyped point.
+* :func:`point2term` --- Convert a point into a min/max term.
 
-* :func:`iter_points` --- Iterate through all points in an N-dimensional Boolean space
-* :func:`iter_upoints` --- Iterate through all untyped points in an N-dimensional Boolean space
-* :func:`iter_terms` --- Iterate through all min/max terms in an N-dimensional Boolean space
+* :func:`iter_points` --- Iterate through all points in an N-dimensional
+  Boolean space.
+* :func:`iter_upoints` --- Iterate through all untyped points in an
+  N-dimensional Boolean space.
+* :func:`iter_terms` --- Iterate through all min/max terms in an N-dimensional
+  Boolean space.
 
-* :func:`vpoint2point` --- Convert a vector point into a point in an N-dimensional Boolean space
+* :func:`vpoint2point` --- Convert a vector point into a point in an
+  N-dimensional Boolean space.
 
 Interface Classes:
 
