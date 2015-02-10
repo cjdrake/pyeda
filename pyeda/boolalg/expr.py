@@ -998,7 +998,7 @@ class Expression(boolfunc.Function):
                           'n' + str(id(expr)), '[label=d1]']
                 parts += ['n' + str(id(expr.d0)), '--',
                           'n' + str(id(expr)), '[label=d0]']
-            elif isinstance(expr, _NaryOperator):
+            elif isinstance(expr, NaryOp):
                 for x in expr.xs:
                     parts += ['n' + str(id(x)), '--', 'n' + str(id(expr))]
         parts.append('}')
@@ -1347,16 +1347,19 @@ class ExprComplement(ExprLiteral):
 
 class Operator(Expression):
     """Operator Expression"""
+    STROP = NotImplemented
+    ASTOP = NotImplemented
 
-
-class _NaryOperator(Operator):
-    """Common methods for N-ary expression operators."""
     def __init__(self, *xs):
-        super(_NaryOperator, self).__init__()
+        super(Operator, self).__init__()
         self.xs = xs
+
+    def __str__(self):
+        return self.STROP + "(" + self._joinargs(", ") + ")"
 
     @property
     def args(self):
+        warn("Operator.args is deprecated. Use Operator.xs instead.")
         return self.xs
 
     # From Function
@@ -1366,27 +1369,27 @@ class _NaryOperator(Operator):
 
     def _urestrict1(self, upoint):
         modified = False
-        xs = list()
+        ys = list()
         for x in self.xs:
-            _x = x._urestrict1(upoint)
-            if _x is not x:
+            y = x._urestrict1(upoint)
+            if y is not x:
                 modified = True
-            xs.append(_x)
+            ys.append(y)
         if modified:
-            return self.__class__(*xs)
+            return self.__class__(*ys)
         else:
             return self
 
     def compose(self, mapping):
         modified = False
-        xs = list()
+        ys = list()
         for x in self.xs:
-            _x = x.compose(mapping)
-            if _x is not x:
+            y = x.compose(mapping)
+            if y is not x:
                 modified = True
-            xs.append(_x)
+            ys.append(y)
         if modified:
-            return self.__class__(*xs).simplify()
+            return self.__class__(*ys).simplify()
         else:
             return self.simplify()
 
@@ -1405,11 +1408,6 @@ class _NaryOperator(Operator):
     def to_ast(self):
         return (self.ASTOP, ) + tuple(x.to_ast() for x in self.xs)
 
-    # Specific to _NaryOperator
-    def _joinargs(self, sep):
-        """Return arguments as a string, joined by a separator."""
-        return sep.join(str(x) for x in sorted(self.xs))
-
     @cached_property
     def splitvar(self):
         """Return a good splitting variable.
@@ -1422,8 +1420,20 @@ class _NaryOperator(Operator):
                 cnt[v] += (v in x.support)
         return cnt.most_common(1)[0][0]
 
+    # Specific to Operator
+    def _joinargs(self, sep):
+        """Return arguments as a string, joined by a separator."""
+        return sep.join(str(x) for x in self.xs)
 
-class ExprOrAnd(_NaryOperator):
+
+class NaryOp(Operator):
+    """Common methods for N-ary expression operators."""
+    def _joinargs(self, sep):
+        """Return arguments as a string, joined by a separator."""
+        return sep.join(str(x) for x in sorted(self.xs))
+
+
+class ExprOrAnd(NaryOp):
     """Base class for Expression OR/AND expressions"""
     IDENTITY = NotImplemented
     DOMINATOR = NotImplemented
@@ -1454,17 +1464,17 @@ class ExprOrAnd(_NaryOperator):
     # From Function
     def _urestrict1(self, upoint):
         modified = False
-        xs = set()
+        ys = set()
         for x in self.xs:
-            _x = x._urestrict1(upoint)
+            y = x._urestrict1(upoint)
             # speed hack
-            if _x is self.DOMINATOR:
+            if y is self.DOMINATOR:
                 return self.DOMINATOR
-            elif _x is not x:
+            elif y is not x:
                 modified = True
-            xs.add(_x)
+            ys.add(y)
         if modified:
-            return self.__class__(*xs)
+            return self.__class__(*ys)
         else:
             return self
 
@@ -1612,6 +1622,7 @@ class ExprOrAnd(_NaryOperator):
 
 class ExprOr(ExprOrAnd):
     """Expression OR operator"""
+    STROP = 'Or'
     ASTOP = 'or'
     SYMBOL = '+'
     LATEX_SYMBOL = '+'
@@ -1619,9 +1630,6 @@ class ExprOr(ExprOrAnd):
 
     IDENTITY = EXPRZERO
     DOMINATOR = EXPRONE
-
-    def __str__(self):
-        return "Or(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         parts = list()
@@ -1707,6 +1715,7 @@ class ExprOr(ExprOrAnd):
 
 class ExprAnd(ExprOrAnd):
     """Expression AND operator"""
+    STROP = 'And'
     ASTOP = 'and'
     # Middle dot - U00B7
     SYMBOL = '·'
@@ -1715,9 +1724,6 @@ class ExprAnd(ExprOrAnd):
 
     IDENTITY = EXPRONE
     DOMINATOR = EXPRZERO
-
-    def __str__(self):
-        return "And(" + self._joinargs(", ") + ")"
 
     def __enter__(self):
         for x in self.xs:
@@ -1820,17 +1826,15 @@ class ExprAnd(ExprOrAnd):
         return term.expand(vs, conj=True).xs
 
 
-class ExprXor(_NaryOperator):
+class ExprXor(NaryOp):
     """Expression exclusive OR (XOR) operator"""
+    STROP = 'Xor'
     ASTOP = 'xor'
     # Circled plus - U2295
     SYMBOL = '⊕'
     LATEX_SYMBOL = '\\oplus'
     PRECEDENCE = 1
     IDENTITY = EXPRZERO
-
-    def __str__(self):
-        return "Xor(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         parts = list()
@@ -1940,8 +1944,9 @@ class ExprXor(_NaryOperator):
         return outer(*terms).simplify()
 
 
-class ExprEqual(_NaryOperator):
+class ExprEqual(NaryOp):
     """Expression EQUAL operator"""
+    STROP = 'Equal'
     ASTOP = 'equal'
     # Left right double arrow - 21D4
     SYMBOL = '⇔'
@@ -1949,9 +1954,6 @@ class ExprEqual(_NaryOperator):
     PRECEDENCE = 4
 
     IDENTITY = EXPRONE
-
-    def __str__(self):
-        return "Equal(" + self._joinargs(", ") + ")"
 
     def to_unicode(self):
         parts = list()
@@ -2040,6 +2042,7 @@ class ExprEqual(_NaryOperator):
 
 class ExprNot(Operator):
     """Expression NOT operator"""
+    STROP = 'Not'
     ASTOP = 'not'
     # Logical NOT - U00AC
     SYMBOL = '¬'
@@ -2055,17 +2058,15 @@ class ExprNot(Operator):
             return super(ExprNot, cls).__new__(cls)
 
     def __init__(self, x):
-        super(ExprNot, self).__init__()
+        super(ExprNot, self).__init__(x)
         self._simplified = x._simplified
         self._inverse = x
         self.x = x
 
     @property
     def arg(self):
-        return self.x
-
-    def __str__(self):
-        return "Not(" + str(self.x) + ")"
+        warn("Not.arg is deprecated. Use Not.x instead.")
+        return self.xs
 
     def to_unicode(self):
         return self.SYMBOL + "(" + str(self.x.to_unicode()) + ")"
@@ -2073,41 +2074,12 @@ class ExprNot(Operator):
     def to_latex(self):
         return "\\overline{" + self.x.to_latex() + "}"
 
-    # From Function
-    @property
-    def support(self):
-        return self.x.support
-
-    def _urestrict1(self, upoint):
-        _x = self.x._urestrict1(upoint)
-        if _x is not self.x:
-            return self.__class__(_x)
-        else:
-            return self
-
-    def compose(self, mapping):
-        _x = self.x.compose(mapping)
-        if _x is not self.x:
-            return self.__class__(_x).simplify()
-        else:
-            return self.simplify()
-
     # From Expression
-    def _traverse(self, visited):
-        yield from self.x._traverse(visited)
-        if self not in visited:
-            visited.add(self)
-            yield self
-
     def simplify(self):
         if self._simplified:
             return self
 
         return self.x.simplify()._inv
-
-    @property
-    def depth(self):
-        return self.x.depth + 1
 
     def to_nnf(self, conj=False):
         return self.x._inv_nnf()
@@ -2118,14 +2090,10 @@ class ExprNot(Operator):
     def to_ast(self):
         return (self.ASTOP, self.x.to_ast())
 
-    @property
-    def splitvar(self):
-        """Return a good splitting variable."""
-        return self.x.splitvar
-
 
 class ExprImplies(Operator):
     """Expression implication operator"""
+    STROP = 'Implies'
     ASTOP = 'implies'
     # Rightwards double arrow - 21D2
     SYMBOL = '⇒'
@@ -2133,16 +2101,9 @@ class ExprImplies(Operator):
     PRECEDENCE = 3
 
     def __init__(self, p, q):
-        super(ExprImplies, self).__init__()
+        super(ExprImplies, self).__init__(p, q)
         self.p = p
         self.q = q
-
-    @property
-    def args(self):
-        return self.p, self.q
-
-    def __str__(self):
-        return "Implies({0.p}, {0.q})".format(self)
 
     def to_unicode(self):
         parts = list()
@@ -2165,27 +2126,6 @@ class ExprImplies(Operator):
                 parts.append(x.to_latex())
         sep = " " + self.LATEX_SYMBOL + " "
         return sep.join(parts)
-
-    # From Function
-    @cached_property
-    def support(self):
-        return frozenset.union(self.p.support, self.q.support)
-
-    def _urestrict1(self, upoint):
-        p = self.p._urestrict1(upoint)
-        q = self.q._urestrict1(upoint)
-        if p is self.p and q is self.q:
-            return self
-        else:
-            return self.__class__(p, q)
-
-    def compose(self, mapping):
-        p = self.p.compose(mapping)
-        q = self.q.compose(mapping)
-        if p is self.p and q is self.q:
-            return self.simplify()
-        else:
-            return self.__class__(p, q).simplify()
 
     # From Expression
     def simplify(self):
@@ -2212,10 +2152,6 @@ class ExprImplies(Operator):
         obj._simplified = True
         return obj
 
-    @cached_property
-    def depth(self):
-        return max([self.p.depth, self.q.depth]) + 1
-
     def to_nnf(self, conj=False):
         return ExprOr(self.p._inv_nnf(), self.q.to_nnf()).simplify()
 
@@ -2225,20 +2161,14 @@ class ExprImplies(Operator):
 
 class ExprITE(Operator):
     """Expression if-then-else ternary operator"""
+    STROP = 'ITE'
     ASTOP = 'ite'
 
     def __init__(self, s, d1, d0):
-        super(ExprITE, self).__init__()
+        super(ExprITE, self).__init__(s, d1, d0)
         self.s = s
         self.d1 = d1
         self.d0 = d0
-
-    @property
-    def args(self):
-        return self.s, self.d1, self.d0
-
-    def __str__(self):
-        return "ITE({0.s}, {0.d1}, {0.d0})".format(self)
 
     def to_unicode(self):
         unicode_args = [self.s.to_unicode(),
@@ -2248,29 +2178,6 @@ class ExprITE(Operator):
     def to_latex(self):
         latex_args = [self.s.to_latex(), self.d1.to_latex(), self.d0.to_latex()]
         return "ite({}, {}, {})".format(*latex_args)
-
-    # From Function
-    @cached_property
-    def support(self):
-        return frozenset.union(self.s.support, self.d1.support, self.d0.support)
-
-    def _urestrict1(self, upoint):
-        s = self.s._urestrict1(upoint)
-        d1 = self.d1._urestrict1(upoint)
-        d0 = self.d0._urestrict1(upoint)
-        if s is self.s and d1 is self.d1 and d0 is self.d0:
-            return self
-        else:
-            return self.__class__(s, d1, d0)
-
-    def compose(self, mapping):
-        s = self.s.compose(mapping)
-        d1 = self.d1.compose(mapping)
-        d0 = self.d0.compose(mapping)
-        if s is self.s and d1 is self.d1 and d0 is self.d0:
-            return self.simplify()
-        else:
-            return self.__class__(s, d1, d0).simplify()
 
     # From Expression
     def simplify(self):
@@ -2317,10 +2224,6 @@ class ExprITE(Operator):
         obj = self.__class__(s, d1, d0)
         obj._simplified = True
         return obj
-
-    @cached_property
-    def depth(self):
-        return max([self.s.depth, self.d1.depth, self.d0.depth]) + 1
 
     def to_nnf(self, conj=False):
         if conj:
