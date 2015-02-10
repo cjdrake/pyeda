@@ -1519,19 +1519,25 @@ class ExprOrAnd(NaryOp):
 
     # FactoredExpression
     def _flatten(self, op):
-        if isinstance(self, op):
-            self_dual = self.get_dual()
-            for i, xi in enumerate(self.xs):
-                if isinstance(xi, self_dual):
-                    others = self.xs[:i] + self.xs[i+1:]
-                    xs = [op(x, *others) for x in xi.xs]
-                    expr = op.get_dual()(*xs).simplify()
-                    return expr._flatten(op)._absorb()
-            return self
+        modified = False
+        ys = list()
+        for x in self.xs:
+            y = x._flatten(op)
+            if y is not x:
+                modified = True
+            ys.append(y)
+        if modified:
+            f = self.__class__(*ys).simplify()._absorb()
         else:
-            xs = [x._flatten(op)._absorb() if x.depth > 1 else x
-                  for x in self.xs]
-            return op.get_dual()(*xs).simplify()
+            f = self
+
+        if f.depth < 2 or isinstance(f, op.get_dual()):
+            return f
+        else:
+            args = [x._lits for x in f.xs]
+            prod = {frozenset(t) for t in itertools.product(*args)}
+            g = op.get_dual()(*[op(*t) for t in prod]).simplify()
+            return g
 
     # FlattenedExpression
     @cached_property
