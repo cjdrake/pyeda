@@ -2220,6 +2220,12 @@ class ExprITE(Operator):
         # s ? d1 : d1 = d1
         elif d1 is d0:
             return d1
+        # s ? s : d0 = s | d0
+        elif s is d1:
+            return ExprOr(s, d0).simplify()
+        # s ? d1 : s = s & d1
+        elif s is d0:
+            return ExprAnd(s, d1).simplify()
 
         obj = self.__class__(s, d1, d0)
         obj._simplified = True
