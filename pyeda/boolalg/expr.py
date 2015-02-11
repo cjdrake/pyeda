@@ -1506,9 +1506,9 @@ class ExprOrAnd(NaryOp):
         if ex.depth < 2 or isinstance(ex, op.get_dual()):
             return ex
         else:
-            args = {x._lits for x in ex.xs}
-            prod = {frozenset(t) for t in itertools.product(*args)}
-            return op.get_dual()(*[op(*t) for t in prod]).simplify()
+            terms = {x._lits for x in ex.xs}
+            xs = {op(*t) for t in itertools.product(*terms)}
+            return op.get_dual()(*xs).simplify()._absorb()
 
     # FlattenedExpression
     @cached_property
