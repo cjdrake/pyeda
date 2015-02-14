@@ -1325,6 +1325,27 @@ class Operator(Expression):
     def __str__(self):
         return self.STROP + "(" + self._joinargs(", ") + ")"
 
+    def to_unicode(self):
+        parts = list()
+        for x in sorted(self.xs):
+            if x.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + x.to_unicode() + ')')
+            else:
+                parts.append(x.to_unicode())
+        sep = " " + self.SYMBOL + " "
+        return sep.join(parts)
+
+    def to_latex(self):
+        parts = list()
+        for x in sorted(self.xs):
+            # lower precedence: implies, equal
+            if x.PRECEDENCE >= self.PRECEDENCE:
+                parts.append('(' + x.to_latex() + ')')
+            else:
+                parts.append(x.to_latex())
+        sep = " " + self.LATEX_SYMBOL + " "
+        return sep.join(parts)
+
     @property
     def args(self):
         warn("Operator.args is deprecated. Use Operator.xs instead.")
@@ -1576,28 +1597,6 @@ class ExprOr(ExprOrAnd):
     IDENTITY = EXPRZERO
     DOMINATOR = EXPRONE
 
-    def to_unicode(self):
-        parts = list()
-        for x in sorted(self.xs):
-            # lower precedence: implies, equal
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_unicode() + ')')
-            else:
-                parts.append(x.to_unicode())
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
-
-    def to_latex(self):
-        parts = list()
-        for x in sorted(self.xs):
-            # lower precedence: implies, equal
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_latex() + ')')
-            else:
-                parts.append(x.to_latex())
-        sep = " " + self.LATEX_SYMBOL + " "
-        return sep.join(parts)
-
     # From Expression
     def is_dnf(self):
         # a | b
@@ -1684,28 +1683,6 @@ class ExprAnd(ExprOrAnd):
             else:
                 raise ValueError("expected assumption to be a literal")
 
-    def to_unicode(self):
-        parts = list()
-        for x in sorted(self.xs):
-            # lower precedence: or, xor, implies, equal
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_unicode() + ')')
-            else:
-                parts.append(x.to_unicode())
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
-
-    def to_latex(self):
-        parts = list()
-        for x in sorted(self.xs):
-            # lower precedence: or, xor, implies, equal
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_latex() + ')')
-            else:
-                parts.append(x.to_latex())
-        sep = " " + self.LATEX_SYMBOL + " "
-        return sep.join(parts)
-
     # From Expression
     def is_dnf(self):
         # a & b
@@ -1780,28 +1757,6 @@ class ExprXor(NaryOp):
     LATEX_SYMBOL = '\\oplus'
     PRECEDENCE = 1
     IDENTITY = EXPRZERO
-
-    def to_unicode(self):
-        parts = list()
-        for x in sorted(self.xs):
-            # lower precedence: or, implies, equal
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_unicode() + ')')
-            else:
-                parts.append(x.to_unicode())
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
-
-    def to_latex(self):
-        parts = list()
-        for x in sorted(self.xs):
-            # lower precedence: or, implies, equal
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_latex() + ')')
-            else:
-                parts.append(x.to_latex())
-        sep = " " + self.LATEX_SYMBOL + " "
-        return sep.join(parts)
 
     # From Expression
     def simplify(self):
@@ -1901,26 +1856,11 @@ class ExprEqual(NaryOp):
     IDENTITY = EXPRONE
 
     def to_unicode(self):
-        parts = list()
-        for x in self.xs:
-            # lower precedence:
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_unicode() + ')')
-            else:
-                parts.append(x.to_unicode())
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
-
-    def to_latex(self):
-        parts = list()
-        for x in self.xs:
-            # lower precedence:
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_latex() + ')')
-            else:
-                parts.append(x.to_latex())
-        sep = " " + self.LATEX_SYMBOL + " "
-        return sep.join(parts)
+        if len(self.xs) == 2:
+            return super().to_unicode()
+        else:
+            unicode_args = [x.to_unicode() for x in sorted(self.xs)]
+            return "eq(" + ", ".join(unicode_args) + ")"
 
     # From Expression
     def simplify(self):
@@ -2050,28 +1990,6 @@ class ExprImplies(Operator):
         self.p = p
         self.q = q
 
-    def to_unicode(self):
-        parts = list()
-        for x in (self.p, self.q):
-            # lower precedence: equal
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_unicode() + ')')
-            else:
-                parts.append(x.to_unicode())
-        sep = " " + self.SYMBOL + " "
-        return sep.join(parts)
-
-    def to_latex(self):
-        parts = list()
-        for x in (self.p, self.q):
-            # lower precedence: equal
-            if x.PRECEDENCE >= self.PRECEDENCE:
-                parts.append('(' + x.to_latex() + ')')
-            else:
-                parts.append(x.to_latex())
-        sep = " " + self.LATEX_SYMBOL + " "
-        return sep.join(parts)
-
     # From Expression
     def simplify(self):
         p = self.p.simplify()
@@ -2116,8 +2034,7 @@ class ExprITE(Operator):
         self.d0 = d0
 
     def to_unicode(self):
-        unicode_args = [self.s.to_unicode(),
-                        self.d1.to_unicode(), self.d0.to_unicode()]
+        unicode_args = [x.to_unicode() for x in self.xs]
         return "ite({}, {}, {})".format(*unicode_args)
 
     def to_latex(self):
