@@ -41,13 +41,17 @@ def espresso_exprs(*exprs):
 
        >>> from pyeda.boolalg.expr import exprvar
        >>> a, b, c = map(exprvar, 'abc')
-       >>> f1 = ~a & ~b & ~c | ~a & ~b & c | a & ~b & c | a & b & c | a & b & ~c
-       >>> f2 = ~a & ~b & c | a & ~b & c
+       >>> f1 = Or(And(~a, ~b, ~c), And(~a, ~b, c), And(a, ~b, c), And(a, b, c), And(a, b, ~c))
+       >>> f2 = Or(And(~a, ~b, c), And(a, ~b, c))
        >>> f1m, f2m = espresso_exprs(f1, f2)
-       >>> f1m
-       Or(And(~a, ~b), And(a, b), And(~b, c))
-       >>> f2m
-       And(~b, c)
+       >>> f1.size, f1m.size
+       (21, 10)
+       >>> f1m.equivalent(f1)
+       True
+       >>> f2.size, f2m.size
+       (9, 3)
+       >>> f2m.equivalent(f2)
+       True
     """
     for f in exprs:
         if not (isinstance(f, Expression) and f.is_dnf()):
@@ -98,16 +102,16 @@ def espresso_tts(*tts):
 
     For example::
 
-       >>> from pyeda.boolalg.bfarray import ttvars
+       >>> from pyeda.boolalg.bfarray import exprvars
        >>> from pyeda.boolalg.table import truthtable
-       >>> X = ttvars('x', 4)
+       >>> X = exprvars('x', 4)
        >>> f1 = truthtable(X, "0000011111------")
        >>> f2 = truthtable(X, "0001111100------")
        >>> f1m, f2m = espresso_tts(f1, f2)
-       >>> f1m
-       Or(x[3], And(x[0], x[2]), And(x[1], x[2]))
-       >>> f2m
-       Or(x[2], And(x[0], x[1]))
+       >>> f1m.equivalent(X[3] | X[0] & X[2] | X[1] & X[2])
+       True
+       >>> f2m.equivalent(X[2] | X[0] & X[1])
+       True
     """
     for f in tts:
         if not isinstance(f, TruthTable):
