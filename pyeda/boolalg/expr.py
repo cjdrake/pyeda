@@ -757,6 +757,10 @@ class Expression(boolfunc.Function):
         """
         raise NotImplementedError()
 
+    @property
+    def size(self):
+        """Return the size of the expression tree."""
+
     def to_ast(self):
         """Return the expression converted to an abstract syntax tree."""
         raise NotImplementedError()
@@ -1015,6 +1019,10 @@ class Atom(Expression):
     @property
     def depth(self):
         return 0
+
+    @property
+    def size(self):
+        return 1
 
     def to_nnf(self, conj=False):
         return self
@@ -1375,6 +1383,10 @@ class Operator(Expression):
     @cached_property
     def depth(self):
         return max(x.depth for x in self.xs) + 1
+
+    @cached_property
+    def size(self):
+        return sum(x.size for x in self.xs) + 1
 
     def to_ast(self):
         return (self.ASTOP, ) + tuple(x.to_ast() for x in self.xs)
