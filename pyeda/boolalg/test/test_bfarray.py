@@ -71,8 +71,8 @@ farray([[[z[0,0,0], z[0,0,1]],
     # expected <= M slice dimensions, got N
     assert_raises(ValueError, X.__getitem__, (2, 2))
     sel = exprvars('s', 2)
-    assert str(X[sel]) == "Or(And(~s[0], ~s[1], x[0]), And(s[0], ~s[1], x[1]), And(~s[0], s[1], x[2]), And(s[0], s[1], x[3]))"
-    assert str(X[:2][sel[0]]) == "Or(And(~s[0], x[0]), And(s[0], x[1]))"
+    assert X[sel].equivalent(~sel[0] & ~sel[1] & X[0] | sel[0] & ~sel[1] & X[1] | ~sel[0] & sel[1] & X[2] | sel[0] & sel[1] & X[3])
+    assert X[:2][sel[0]].equivalent(~sel[0] & X[0] | sel[0] & X[1])
     # expected clog2(N) bits
     assert_raises(ValueError, X.__getitem__, sel[0])
     # slice step not supported
