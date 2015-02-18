@@ -146,8 +146,8 @@ def bdd2expr(bdd, conj=False):
     For example::
 
        >>> a, b = map(bddvar, 'ab')
-       >>> bdd2expr(~a & b | a & ~b)
-       Or(And(~a, b), And(a, ~b))
+       >>> bdd2expr(~a | b)
+       Or(~a, And(a, b))
     """
     if conj:
         outer, inner = (And, Or)
@@ -167,7 +167,7 @@ def upoint2bddpoint(upoint):
     """Convert an untyped point into a BDD point.
 
     .. seealso::
-       For definitions of points an untyped points,
+       For definitions of points and untyped points,
        see the :mod:`pyeda.boolalg.boolfunc` module.
     """
     point = dict()
