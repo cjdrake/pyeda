@@ -128,39 +128,39 @@ def test_point2upoint():
     assert point2upoint({a: 1, b: 1, c: 1, d: 1}) == (set(), {aa, bb, cc, dd})
 
 def test_point2term():
-    assert sorted(point2term({a: 0, b: 0, c: 0, d: 0}, conj=False)) == [~a, ~b, ~c, ~d]
-    assert sorted(point2term({a: 1, b: 0, c: 0, d: 0}, conj=False)) == [ a, ~b, ~c, ~d]
-    assert sorted(point2term({a: 0, b: 1, c: 0, d: 0}, conj=False)) == [~a,  b, ~c, ~d]
-    assert sorted(point2term({a: 1, b: 1, c: 0, d: 0}, conj=False)) == [ a,  b, ~c, ~d]
-    assert sorted(point2term({a: 0, b: 0, c: 1, d: 0}, conj=False)) == [~a, ~b,  c, ~d]
-    assert sorted(point2term({a: 1, b: 0, c: 1, d: 0}, conj=False)) == [ a, ~b,  c, ~d]
-    assert sorted(point2term({a: 0, b: 1, c: 1, d: 0}, conj=False)) == [~a,  b,  c, ~d]
-    assert sorted(point2term({a: 1, b: 1, c: 1, d: 0}, conj=False)) == [ a,  b,  c, ~d]
-    assert sorted(point2term({a: 0, b: 0, c: 0, d: 1}, conj=False)) == [~a, ~b, ~c,  d]
-    assert sorted(point2term({a: 1, b: 0, c: 0, d: 1}, conj=False)) == [ a, ~b, ~c,  d]
-    assert sorted(point2term({a: 0, b: 1, c: 0, d: 1}, conj=False)) == [~a,  b, ~c,  d]
-    assert sorted(point2term({a: 1, b: 1, c: 0, d: 1}, conj=False)) == [ a,  b, ~c,  d]
-    assert sorted(point2term({a: 0, b: 0, c: 1, d: 1}, conj=False)) == [~a, ~b,  c,  d]
-    assert sorted(point2term({a: 1, b: 0, c: 1, d: 1}, conj=False)) == [ a, ~b,  c,  d]
-    assert sorted(point2term({a: 0, b: 1, c: 1, d: 1}, conj=False)) == [~a,  b,  c,  d]
-    assert sorted(point2term({a: 1, b: 1, c: 1, d: 1}, conj=False)) == [ a,  b,  c,  d]
+    assert set(point2term({a: 0, b: 0, c: 0, d: 0}, conj=False)) == {~a, ~b, ~c, ~d}
+    assert set(point2term({a: 1, b: 0, c: 0, d: 0}, conj=False)) == { a, ~b, ~c, ~d}
+    assert set(point2term({a: 0, b: 1, c: 0, d: 0}, conj=False)) == {~a,  b, ~c, ~d}
+    assert set(point2term({a: 1, b: 1, c: 0, d: 0}, conj=False)) == { a,  b, ~c, ~d}
+    assert set(point2term({a: 0, b: 0, c: 1, d: 0}, conj=False)) == {~a, ~b,  c, ~d}
+    assert set(point2term({a: 1, b: 0, c: 1, d: 0}, conj=False)) == { a, ~b,  c, ~d}
+    assert set(point2term({a: 0, b: 1, c: 1, d: 0}, conj=False)) == {~a,  b,  c, ~d}
+    assert set(point2term({a: 1, b: 1, c: 1, d: 0}, conj=False)) == { a,  b,  c, ~d}
+    assert set(point2term({a: 0, b: 0, c: 0, d: 1}, conj=False)) == {~a, ~b, ~c,  d}
+    assert set(point2term({a: 1, b: 0, c: 0, d: 1}, conj=False)) == { a, ~b, ~c,  d}
+    assert set(point2term({a: 0, b: 1, c: 0, d: 1}, conj=False)) == {~a,  b, ~c,  d}
+    assert set(point2term({a: 1, b: 1, c: 0, d: 1}, conj=False)) == { a,  b, ~c,  d}
+    assert set(point2term({a: 0, b: 0, c: 1, d: 1}, conj=False)) == {~a, ~b,  c,  d}
+    assert set(point2term({a: 1, b: 0, c: 1, d: 1}, conj=False)) == { a, ~b,  c,  d}
+    assert set(point2term({a: 0, b: 1, c: 1, d: 1}, conj=False)) == {~a,  b,  c,  d}
+    assert set(point2term({a: 1, b: 1, c: 1, d: 1}, conj=False)) == { a,  b,  c,  d}
 
-    assert sorted(point2term({a: 0, b: 0, c: 0, d: 0}, conj=True)) == [ a,  b,  c,  d]
-    assert sorted(point2term({a: 1, b: 0, c: 0, d: 0}, conj=True)) == [~a,  b,  c,  d]
-    assert sorted(point2term({a: 0, b: 1, c: 0, d: 0}, conj=True)) == [ a, ~b,  c,  d]
-    assert sorted(point2term({a: 1, b: 1, c: 0, d: 0}, conj=True)) == [~a, ~b,  c,  d]
-    assert sorted(point2term({a: 0, b: 0, c: 1, d: 0}, conj=True)) == [ a,  b, ~c,  d]
-    assert sorted(point2term({a: 1, b: 0, c: 1, d: 0}, conj=True)) == [~a,  b, ~c,  d]
-    assert sorted(point2term({a: 0, b: 1, c: 1, d: 0}, conj=True)) == [ a, ~b, ~c,  d]
-    assert sorted(point2term({a: 1, b: 1, c: 1, d: 0}, conj=True)) == [~a, ~b, ~c,  d]
-    assert sorted(point2term({a: 0, b: 0, c: 0, d: 1}, conj=True)) == [ a,  b,  c, ~d]
-    assert sorted(point2term({a: 1, b: 0, c: 0, d: 1}, conj=True)) == [~a,  b,  c, ~d]
-    assert sorted(point2term({a: 0, b: 1, c: 0, d: 1}, conj=True)) == [ a, ~b,  c, ~d]
-    assert sorted(point2term({a: 1, b: 1, c: 0, d: 1}, conj=True)) == [~a, ~b,  c, ~d]
-    assert sorted(point2term({a: 0, b: 0, c: 1, d: 1}, conj=True)) == [ a,  b, ~c, ~d]
-    assert sorted(point2term({a: 1, b: 0, c: 1, d: 1}, conj=True)) == [~a,  b, ~c, ~d]
-    assert sorted(point2term({a: 0, b: 1, c: 1, d: 1}, conj=True)) == [ a, ~b, ~c, ~d]
-    assert sorted(point2term({a: 1, b: 1, c: 1, d: 1}, conj=True)) == [~a, ~b, ~c, ~d]
+    assert set(point2term({a: 0, b: 0, c: 0, d: 0}, conj=True)) == { a,  b,  c,  d}
+    assert set(point2term({a: 1, b: 0, c: 0, d: 0}, conj=True)) == {~a,  b,  c,  d}
+    assert set(point2term({a: 0, b: 1, c: 0, d: 0}, conj=True)) == { a, ~b,  c,  d}
+    assert set(point2term({a: 1, b: 1, c: 0, d: 0}, conj=True)) == {~a, ~b,  c,  d}
+    assert set(point2term({a: 0, b: 0, c: 1, d: 0}, conj=True)) == { a,  b, ~c,  d}
+    assert set(point2term({a: 1, b: 0, c: 1, d: 0}, conj=True)) == {~a,  b, ~c,  d}
+    assert set(point2term({a: 0, b: 1, c: 1, d: 0}, conj=True)) == { a, ~b, ~c,  d}
+    assert set(point2term({a: 1, b: 1, c: 1, d: 0}, conj=True)) == {~a, ~b, ~c,  d}
+    assert set(point2term({a: 0, b: 0, c: 0, d: 1}, conj=True)) == { a,  b,  c, ~d}
+    assert set(point2term({a: 1, b: 0, c: 0, d: 1}, conj=True)) == {~a,  b,  c, ~d}
+    assert set(point2term({a: 0, b: 1, c: 0, d: 1}, conj=True)) == { a, ~b,  c, ~d}
+    assert set(point2term({a: 1, b: 1, c: 0, d: 1}, conj=True)) == {~a, ~b,  c, ~d}
+    assert set(point2term({a: 0, b: 0, c: 1, d: 1}, conj=True)) == { a,  b, ~c, ~d}
+    assert set(point2term({a: 1, b: 0, c: 1, d: 1}, conj=True)) == {~a,  b, ~c, ~d}
+    assert set(point2term({a: 0, b: 1, c: 1, d: 1}, conj=True)) == { a, ~b, ~c, ~d}
+    assert set(point2term({a: 1, b: 1, c: 1, d: 1}, conj=True)) == {~a, ~b, ~c, ~d}
 
 def test_iter_points():
     assert list(iter_points([a, b])) == [{a: 0, b: 0}, {a: 1, b: 0}, {a: 0, b: 1}, {a: 1, b: 1}]
@@ -169,6 +169,6 @@ def test_iter_upoints():
     assert list(iter_upoints([a, b])) == [({aa, bb}, set()), ({bb}, {aa}), ({aa}, {bb}), (set(), {aa, bb})]
 
 def test_iter_terms():
-    assert list(sorted(term) for term in iter_terms([a, b], conj=False)) == [[~a, ~b], [a, ~b], [~a, b], [a, b]]
-    assert list(sorted(term) for term in iter_terms([a, b], conj=True)) == [[a, b], [~a, b], [a, ~b], [~a, ~b]]
+    assert list(set(term) for term in iter_terms([a, b], conj=False)) == [{~a, ~b}, {a, ~b}, {~a, b}, {a, b}]
+    assert list(set(term) for term in iter_terms([a, b], conj=True)) == [{a, b}, {~a, b}, {a, ~b}, {~a, ~b}]
 
