@@ -70,30 +70,27 @@ _eq_binify(BoolExpr *op)
 
         for (size_t i = 0, index = 0; i < (op->data.xs->length - 1); ++i) {
             for (size_t j = i+1; j < op->data.xs->length; ++j, ++index) {
-
                 xs[index] = EqualN(2, op->data.xs->items[i],
                                       op->data.xs->items[j]);
-
-                /* LCOV_EXCL_START */
                 if (xs[index] == NULL) {
+                    /* LCOV_EXCL_START */
                     for (size_t k = 0; k < index; ++k)
                         BoolExpr_DecRef(xs[k]);
                     free(xs);
                     return NULL;
+                    /* LCOV_EXCL_STOP */
                 }
-                /* LCOV_EXCL_STOP */
             }
         }
 
         temp = And(length, xs);
-
-        /* LCOV_EXCL_START */
         if (temp == NULL) {
+            /* LCOV_EXCL_START */
             for (size_t i = 0; i < length; ++i)
                 BoolExpr_DecRef(xs[i]);
             free(xs);
+            /* LCOV_EXCL_STOP */
         }
-        /* LCOV_EXCL_STOP */
 
         for (size_t i = 0; i < length; ++i)
             BoolExpr_DecRef(xs[i]);

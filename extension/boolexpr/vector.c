@@ -15,20 +15,14 @@ BoolExprVector_New()
     BoolExprVector *vec;
 
     vec = (BoolExprVector *) malloc(sizeof(BoolExprVector));
-
-    /* LCOV_EXCL_START */
     if (vec == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     vec->items = (BoolExpr **) malloc(CAPACITY * sizeof(BoolExpr *));
-
-    /* LCOV_EXCL_START */
     if (vec->items == NULL) {
-        free(vec);
-        return NULL;
+        free(vec);   // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     vec->length = 0;
     vec->capacity = CAPACITY;
@@ -69,11 +63,8 @@ BoolExprVector_Insert(BoolExprVector *vec, size_t index, BoolExpr *ex)
 
     if (req_cap > vec->capacity) {
         vec->items = (BoolExpr **) realloc(vec->items, req_cap * sizeof(BoolExpr *));
-
-        /* LCOV_EXCL_START */
         if (vec->items == NULL)
-            return false;
-        /* LCOV_EXCL_STOP */
+            return false; // LCOV_EXCL_LINE
 
         /* Initialize new items to NULL expression */
         for (size_t i = vec->capacity; i < req_cap; ++i)

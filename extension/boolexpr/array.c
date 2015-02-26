@@ -12,20 +12,14 @@ BoolExprArray_New(size_t length, BoolExpr **items)
     BoolExprArray *array;
 
     array = (BoolExprArray *) malloc(sizeof(BoolExprArray));
-
-    /* LCOV_EXCL_START */
     if (array == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     array->items = (BoolExpr **) malloc(length * sizeof(BoolExpr *));
-
-    /* LCOV_EXCL_START */
     if (array->items == NULL) {
-        free(array);
-        return NULL;
+        free(array); // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     array->length = length;
 

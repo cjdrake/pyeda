@@ -36,11 +36,8 @@ BoolExprIter_New(BoolExpr *ex)
     BoolExprIter *it;
 
     it = (BoolExprIter *) malloc(sizeof(BoolExprIter));
-
-    /* LCOV_EXCL_START */
     if (it == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     it->done = false;
     it->ex = ex;
@@ -48,13 +45,10 @@ BoolExprIter_New(BoolExpr *ex)
     if (IS_OP(ex)) {
         it->index = 0;
         it->it = BoolExprIter_New(ex->data.xs->items[0]);
-
-        /* LCOV_EXCL_START */
         if (it->it == NULL) {
-            free(it);
-            return NULL;
+            free(it);    // LCOV_EXCL_LINE
+            return NULL; // LCOV_EXCL_LINE
         }
-        /* LCOV_EXCL_STOP */
     }
 
     return it;
@@ -124,11 +118,8 @@ _lit_new(BoolExprVector *lits, long uniqid)
     BoolExpr *lit;
 
     lit = (BoolExpr *) malloc(sizeof(BoolExpr));
-
-    /* LCOV_EXCL_START */
     if (lit == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     lit->refcount = 1;
     lit->type = uniqid < 0 ? COMP : VAR;
@@ -155,20 +146,14 @@ _op_new(BoolExprType t, size_t n, BoolExpr **xs)
     BoolExpr *op;
 
     op = (BoolExpr *) malloc(sizeof(BoolExpr));
-
-    /* LCOV_EXCL_START */
     if (op == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     op->data.xs = BoolExprArray_New(n, xs);
-
-    /* LCOV_EXCL_START */
     if (op->data.xs == NULL) {
-        free(op);
-        return NULL;
+        free(op);    // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     op->refcount = 1;
     op->type = t;

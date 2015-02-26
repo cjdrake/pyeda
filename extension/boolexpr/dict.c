@@ -88,20 +88,14 @@ BoolExprDict_New(size_t (*prehash)(BoolExpr *))
     size_t width = _primes[pridx];
 
     dict = (BoolExprDict *) malloc(sizeof(BoolExprDict));
-
-    /* LCOV_EXCL_START */
     if (dict == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     dict->items = (BoolExprDictItem **) malloc(width * sizeof(BoolExprDictItem *));
-
-    /* LCOV_EXCL_START */
     if (dict->items == NULL) {
-        free(dict);
-        return NULL;
+        free(dict);  // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     for (size_t i = 0; i < width; ++i)
         dict->items[i] = (BoolExprDictItem *) NULL;
@@ -181,11 +175,8 @@ _insert(BoolExprDict *dict, BoolExpr *key, BoolExpr *val)
     }
 
     item = (BoolExprDictItem *) malloc(sizeof(BoolExprDictItem));
-
-    /* LCOV_EXCL_START */
     if (item == NULL)
-        return false;
-    /* LCOV_EXCL_STOP */
+        return false; // LCOV_EXCL_LINE
 
     item->key = BoolExpr_IncRef(key);
     item->val = BoolExpr_IncRef(val);
@@ -215,14 +206,14 @@ _enlarge(BoolExprDict *dict)
     for (size_t i = 0; i < _primes[pridx]; ++i) {
         item = items[i];
         while (item != (BoolExprDictItem *) NULL) {
-            /* LCOV_EXCL_START */
             if (!_insert(dict, item->key, item->val)) {
+                /* LCOV_EXCL_START */
                 for (size_t j = 0; j < i; ++j)
                     _list_del(items[j]);
                 free(items);
                 return false;
+                /* LCOV_EXCL_STOP */
             }
-            /* LCOV_EXCL_STOP */
             item = item->tail;
         }
         _list_del(items[i]);
@@ -238,18 +229,14 @@ BoolExprDict_Insert(BoolExprDict *dict, BoolExpr *key, BoolExpr *val)
 {
     double load;
 
-    /* LCOV_EXCL_START */
     if (!_insert(dict, key, val))
-        return false;
-    /* LCOV_EXCL_STOP */
+        return false; // LCOV_EXCL_LINE
 
     load = (double) dict->length / (double) _primes[dict->pridx];
 
     if (dict->pridx < _MAX_IDX && load > MAX_LOAD) {
-        /* LCOV_EXCL_START */
         if (!_enlarge(dict))
-            return false;
-        /* LCOV_EXCL_STOP */
+            return false; // LCOV_EXCL_LINE
     }
 
     return true;

@@ -56,29 +56,20 @@ _distribute(BoolExprType t, BoolExpr *nf)
     BoolExpr *dnf;
 
     sets = _nf2sets(nf);
-
-    /* LCOV_EXCL_START */
     if (sets == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     product = BoolExprArray2_Product(sets, t);
-
-    /* LCOV_EXCL_START */
     if (product == NULL) {
-        BoolExprArray2_Del(sets);
-        return NULL;
+        BoolExprArray2_Del(sets); // LCOV_EXCL_LINE
+        return NULL;              // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     temp = _op_new(DUAL(t), product->length, product->items);
-
-    /* LCOV_EXCL_START */
     if (temp == NULL) {
-        BoolExprArray_Del(product);
-        BoolExprArray2_Del(sets);
+        BoolExprArray_Del(product); // LCOV_EXCL_LINE
+        BoolExprArray2_Del(sets);   // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     BoolExprArray_Del(product);
     BoolExprArray2_Del(sets);
@@ -329,51 +320,36 @@ _cofactors(BoolExpr **fv0, BoolExpr **fv1, BoolExpr *f, BoolExpr *v)
     BoolExprDict *v0, *v1;
 
     v0 = BoolExprVarMap_New();
-    /* LCOV_EXCL_START */
     if (v0 == NULL)
-        return false;
-    /* LCOV_EXCL_STOP */
+        return false; // LCOV_EXCL_LINE
 
-    /* LCOV_EXCL_START */
     if (!BoolExprDict_Insert(v0, v, &Zero)) {
-        BoolExprDict_Del(v0);
-        return false;
+        BoolExprDict_Del(v0); // LCOV_EXCL_LINE
+        return false;         // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     *fv0 = BoolExpr_Restrict(f, v0);
-
-    /* LCOV_EXCL_START */
     if (fv0 == NULL) {
-        BoolExprDict_Del(v0);
-        return false;
+        BoolExprDict_Del(v0); // LCOV_EXCL_LINE
+        return false;         // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     BoolExprDict_Del(v0);
 
     v1 = BoolExprVarMap_New();
-
-    /* LCOV_EXCL_START */
     if (v1 == NULL)
-        return false;
-    /* LCOV_EXCL_STOP */
+        return false; // LCOV_EXCL_LINE
 
-    /* LCOV_EXCL_START */
     if (!BoolExprDict_Insert(v1, v, &One)) {
-        BoolExprDict_Del(v1);
-        return false;
+        BoolExprDict_Del(v1); // LCOV_EXCL_LINE
+        return false;         // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     *fv1 = BoolExpr_Restrict(f, v1);
-
-    /* LCOV_EXCL_START */
     if (fv1 == NULL) {
-        BoolExprDict_Del(v1);
-        return false;
+        BoolExprDict_Del(v1); // LCOV_EXCL_LINE
+        return false;         // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     BoolExprDict_Del(v1);
 
@@ -398,12 +374,10 @@ _complete_sum(BoolExpr *dnf)
 
         CHECK_NULL(v, _choose_var(dnf));
 
-        /* LCOV_EXCL_START */
         if (!_cofactors(&fv0, &fv1, dnf, v)) {
-            BoolExpr_DecRef(v);
-            return NULL;
+            BoolExpr_DecRef(v); // LCOV_EXCL_LINE
+            return NULL;        // LCOV_EXCL_LINE
         }
-        /* LCOV_EXCL_STOP */
 
         CHECK_NULL_3(cs0, _complete_sum(fv0), v, fv0, fv1);
         BoolExpr_DecRef(fv0);

@@ -84,10 +84,10 @@ do { \
 
 
 /* Category checks */
-#define IS_ATOM(ex)   (((ex)->type) >> 3 == 0x0) // 0000_0***
-#define IS_CONST(ex)  (((ex)->type) >> 2 == 0x0) // 0000_00**
-#define IS_LIT(ex)    (((ex)->type) >> 1 == 0x2) // 0000_010*
-#define IS_OP(ex)     (((ex)->type) >> 3 == 0x1) // 0000_1***
+#define IS_ATOM(ex)   (((ex)->type) >> 3 == 0x0) // 0***
+#define IS_CONST(ex)  (((ex)->type) >> 2 == 0x0) // 00**
+#define IS_LIT(ex)    (((ex)->type) >> 1 == 0x2) // 010*
+#define IS_OP(ex)     (((ex)->type) >> 3 == 0x1) // 1***
 
 
 /* Flag definitions */

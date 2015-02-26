@@ -86,20 +86,14 @@ BoolExprSet_New(size_t (*prehash)(BoolExpr *))
     size_t width = _primes[pridx];
 
     set = (BoolExprSet *) malloc(sizeof(BoolExprSet));
-
-    /* LCOV_EXCL_START */
     if (set == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     set->items = (BoolExprSetItem **) malloc(width * sizeof(BoolExprSetItem *));
-
-    /* LCOV_EXCL_START */
     if (set->items == NULL) {
-        free(set);
-        return NULL;
+        free(set);   // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     for (size_t i = 0; i < width; ++i)
         set->items[i] = (BoolExprSetItem *) NULL;
@@ -175,11 +169,8 @@ _insert(BoolExprSet *set, BoolExpr *key)
     }
 
     item = (BoolExprSetItem *) malloc(sizeof(BoolExprSetItem));
-
-    /* LCOV_EXCL_START */
     if (item == NULL)
-        return false;
-    /* LCOV_EXCL_STOP */
+        return false; // LCOV_EXCL_LINE
 
     item->key = BoolExpr_IncRef(key);
     item->tail = set->items[index];
@@ -208,14 +199,14 @@ _enlarge(BoolExprSet *set)
     for (size_t i = 0; i < _primes[pridx]; ++i) {
         item = items[i];
         while (item != (BoolExprSetItem *) NULL) {
-            /* LCOV_EXCL_START */
             if (!_insert(set, item->key)) {
+                /* LCOV_EXCL_START */
                 for (size_t j = 0; j < i; ++j)
                     _list_del(items[j]);
                 free(items);
                 return false;
+                /* LCOV_EXCL_STOP */
             }
-            /* LCOV_EXCL_STOP */
             item = item->tail;
         }
         _list_del(items[i]);
@@ -231,18 +222,14 @@ BoolExprSet_Insert(BoolExprSet *set, BoolExpr *key)
 {
     double load;
 
-    /* LCOV_EXCL_START */
     if (!_insert(set, key))
-        return false;
-    /* LCOV_EXCL_STOP */
+        return false; // LCOV_EXCL_LINE
 
     load = (double) set->length / (double) _primes[set->pridx];
 
     if (set->pridx < _MAX_IDX && load > MAX_LOAD) {
-        /* LCOV_EXCL_START */
         if (!_enlarge(set))
-            return false;
-        /* LCOV_EXCL_STOP */
+            return false; // LCOV_EXCL_LINE
     }
 
     return true;

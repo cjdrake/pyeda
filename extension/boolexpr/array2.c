@@ -16,20 +16,14 @@ BoolExprArray2_New(size_t length, size_t *lengths, BoolExpr ***items)
     BoolExprArray2 *array2;
 
     array2 = (BoolExprArray2 *) malloc(sizeof(BoolExprArray2));
-
-    /* LCOV_EXCL_START */
     if (array2 == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     array2->items = (BoolExprArray **) malloc(length * sizeof(BoolExprArray *));
-
-    /* LCOV_EXCL_START */
     if (array2->items == NULL) {
-        free(array2);
-        return NULL;
+        free(array2); // LCOV_EXCL_LINE
+        return NULL;  // LCOV_EXCL_LINE
     }
-    /* LCOV_EXCL_STOP */
 
     array2->length = length;
 
@@ -73,25 +67,20 @@ _multiply(BoolExprArray *a, BoolExprArray *b, BoolExprType t)
     BoolExprArray *prod;
 
     items = (BoolExpr **) malloc(length * sizeof(BoolExpr *));
-
-    /* LCOV_EXCL_START */
     if (items == NULL)
-        return NULL;
-    /* LCOV_EXCL_STOP */
+        return NULL; // LCOV_EXCL_LINE
 
     for (size_t i = 0, index = 0; i < a->length; ++i) {
         for (size_t j = 0; j < b->length; ++j, ++index) {
-
             items[index] = _opn_new(t, 2, a->items[i], b->items[j]);
-
-            /* LCOV_EXCL_START */
             if (items[index] == NULL) {
+                /* LCOV_EXCL_START */
                 for (size_t k = 0; k < index; ++k)
                     BoolExpr_DecRef(items[k]);
                 free(items);
                 return NULL;
+                /* LCOV_EXCL_STOP */
             }
-            /* LCOV_EXCL_STOP */
         }
     }
 
@@ -117,11 +106,8 @@ _product(BoolExprArray2 *array2, BoolExprType t, size_t n)
         BoolExprArray *prod;
 
         prev = _product(array2, t, n-1);
-
-        /* LCOV_EXCL_START */
         if (prev == NULL)
-            return NULL;
-        /* LCOV_EXCL_STOP */
+            return NULL; // LCOV_EXCL_LINE
 
         prod = _multiply(array2->items[n-1], prev, t);
 
