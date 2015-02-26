@@ -229,7 +229,7 @@ _to_dnf(BoolExpr *nnf)
         if (IS_ATOM(nf2) || _is_clause(nf2) || IS_OR(nf2))
             return nf2;
 
-        CHECK_NULL(temp, _distribute(OP_AND, nf2));
+        CHECK_NULL_1(temp, _distribute(OP_AND, nf2), nf2);
         BoolExpr_DecRef(nf2);
         CHECK_NULL_1(dnf, _absorb(temp), temp);
         BoolExpr_DecRef(temp);
@@ -266,7 +266,7 @@ _to_cnf(BoolExpr *nnf)
         if (IS_ATOM(nf2) || _is_clause(nf2) || IS_AND(nf2))
             return nf2;
 
-        CHECK_NULL(temp, _distribute(OP_OR, nf2));
+        CHECK_NULL_1(temp, _distribute(OP_OR, nf2), nf2);
         BoolExpr_DecRef(nf2);
         CHECK_NULL_1(cnf, _absorb(temp), temp);
         BoolExpr_DecRef(temp);
