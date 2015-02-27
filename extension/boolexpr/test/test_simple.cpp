@@ -365,6 +365,18 @@ TEST_F(BoolExprSimpleTest, EqualCases)
 }
 
 
+TEST_F(BoolExprSimpleTest, NotCases)
+{
+    ops[0] = NorN(3, xs[0], &One, xs[1]);
+    ops[1] = BoolExpr_Simplify(ops[0]);
+    EXPECT_EQ(ops[1], &Zero);
+
+    ops[2] = NandN(3, xs[0], xs[1], xs[2]);
+    ops[3] = BoolExpr_Simplify(ops[2]);
+    EXPECT_TRUE(Similar(ops[2], ops[3]));
+}
+
+
 TEST_F(BoolExprSimpleTest, ImpliesCases)
 {
     ops[0] = Implies(&Zero, xs[0]);
@@ -390,6 +402,10 @@ TEST_F(BoolExprSimpleTest, ImpliesCases)
     ops[10] = Implies(xns[0], xs[0]);
     ops[11] = BoolExpr_Simplify(ops[10]);
     EXPECT_EQ(ops[11], xs[0]);
+
+    ops[12] = Implies(xs[1], xs[2]);
+    ops[13] = BoolExpr_Simplify(ops[12]);
+    EXPECT_TRUE(Similar(ops[12], ops[13]));
 }
 
 
@@ -455,5 +471,9 @@ TEST_F(BoolExprSimpleTest, ITECases)
     ops[21] = BoolExpr_Simplify(ops[20]);
     exps[5] = AndN(2, xs[0], xs[1]);
     EXPECT_TRUE(Similar(ops[21], exps[5]));
+
+    ops[22] = ITE(xs[0], xs[1], xs[2]);
+    ops[23] = BoolExpr_Simplify(ops[22]);
+    EXPECT_TRUE(Similar(ops[22], ops[23]));
 }
 

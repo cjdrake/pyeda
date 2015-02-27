@@ -338,12 +338,7 @@ done:
 static BoolExpr *
 _not_simplify(BoolExpr *op)
 {
-    BoolExpr *x = op->data.xs->items[0];
-    BoolExpr *y;
-
-    CHECK_NULL(y, Not(x));
-
-    return y;
+    return Not(op->data.xs->items[0]);
 }
 
 
