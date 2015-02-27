@@ -87,6 +87,13 @@ Interface Classes:
 """
 
 
+# Disable 'unnecessary-lambda'
+# pylint: disable=W0108
+
+# Disable 'no-member' error
+# pylint: disable=E1101
+
+
 import itertools
 import random
 
@@ -258,7 +265,7 @@ def _expr2sat(ex, litmap): # pragma: no cover
     if isinstance(ex, Literal):
         return str(litmap[ex])
     elif isinstance(ex, NotOp):
-       return "-(" + _expr2sat(ex.x, litmap) + ")"
+        return "-(" + _expr2sat(ex.x, litmap) + ")"
     elif isinstance(ex, OrOp):
         return "+(" + " ".join(_expr2sat(x, litmap)
                                for x in ex.xs) + ")"
@@ -550,20 +557,20 @@ def Mux(fs, sel, simplify=True):
     return _expr(y)
 
 
-def ForAll(vs, expr): # pragma: no cover
+def ForAll(vs, ex): # pragma: no cover
     """
     Return an expression that means
-    "for all variables in *vs*, *expr* is true".
+    "for all variables in *vs*, *ex* is true".
     """
-    return And(*expr.cofactors(vs))
+    return And(*ex.cofactors(vs))
 
 
-def Exists(vs, expr): # pragma: no cover
+def Exists(vs, ex): # pragma: no cover
     """
     Return an expression that means
-    "there exists a variable in *vs* such that *expr* is true".
+    "there exists a variable in *vs* such that *ex* is true".
     """
-    return Or(*expr.cofactors(vs))
+    return Or(*ex.cofactors(vs))
 
 
 class Expression(boolfunc.Function):
@@ -743,6 +750,13 @@ class Expression(boolfunc.Function):
         return self.node.is_cnf()
 
     def pushdown_not(self):
+        """Return an expression with NOT operators pushed down thru dual ops.
+
+        Specifically, perform the following transformations:
+            ~(a | b | c ...) <=> ~a & ~b & ~c ...
+            ~(a & b & c ...) <=> ~a | ~b | ~c ...
+            ~(s ? d1 : d0) <=> s ? ~d1 : ~d0
+        """
         node = self.node.pushdown_not()
         if node is self.node:
             return self
@@ -759,6 +773,7 @@ class Expression(boolfunc.Function):
 
     @property
     def simple(self):
+        """Return True if the expression has been simplified."""
         return self.node.simple()
 
     def to_binary(self):
@@ -770,6 +785,7 @@ class Expression(boolfunc.Function):
             return _expr(node)
 
     def to_nnf(self):
+        """Return an equivalent expression is negation normal form."""
         node = self.node.to_nnf()
         if node is self.node:
             return self
@@ -777,6 +793,7 @@ class Expression(boolfunc.Function):
             return _expr(node)
 
     def to_dnf(self):
+        """Return an equivalent expression in disjunctive normal form."""
         node = self.node.to_dnf()
         if node is self.node:
             return self
@@ -784,6 +801,7 @@ class Expression(boolfunc.Function):
             return _expr(node)
 
     def to_cnf(self):
+        """Return an equivalent expression in conjunctive normal form."""
         node = self.node.to_cnf()
         if node is self.node:
             return self
@@ -791,6 +809,10 @@ class Expression(boolfunc.Function):
             return _expr(node)
 
     def complete_sum(self):
+        """
+        Return an equivalent DNF expression that includes all prime
+        implicants.
+        """
         node = self.node.complete_sum()
         if node is self.node:
             return self
@@ -869,7 +891,7 @@ class Expression(boolfunc.Function):
 
         _, constraints = _tseitin(self.to_nnf(), auxvarname)
         fst = constraints[-1][1]
-        rst = [Equal(f, expr).to_cnf() for f, expr in constraints[:-1]]
+        rst = [Equal(v, ex).to_cnf() for v, ex in constraints[:-1]]
         return And(fst, *rst)
 
     def equivalent(self, other):
