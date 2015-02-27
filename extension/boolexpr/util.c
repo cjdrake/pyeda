@@ -12,24 +12,6 @@
 BoolExpr * _op_new(BoolExprType t, size_t n, BoolExpr **xs);
 
 
-/* Return the ceiling log base two of an integer. */
-unsigned int
-_clog2(unsigned int num)
-{
-    unsigned int accum = 0;
-    unsigned int shifter = 1;
-
-    assert(num >= 1);
-
-    while (num > shifter) {
-        shifter <<= 1;
-        accum += 1;
-    }
-
-    return accum;
-}
-
-
 /*
 ** Map negative lits onto evens, and positive lits onto odds.
 ** ~x : {-1, -2, -3, -4, ...} => {0, 2, 4, 6, ...}
