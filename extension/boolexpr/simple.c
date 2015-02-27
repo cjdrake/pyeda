@@ -24,6 +24,7 @@
 
 /* boolexpr.c */
 BoolExpr * _op_new(BoolExprType t, size_t n, BoolExpr **xs);
+BoolExpr * _orandxor_new(BoolExprType t, size_t n, BoolExpr **xs);
 
 /* util.c */
 BoolExpr * _op_transform(BoolExpr *op, BoolExpr * (*fn)(BoolExpr *));
@@ -95,7 +96,7 @@ _count_assoc_args(BoolExpr *op)
 
 /* NOTE: assume operator arguments are already simple */
 static BoolExpr *
-_or_simplify(BoolExpr *op)
+_orand_simplify(BoolExpr *op)
 {
     size_t count;
     size_t n = _count_assoc_args(op);
@@ -108,8 +109,8 @@ _or_simplify(BoolExpr *op)
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         BoolExpr *item_i = op->data.xs->items[i];
         /* Or(1, x) <=> 1 */
-        if (IS_ONE(item_i)) {
-            y = BoolExpr_IncRef(&One);
+        if (item_i == DOMINATOR[op->type]) {
+            y = BoolExpr_IncRef(DOMINATOR[op->type]);
             goto done;
         }
         /* Or(Or(x0, x1), x2) <=> Or(x0, x1, x2) */
@@ -117,18 +118,18 @@ _or_simplify(BoolExpr *op)
             for (size_t j = 0; j < item_i->data.xs->length; ++j) {
                 BoolExpr *item_j = item_i->data.xs->items[j];
                 /* Or(1, x) <=> 1 */
-                if (IS_ONE(item_j)) {
-                    y = BoolExpr_IncRef(&One);
+                if (item_j == DOMINATOR[op->type]) {
+                    y = BoolExpr_IncRef(DOMINATOR[op->type]);
                     goto done;
                 }
                 /* Or(0, x) <=> x */
-                else if (!IS_ZERO(item_j)) {
+                else if (item_j != IDENTITY[op->type]) {
                     flat[count++] = item_j;
                 }
             }
         }
         /* Or(0, x) <=> x */
-        else if (!IS_ZERO(item_i)) {
+        else if (item_i != IDENTITY[op->type]) {
             flat[count++] = item_i;
         }
     }
@@ -146,7 +147,7 @@ _or_simplify(BoolExpr *op)
         else {
             /* Or(~x, x) <=> 1 */
             if (COMPLEMENTARY(uniq[count-1], flat[i])) {
-                y = BoolExpr_IncRef(&One);
+                y = BoolExpr_IncRef(DOMINATOR[op->type]);
                 goto done;
             }
             /* Or(x, x) <=> x */
@@ -157,79 +158,7 @@ _or_simplify(BoolExpr *op)
     }
     uniq_len = count;
 
-    CHECK_NULL(y, Or(uniq_len, uniq));
-
-done:
-
-    return y;
-}
-
-
-/* NOTE: assume operator arguments are already simple */
-static BoolExpr *
-_and_simplify(BoolExpr *op)
-{
-    size_t count;
-    size_t n = _count_assoc_args(op);
-    BoolExpr *flat[n], *uniq[n];
-    size_t flat_len, uniq_len;
-    BoolExpr *y;
-
-    /* 1. Flatten arguments, and eliminate {0, 1} */
-    count = 0;
-    for (size_t i = 0; i < op->data.xs->length; ++i) {
-        BoolExpr *item_i = op->data.xs->items[i];
-        /* And(0, x) <=> 0 */
-        if (IS_ZERO(item_i)) {
-            y = BoolExpr_IncRef(&Zero);
-            goto done;
-        }
-        /* And(And(x0, x1), x2) <=> And(x0, x1, x2) */
-        else if (item_i->type == op->type) {
-            for (size_t j = 0; j < item_i->data.xs->length; ++j) {
-                BoolExpr *item_j = item_i->data.xs->items[j];
-                /* And(0, x) <=> 0 */
-                if (IS_ZERO(item_j)) {
-                    y = BoolExpr_IncRef(&Zero);
-                    goto done;
-                }
-                /* And(1, x) <=> x */
-                else if (!IS_ONE(item_j)) {
-                    flat[count++] = item_j;
-                }
-            }
-        }
-        /* And(1, x) <=> x */
-        else if (!IS_ONE(item_i)) {
-            flat[count++] = item_i;
-        }
-    }
-    flat_len = count;
-
-    /* 2. Sort arguments, so you get ~a, ~a, a, a, ~b, ... */
-    qsort(flat, flat_len, sizeof(BoolExpr *), _cmp);
-
-    /* 3. Apply: And(~x, x) <=> 0, And(x, x) <=> x */
-    count = 0;
-    for (size_t i = 0; i < flat_len; ++i) {
-        if (count == 0) {
-            uniq[count++] = flat[i];
-        }
-        else {
-            /* And(~x, x) <=> 0 */
-            if (COMPLEMENTARY(uniq[count-1], flat[i])) {
-                y = BoolExpr_IncRef(&Zero);
-                goto done;
-            }
-            /* And(x, x) <=> x */
-            else if (!_eq(flat[i], uniq[count-1])) {
-                uniq[count++] = flat[i];
-            }
-        }
-    }
-    uniq_len = count;
-
-    CHECK_NULL(y, And(uniq_len, uniq));
+    CHECK_NULL(y, _orandxor_new(op->type, uniq_len, uniq));
 
 done:
 
@@ -528,8 +457,8 @@ static BoolExpr * (*_op_simplify[16])(BoolExpr *op) = {
     NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
 
-    _or_simplify,
-    _and_simplify,
+    _orand_simplify,
+    _orand_simplify,
     _xor_simplify,
     _eq_simplify,
 

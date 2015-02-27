@@ -172,6 +172,22 @@ _opn_new(BoolExprType t, size_t n, ...)
 }
 
 
+BoolExpr *
+_orandxor_new(BoolExprType t, size_t n, BoolExpr **xs)
+{
+    BoolExpr *y;
+
+    if (n == 0)
+        y = BoolExpr_IncRef(IDENTITY[t]);
+    else if (n == 1)
+        y = BoolExpr_IncRef(xs[0]);
+    else
+        CHECK_NULL(y, _op_new(t, n, xs));
+
+    return y;
+}
+
+
 static void
 _op_del(BoolExpr *op)
 {
@@ -203,21 +219,7 @@ Literal(BoolExprVector *lits, long uniqid)
 BoolExpr *
 Or(size_t n, BoolExpr **xs)
 {
-    BoolExpr *y;
-
-    /* Or() <=> 0 */
-    if (n == 0) {
-        y = BoolExpr_IncRef(IDENTITY[OP_OR]);
-    }
-    /* Or(x) <=> x */
-    else if (n == 1) {
-        y = BoolExpr_IncRef(xs[0]);
-    }
-    else {
-        CHECK_NULL(y, _op_new(OP_OR, n, xs));
-    }
-
-    return y;
+    return _orandxor_new(OP_OR, n, xs);
 }
 
 
@@ -238,21 +240,7 @@ Nor(size_t n, BoolExpr **xs)
 BoolExpr *
 And(size_t n, BoolExpr **xs)
 {
-    BoolExpr *y;
-
-    /* And() <=> 1 */
-    if (n == 0) {
-        y = BoolExpr_IncRef(IDENTITY[OP_AND]);
-    }
-    /* And(x) <=> x */
-    else if (n == 1) {
-        y = BoolExpr_IncRef(xs[0]);
-    }
-    else {
-        CHECK_NULL(y, _op_new(OP_AND, n, xs));
-    }
-
-    return y;
+    return _orandxor_new(OP_AND, n, xs);
 }
 
 
@@ -273,21 +261,7 @@ Nand(size_t n, BoolExpr **xs)
 BoolExpr *
 Xor(size_t n, BoolExpr **xs)
 {
-    BoolExpr *y;
-
-    /* Xor() <=> 0 */
-    if (n == 0) {
-        y = BoolExpr_IncRef(IDENTITY[OP_XOR]);
-    }
-    /* Xor(x) <=> x */
-    else if (n == 1) {
-        y = BoolExpr_IncRef(xs[0]);
-    }
-    else {
-        CHECK_NULL(y, _op_new(OP_XOR, n, xs));
-    }
-
-    return y;
+    return _orandxor_new(OP_XOR, n, xs);
 }
 
 
