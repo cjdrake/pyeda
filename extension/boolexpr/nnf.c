@@ -149,9 +149,9 @@ _xor_nnfify(BoolExpr *op)
     unsigned int num_ands = 0;
 
     for (size_t i = 0; i < op->data.xs->length; ++i) {
-        if (op->data.xs->items[i]->type == OP_OR)
+        if (IS_OR(op->data.xs->items[i]))
             num_ors += 1;
-        else if (op->data.xs->items[i]->type == OP_AND)
+        else if (IS_AND(op->data.xs->items[i]))
             num_ands += 1;
     }
 
@@ -273,9 +273,9 @@ _ite_nnfify(BoolExpr *op)
     unsigned int num_ands = 0;
 
     for (size_t i = 0; i < 3; ++i) {
-        if (op->data.xs->items[i]->type == OP_OR)
+        if (IS_OR(op->data.xs->items[i]))
             num_ors += 1;
-        else if (op->data.xs->items[i]->type == OP_AND)
+        else if (IS_AND(op->data.xs->items[i]))
             num_ands += 1;
     }
 
