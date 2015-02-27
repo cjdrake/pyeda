@@ -47,7 +47,7 @@ _eq(BoolExpr *a, BoolExpr *b)
 **
 ** Rules:
 ** 1. Literals are ordered ~a, ~a, a, a, ~b, ...
-** 2. Nodes with same type are ordered by pointer value.
+** 2. Nodes with same type are considered "equal".
 ** 3. Nodes with different types are ordered by type value.
 **
 ** These rules make it easy to find (~x, x), and (x, x) arguments,
@@ -71,7 +71,7 @@ _cmp(const void *p1, const void *p2)
             return CMP(a->data.lit.uniqid, b->data.lit.uniqid);
     }
     else if (a->type == b->type) {
-        return CMP(a, b);
+        return 0;
     }
     else {
         return CMP(a->type, b->type);
