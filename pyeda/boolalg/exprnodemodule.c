@@ -1289,7 +1289,7 @@ PyInit_exprnode(void)
     if (PyType_Ready(&ExprNode_T) < 0)
         goto decref_Error;
     Py_INCREF(&ExprNode_T);
-    if (PyModule_AddObject(m, "BoolExpr", (PyObject *) &ExprNode_T) < 0)
+    if (PyModule_AddObject(m, "ExprNode", (PyObject *) &ExprNode_T) < 0)
         goto decref_ExprNode;
 
     /* Create constants */
