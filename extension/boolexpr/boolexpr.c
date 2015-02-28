@@ -90,11 +90,11 @@ BoolExprIter_Next(struct BoolExprIter *it)
 
 
 /* Initialize global constants */
-struct BoolExpr Zero = {1, ZERO, {.pcval=1}, NNF | SIMPLE};
-struct BoolExpr One  = {1, ONE,  {.pcval=2}, NNF | SIMPLE};
+struct BoolExpr Zero = {1, ZERO, NNF | SIMPLE, {.pcval=1}};
+struct BoolExpr One  = {1, ONE,  NNF | SIMPLE, {.pcval=2}};
 
-struct BoolExpr Logical   = {1, LOGICAL,   {.pcval=3}, NNF | SIMPLE};
-struct BoolExpr Illogical = {1, ILLOGICAL, {.pcval=0}, NNF | SIMPLE};
+struct BoolExpr Logical   = {1, LOGICAL,   NNF | SIMPLE, {.pcval=3}};
+struct BoolExpr Illogical = {1, ILLOGICAL, NNF | SIMPLE, {.pcval=0}};
 
 struct BoolExpr * IDENTITY[16] = {
     NULL, NULL, NULL, NULL,

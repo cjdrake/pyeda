@@ -138,6 +138,7 @@ struct BoolExpr {
     int refcount;
 
     BoolExprType type;
+    BoolExprFlags flags;
 
     union {
         /* constant */
@@ -152,8 +153,14 @@ struct BoolExpr {
         /* operator */
         struct BoolExprArray *xs;
     } data;
+};
 
-    BoolExprFlags flags;
+
+struct BoolExprIter {
+    bool done;
+    struct BoolExpr *ex;
+    size_t index;
+    struct BoolExprIter *it;
 };
 
 
@@ -190,107 +197,6 @@ struct BoolExprSet {
     size_t pridx;
     struct BoolExprSetItem **items;
 };
-
-
-struct BoolExprIter {
-    bool done;
-    struct BoolExpr *ex;
-    size_t index;
-    struct BoolExprIter *it;
-};
-
-
-/* Return a new array of Boolean expressions. */
-struct BoolExprArray * BoolExprArray_New(size_t length, struct BoolExpr **items);
-
-/* Delete an array of Boolean expressions. */
-void BoolExprArray_Del(struct BoolExprArray *);
-
-/* Return true if two arrays are equal. */
-bool BoolExprArray_Equal(struct BoolExprArray *, struct BoolExprArray *);
-
-
-/* Return a new 2d array of Boolean expressions. */
-struct BoolExprArray2 * BoolExprArray2_New(size_t length, size_t *lengths, struct BoolExpr ***items);
-
-/* Delete a two-dimensional array of Boolean expressions. */
-void BoolExprArray2_Del(struct BoolExprArray2 *);
-
-/* Return true if two 2d arrays are equal. */
-bool BoolExprArray2_Equal(struct BoolExprArray2 *, struct BoolExprArray2 *);
-
-/* Return the cartesian product of two 2d arrays */
-struct BoolExprArray * BoolExprArray2_Product(struct BoolExprArray2 *, BoolExprType t);
-
-
-/*
-** Return a new vector of Boolean expressions.
-**
-** All items will be initialized to NULL.
-*/
-struct BoolExprVector * BoolExprVector_New(void);
-
-/* Delete a vector of Boolean expressions. */
-void BoolExprVector_Del(struct BoolExprVector *);
-
-bool BoolExprVector_Insert(struct BoolExprVector *, size_t index, struct BoolExpr *ex);
-
-bool BoolExprVector_Append(struct BoolExprVector *, struct BoolExpr *ex);
-
-
-/*
-** Return a new dictionary of Boolean expressions.
-*/
-struct BoolExprDict * BoolExprDict_New(size_t (*prehash)(struct BoolExpr *));
-
-/* Return a mapping from variables to arbitrary expressions. */
-struct BoolExprDict * BoolExprVarMap_New(void);
-
-/* Return a mapping from literals to arbitrary expressions. */
-struct BoolExprDict * BoolExprLitMap_New(void);
-
-/* Delete a dictionary of Boolean expressions. */
-void BoolExprDict_Del(struct BoolExprDict *);
-
-/* Insert an expression into the dictionary. */
-bool BoolExprDict_Insert(struct BoolExprDict *, struct BoolExpr *key, struct BoolExpr *val);
-
-/* Delete an expression from the dictionary. */
-bool BoolExprDict_Remove(struct BoolExprDict *, struct BoolExpr *key);
-
-struct BoolExpr * BoolExprDict_Search(struct BoolExprDict *, struct BoolExpr *key);
-
-bool BoolExprDict_Contains(struct BoolExprDict *, struct BoolExpr *key);
-
-
-/*
-** Return a new set of Boolean expressions.
-*/
-struct BoolExprSet * BoolExprSet_New(size_t (*prehash)(struct BoolExpr *));
-
-/* Return a set of variables */
-struct BoolExprSet * BoolExprVarSet_New(void);
-
-/* Return a set of literals */
-struct BoolExprSet * BoolExprLitSet_New(void);
-
-void BoolExprSet_Del(struct BoolExprSet *);
-
-bool BoolExprSet_Insert(struct BoolExprSet *, struct BoolExpr *key);
-
-bool BoolExprSet_Remove(struct BoolExprSet *, struct BoolExpr *key);
-
-bool BoolExprSet_Contains(struct BoolExprSet *, struct BoolExpr *key);
-
-
-/* Return a new Boolean expression iterator. */
-struct BoolExprIter * BoolExprIter_New(struct BoolExpr *ex);
-
-/* Delete a Boolean expression iterator. */
-void BoolExprIter_Del(struct BoolExprIter *);
-
-/* Return the next Boolean expression in an iteration. */
-struct BoolExpr * BoolExprIter_Next(struct BoolExprIter *);
 
 
 /* Constant expressions */
@@ -412,7 +318,7 @@ struct BoolExpr * BoolExpr_Simplify(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_ToBinary(struct BoolExpr *ex);
+struct BoolExpr * BoolExpr_ToBinary(struct BoolExpr *);
 
 
 /*
@@ -461,6 +367,99 @@ struct BoolExpr * BoolExpr_Compose(struct BoolExpr *, struct BoolExprDict *var2e
 ** NOTE: Returns a new reference.
 */
 struct BoolExpr * BoolExpr_Restrict(struct BoolExpr *, struct BoolExprDict *var2const);
+
+
+/* Return a new Boolean expression iterator. */
+struct BoolExprIter * BoolExprIter_New(struct BoolExpr *ex);
+
+/* Delete a Boolean expression iterator. */
+void BoolExprIter_Del(struct BoolExprIter *);
+
+/* Return the next Boolean expression in an iteration. */
+struct BoolExpr * BoolExprIter_Next(struct BoolExprIter *);
+
+
+/* Return a new array of Boolean expressions. */
+struct BoolExprArray * BoolExprArray_New(size_t length, struct BoolExpr **items);
+
+/* Delete an array of Boolean expressions. */
+void BoolExprArray_Del(struct BoolExprArray *);
+
+/* Return true if two arrays are equal. */
+bool BoolExprArray_Equal(struct BoolExprArray *, struct BoolExprArray *);
+
+
+/* Return a new 2d array of Boolean expressions. */
+struct BoolExprArray2 * BoolExprArray2_New(size_t length, size_t *lengths, struct BoolExpr ***items);
+
+/* Delete a two-dimensional array of Boolean expressions. */
+void BoolExprArray2_Del(struct BoolExprArray2 *);
+
+/* Return true if two 2d arrays are equal. */
+bool BoolExprArray2_Equal(struct BoolExprArray2 *, struct BoolExprArray2 *);
+
+/* Return the cartesian product of two 2d arrays */
+struct BoolExprArray * BoolExprArray2_Product(struct BoolExprArray2 *, BoolExprType t);
+
+
+/*
+** Return a new vector of Boolean expressions.
+**
+** All items will be initialized to NULL.
+*/
+struct BoolExprVector * BoolExprVector_New(void);
+
+/* Delete a vector of Boolean expressions. */
+void BoolExprVector_Del(struct BoolExprVector *);
+
+bool BoolExprVector_Insert(struct BoolExprVector *, size_t index, struct BoolExpr *ex);
+
+bool BoolExprVector_Append(struct BoolExprVector *, struct BoolExpr *ex);
+
+
+/*
+** Return a new dictionary of Boolean expressions.
+*/
+struct BoolExprDict * BoolExprDict_New(size_t (*prehash)(struct BoolExpr *));
+
+/* Return a mapping from variables to arbitrary expressions. */
+struct BoolExprDict * BoolExprVarMap_New(void);
+
+/* Return a mapping from literals to arbitrary expressions. */
+struct BoolExprDict * BoolExprLitMap_New(void);
+
+/* Delete a dictionary of Boolean expressions. */
+void BoolExprDict_Del(struct BoolExprDict *);
+
+/* Insert an expression into the dictionary. */
+bool BoolExprDict_Insert(struct BoolExprDict *, struct BoolExpr *key, struct BoolExpr *val);
+
+/* Delete an expression from the dictionary. */
+bool BoolExprDict_Remove(struct BoolExprDict *, struct BoolExpr *key);
+
+struct BoolExpr * BoolExprDict_Search(struct BoolExprDict *, struct BoolExpr *key);
+
+bool BoolExprDict_Contains(struct BoolExprDict *, struct BoolExpr *key);
+
+
+/*
+** Return a new set of Boolean expressions.
+*/
+struct BoolExprSet * BoolExprSet_New(size_t (*prehash)(struct BoolExpr *));
+
+/* Return a set of variables */
+struct BoolExprSet * BoolExprVarSet_New(void);
+
+/* Return a set of literals */
+struct BoolExprSet * BoolExprLitSet_New(void);
+
+void BoolExprSet_Del(struct BoolExprSet *);
+
+bool BoolExprSet_Insert(struct BoolExprSet *, struct BoolExpr *key);
+
+bool BoolExprSet_Remove(struct BoolExprSet *, struct BoolExpr *key);
+
+bool BoolExprSet_Contains(struct BoolExprSet *, struct BoolExpr *key);
 
 
 #ifdef __cplusplus
