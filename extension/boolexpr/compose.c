@@ -9,34 +9,34 @@
 
 
 /* boolexpr.c */
-BoolExpr * _op_new(BoolExprType t, size_t n, BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
 
 
-static BoolExpr *
-_const_compose(BoolExpr *ex, BoolExprDict *var2ex)
+static struct BoolExpr *
+_const_compose(struct BoolExpr *ex, struct BoolExprDict *var2ex)
 {
     return BoolExpr_IncRef(ex);
 }
 
 
-static BoolExpr *
-_var_compose(BoolExpr *x, BoolExprDict *var2ex)
+static struct BoolExpr *
+_var_compose(struct BoolExpr *x, struct BoolExprDict *var2ex)
 {
-    BoolExpr *ex = BoolExprDict_Search(var2ex, x);
+    struct BoolExpr *ex = BoolExprDict_Search(var2ex, x);
 
-    if (ex == (BoolExpr *) NULL)
+    if (ex == (struct BoolExpr *) NULL)
         return BoolExpr_IncRef(x);
     else
         return BoolExpr_IncRef(ex);
 }
 
 
-static BoolExpr *
-_comp_compose(BoolExpr *xn, BoolExprDict *var2ex)
+static struct BoolExpr *
+_comp_compose(struct BoolExpr *xn, struct BoolExprDict *var2ex)
 {
-    BoolExpr *lit = Literal(xn->data.lit.lits, -xn->data.lit.uniqid);
-    BoolExpr *temp;
-    BoolExpr *y;
+    struct BoolExpr *lit = Literal(xn->data.lit.lits, -xn->data.lit.uniqid);
+    struct BoolExpr *temp;
+    struct BoolExpr *y;
 
     CHECK_NULL_1(temp, _var_compose(lit, var2ex), lit);
     BoolExpr_DecRef(lit);
@@ -48,13 +48,13 @@ _comp_compose(BoolExpr *xn, BoolExprDict *var2ex)
 }
 
 
-static BoolExpr *
-_op_compose(BoolExpr *op, BoolExprDict *var2ex)
+static struct BoolExpr *
+_op_compose(struct BoolExpr *op, struct BoolExprDict *var2ex)
 {
     size_t length = op->data.xs->length;
-    BoolExpr *xs[length];
+    struct BoolExpr *xs[length];
     unsigned int mod_count = 0;
-    BoolExpr *y;
+    struct BoolExpr *y;
 
     for (size_t i = 0; i < length; ++i) {
         CHECK_NULL_N(xs[i], BoolExpr_Compose(op->data.xs->items[i], var2ex), i, xs);
@@ -74,7 +74,7 @@ _op_compose(BoolExpr *op, BoolExprDict *var2ex)
 }
 
 
-static BoolExpr * (*_compose[16])(BoolExpr *ex, BoolExprDict *var2ex) = {
+static struct BoolExpr * (*_compose[16])(struct BoolExpr *ex, struct BoolExprDict *var2ex) = {
     _const_compose,
     _const_compose,
     _const_compose,
@@ -97,18 +97,18 @@ static BoolExpr * (*_compose[16])(BoolExpr *ex, BoolExprDict *var2ex) = {
 };
 
 
-BoolExpr *
-BoolExpr_Compose(BoolExpr *ex, BoolExprDict *var2ex)
+struct BoolExpr *
+BoolExpr_Compose(struct BoolExpr *ex, struct BoolExprDict *var2ex)
 {
     return _compose[ex->type](ex, var2ex);
 }
 
 
-BoolExpr *
-BoolExpr_Restrict(BoolExpr *ex, BoolExprDict *var2const)
+struct BoolExpr *
+BoolExpr_Restrict(struct BoolExpr *ex, struct BoolExprDict *var2const)
 {
-    BoolExpr *temp;
-    BoolExpr *y;
+    struct BoolExpr *temp;
+    struct BoolExpr *y;
 
     CHECK_NULL(temp, BoolExpr_Compose(ex, var2const));
     CHECK_NULL_1(y, BoolExpr_Simplify(temp), temp);

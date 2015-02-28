@@ -9,16 +9,16 @@
 
 
 /* util.c */
-BoolExpr * _op_transform(BoolExpr *op, BoolExpr * (*fn)(BoolExpr *));
+struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
 
 
-static BoolExpr *
-_inv_or(BoolExpr *op)
+static struct BoolExpr *
+_inv_or(struct BoolExpr *op)
 {
     size_t length = op->data.xs->length;
-    BoolExpr *xs[length];
-    BoolExpr *temp;
-    BoolExpr *y;
+    struct BoolExpr *xs[length];
+    struct BoolExpr *temp;
+    struct BoolExpr *y;
 
     for (size_t i = 0; i < length; ++i) {
         CHECK_NULL(temp, Not(op->data.xs->items[i]));
@@ -35,13 +35,13 @@ _inv_or(BoolExpr *op)
 }
 
 
-static BoolExpr *
-_inv_and(BoolExpr *op)
+static struct BoolExpr *
+_inv_and(struct BoolExpr *op)
 {
     size_t length = op->data.xs->length;
-    BoolExpr *xs[length];
-    BoolExpr *temp;
-    BoolExpr *y;
+    struct BoolExpr *xs[length];
+    struct BoolExpr *temp;
+    struct BoolExpr *y;
 
     for (size_t i = 0; i < length; ++i) {
         CHECK_NULL(temp, Not(op->data.xs->items[i]));
@@ -58,13 +58,13 @@ _inv_and(BoolExpr *op)
 }
 
 
-//static BoolExpr *
-//_inv_xor(BoolExpr *op)
+//static struct BoolExpr *
+//_inv_xor(struct BoolExpr *op)
 //{
 //    size_t length = op->data.xs->length;
-//    BoolExpr *xs[length];
-//    BoolExpr *temp;
-//    BoolExpr *y;
+//    struct BoolExpr *xs[length];
+//    struct BoolExpr *temp;
+//    struct BoolExpr *y;
 //
 //    CHECK_NULL(temp, Not(op->data.xs->items[0]));
 //    CHECK_NULL_1(xs[0], BoolExpr_PushDownNot(temp), temp);
@@ -81,12 +81,12 @@ _inv_and(BoolExpr *op)
 //}
 
 
-//static BoolExpr *
-//_inv_eq2(BoolExpr *op)
+//static struct BoolExpr *
+//_inv_eq2(struct BoolExpr *op)
 //{
-//    BoolExpr *x0, *x1;
-//    BoolExpr *temp;
-//    BoolExpr *y;
+//    struct BoolExpr *x0, *x1;
+//    struct BoolExpr *temp;
+//    struct BoolExpr *y;
 //
 //    CHECK_NULL(temp, Not(op->data.xs->items[0]));
 //    CHECK_NULL_1(x0, BoolExpr_PushDownNot(temp), temp);
@@ -103,12 +103,12 @@ _inv_and(BoolExpr *op)
 //}
 
 
-static BoolExpr *
-_inv_ite(BoolExpr *op)
+static struct BoolExpr *
+_inv_ite(struct BoolExpr *op)
 {
-    BoolExpr *d1, *d0;
-    BoolExpr *temp;
-    BoolExpr *y;
+    struct BoolExpr *d1, *d0;
+    struct BoolExpr *temp;
+    struct BoolExpr *y;
 
     CHECK_NULL(temp, Not(op->data.xs->items[1]));
     CHECK_NULL_1(d1, BoolExpr_PushDownNot(temp), temp);
@@ -126,8 +126,8 @@ _inv_ite(BoolExpr *op)
 }
 
 
-BoolExpr *
-BoolExpr_PushDownNot(BoolExpr *ex)
+struct BoolExpr *
+BoolExpr_PushDownNot(struct BoolExpr *ex)
 {
     if (IS_ATOM(ex)) {
         return BoolExpr_IncRef(ex);

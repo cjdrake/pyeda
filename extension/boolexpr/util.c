@@ -9,7 +9,7 @@
 
 
 /* boolexpr.c */
-BoolExpr * _op_new(BoolExprType t, size_t n, BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
 
 
 /*
@@ -26,13 +26,13 @@ _uniqid2index(long uniqid)
 }
 
 
-BoolExpr *
-_op_transform(BoolExpr *op, BoolExpr * (*fn)(BoolExpr *))
+struct BoolExpr *
+_op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
 {
     size_t length = op->data.xs->length;
-    BoolExpr *xs[length];
+    struct BoolExpr *xs[length];
     unsigned int mod_count = 0;
-    BoolExpr *y;
+    struct BoolExpr *y;
 
     for (size_t i = 0; i < length; ++i) {
         CHECK_NULL_N(xs[i], fn(op->data.xs->items[i]), i, xs);
@@ -53,7 +53,7 @@ _op_transform(BoolExpr *op, BoolExpr * (*fn)(BoolExpr *))
 
 
 void
-_mark_flags(BoolExpr *ex, BoolExprFlags f)
+_mark_flags(struct BoolExpr *ex, BoolExprFlags f)
 {
     if ((ex->flags & f) != f) {
         for (size_t i = 0; i < ex->data.xs->length; ++i)
@@ -65,7 +65,7 @@ _mark_flags(BoolExpr *ex, BoolExprFlags f)
 
 /* Return true if the operator is a clause, containing only literals */
 bool
-_is_clause(BoolExpr *op)
+_is_clause(struct BoolExpr *op)
 {
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         if (!IS_LIT(op->data.xs->items[i]))

@@ -9,14 +9,14 @@
 
 
 /* boolexpr.c */
-BoolExpr * _op_new(BoolExprType t, size_t n, BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
 
 /* util.c */
-BoolExpr * _op_transform(BoolExpr *op, BoolExpr * (*fn)(BoolExpr *));
+struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
 
 
-static BoolExpr *
-_commutative_binify(BoolExpr *op)
+static struct BoolExpr *
+_commutative_binify(struct BoolExpr *op)
 {
     if (op->data.xs->length == 2) {
         return BoolExpr_IncRef(op);
@@ -25,11 +25,11 @@ _commutative_binify(BoolExpr *op)
         size_t mid = op->data.xs->length / 2;
         size_t n0 = mid;
         size_t n1 = op->data.xs->length - mid;
-        BoolExpr **items0 = op->data.xs->items;
-        BoolExpr **items1 = op->data.xs->items + mid;
-        BoolExpr *xs[2];
-        BoolExpr *temp;
-        BoolExpr *y;
+        struct BoolExpr **items0 = op->data.xs->items;
+        struct BoolExpr **items1 = op->data.xs->items + mid;
+        struct BoolExpr *xs[2];
+        struct BoolExpr *temp;
+        struct BoolExpr *y;
 
         if (n0 == 1) {
             xs[0] = BoolExpr_IncRef(items0[0]);
@@ -53,20 +53,20 @@ _commutative_binify(BoolExpr *op)
 }
 
 
-static BoolExpr *
-_eq_binify(BoolExpr *op)
+static struct BoolExpr *
+_eq_binify(struct BoolExpr *op)
 {
     if (op->data.xs->length == 2) {
         return BoolExpr_IncRef(op);
     }
     else {
         size_t length;
-        BoolExpr **xs;
-        BoolExpr *temp;
-        BoolExpr *y;
+        struct BoolExpr **xs;
+        struct BoolExpr *temp;
+        struct BoolExpr *y;
 
         length = (op->data.xs->length * (op->data.xs->length - 1)) >> 1;
-        xs = (BoolExpr **) malloc(length * sizeof(BoolExpr *));
+        xs = (struct BoolExpr **) malloc(length * sizeof(struct BoolExpr *));
 
         for (size_t i = 0, index = 0; i < (op->data.xs->length - 1); ++i) {
             for (size_t j = i+1; j < op->data.xs->length; ++j, ++index) {
@@ -104,14 +104,14 @@ _eq_binify(BoolExpr *op)
 }
 
 
-static BoolExpr *
-_fixed_binify(BoolExpr *op)
+static struct BoolExpr *
+_fixed_binify(struct BoolExpr *op)
 {
     return BoolExpr_IncRef(op);
 }
 
 
-static BoolExpr * (*_op_binify[16])(BoolExpr *ex) = {
+static struct BoolExpr * (*_op_binify[16])(struct BoolExpr *ex) = {
     NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
 
@@ -127,15 +127,15 @@ static BoolExpr * (*_op_binify[16])(BoolExpr *ex) = {
 };
 
 
-BoolExpr *
-BoolExpr_ToBinary(BoolExpr *ex)
+struct BoolExpr *
+BoolExpr_ToBinary(struct BoolExpr *ex)
 {
     if (IS_ATOM(ex)) {
         return BoolExpr_IncRef(ex);
     }
     else {
-        BoolExpr *temp;
-        BoolExpr *y;
+        struct BoolExpr *temp;
+        struct BoolExpr *y;
 
         CHECK_NULL(temp, _op_transform(ex, BoolExpr_ToBinary));
         CHECK_NULL_1(y, _op_binify[temp->type](temp), temp);

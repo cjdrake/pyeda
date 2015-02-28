@@ -6,16 +6,16 @@
 #include "boolexpr.h"
 
 
-BoolExprArray *
-BoolExprArray_New(size_t length, BoolExpr **items)
+struct BoolExprArray *
+BoolExprArray_New(size_t length, struct BoolExpr **items)
 {
-    BoolExprArray *array;
+    struct BoolExprArray *array;
 
-    array = (BoolExprArray *) malloc(sizeof(BoolExprArray));
+    array = (struct BoolExprArray *) malloc(sizeof(struct BoolExprArray));
     if (array == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    array->items = (BoolExpr **) malloc(length * sizeof(BoolExpr *));
+    array->items = (struct BoolExpr **) malloc(length * sizeof(struct BoolExpr *));
     if (array->items == NULL) {
         free(array); // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
@@ -31,7 +31,7 @@ BoolExprArray_New(size_t length, BoolExpr **items)
 
 
 void
-BoolExprArray_Del(BoolExprArray *array)
+BoolExprArray_Del(struct BoolExprArray *array)
 {
     for (size_t i = 0; i < array->length; ++i)
         BoolExpr_DecRef(array->items[i]);
@@ -42,7 +42,7 @@ BoolExprArray_Del(BoolExprArray *array)
 
 
 bool
-BoolExprArray_Equal(BoolExprArray *self, BoolExprArray *other)
+BoolExprArray_Equal(struct BoolExprArray *self, struct BoolExprArray *other)
 {
     if (self->length != other->length)
         return false;

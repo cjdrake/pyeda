@@ -9,16 +9,16 @@
 #define CAPACITY 64
 
 
-BoolExprVector *
+struct BoolExprVector *
 BoolExprVector_New()
 {
-    BoolExprVector *vec;
+    struct BoolExprVector *vec;
 
-    vec = (BoolExprVector *) malloc(sizeof(BoolExprVector));
+    vec = (struct BoolExprVector *) malloc(sizeof(struct BoolExprVector));
     if (vec == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    vec->items = (BoolExpr **) malloc(CAPACITY * sizeof(BoolExpr *));
+    vec->items = (struct BoolExpr **) malloc(CAPACITY * sizeof(struct BoolExpr *));
     if (vec->items == NULL) {
         free(vec);   // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
@@ -29,17 +29,17 @@ BoolExprVector_New()
 
     /* Initialize items to NULL expression */
     for (size_t i = 0; i < vec->capacity; ++i)
-        vec->items[i] = (BoolExpr *) NULL;
+        vec->items[i] = (struct BoolExpr *) NULL;
 
     return vec;
 }
 
 
 void
-BoolExprVector_Del(BoolExprVector *vec)
+BoolExprVector_Del(struct BoolExprVector *vec)
 {
     for (size_t i = 0; i < vec->length; ++i) {
-        if (vec->items[i] != (BoolExpr *) NULL)
+        if (vec->items[i] != (struct BoolExpr *) NULL)
             BoolExpr_DecRef(vec->items[i]);
     }
 
@@ -51,7 +51,7 @@ BoolExprVector_Del(BoolExprVector *vec)
 #define SCALE_FACTOR 2.0
 
 bool
-BoolExprVector_Insert(BoolExprVector *vec, size_t index, BoolExpr *ex)
+BoolExprVector_Insert(struct BoolExprVector *vec, size_t index, struct BoolExpr *ex)
 {
     /* Required length and capacity */
     size_t req_len = index + 1;
@@ -62,13 +62,13 @@ BoolExprVector_Insert(BoolExprVector *vec, size_t index, BoolExpr *ex)
         req_cap = (size_t) (SCALE_FACTOR * req_cap);
 
     if (req_cap > vec->capacity) {
-        vec->items = (BoolExpr **) realloc(vec->items, req_cap * sizeof(BoolExpr *));
+        vec->items = (struct BoolExpr **) realloc(vec->items, req_cap * sizeof(struct BoolExpr *));
         if (vec->items == NULL)
             return false; // LCOV_EXCL_LINE
 
         /* Initialize new items to NULL expression */
         for (size_t i = vec->capacity; i < req_cap; ++i)
-            vec->items[i] = (BoolExpr *) NULL;
+            vec->items[i] = (struct BoolExpr *) NULL;
 
         vec->capacity = req_cap;
     }
@@ -82,7 +82,7 @@ BoolExprVector_Insert(BoolExprVector *vec, size_t index, BoolExpr *ex)
 
 
 bool
-BoolExprVector_Append(BoolExprVector *vec, BoolExpr *ex)
+BoolExprVector_Append(struct BoolExprVector *vec, struct BoolExpr *ex)
 {
     return BoolExprVector_Insert(vec, vec->length, ex);
 }

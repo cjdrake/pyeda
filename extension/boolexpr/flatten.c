@@ -9,27 +9,27 @@
 
 
 /* boolexpr.c */
-BoolExpr * _op_new(BoolExprType t, size_t n, BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
 
 /* nnf.c */
-BoolExpr * _to_nnf(BoolExpr *ex);
+struct BoolExpr * _to_nnf(struct BoolExpr *ex);
 
 /* simple.c */
-BoolExpr * _simplify(BoolExpr *ex);
+struct BoolExpr * _simplify(struct BoolExpr *ex);
 
 /* util.c */
-BoolExpr * _op_transform(BoolExpr *op, BoolExpr * (*fn)(BoolExpr *));
-void _mark_flags(BoolExpr *ex, BoolExprFlags f);
-bool _is_clause(BoolExpr *op);
+struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
+void _mark_flags(struct BoolExpr *ex, BoolExprFlags f);
+bool _is_clause(struct BoolExpr *op);
 
 
 /* Convert a two-level expression to set of sets form */
-static BoolExprArray2 *
-_nf2sets(BoolExpr *nf)
+static struct BoolExprArray2 *
+_nf2sets(struct BoolExpr *nf)
 {
     size_t length = nf->data.xs->length;
     size_t lengths[length];
-    BoolExpr **items[length];
+    struct BoolExpr **items[length];
 
     for (size_t i = 0; i < length; ++i) {
         if (IS_LIT(nf->data.xs->items[i])) {
@@ -47,13 +47,13 @@ _nf2sets(BoolExpr *nf)
 
 
 /* NOTE: Return size is exponential */
-static BoolExpr *
-_distribute(BoolExprType t, BoolExpr *nf)
+static struct BoolExpr *
+_distribute(BoolExprType t, struct BoolExpr *nf)
 {
-    BoolExprArray2 *sets;
-    BoolExprArray *product;
-    BoolExpr *temp;
-    BoolExpr *dnf;
+    struct BoolExprArray2 *sets;
+    struct BoolExprArray *product;
+    struct BoolExpr *temp;
+    struct BoolExpr *dnf;
 
     sets = _nf2sets(nf);
     if (sets == NULL)
@@ -95,14 +95,14 @@ _distribute(BoolExprType t, BoolExpr *nf)
 #define YS_LTE_XS (1u << 1)
 
 static unsigned int
-_set_cmp(BoolExprArray *xs, BoolExprArray *ys)
+_set_cmp(struct BoolExprArray *xs, struct BoolExprArray *ys)
 {
     size_t i = 0, j = 0;
     unsigned int ret = XS_LTE_YS | YS_LTE_XS;
 
     while (i < xs->length && j < ys->length) {
-        BoolExpr *x = xs->items[i];
-        BoolExpr *y = ys->items[j];
+        struct BoolExpr *x = xs->items[i];
+        struct BoolExpr *y = ys->items[j];
 
         if (x == y) {
             i += 1;
@@ -135,10 +135,10 @@ _set_cmp(BoolExprArray *xs, BoolExprArray *ys)
 }
 
 
-static BoolExpr *
-_absorb(BoolExpr *dnf)
+static struct BoolExpr *
+_absorb(struct BoolExpr *dnf)
 {
-    BoolExprArray2 *sets;
+    struct BoolExprArray2 *sets;
     int length = dnf->data.xs->length;
     unsigned int val;
     bool keep[length];
@@ -175,9 +175,9 @@ _absorb(BoolExpr *dnf)
         return BoolExpr_IncRef(dnf);
     }
     else {
-        BoolExpr *xs[count];
-        BoolExpr *temp;
-        BoolExpr *dnf2;
+        struct BoolExpr *xs[count];
+        struct BoolExpr *temp;
+        struct BoolExpr *dnf2;
 
         for (size_t i = 0, index = 0; i < length; ++i) {
             if (keep[i])
@@ -193,16 +193,16 @@ _absorb(BoolExpr *dnf)
 }
 
 
-static BoolExpr *
-_to_dnf(BoolExpr *nnf)
+static struct BoolExpr *
+_to_dnf(struct BoolExpr *nnf)
 {
     if (IS_ATOM(nnf)) {
         return BoolExpr_IncRef(nnf);
     }
     else {
-        BoolExpr *temp;
-        BoolExpr *nf1, *nf2;
-        BoolExpr *dnf;
+        struct BoolExpr *temp;
+        struct BoolExpr *nf1, *nf2;
+        struct BoolExpr *dnf;
 
         /* Convert sub-expressions to DNF */
         CHECK_NULL(temp, _op_transform(nnf, _to_dnf));
@@ -230,16 +230,16 @@ _to_dnf(BoolExpr *nnf)
 }
 
 
-static BoolExpr *
-_to_cnf(BoolExpr *nnf)
+static struct BoolExpr *
+_to_cnf(struct BoolExpr *nnf)
 {
     if (IS_ATOM(nnf)) {
         return BoolExpr_IncRef(nnf);
     }
     else {
-        BoolExpr *temp;
-        BoolExpr *nf1, *nf2;
-        BoolExpr *cnf;
+        struct BoolExpr *temp;
+        struct BoolExpr *nf1, *nf2;
+        struct BoolExpr *cnf;
 
         /* Convert sub-expressions to CNF */
         CHECK_NULL(temp, _op_transform(nnf, _to_cnf));
@@ -267,11 +267,11 @@ _to_cnf(BoolExpr *nnf)
 }
 
 
-BoolExpr *
-BoolExpr_ToDNF(BoolExpr *ex)
+struct BoolExpr *
+BoolExpr_ToDNF(struct BoolExpr *ex)
 {
-    BoolExpr *nnf;
-    BoolExpr *dnf;
+    struct BoolExpr *nnf;
+    struct BoolExpr *dnf;
 
     CHECK_NULL(nnf, _to_nnf(ex));
     CHECK_NULL_1(dnf, _to_dnf(nnf), nnf);
@@ -283,11 +283,11 @@ BoolExpr_ToDNF(BoolExpr *ex)
 }
 
 
-BoolExpr *
-BoolExpr_ToCNF(BoolExpr *ex)
+struct BoolExpr *
+BoolExpr_ToCNF(struct BoolExpr *ex)
 {
-    BoolExpr *nnf;
-    BoolExpr *cnf;
+    struct BoolExpr *nnf;
+    struct BoolExpr *cnf;
 
     CHECK_NULL(nnf, _to_nnf(ex));
     CHECK_NULL_1(cnf, _to_cnf(nnf), nnf);
@@ -300,10 +300,10 @@ BoolExpr_ToCNF(BoolExpr *ex)
 
 
 // FIXME: Implement splitvar heuristic
-static BoolExpr *
-_choose_var(BoolExpr *dnf)
+static struct BoolExpr *
+_choose_var(struct BoolExpr *dnf)
 {
-    BoolExpr *lit = IS_LIT(dnf->data.xs->items[0])
+    struct BoolExpr *lit = IS_LIT(dnf->data.xs->items[0])
                   ? dnf->data.xs->items[0]
                   : dnf->data.xs->items[0]->data.xs->items[0];
 
@@ -315,9 +315,9 @@ _choose_var(BoolExpr *dnf)
 
 
 static bool
-_cofactors(BoolExpr **fv0, BoolExpr **fv1, BoolExpr *f, BoolExpr *v)
+_cofactors(struct BoolExpr **fv0, struct BoolExpr **fv1, struct BoolExpr *f, struct BoolExpr *v)
 {
-    BoolExprDict *v0, *v1;
+    struct BoolExprDict *v0, *v1;
 
     v0 = BoolExprVarMap_New();
     if (v0 == NULL)
@@ -358,19 +358,19 @@ _cofactors(BoolExpr **fv0, BoolExpr **fv1, BoolExpr *f, BoolExpr *v)
 
 
 /* CS(f) = [x0 | CS(0, x1, ..., xn)] & [~x0 | CS(1, x1, ..., xn)] */
-static BoolExpr *
-_complete_sum(BoolExpr *dnf)
+static struct BoolExpr *
+_complete_sum(struct BoolExpr *dnf)
 {
     if (BoolExpr_Depth(dnf) <= 1) {
         return BoolExpr_IncRef(dnf);
     }
     else {
-        BoolExpr *v, *vn;
-        BoolExpr *fv0, *fv1;
-        BoolExpr *cs0, *cs1;
-        BoolExpr *left, *right;
-        BoolExpr *temp;
-        BoolExpr *y;
+        struct BoolExpr *v, *vn;
+        struct BoolExpr *fv0, *fv1;
+        struct BoolExpr *cs0, *cs1;
+        struct BoolExpr *left, *right;
+        struct BoolExpr *temp;
+        struct BoolExpr *y;
 
         CHECK_NULL(v, _choose_var(dnf));
 
@@ -406,11 +406,11 @@ _complete_sum(BoolExpr *dnf)
 }
 
 
-BoolExpr *
-BoolExpr_CompleteSum(BoolExpr *ex)
+struct BoolExpr *
+BoolExpr_CompleteSum(struct BoolExpr *ex)
 {
-    BoolExpr *dnf;
-    BoolExpr *sum;
+    struct BoolExpr *dnf;
+    struct BoolExpr *sum;
 
     if (BoolExpr_IsDNF(ex))
         dnf = BoolExpr_IncRef(ex);

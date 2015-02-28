@@ -48,16 +48,16 @@ static size_t _primes[] = {
 };
 
 
-struct _BoolExprSetItem {
-    BoolExpr *key;
-    BoolExprSetItem *tail;
+struct BoolExprSetItem {
+    struct BoolExpr *key;
+    struct BoolExprSetItem *tail;
 };
 
 
 static void
-_list_del(BoolExprSetItem *list)
+_list_del(struct BoolExprSetItem *list)
 {
-    if (list != (BoolExprSetItem *) NULL) {
+    if (list != (struct BoolExprSetItem *) NULL) {
         _list_del(list->tail);
         BoolExpr_DecRef(list->key);
 
@@ -67,9 +67,9 @@ _list_del(BoolExprSetItem *list)
 
 
 static bool
-_list_contains(BoolExprSetItem *list, BoolExpr *key)
+_list_contains(struct BoolExprSetItem *list, struct BoolExpr *key)
 {
-    if (list == (BoolExprSetItem *) NULL)
+    if (list == (struct BoolExprSetItem *) NULL)
         return false;
     else if (list->key == key)
         return true;
@@ -78,25 +78,25 @@ _list_contains(BoolExprSetItem *list, BoolExpr *key)
 }
 
 
-BoolExprSet *
-BoolExprSet_New(size_t (*prehash)(BoolExpr *))
+struct BoolExprSet *
+BoolExprSet_New(size_t (*prehash)(struct BoolExpr *))
 {
-    BoolExprSet *set;
+    struct BoolExprSet *set;
     size_t pridx = _MIN_IDX;
     size_t width = _primes[pridx];
 
-    set = (BoolExprSet *) malloc(sizeof(BoolExprSet));
+    set = (struct BoolExprSet *) malloc(sizeof(struct BoolExprSet));
     if (set == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    set->items = (BoolExprSetItem **) malloc(width * sizeof(BoolExprSetItem *));
+    set->items = (struct BoolExprSetItem **) malloc(width * sizeof(struct BoolExprSetItem *));
     if (set->items == NULL) {
         free(set);   // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
     }
 
     for (size_t i = 0; i < width; ++i)
-        set->items[i] = (BoolExprSetItem *) NULL;
+        set->items[i] = (struct BoolExprSetItem *) NULL;
 
     set->prehash = prehash;
     set->length = 0;
@@ -107,13 +107,13 @@ BoolExprSet_New(size_t (*prehash)(BoolExpr *))
 
 
 static size_t
-_var2int(BoolExpr *var)
+_var2int(struct BoolExpr *var)
 {
     return (size_t) (var->data.lit.uniqid - 1);
 }
 
 
-BoolExprSet *
+struct BoolExprSet *
 BoolExprVarSet_New(void)
 {
     return BoolExprSet_New(_var2int);
@@ -121,14 +121,14 @@ BoolExprVarSet_New(void)
 
 
 static size_t
-_lit2int(BoolExpr *lit)
+_lit2int(struct BoolExpr *lit)
 {
     return (size_t) (lit->data.lit.uniqid < 0 ? -2 * lit->data.lit.uniqid - 2
                                               :  2 * lit->data.lit.uniqid - 1);
 }
 
 
-BoolExprSet *
+struct BoolExprSet *
 BoolExprLitSet_New(void)
 {
     return BoolExprSet_New(_lit2int);
@@ -136,7 +136,7 @@ BoolExprLitSet_New(void)
 
 
 void
-BoolExprSet_Del(BoolExprSet *set)
+BoolExprSet_Del(struct BoolExprSet *set)
 {
     for (size_t i = 0; i < _primes[set->pridx]; ++i)
         _list_del(set->items[i]);
@@ -147,19 +147,19 @@ BoolExprSet_Del(BoolExprSet *set)
 
 
 static size_t
-_hash(BoolExprSet *set, BoolExpr *key)
+_hash(struct BoolExprSet *set, struct BoolExpr *key)
 {
     return set->prehash(key) % _primes[set->pridx];
 }
 
 
 static bool
-_insert(BoolExprSet *set, BoolExpr *key)
+_insert(struct BoolExprSet *set, struct BoolExpr *key)
 {
     size_t index = _hash(set, key);;
-    BoolExprSetItem *item = set->items[index];
+    struct BoolExprSetItem *item = set->items[index];
 
-    while (item != (BoolExprSetItem *) NULL) {
+    while (item != (struct BoolExprSetItem *) NULL) {
         if (item->key == key) {
             BoolExpr_DecRef(item->key);
             item->key = BoolExpr_IncRef(key);
@@ -168,7 +168,7 @@ _insert(BoolExprSet *set, BoolExpr *key)
         item = item->tail;
     }
 
-    item = (BoolExprSetItem *) malloc(sizeof(BoolExprSetItem));
+    item = (struct BoolExprSetItem *) malloc(sizeof(struct BoolExprSetItem));
     if (item == NULL)
         return false; // LCOV_EXCL_LINE
 
@@ -183,22 +183,22 @@ _insert(BoolExprSet *set, BoolExpr *key)
 
 
 static bool
-_enlarge(BoolExprSet *set)
+_enlarge(struct BoolExprSet *set)
 {
-    BoolExprSetItem *item;
+    struct BoolExprSetItem *item;
 
     size_t pridx = set->pridx;
-    BoolExprSetItem **items = set->items;
+    struct BoolExprSetItem **items = set->items;
 
     set->length = 0;
     set->pridx += 1;
-    set->items = (BoolExprSetItem **) malloc(_primes[set->pridx] * sizeof(BoolExprSetItem *));
+    set->items = (struct BoolExprSetItem **) malloc(_primes[set->pridx] * sizeof(struct BoolExprSetItem *));
     for (size_t i = 0; i < _primes[set->pridx]; ++i)
-        set->items[i] = (BoolExprSetItem *) NULL;
+        set->items[i] = (struct BoolExprSetItem *) NULL;
 
     for (size_t i = 0; i < _primes[pridx]; ++i) {
         item = items[i];
-        while (item != (BoolExprSetItem *) NULL) {
+        while (item != (struct BoolExprSetItem *) NULL) {
             if (!_insert(set, item->key)) {
                 /* LCOV_EXCL_START */
                 for (size_t j = 0; j < i; ++j)
@@ -218,7 +218,7 @@ _enlarge(BoolExprSet *set)
 
 
 bool
-BoolExprSet_Insert(BoolExprSet *set, BoolExpr *key)
+BoolExprSet_Insert(struct BoolExprSet *set, struct BoolExpr *key)
 {
     double load;
 
@@ -237,13 +237,13 @@ BoolExprSet_Insert(BoolExprSet *set, BoolExpr *key)
 
 
 bool
-BoolExprSet_Remove(BoolExprSet *set, BoolExpr *key)
+BoolExprSet_Remove(struct BoolExprSet *set, struct BoolExpr *key)
 {
     size_t index = _hash(set, key);
-    BoolExprSetItem **p = &set->items[index];
-    BoolExprSetItem *item = set->items[index];
+    struct BoolExprSetItem **p = &set->items[index];
+    struct BoolExprSetItem *item = set->items[index];
 
-    while (item != (BoolExprSetItem *) NULL) {
+    while (item != (struct BoolExprSetItem *) NULL) {
         if (item->key == key) {
             BoolExpr_DecRef(item->key);
             *p = item->tail;
@@ -262,7 +262,7 @@ BoolExprSet_Remove(BoolExprSet *set, BoolExpr *key)
 
 
 bool
-BoolExprSet_Contains(BoolExprSet *set, BoolExpr *key)
+BoolExprSet_Contains(struct BoolExprSet *set, struct BoolExpr *key)
 {
     size_t index = _hash(set, key);
 

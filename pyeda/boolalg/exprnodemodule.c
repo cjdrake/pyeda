@@ -43,8 +43,8 @@ PyDoc_STRVAR(ExprNode_doc,
 typedef struct {
     PyObject_HEAD
 
-    BoolExpr *ex;
-    BoolExprIter *it;
+    struct BoolExpr *ex;
+    struct BoolExprIter *it;
 } ExprNode;
 
 
@@ -52,7 +52,7 @@ static ExprNode *_Zero;
 static ExprNode *_One;
 
 
-static BoolExprVector *lits;
+static struct BoolExprVector *lits;
 
 
 static PyObject *
@@ -91,7 +91,7 @@ ExprNode_compose(ExprNode *self, PyObject *args);
 
 /* Recursive component of ExprNode_to_ast */
 static PyObject *
-_node2ast(BoolExpr *ex)
+_node2ast(struct BoolExpr *ex)
 {
     PyObject *ast;
 
@@ -403,7 +403,7 @@ ExprNode_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 static int
 ExprNode_init(ExprNode *self, PyObject *args, PyObject *kwargs)
 {
-    self->it = (BoolExprIter *) NULL;
+    self->it = (struct BoolExprIter *) NULL;
     return 0;
 }
 
@@ -466,7 +466,7 @@ ExprNode_next(ExprNode *self)
         return NULL;
     }
     else {
-        BoolExpr *ex = BoolExprIter_Next(self->it);
+        struct BoolExpr *ex = BoolExprIter_Next(self->it);
         ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
         if (pyex == NULL) {
             BoolExprIter_Del(self->it);
@@ -484,12 +484,12 @@ static PyObject *
 ExprNode_restrict(ExprNode *self, PyObject *args)
 {
     PyObject *point;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     Py_ssize_t pos = 0;
     PyObject *key, *val;
 
-    BoolExprDict *var2ex;
+    struct BoolExprDict *var2ex;
 
     if (!PyArg_ParseTuple(args, "O", &point))
         return NULL;
@@ -532,12 +532,12 @@ static PyObject *
 ExprNode_compose(ExprNode *self, PyObject *args)
 {
     PyObject *mapping;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     Py_ssize_t pos = 0;
     PyObject *key, *val;
 
-    BoolExprDict *var2ex;
+    struct BoolExprDict *var2ex;
 
     if (!PyArg_ParseTuple(args, "O", &mapping))
         return NULL;
@@ -622,7 +622,7 @@ ExprNode_data(ExprNode *self)
 static PyObject *
 ExprNode_pushdown_not(ExprNode *self)
 {
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     if ((ex = BoolExpr_PushDownNot(self->ex)) == NULL) {
         PyErr_SetString(Error, "BoolExpr_PushDownNot failed");
@@ -650,7 +650,7 @@ ExprNode_pushdown_not(ExprNode *self)
 static PyObject *
 ExprNode_simplify(ExprNode *self)
 {
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     if ((ex = BoolExpr_Simplify(self->ex)) == NULL) {
         PyErr_SetString(Error, "BoolExpr_Simplify failed");
@@ -678,7 +678,7 @@ ExprNode_simplify(ExprNode *self)
 static PyObject *
 ExprNode_to_binary(ExprNode *self)
 {
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     if ((ex = BoolExpr_ToBinary(self->ex)) == NULL) {
         PyErr_SetString(Error, "BoolExpr_ToBinary failed");
@@ -705,7 +705,7 @@ ExprNode_to_binary(ExprNode *self)
 static PyObject *
 ExprNode_to_nnf(ExprNode *self)
 {
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     if ((ex = BoolExpr_ToNNF(self->ex)) == NULL) {
         PyErr_SetString(Error, "BoolExpr_ToNNF failed");
@@ -732,7 +732,7 @@ ExprNode_to_nnf(ExprNode *self)
 static PyObject *
 ExprNode_to_dnf(ExprNode *self)
 {
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     if ((ex = BoolExpr_ToDNF(self->ex)) == NULL) {
         PyErr_SetString(Error, "BoolExpr_ToDNF failed");
@@ -759,7 +759,7 @@ ExprNode_to_dnf(ExprNode *self)
 static PyObject *
 ExprNode_to_cnf(ExprNode *self)
 {
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     if ((ex = BoolExpr_ToCNF(self->ex)) == NULL) {
         PyErr_SetString(Error, "BoolExpr_ToCNF failed");
@@ -786,7 +786,7 @@ ExprNode_to_cnf(ExprNode *self)
 static PyObject *
 ExprNode_complete_sum(ExprNode *self)
 {
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     if ((ex = BoolExpr_CompleteSum(self->ex)) == NULL) {
         PyErr_SetString(Error, "BoolExpr_CompleteSum failed");
@@ -828,7 +828,7 @@ static PyObject *
 lit(PyObject *self, PyObject *args)
 {
     long uniqid;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
     ExprNode *pyex;
 
     if (!PyArg_ParseTuple(args, "l", &uniqid))
@@ -873,7 +873,7 @@ static PyObject *
 not_(PyObject *self, PyObject *args)
 {
     PyObject *x;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
     ExprNode *pyex;
 
     if (!PyArg_ParseTuple(args, "O", &x))
@@ -900,14 +900,14 @@ not_(PyObject *self, PyObject *args)
 }
 
 
-static BoolExpr **
+static struct BoolExpr **
 _parse_args(int n, PyObject *args)
 {
     int i;
     PyObject *iter, *item;
-    BoolExpr **xs;
+    struct BoolExpr **xs;
 
-    xs = (BoolExpr **) PyMem_Malloc(n * sizeof(BoolExpr *));
+    xs = (struct BoolExpr **) PyMem_Malloc(n * sizeof(struct BoolExpr *));
     if (xs == NULL)
         return NULL;
 
@@ -953,9 +953,9 @@ static PyObject *
 or_(PyObject *self, PyObject *args)
 {
     int n = PyTuple_Size(args);
-    BoolExpr **xs;
+    struct BoolExpr **xs;
     ExprNode *pyex;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     xs = _parse_args(n, args);
     if (xs == NULL)
@@ -997,9 +997,9 @@ static PyObject *
 and_(PyObject *self, PyObject *args)
 {
     int n = PyTuple_Size(args);
-    BoolExpr **xs;
+    struct BoolExpr **xs;
     ExprNode *pyex;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     xs = _parse_args(n, args);
     if (xs == NULL)
@@ -1041,9 +1041,9 @@ static PyObject *
 xor_(PyObject *self, PyObject *args)
 {
     int n = PyTuple_Size(args);
-    BoolExpr **xs;
+    struct BoolExpr **xs;
     ExprNode *pyex;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     xs = _parse_args(n, args);
     if (xs == NULL)
@@ -1085,9 +1085,9 @@ static PyObject *
 eq(PyObject *self, PyObject *args)
 {
     int n = PyTuple_Size(args);
-    BoolExpr **xs;
+    struct BoolExpr **xs;
     ExprNode *pyex;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
 
     xs = _parse_args(n, args);
     if (xs == NULL)
@@ -1132,7 +1132,7 @@ static PyObject *
 impl(PyObject *self, PyObject *args)
 {
     PyObject *p, *q;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
     ExprNode *pyex;
 
     if (!PyArg_ParseTuple(args, "OO", &p, &q))
@@ -1185,7 +1185,7 @@ static PyObject *
 ite(PyObject *self, PyObject *args)
 {
     PyObject *s, *d1, *d0;
-    BoolExpr *ex;
+    struct BoolExpr *ex;
     ExprNode *pyex;
 
     if (!PyArg_ParseTuple(args, "OOO", &s, &d1, &d0))
