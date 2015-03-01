@@ -304,8 +304,8 @@ static struct BoolExpr *
 _choose_var(struct BoolExpr *dnf)
 {
     struct BoolExpr *lit = IS_LIT(dnf->data.xs->items[0])
-                  ? dnf->data.xs->items[0]
-                  : dnf->data.xs->items[0]->data.xs->items[0];
+                         ? dnf->data.xs->items[0]
+                         : dnf->data.xs->items[0]->data.xs->items[0];
 
     if (IS_COMP(lit))
         return Not(lit);
