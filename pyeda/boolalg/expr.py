@@ -106,14 +106,10 @@ import random
 
 import pyeda.parsing.boolexpr
 from pyeda.boolalg import boolfunc
-from pyeda.boolalg import exprnode
 from pyeda.util import bit_on, cached_property, clog2
 
-# FIXME: This is a hack for readthedocs Sphinx autodoc
-try:
-    from pyeda.boolalg import picosat
-except ImportError: # pragma: no cover
-    pass
+from pyeda.boolalg import exprnode
+from pyeda.boolalg import picosat
 
 
 # existing Literal references

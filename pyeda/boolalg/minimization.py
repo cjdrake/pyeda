@@ -12,14 +12,10 @@ from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import exprvar, Expression, Or, And
 from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC
 
-# NOTE: This is a hack for readthedocs Sphinx autodoc
-try:
-    from pyeda.boolalg.espresso import (
-        FTYPE, DTYPE, RTYPE,
-        set_config, espresso,
-    )
-except ImportError:
-    pass
+from pyeda.boolalg.espresso import (
+    FTYPE, DTYPE, RTYPE,
+    set_config, espresso,
+)
 
 
 CONFIG = dict(
