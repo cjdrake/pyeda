@@ -5,8 +5,9 @@ include requirements.txt
 
 recursive-include doc *
 
-include extension/picosat/*
+include extension/boolexpr/*
 include extension/espresso/src/*
+include extension/picosat/*
 
 include pyeda/logic/test/top95.txt
 include pyeda/logic/test/top95_solns.txt
