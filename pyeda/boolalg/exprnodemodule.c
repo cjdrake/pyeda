@@ -89,6 +89,18 @@ static PyObject *
 ExprNode_compose(ExprNode *self, PyObject *args);
 
 
+/* ExprNode.id() */
+PyDoc_STRVAR(id_doc,
+    "Return the int id of the expression."
+);
+
+static PyObject *
+ExprNode_id(ExprNode *self)
+{
+    return PyLong_FromLong((long) self->ex);
+}
+
+
 /* Recursive component of ExprNode_to_ast */
 static PyObject *
 _node2ast(struct BoolExpr *ex)
@@ -364,6 +376,7 @@ ExprNode_methods[] = {
     {"restrict", (PyCFunction) ExprNode_restrict, METH_VARARGS, restrict_doc},
     {"compose",  (PyCFunction) ExprNode_compose,  METH_VARARGS, compose_doc},
 
+    {"id",           (PyCFunction) ExprNode_id,           METH_NOARGS, id_doc},
     {"to_ast",       (PyCFunction) ExprNode_to_ast,       METH_NOARGS, to_ast_doc},
     {"type",         (PyCFunction) ExprNode_type,         METH_NOARGS, type_doc},
     {"data",         (PyCFunction) ExprNode_data,         METH_NOARGS, data_doc},

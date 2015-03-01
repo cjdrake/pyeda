@@ -928,35 +928,31 @@ class Expression(boolfunc.Function):
         """Convert to DOT language representation."""
         parts = ['graph', name, '{', 'rankdir=BT;']
         for ex in self.iter_dfs():
+            exid = ex.node.id()
             if ex is Zero:
-                parts += ['n' + str(id(ex)), '[label=0,shape=box]']
+                parts += ["n{} [label=0,shape=box];".format(exid)]
             elif ex is One:
-                parts += ['n' + str(id(ex)), '[label=1,shape=box]']
+                parts += ["n{} [label=1,shape=box];".format(exid)]
             elif isinstance(ex, Literal):
-                parts += ['n' + str(id(ex)),
-                          '[label="{}",shape=box]'.format(ex)]
+                parts += ['n{} [label="{}",shape=box];'.format(exid, ex)]
             else:
-                parts.append('n' + str(id(ex)))
-                parts.append("[label={0.ASTOP},shape=circle]".format(ex))
+                parts += ["n{0} [label={1.ASTOP},shape=circle];".format(exid, ex)]
         for ex in self.iter_dfs():
+            exid = ex.node.id()
             if isinstance(ex, NotOp):
-                parts += ['n' + str(id(ex.x)), '--',
-                          'n' + str(id(ex))]
+                parts += ["n{} -- n{};".format(ex.x.node.id(), exid)]
             elif isinstance(ex, ImpliesOp):
-                parts += ['n' + str(id(ex.p)), '--',
-                          'n' + str(id(ex)), '[label=p]']
-                parts += ['n' + str(id(ex.q)), '--',
-                          'n' + str(id(ex)), '[label=q]']
+                p, q = ex.xs
+                parts += ["n{} -- n{} [label=p];".format(p.node.id(), exid)]
+                parts += ["n{} -- n{} [label=q];".format(q.node.id(), exid)]
             elif isinstance(ex, IfThenElseOp):
-                parts += ['n' + str(id(ex.s)), '--',
-                          'n' + str(id(ex)), '[label=s]']
-                parts += ['n' + str(id(ex.d1)), '--',
-                          'n' + str(id(ex)), '[label=d1]']
-                parts += ['n' + str(id(ex.d0)), '--',
-                          'n' + str(id(ex)), '[label=d0]']
+                s, d1, d0 = ex.xs
+                parts += ["n{} -- n{} [label=s];".format(s.node.id(), exid)]
+                parts += ["n{} -- n{} [label=d1];".format(d1.node.id(), exid)]
+                parts += ["n{} -- n{} [label=d0];".format(d0.node.id(), exid)]
             elif isinstance(ex, NaryOp):
                 for x in ex.xs:
-                    parts += ['n' + str(id(x)), '--', 'n' + str(id(ex))]
+                    parts += ["n{} -- n{};".format(x.node.id(), exid)]
         parts.append('}')
         return " ".join(parts)
 
