@@ -8,7 +8,11 @@ Interface Functions:
     parse
 """
 
+
+# Disable 'invalid-name', because this module uses an unconventional naming
+# scheme for the parsing tokens.
 # pylint: disable=C0103
+
 
 from pyeda.parsing import lex
 from pyeda.parsing.token import (

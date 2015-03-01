@@ -8,6 +8,11 @@ Interface Functions:
 * :func:`espresso_tts`
 """
 
+
+# Disable the 'no-name-in-module' error, b/c pylint can't look into C extensions
+# pylint: disable=E0611
+
+
 from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import exprvar, Expression, Or, And
 from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC

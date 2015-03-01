@@ -90,11 +90,8 @@ Interface Classes:
 """
 
 
-# Disable 'unnecessary-lambda'
-# pylint: disable=W0108
-
-# Disable 'no-member' error
-# pylint: disable=E1101
+# Disable 'no-member' error, b/c pylint can't look into C extensions
+# foo bar pylint: disable=E1101
 
 
 import itertools
@@ -109,6 +106,7 @@ from pyeda.util import bit_on, cached_property, clog2
 import os
 if os.getenv('READTHEDOCS') == 'True':
     from unittest.mock import MagicMock
+    # pylint: disable=C0103
     exprnode = MagicMock()
 else:
     from pyeda.boolalg import exprnode
@@ -621,10 +619,6 @@ class Expression(boolfunc.Function):
         other_node = self.box(other).node
         return _expr(exprnode.xor(self.node, other_node))
 
-    def eq(self, other):
-        other_node = self.box(other).node
-        return _expr(exprnode.eq(self.node, other_node))
-
     def __rshift__(self, other):
         other_node = self.box(other).node
         return _expr(exprnode.impl(self.node, other_node))
@@ -826,7 +820,6 @@ class Expression(boolfunc.Function):
             return _expr(node)
     ### End C API ###
 
-    ### FIXME: Write C hooks for these
     def expand(self, vs=None, conj=False):
         """Return the Shannon expansion with respect to a list of variables."""
         vs = self._expect_vars(vs)
@@ -948,18 +941,21 @@ class Atom(Expression):
 
 class Constant(Atom):
     """Constant Expression"""
+    VALUE = NotImplemented
 
 
 class _Zero(Constant):
     """Constant Zero"""
+    VALUE = False
+
     def __bool__(self):
-        return False
+        return self.VALUE
 
     def __int__(self):
-        return 0
+        return int(self.VALUE)
 
     def __str__(self):
-        return '0'
+        return str(self.__int__())
 
     def is_zero(self):
         return True
@@ -976,14 +972,16 @@ class _Zero(Constant):
 
 class _One(Constant):
     """Constant One"""
+    VALUE = True
+
     def __bool__(self):
-        return True
+        return self.VALUE
 
     def __int__(self):
-        return 1
+        return int(self.VALUE)
 
     def __str__(self):
-        return '1'
+        return str(self.__int__())
 
     def is_one(self):
         return True

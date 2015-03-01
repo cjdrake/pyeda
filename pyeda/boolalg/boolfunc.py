@@ -158,10 +158,10 @@ def num2point(num, vs):
     if type(num) is not int:
         fstr = "expected num to be an int, got {0.__name__}"
         raise TypeError(fstr.format(type(num)))
-    N = len(vs)
-    if not 0 <= num < 2**N:
+    n = len(vs)
+    if not 0 <= num < 2**n:
         fstr = "expected num to be in range [0, {}), got {}"
-        raise ValueError(fstr.format(2**N, num))
+        raise ValueError(fstr.format(2**n, num))
 
     return {v: bit_on(num, i) for i, v in enumerate(vs)}
 
@@ -218,10 +218,10 @@ def num2term(num, fs, conj=False):
     if type(num) is not int:
         fstr = "expected num to be an int, got {0.__name__}"
         raise TypeError(fstr.format(type(num)))
-    N = len(fs)
-    if not 0 <= num < 2**N:
+    n = len(fs)
+    if not 0 <= num < 2**n:
         fstr = "expected num to be in range [0, {}), got {}"
-        raise ValueError(fstr.format(2**N, num))
+        raise ValueError(fstr.format(2**n, num))
 
     if conj:
         return tuple(~f if bit_on(num, i) else f for i, f in enumerate(fs))

@@ -265,6 +265,7 @@ class TruthTable(boolfunc.Function):
         def items():
             """Iterate through OR'ed items."""
             for point in boolfunc.iter_points(inputs):
+                # pylint: disable=C0103
                 ab = self.restrict(point).pcdata[0]
                 cd = other.restrict(point).pcdata[0]
                 # a | c, b & d
@@ -278,6 +279,7 @@ class TruthTable(boolfunc.Function):
         def items():
             """Iterate through AND'ed items."""
             for point in boolfunc.iter_points(inputs):
+                # pylint: disable=C0103
                 ab = self.restrict(point).pcdata[0]
                 cd = other.restrict(point).pcdata[0]
                 # a & c, b | d
@@ -290,8 +292,8 @@ class TruthTable(boolfunc.Function):
         inputs = sorted(self.support | other.support)
         def items():
             """Iterate through XOR'ed items."""
-            # pylint: disable=C0103
             for point in boolfunc.iter_points(inputs):
+                # pylint: disable=C0103
                 ab = self.restrict(point).pcdata[0]
                 cd = other.restrict(point).pcdata[0]
                 # a & d | b & c, a & c | b & d

@@ -11,6 +11,11 @@ Interface Functions:
     parse
 """
 
+
+# Disable 'no-name-in-module', b/c pylint can't look into C extensions
+# pylint: disable=E0611
+
+
 import re
 
 from pyeda.boolalg.espresso import FTYPE, DTYPE, RTYPE

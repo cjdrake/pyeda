@@ -2,8 +2,10 @@
 Logic functions for Sudoku
 """
 
-# Disable "invalid variable name"
+
+# Disable 'invalid-name', b/c 'logic' package uses unconventional names
 # pylint: disable=C0103
+
 
 from pyeda.boolalg.expr import And, OneHot, expr2dimacscnf
 from pyeda.boolalg.bfarray import exprvars

@@ -39,13 +39,14 @@ load-plugins=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 # C0302 = Too many lines in module
+# W0108 = Lambda may not be necessary
 # W0142 = Used * or ** magic
 # W0212 = Access to a protected member of a client class
 # W0602 = Using global for ... but no assignment is done
 # R0903 = Too few public methods
 # R0904 = Too many public methods
 # R0923 = Interface not implemented
-disable=similarities,C0302,W0142,W0212,W0223,W0602,R0903,R0904,R0923
+disable=similarities,C0302,W0108,W0142,W0212,W0223,W0602,R0903,R0904,R0923
 
 [REPORTS]
 
@@ -142,16 +143,15 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # Good variable names which should always be accepted, separated by a comma
 # _ : generic
 # i, j, k : iterator index
-# N : generic integer
+# n : int
+# d : dict
 # it : generic iterator
-# ab, cd : short-hand for positional cube variables
-# x, y, x0, x1, xi, xs, ys: operator 'x' arguments
-# y: generic function output variable
+# x, x0, x1, xi, xs: function inputs
+# y, ys: function outputs
 # p, q : conventional Implies variable names p => q
 # s, d1, d0 : conventional ITE (if-then-else) variable names s ? d1 : d0
 # lo, hi : BDD low/high edges
-# v : Variable instance
-# vs : [v]
+# v, vs : Variable instance(s)
 # bf : Boolean function
 # farray : Function array
 # ex : Expression
@@ -161,10 +161,11 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # tt : TruthTable instances
 # sl : slice instance
 # op : Boolean operator
+# Zero, One : Constant names
 # Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE : Expression factory functions
 # Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel, Mux : Expression higher-order factory functions
 # ForAll, Exists : Expression quantifiers
-good-names=_,i,j,k,N,it,ab,cd,x,x0,x1,xi,xs,y,ys,p,q,s,d1,d0,lo,hi,v,vs,bf,farray,ex,f,g,h,cf,fs,tt,sl,op,Not,Or,And,Xor,Xnor,Equal,Unequal,Implies,ITE,Nor,Nand,OneHot0,OneHot,Majority,AchillesHeel,Mux,ForAll,Exists
+good-names=_,i,j,k,n,d,it,x,x0,x1,xi,xs,y,ys,p,q,s,d1,d0,lo,hi,v,vs,bf,farray,ex,f,g,h,cf,fs,tt,sl,op,Zero,One,Not,Or,And,Xor,Xnor,Equal,Unequal,Implies,ITE,Nor,Nand,OneHot0,OneHot,Majority,AchillesHeel,Mux,ForAll,Exists
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz

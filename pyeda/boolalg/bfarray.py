@@ -1172,16 +1172,16 @@ def _filtdim(items, shape, dim, nsl):
     # Size of each group
     size = len(items) // num
     # Size of the dimension
-    N = normshape[dim]
+    n = normshape[dim]
     if nsl_type is int:
         for i in range(num):
-            if i % N == nsl:
+            if i % n == nsl:
                 newitems += items[size*i:size*(i+1)]
         # Collapse dimension
         newshape = shape[:dim] + shape[dim+1:]
     elif nsl_type is slice:
         for i in range(num):
-            if nsl.start <= (i % N) < nsl.stop:
+            if nsl.start <= (i % n) < nsl.stop:
                 newitems += items[size*i:size*(i+1)]
         # Reshape dimension
         offset = shape[dim][0]
@@ -1189,12 +1189,12 @@ def _filtdim(items, shape, dim, nsl):
         newshape = shape[:dim] + (redim, ) + shape[dim+1:]
     # farray
     else:
-        if nsl.size < clog2(N):
+        if nsl.size < clog2(n):
             fstr = "expected dim {} select to have >= {} bits, got {}"
-            raise ValueError(fstr.format(dim, clog2(N), nsl.size))
-        groups = [list() for _ in range(N)]
+            raise ValueError(fstr.format(dim, clog2(n), nsl.size))
+        groups = [list() for _ in range(n)]
         for i in range(num):
-            groups[i % N] += items[size*i:size*(i+1)]
+            groups[i % n] += items[size*i:size*(i+1)]
         for muxins in zip(*groups):
             it = boolfunc.iter_terms(nsl._items)
             xs = [reduce(operator.and_, (muxin, ) + next(it))

@@ -6,8 +6,10 @@ Interface Functions:
     gray2bin
 """
 
-# Disable "invalid variable name"
+
+# Disable 'invalid-name', b/c 'logic' package uses unconventional names
 # pylint: disable=C0103
+
 
 from pyeda.boolalg.bfarray import fcat, farray
 

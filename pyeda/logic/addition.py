@@ -7,8 +7,10 @@ Interface Functions:
     brent_kung_add
 """
 
-# Disable "invalid variable name"
+
+# Disable 'invalid-name', b/c 'logic' package uses unconventional names
 # pylint: disable=C0103
+
 
 from math import floor, log
 
