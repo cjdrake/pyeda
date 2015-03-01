@@ -277,7 +277,7 @@ unsigned long BoolExpr_Depth(struct BoolExpr *);
 unsigned long BoolExpr_Size(struct BoolExpr *);
 
 
-/* Return the number of atomic nodes in an expression tree. */
+/* Return the number of atoms in an expression tree. */
 unsigned long BoolExpr_AtomCount(struct BoolExpr *);
 
 

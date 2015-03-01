@@ -111,7 +111,6 @@ struct BoolExpr * DOMINATOR[16] = {
 };
 
 
-/* Returns a new reference */
 struct BoolExpr *
 _lit_new(struct BoolExprVector *lits, long uniqid)
 {
@@ -139,7 +138,6 @@ _lit_del(struct BoolExpr *lit)
 }
 
 
-/* Returns a new reference */
 struct BoolExpr *
 _op_new(BoolExprType t, size_t n, struct BoolExpr **xs)
 {
