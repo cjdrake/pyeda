@@ -24,7 +24,6 @@ abstract syntax tree
             | 'xor'
             | 'eq'
 
-
 Interface Functions:
 
 * :func:`exprvar` --- Return a unique Expression variable
@@ -36,6 +35,7 @@ Interface Functions:
 * :func:`Not` --- Expression negation operator
 * :func:`Or` --- Expression disjunction (sum, OR) operator
 * :func:`And` --- Expression conjunction (product, AND) operator
+
 * :func:`Xor` --- Expression exclusive or (XOR) operator
 * :func:`Equal` --- Expression equality operator
 * :func:`Implies` --- Expression implication operator
@@ -51,7 +51,6 @@ Interface Functions:
 * :func:`Majority`
 * :func:`AchillesHeel`
 * :func:`Mux`
-
 
 Interface Classes:
 
@@ -73,11 +72,8 @@ Interface Classes:
 
     * :class:`NaryOp`
 
-      * :class:`OrAndOp`
-
-        * :class:`OrOp`
-        * :class:`AndOp`
-
+      * :class:`OrOp`
+      * :class:`AndOp`
       * :class:`XorOp`
       * :class:`EqualOp`
 
