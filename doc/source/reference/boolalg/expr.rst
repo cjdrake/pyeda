@@ -34,17 +34,9 @@ Primary Operators
 Secondary Operators
 ^^^^^^^^^^^^^^^^^^^
 
-.. autofunction:: pyeda.boolalg.expr.Nor
-
-.. autofunction:: pyeda.boolalg.expr.Nand
-
 .. autofunction:: pyeda.boolalg.expr.Xor
 
-.. autofunction:: pyeda.boolalg.expr.Xnor
-
 .. autofunction:: pyeda.boolalg.expr.Equal
-
-.. autofunction:: pyeda.boolalg.expr.Unequal
 
 .. autofunction:: pyeda.boolalg.expr.Implies
 
@@ -52,6 +44,14 @@ Secondary Operators
 
 High Order Operators
 ^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: pyeda.boolalg.expr.Nor
+
+.. autofunction:: pyeda.boolalg.expr.Nand
+
+.. autofunction:: pyeda.boolalg.expr.Xnor
+
+.. autofunction:: pyeda.boolalg.expr.Unequal
 
 .. autofunction:: pyeda.boolalg.expr.OneHot0
 
@@ -71,22 +71,15 @@ Expression Tree Nodes
 
 .. autoclass:: pyeda.boolalg.expr.Expression
    :members: __rshift__,
-             to_unicode, to_latex,
-             invert,
              simplify,
-             simplified,
+             simple,
              depth,
              to_ast,
              expand,
              to_nnf,
-             flatten,
              to_dnf,
-             to_cdnf,
              to_cnf,
-             to_ccnf,
              cover,
-             absorb,
-             reduce,
              encode_inputs,
              encode_dnf,
              encode_cnf,
@@ -96,29 +89,35 @@ Expression Tree Nodes
              to_dot
    :member-order: bysource
 
-.. autoclass:: pyeda.boolalg.expr.ExprConstant
+.. autoclass:: pyeda.boolalg.expr.Atom
 
-.. autoclass:: pyeda.boolalg.expr.ExprLiteral
+.. autoclass:: pyeda.boolalg.expr.Constant
 
-.. autoclass:: pyeda.boolalg.expr.ExprVariable
+.. autoclass:: pyeda.boolalg.expr.Literal
 
-.. autoclass:: pyeda.boolalg.expr.ExprComplement
+.. autoclass:: pyeda.boolalg.expr.Complement
 
-.. autoclass:: pyeda.boolalg.expr.ExprOrAnd
+.. autoclass:: pyeda.boolalg.expr.Variable
 
-.. autoclass:: pyeda.boolalg.expr.ExprOr
+.. autoclass:: pyeda.boolalg.expr.Operator
 
-.. autoclass:: pyeda.boolalg.expr.ExprAnd
+.. autoclass:: pyeda.boolalg.expr.NaryOp
 
-.. autoclass:: pyeda.boolalg.expr.ExprXor
+.. autoclass:: pyeda.boolalg.expr.OrAndOp
 
-.. autoclass:: pyeda.boolalg.expr.ExprEqual
+.. autoclass:: pyeda.boolalg.expr.OrOp
 
-.. autoclass:: pyeda.boolalg.expr.ExprNot
+.. autoclass:: pyeda.boolalg.expr.AndOp
 
-.. autoclass:: pyeda.boolalg.expr.ExprImplies
+.. autoclass:: pyeda.boolalg.expr.XorOp
 
-.. autoclass:: pyeda.boolalg.expr.ExprITE
+.. autoclass:: pyeda.boolalg.expr.EqualOp
+
+.. autoclass:: pyeda.boolalg.expr.NotOp
+
+.. autoclass:: pyeda.boolalg.expr.ImpliesOp
+
+.. autoclass:: pyeda.boolalg.expr.IfThenElseOp
 
 Normal Forms
 ------------

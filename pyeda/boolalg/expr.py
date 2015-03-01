@@ -44,7 +44,7 @@ Interface Functions:
 * :func:`Nor` --- Expression NOR (not OR) operator
 * :func:`Nand` --- Expression NAND (not AND) operator
 * :func:`Xnor` --- Expression XNOR (not XOR) operator
-* :func:`Unequal` --- Expression inequality operator
+* :func:`Unequal` --- Expression inequality (not EQUAL) operator
 
 * :func:`OneHot0`
 * :func:`OneHot`
@@ -84,6 +84,13 @@ Interface Classes:
     * :class:`NotOp`
     * :class:`ImpliesOp`
     * :class:`IfThenElseOp`
+
+* :class:`NormalForm`
+
+  * :class:`DisjNormalForm`
+  * :class:`ConjNormalForm`
+
+    * :class:`DimacsCNF`
 """
 
 
