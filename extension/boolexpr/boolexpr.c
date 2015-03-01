@@ -560,9 +560,6 @@ BoolExpr_OpCount(struct BoolExpr *ex)
 bool
 BoolExpr_IsDNF(struct BoolExpr *ex)
 {
-    if (!IS_SIMPLE(ex))
-        return false;
-
     if (IS_ZERO(ex) || IS_LIT(ex)) {
         return true;
     }
@@ -586,9 +583,6 @@ BoolExpr_IsDNF(struct BoolExpr *ex)
 bool
 BoolExpr_IsCNF(struct BoolExpr *ex)
 {
-    if (!IS_SIMPLE(ex))
-        return false;
-
     if (IS_ONE(ex) || IS_LIT(ex)) {
         return true;
     }
