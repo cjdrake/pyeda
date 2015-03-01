@@ -577,6 +577,39 @@ def Exists(vs, ex): # pragma: no cover
     return Or(*ex.cofactors(vs))
 
 
+class _Clause:
+    """Helper interface for operators in *clause* form."""
+
+    def _lits(self):
+        """Return the clause as a frozenset of literals."""
+        raise NotImplementedError()
+
+    def _encode_clause(self, litmap):
+        """Encode a clause as a frozenset of ints."""
+        raise NotImplementedError()
+
+
+class _DNF:
+    """Helper interface for operators in disjunctive normal form."""
+
+    def _encode_dnf(self):
+        """Encode DNF as a set of frozenset of ints."""
+        raise NotImplementedError()
+
+    @cached_property
+    def _cover(self):
+        """Return the DNF as a set of frozenset of literals."""
+        raise NotImplementedError()
+
+
+class _CNF:
+    """Helper interface for operators in conjunctive normal form."""
+
+    def _encode_cnf(self):
+        """Encode CNF as a set of frozenset of ints."""
+        raise NotImplementedError()
+
+
 class Expression(boolfunc.Function):
     """Boolean function represented by a logical expression
 
@@ -588,6 +621,7 @@ class Expression(boolfunc.Function):
 
     Do **NOT** create an Expression using the ``Expression`` constructor.
     """
+
     ASTOP = NotImplemented
 
     def __init__(self, node):
@@ -618,6 +652,11 @@ class Expression(boolfunc.Function):
     def __xor__(self, other):
         other_node = self.box(other).node
         return _expr(exprnode.xor(self.node, other_node))
+
+    def eq(self, other):
+        """Boolean equal operator."""
+        other_node = self.box(other).node
+        return _expr(exprnode.eq(self.node, other_node))
 
     def __rshift__(self, other):
         other_node = self.box(other).node
@@ -836,11 +875,6 @@ class Expression(boolfunc.Function):
         else:
             return self
 
-    @cached_property
-    def _cover(self):
-        """Return the cover representation."""
-        raise NotImplementedError()
-
     @property
     def cover(self):
         """Return the DNF expression as a cover of cubes."""
@@ -861,20 +895,12 @@ class Expression(boolfunc.Function):
             nvars += 1
         return litmap, nvars
 
-    def _encode_dnf(self):
-        """Encode as a compact DNF."""
-        raise NotImplementedError()
-
     def encode_dnf(self):
         """Encode as a compact DNF."""
         if self.is_dnf():
             return self._encode_dnf()
         else:
             raise ValueError("expected a DNF expression")
-
-    def _encode_cnf(self):
-        """Encode as a compact CNF."""
-        raise NotImplementedError()
 
     def encode_cnf(self):
         """Encode as a compact CNF."""
@@ -944,8 +970,9 @@ class Constant(Atom):
     VALUE = NotImplemented
 
 
-class _Zero(Constant):
+class _Zero(Constant, _DNF):
     """Constant Zero"""
+
     VALUE = False
 
     def __bool__(self):
@@ -960,18 +987,20 @@ class _Zero(Constant):
     def is_zero(self):
         return True
 
-    @cached_property
-    def _cover(self):
-        return set()
-
+    # _DNF
     def _encode_dnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = set()
         return litmap, nvars, clauses
 
+    @cached_property
+    def _cover(self):
+        return set()
 
-class _One(Constant):
+
+class _One(Constant, _CNF):
     """Constant One"""
+
     VALUE = True
 
     def __bool__(self):
@@ -986,6 +1015,7 @@ class _One(Constant):
     def is_one(self):
         return True
 
+    # _CNF
     def _encode_cnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = set()
@@ -999,8 +1029,9 @@ One = _One(exprnode.One)
 _CONSTS = [Zero, One]
 
 
-class Literal(Atom):
+class Literal(Atom, _Clause, _DNF, _CNF):
     """Literal Expression"""
+
     ASTOP = 'lit'
 
     def __enter__(self):
@@ -1009,22 +1040,25 @@ class Literal(Atom):
     def __exit__(self, exc_type, exc_val, exc_tb):
         _ASSUMPTIONS.discard(self)
 
+    # _Clause
     @cached_property
     def _lits(self):
         return frozenset([self])
 
-    @cached_property
-    def _cover(self):
-        return {self._lits}
-
     def _encode_clause(self, litmap):
         return frozenset([litmap[self]])
 
+    # _DNF
     def _encode_dnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = {self._encode_clause(litmap)}
         return litmap, nvars, clauses
 
+    @cached_property
+    def _cover(self):
+        return {self._lits}
+
+    # _CNF
     def _encode_cnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = {self._encode_clause(litmap)}
@@ -1033,16 +1067,23 @@ class Literal(Atom):
 
 class Complement(Literal):
     """Complement Expression"""
+
     def __str__(self):
         return "~{}".format(self.__invert__())
 
     @cached_property
     def uniqid(self):
+        """Return a unique integer for this complement.
+
+        The value is the negation of the complement's variable.
+        For example, if the uniqid of x1 = 1, then the uniqid of ~x1 = -1.
+        """
         return self.node.data()
 
 
 class Variable(boolfunc.Variable, Literal):
     """Variable Expression"""
+
     def __init__(self, bvar):
         boolfunc.Variable.__init__(self, bvar.names, bvar.indices)
         Literal.__init__(self, exprnode.lit(bvar.uniqid))
@@ -1058,6 +1099,7 @@ class Operator(Expression):
 
     @cached_property
     def xs(self):
+        """Return a tuple of this operator's arguments."""
         return tuple(_expr(node) for node in self.node.data())
 
 
@@ -1065,9 +1107,10 @@ class NaryOp(Operator):
     """Operator with N arguments"""
 
 
-class OrAndOp(NaryOp):
+class OrAndOp(NaryOp, _Clause, _DNF, _CNF):
     """Either an OR or AND operator (a lattice op)"""
 
+    # _Clause
     @cached_property
     def _lits(self):
         return frozenset(self.xs)
@@ -1078,18 +1121,21 @@ class OrAndOp(NaryOp):
 
 class OrOp(OrAndOp):
     """OR Operator"""
+
     ASTOP = 'or'
     NAME = 'Or'
 
-    @cached_property
-    def _cover(self):
-        return {x._lits for x in self.xs}
-
+    # _DNF
     def _encode_dnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = {x._encode_clause(litmap) for x in self.xs}
         return litmap, nvars, clauses
 
+    @cached_property
+    def _cover(self):
+        return {x._lits for x in self.xs}
+
+    # _CNF
     def _encode_cnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = {self._encode_clause(litmap)}
@@ -1098,6 +1144,7 @@ class OrOp(OrAndOp):
 
 class AndOp(OrAndOp):
     """AND Operator"""
+
     ASTOP = 'and'
     NAME = 'And'
 
@@ -1115,15 +1162,17 @@ class AndOp(OrAndOp):
             else:
                 raise ValueError("expected assumption to be a literal")
 
-    @cached_property
-    def _cover(self):
-        return {self._lits}
-
+    # _DNF
     def _encode_dnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = {self._encode_clause(litmap)}
         return litmap, nvars, clauses
 
+    @cached_property
+    def _cover(self):
+        return {self._lits}
+
+    # _CNF
     def _encode_cnf(self):
         litmap, nvars = self.encode_inputs()
         clauses = {x._encode_clause(litmap) for x in self.xs}
@@ -1144,43 +1193,52 @@ class EqualOp(NaryOp):
 
 class NotOp(Operator):
     """NOT Operator"""
+
     ASTOP = 'not'
     NAME = 'Not'
 
     @cached_property
     def x(self):
+        """For Not(x), return x."""
         return self.xs[0]
 
 
 class ImpliesOp(Operator):
     """Implies Operator"""
+
     ASTOP = 'impl'
     NAME = 'Implies'
 
     @cached_property
     def p(self):
+        """For Implies(p, q), return p."""
         return self.xs[0]
 
     @cached_property
     def q(self):
+        """For Implies(p, q), return q."""
         return self.xs[1]
 
 
 class IfThenElseOp(Operator):
     """If-Then-Else (ITE) Operator"""
+
     ASTOP = 'ite'
     NAME = 'ITE'
 
     @cached_property
     def s(self):
+        """For ITE(s, d1, d0), return s."""
         return self.xs[0]
 
     @cached_property
     def d1(self):
+        """For ITE(s, d1, d0), return d1."""
         return self.xs[1]
 
     @cached_property
     def d0(self):
+        """For ITE(s, d1, d0), return d0."""
         return self.xs[2]
 
 
@@ -1224,6 +1282,7 @@ def _iter_backtrack(ex, rand=False):
 
 class NormalForm:
     """Normal form expression"""
+
     def __init__(self, nvars, clauses):
         self.nvars = nvars
         self.clauses = clauses
@@ -1262,6 +1321,7 @@ class NormalForm:
 
 class DisjNormalForm(NormalForm):
     """Disjunctive normal form expression"""
+
     def decode(self, litmap):
         """Convert the DNF to an expression."""
         return Or(*[And(*[litmap[idx] for idx in clause])
@@ -1274,6 +1334,7 @@ class DisjNormalForm(NormalForm):
 
 class ConjNormalForm(NormalForm):
     """Conjunctive normal form expression"""
+
     def decode(self, litmap):
         """Convert the CNF to an expression."""
         return And(*[Or(*[litmap[idx] for idx in clause])
@@ -1304,6 +1365,7 @@ class ConjNormalForm(NormalForm):
 
 class DimacsCNF(ConjNormalForm):
     """Wrapper class for a DIMACS CNF representation"""
+
     def __str__(self):
         formula = super(DimacsCNF, self).__str__()
         return "p cnf {0.nvars} {0.nclauses}\n{1}".format(self, formula)

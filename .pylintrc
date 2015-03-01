@@ -160,12 +160,13 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 # cf : Cofactor
 # tt : TruthTable instances
 # sl : slice instance
+# eq : equals operator
 # op : Boolean operator
 # Zero, One : Constant names
 # Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE : Expression factory functions
 # Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel, Mux : Expression higher-order factory functions
 # ForAll, Exists : Expression quantifiers
-good-names=_,i,j,k,n,d,it,x,x0,x1,xi,xs,y,ys,p,q,s,d1,d0,lo,hi,v,vs,bf,farray,ex,f,g,h,cf,fs,tt,sl,op,Zero,One,Not,Or,And,Xor,Xnor,Equal,Unequal,Implies,ITE,Nor,Nand,OneHot0,OneHot,Majority,AchillesHeel,Mux,ForAll,Exists
+good-names=_,i,j,k,n,d,it,x,x0,x1,xi,xs,y,ys,p,q,s,d1,d0,lo,hi,v,vs,bf,farray,ex,f,g,h,cf,fs,tt,sl,eq,op,Zero,One,Not,Or,And,Xor,Xnor,Equal,Unequal,Implies,ITE,Nor,Nand,OneHot0,OneHot,Majority,AchillesHeel,Mux,ForAll,Exists
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,fiz,buz
