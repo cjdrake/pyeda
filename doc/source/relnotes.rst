@@ -4,6 +4,108 @@
   Release Notes
 *****************
 
+Version 0.27
+============
+
+.. note::
+   This release involves many backwards-incompatible changes,
+   so please browse through these release notes when upgrading from 0.26 to 0.27.
+
+The major new feature in this release is the addition of a high performance C
+extension for Boolean expressions.
+See `Issue 98 <https://github.com/cjdrake/pyeda/issues/98>`_ for some details,
+but the idea is fairly simple.
+Since expressions are basically the central data type of PyEDA,
+it was about time they received the proper performance attention.
+So I spent a couple months hacking on a C extension located in
+``extension/boolexpr``.
+Now most of the expensive transformations are handled at the C level.
+For example, simplification and conversion to DNF/CNF are *much* faster.
+
+The C library uses reference counting for memory management,
+and I have done some extensive testing to make sure it doesn't leak memory.
+The API isn't isn't documented to the level of a finished product,
+but if you want to figure out the broad strokes just read the ``boolexpr.h``
+header file.
+The algorithms are all single-threaded at the moment.
+In a future release I would like to experiment with using OpenMP tasks to
+accelerate the work.
+
+With that said, here's a list of changes.
+
+The deprecated ``Expression.factor`` method went away,
+replaced by the ``to_nnf`` method.
+
+Also, the deprecated ``Expression.invert`` method went away.
+The simplification and NNF transformation algorithms are more efficient now,
+so you really don't need this anyways.
+
+The ``Expression.to_unicode`` and ``Expression.to_latex`` methods went away.
+They may come back in the future, but they were undocumented and broken anyways.
+
+The ``Expression`` class hierarchy is now completely different.
+Expressions are split up into two categories: ``Atom`` and ``Operator``.
+Atoms are sub-divided into ``Constant`` and ``Literal``,
+and literals are further subdivided into ``Complement``, and ``Variable``.
+Note that it is ``Variable``, not ``ExprVariable``.
+Operators now have completely different class names.
+Instead of ``ExprOr``, it is now ``OrOp``. ``ExprNot`` becomes ``NotOp``, etc.
+
+Probably the other most noticeable change to the UI is that using overloaded
+operators no longer automatically simplifies expressions.
+For example::
+
+   >>> a, b, c, d = map(exprvar, 'abcd')
+   >>> a & b & c & d
+   And(And(And(a, b), c), d)
+
+The reason I made this change is that simplification costs a bit of CPU time,
+and we should avoid that when creating large expressions.
+The factory operators still simplify by default::
+
+   >>> And(a, b, c, d)
+   And(a, b, c, d)
+
+You can no longer count on the ordering of clauses in a two-level expression.
+This was done for performance reasons as well.
+It is very wasteful to to the computations necessary for figuring out a
+canonical ordering, and the return on investment isn't very high.
+If you have written tests that rely on some fixed operand ordering,
+they will probably break.
+Literals within clauses, on the other hand,
+are still ordered by their uniqid values.
+
+There is now an ``Expression.size`` method,
+which returns the number of nodes in the tree.
+This number is a nice proxy for memory usage if you multiply it by the size
+of a ``BoolExpr`` node.
+
+The ``Expression.absorb`` method is now gone,
+but if you use ``Expression.to_dnf`` or ``Expression.to_cnf``,
+it will automatically apply absorption for you.
+Also, it is *much* faster than it was before.
+
+My apologies to anybody using Windows,
+because I have not had the necessary machines for testing a build on that platform.
+Feel free to submit a pull request if you find something that is not portable.
+
+Though this addition is very exciting,
+there is still plenty of room for improvement in the performance area.
+I would like to experiment with using OpenMP "tasks" to accelerate big
+tree transformations.
+Currently, the SAT implementation does *not* happen directly in the C layer.
+That requires further integration between the two C APIs.
+Also, annoyingly, the Tseitin transformation code is still written in Python.
+This is due to the problem that this transformation requires the ability to
+create new variable objects,
+which is currently handled at the Python level.
+This is not an unsolvable problem, but requires some work.
+
+I'm almost positive I missed a few details.
+Feel free to email with comments and suggestions.
+
+Happy programming!
+
 Version 0.26
 ============
 
