@@ -414,10 +414,11 @@ Boolean Functions
 A Boolean function is a rule that maps points in an :math:`N`-dimensional
 Boolean space to an element in :math:`\{0, 1\}`.
 In formal mathematical lingo, :math:`f: B^N \Rightarrow B`,
-where :math:`B^N` means the Cartesian product of :math:`N` Boolean variables,
-:math:`v \in \{0, 1\}`.
+where :math:`B^N` means the Cartesian product of :math:`N` sets of type
+:math:`\{0, 1\}`.
 For example, if you have three input variables, :math:`a, b, c`,
-then :math:`B^3 = a \times b \times c = \{(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)\}`.
+each defined on :math:`\{0, 1\}`,
+then :math:`B^3 = \{0, 1\}^3 = \{(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)\}`.
 :math:`B^3` is the **domain** of the function (the input part),
 and :math:`B = \{0, 1\}` is the **range** of the function (the output part).
 
