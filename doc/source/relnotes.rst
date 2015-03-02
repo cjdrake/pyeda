@@ -4,8 +4,17 @@
   Release Notes
 *****************
 
-Version 0.27
+Release 0.27
 ============
+
+Version 0.27.1
+--------------
+
+Fixed a segfault issue with the ``to_dnf`` and ``to_cnf`` functions.
+See `Issue 109 <https://github.com/cjdrake/pyeda/issues/109>`_ for details.
+
+Version 0.27.0
+--------------
 
 .. note::
    This release involves many backwards-incompatible changes,
