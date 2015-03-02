@@ -24,7 +24,7 @@ For example, simplification and conversion to DNF/CNF are *much* faster.
 
 The C library uses reference counting for memory management,
 and I have done some extensive testing to make sure it doesn't leak memory.
-The API isn't isn't documented to the level of a finished product,
+The API isn't documented to the level of a finished product,
 but if you want to figure out the broad strokes just read the ``boolexpr.h``
 header file.
 The algorithms are all single-threaded at the moment.
