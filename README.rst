@@ -52,6 +52,22 @@ Installation from the repository::
 
    $ python3 setup.py install
 
+Note that you will need to have Python headers and libraries in order to
+compile the C extensions.
+For MacOS, the standard Python installation should have everything you need.
+For Linux, you will probably need to install the Python3 "development" package.
+
+For Debian-based systems (eg Ubuntu, Mint)::
+
+   $ sudo apt-get install python3-dev
+
+For RedHat-based systems (eg RHEL, Centos)::
+
+   $ sudo yum install python3-devel
+
+For Windows, just grab the binaries from Christoph Gohlke's
+*excellent* `pythonlibs page <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.
+
 Logic Expressions
 =================
 
