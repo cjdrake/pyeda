@@ -11,7 +11,7 @@ from pyeda.boolalg.expr import (
     Expression,
     Zero, One,
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
-    OneHot0, OneHot, Majority, AchillesHeel, Mux,
+    OneHot0, OneHot, NHot, Majority, AchillesHeel, Mux,
 )
 
 
@@ -173,6 +173,16 @@ def test_onehot():
     assert OneHot(1, 1, 1) is Zero
     assert OneHot(a, b, c, conj=False).equivalent((~a | ~b) & (~a | ~c) & (~b | ~c) & (a | b | c))
     assert OneHot(a, b, c, conj=True).equivalent((~a | ~b) & (~a | ~c) & (~b | ~c) & (a | b | c))
+
+def test_nhot():
+    assert NHot(2, 0, 0, 0) is Zero
+    assert NHot(2, 0, 0, 1) is Zero
+    assert NHot(2, 0, 1, 0) is Zero
+    assert NHot(2, 0, 1, 1) is One
+    assert NHot(2, 1, 0, 0) is Zero
+    assert NHot(2, 1, 0, 1) is One
+    assert NHot(2, 1, 1, 0) is One
+    assert NHot(2, 1, 1, 1) is Zero
 
 def test_majority():
     assert Majority(0, 0, 0) is Zero

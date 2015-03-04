@@ -509,12 +509,14 @@ def NHot(n, *xs, simplify=True):
         fstr = "expected 0 <= n <= {}, got {}"
         raise ValueError(fstr.format(len(xs), n))
 
-    xs = {Expression.box(x).node for x in xs}
+    xs = [Expression.box(x).node for x in xs]
+    num = len(xs)
     terms = list()
-    for hots in itertools.combinations(xs, n):
-        colds = xs - set(hots)
-        not_colds = tuple(map(exprnode.not_, colds))
-        terms.append(exprnode.and_(*(hots + not_colds)))
+    for hot_idxs in itertools.combinations(range(num), n):
+        hot_idxs = set(hot_idxs)
+        _xs = [xs[i] if i in hot_idxs else exprnode.not_(xs[i])
+               for i in range(num)]
+        terms.append(exprnode.and_(*_xs))
     y = exprnode.or_(*terms)
     if simplify:
         y = y.simplify()
