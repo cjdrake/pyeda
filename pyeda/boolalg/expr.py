@@ -48,6 +48,7 @@ Interface Functions:
 
 * :func:`OneHot0`
 * :func:`OneHot`
+* :func:`NHot`
 * :func:`Majority`
 * :func:`AchillesHeel`
 * :func:`Mux`
@@ -490,6 +491,31 @@ def OneHot(*xs, simplify=True, conj=True):
             zeros = [exprnode.not_(x) for x in xs[:i] + xs[i+1:]]
             terms.append(exprnode.and_(xi, *zeros))
         y = exprnode.or_(*terms)
+    if simplify:
+        y = y.simplify()
+    return _expr(y)
+
+
+def NHot(n, *xs, simplify=True):
+    """
+    Return an expression that means
+    "exactly N input functions are true".
+
+    If *simplify* is ``True``, return a simplified expression.
+    """
+    if not isinstance(n, int):
+        raise TypeError("expected n to be an int")
+    if not 0 <= n <= len(xs):
+        fstr = "expected 0 <= n <= {}, got {}"
+        raise ValueError(fstr.format(len(xs), n))
+
+    xs = {Expression.box(x).node for x in xs}
+    terms = list()
+    for hots in itertools.combinations(xs, n):
+        colds = xs - set(hots)
+        not_colds = tuple(map(exprnode.not_, colds))
+        terms.append(exprnode.and_(*(hots + not_colds)))
+    y = exprnode.or_(*terms)
     if simplify:
         y = y.simplify()
     return _expr(y)
