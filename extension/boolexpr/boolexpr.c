@@ -134,7 +134,6 @@ static void
 _lit_del(struct BoolExpr *lit)
 {
     free(lit);
-    lit = (struct BoolExpr *) NULL;
 }
 
 
