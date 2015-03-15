@@ -217,7 +217,7 @@ def expr(obj, simplify=True):
     # False, True, 0, 1
     elif isinstance(obj, int) and obj in {0, 1}:
         return _CONSTS[obj]
-    elif type(obj) is str:
+    elif isinstance(obj, str):
         ast = pyeda.parsing.boolexpr.parse(obj)
         ex = ast2expr(ast)
         if simplify:
@@ -768,7 +768,7 @@ class Expression(boolfunc.Function):
         # False, True, 0, 1
         elif isinstance(obj, int) and obj in {0, 1}:
             return _CONSTS[obj]
-        elif type(obj) is str:
+        elif isinstance(obj, str):
             ast = pyeda.parsing.boolexpr.parse(obj)
             return ast2expr(ast)
         else:

@@ -155,7 +155,7 @@ def num2point(num, vs):
        The ``a b c`` column is the binary representation of *num*
        written in little-endian order.
     """
-    if type(num) is not int:
+    if not isinstance(num, int):
         fstr = "expected num to be an int, got {0.__name__}"
         raise TypeError(fstr.format(type(num)))
     n = len(vs)
@@ -215,7 +215,7 @@ def num2term(num, fs, conj=False):
        The ``f g h`` column is the binary representation of *num*
        written in little-endian order.
     """
-    if type(num) is not int:
+    if not isinstance(num, int):
         fstr = "expected num to be an int, got {0.__name__}"
         raise TypeError(fstr.format(type(num)))
     n = len(fs)
@@ -524,7 +524,7 @@ class Function:
     def __mul__(self, num):
         """Repetition operator"""
         from pyeda.boolalg.bfarray import farray
-        if type(num) is not int:
+        if not isinstance(num, int):
             raise TypeError("expected multiplier to be an int")
         if num < 0:
             raise ValueError("expected multiplier to be non-negative")

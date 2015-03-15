@@ -134,7 +134,7 @@ class CNFLexer(lex.RegexLexer):
 def _expect_token(lexer, types):
     """Return the next token, or raise an exception."""
     tok = next(lexer)
-    if any(type(tok) is t for t in types):
+    if any(isinstance(tok, t) for t in types):
         return tok
     else:
         raise Error("unexpected token: " + str(tok))
@@ -227,10 +227,10 @@ def _clause(lexer, varname, nvars):
 def _lits(lexer, varname, nvars):
     """Return a tuple of DIMACS CNF clause literals."""
     tok = _expect_token(lexer, {OP_not, IntegerToken})
-    if type(tok) is IntegerToken and tok.value == 0:
+    if isinstance(tok, IntegerToken) and tok.value == 0:
         return tuple()
     else:
-        if type(tok) is OP_not:
+        if isinstance(tok, OP_not):
             neg = True
             tok = _expect_token(lexer, {IntegerToken})
         else:
@@ -387,17 +387,17 @@ def _sat_formula(lexer, varname, fmt, nvars):
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
     tok = _expect_token(lexer, types)
     # INT
-    if type(tok) is IntegerToken:
+    if isinstance(tok, IntegerToken):
         index = tok.value
         if not 0 < index <= nvars:
             fstr = "formula literal {} outside valid range: (0, {}]"
             raise Error(fstr.format(index, nvars))
         return ('var', (varname, ), (index, ))
     # '-'
-    elif type(tok) is OP_not:
+    elif isinstance(tok, OP_not):
         tok = _expect_token(lexer, {IntegerToken, LPAREN})
         # '-' INT
-        if type(tok) is IntegerToken:
+        if isinstance(tok, IntegerToken):
             index = tok.value
             if not 0 < index <= nvars:
                 fstr = "formula literal {} outside valid range: (0, {}]"
@@ -409,7 +409,7 @@ def _sat_formula(lexer, varname, fmt, nvars):
             _expect_token(lexer, {RPAREN})
             return ('not', formula)
     # '(' FORMULA ')'
-    elif type(tok) is LPAREN:
+    elif isinstance(tok, LPAREN):
         formula = _sat_formula(lexer, varname, fmt, nvars)
         _expect_token(lexer, {RPAREN})
         return formula
@@ -425,7 +425,7 @@ def _formulas(lexer, varname, fmt, nvars):
     """Return a tuple of DIMACS SAT formulas."""
     types = {IntegerToken, LPAREN} | _SAT_TOKS[fmt]
     tok = lexer.peek_token()
-    if any(type(tok) is t for t in types):
+    if any(isinstance(tok, t) for t in types):
         first = _sat_formula(lexer, varname, fmt, nvars)
         rest = _formulas(lexer, varname, fmt, nvars)
         return (first, ) + rest

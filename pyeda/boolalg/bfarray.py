@@ -440,7 +440,7 @@ class farray:
                 raise ValueError("could not determine ftype parameter")
             self.ftype = autoftype
         else:
-            if type(ftype) is not type:
+            if not isinstance(ftype, type):
                 raise TypeError("expected ftype to be a type")
             if not (autoftype is None or ftype is autoftype):
                 raise ValueError("expected ftype to match items")
@@ -484,7 +484,7 @@ class farray:
         fsls = self._fill_slices(sls)
         nsls = self._norm_slices(fsls)
 
-        if all(type(nsl) is int for nsl in nsls):
+        if all(isinstance(nsl, int) for nsl in nsls):
             # Speed hack for coordinates
             return self._items[self._coord2offset(nsls)]
         else:
@@ -506,12 +506,12 @@ class farray:
         fsls = self._fill_slices(sls)
         nsls = self._norm_slices(fsls)
 
-        if all(type(nsl) is int for nsl in nsls):
+        if all(isinstance(nsl, int) for nsl in nsls):
             if not isinstance(item, boolfunc.Function):
                 raise TypeError("expected item to be a Function")
             self._items[self._coord2offset(nsls)] = item
         else:
-            if type(item) is not farray:
+            if not isinstance(item, farray):
                 raise TypeError("expected item to be an farray")
             coords = list(_iter_coords(nsls))
             if item.size != len(coords):
@@ -552,9 +552,9 @@ class farray:
 
         .. seealso:: :meth:`lsh`
         """
-        if type(obj) is tuple and len(obj) == 2:
+        if isinstance(obj, tuple) and len(obj) == 2:
             return self.lsh(obj[0], obj[1])[0]
-        elif type(obj) is int:
+        elif isinstance(obj, int):
             return self.lsh(obj)[0]
         else:
             raise TypeError("expected int or (int, farray)")
@@ -567,9 +567,9 @@ class farray:
 
         .. seealso:: :meth:`rsh`
         """
-        if type(obj) is tuple and len(obj) == 2:
+        if isinstance(obj, tuple) and len(obj) == 2:
             return self.rsh(obj[0], obj[1])[0]
-        elif type(obj) is int:
+        elif isinstance(obj, int):
             return self.rsh(obj)[0]
         else:
             raise TypeError("expected int or (int, farray)")
@@ -606,7 +606,7 @@ class farray:
 
     def __mul__(self, num):
         """Repetition operator"""
-        if type(num) is not int:
+        if not isinstance(num, int):
             raise TypeError("expected multiplier to be an int")
         if num < 0:
             raise ValueError("expected multiplier to be non-negative")
@@ -850,7 +850,7 @@ class farray:
     def _keys2sls(self, keys, key2sl):
         """Convert an input key to a list of slices."""
         sls = list()
-        if type(keys) is tuple:
+        if isinstance(keys, tuple):
             for key in keys:
                 sls.append(key2sl(key))
         else:
@@ -929,9 +929,9 @@ def _dims2shape(*dims):
         raise ValueError("expected at least one dimension spec")
     shape = list()
     for dim in dims:
-        if type(dim) is int:
+        if isinstance(dim, int):
             dim = (0, dim)
-        if type(dim) is tuple and len(dim) == 2:
+        if isinstance(dim, tuple) and len(dim) == 2:
             if dim[0] < 0:
                 raise ValueError("expected low dimension to be >= 0")
             if dim[1] < 0:
@@ -1071,10 +1071,10 @@ def _itemize(objs):
 
 def _check_shape(shape):
     """Verify that a shape has the right format."""
-    if type(shape) is tuple:
+    if isinstance(shape, tuple):
         for dim in shape:
-            if (type(dim) is tuple and len(dim) == 2 and
-                    type(dim[0]) is int and type(dim[1]) is int):
+            if (isinstance(dim, tuple) and len(dim) == 2 and
+                    isinstance(dim[0], int) and isinstance(dim[1], int)):
                 if dim[0] < 0:
                     raise ValueError("expected low dimension to be >= 0")
                 if dim[1] < 0:
@@ -1089,9 +1089,9 @@ def _check_shape(shape):
 
 def _get_key2sl(key):
     """Convert a key part to a slice part."""
-    if type(key) in {int, farray} or key is Ellipsis:
+    if isinstance(key, (int, farray)) or key is Ellipsis:
         return key
-    elif type(key) is slice:
+    elif isinstance(key, slice):
         # Forbid slice steps
         if key.step is not None:
             raise ValueError("farray slice step is not supported")
@@ -1104,9 +1104,9 @@ def _get_key2sl(key):
 
 def _set_key2sl(key):
     """Convert a key part to a slice part."""
-    if type(key) is int or key is Ellipsis:
+    if isinstance(key, int) or key is Ellipsis:
         return key
-    elif type(key) is slice:
+    elif isinstance(key, slice):
         # Forbid slice steps
         if key.step is not None:
             raise ValueError("farray slice step is not supported")
@@ -1210,7 +1210,7 @@ def _iter_coords(nsls):
     # First convert all slices to ranges
     ranges = list()
     for nsl in nsls:
-        if type(nsl) is int:
+        if isinstance(nsl, int):
             ranges.append(range(nsl, nsl+1))
         else:
             ranges.append(range(nsl.start, nsl.stop))

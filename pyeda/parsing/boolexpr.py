@@ -396,7 +396,7 @@ def parse(s):
 def _expect_token(lexer, types):
     """Return the next token, or raise an exception."""
     tok = next(lexer)
-    if any(type(tok) is t for t in types):
+    if any(isinstance(tok, t) for t in types):
         return tok
     else:
         raise Error("unexpected token: " + str(tok))
@@ -413,7 +413,7 @@ def _ite(lexer):
 
     tok = next(lexer)
     # IMPL '?' ITE ':' ITE
-    if type(tok) is OP_question:
+    if isinstance(tok, OP_question):
         d1 = _ite(lexer)
         _expect_token(lexer, {OP_colon})
         d0 = _ite(lexer)
@@ -430,11 +430,11 @@ def _impl(lexer):
 
     tok = next(lexer)
     # SUMTERM '=>' IMPL
-    if type(tok) is OP_rarrow:
+    if isinstance(tok, OP_rarrow):
         q = _impl(lexer)
         return ('implies', p, q)
     # SUMTERM '<=>' IMPL
-    elif type(tok) is OP_lrarrow:
+    elif isinstance(tok, OP_lrarrow):
         q = _impl(lexer)
         return ('equal', p, q)
     # SUMTERM
@@ -457,7 +457,7 @@ def _sumterm_prime(lexer):
     """Return a sum term' expression, eliminates left recursion."""
     tok = next(lexer)
     # '|' XORTERM SUMTERM'
-    if type(tok) is OP_or:
+    if isinstance(tok, OP_or):
         xorterm = _xorterm(lexer)
         sumterm_prime = _sumterm_prime(lexer)
         if sumterm_prime is None:
@@ -484,7 +484,7 @@ def _xorterm_prime(lexer):
     """Return an xor term' expression, eliminates left recursion."""
     tok = next(lexer)
     # '^' PRODTERM XORTERM'
-    if type(tok) is OP_xor:
+    if isinstance(tok, OP_xor):
         prodterm = _prodterm(lexer)
         xorterm_prime = _xorterm_prime(lexer)
         if xorterm_prime is None:
@@ -511,7 +511,7 @@ def _prodterm_prime(lexer):
     """Return a product term' expression, eliminates left recursion."""
     tok = next(lexer)
     # '&' FACTOR PRODTERM'
-    if type(tok) is OP_and:
+    if isinstance(tok, OP_and):
         factor = _factor(lexer)
         prodterm_prime = _prodterm_prime(lexer)
         if prodterm_prime is None:
@@ -542,7 +542,7 @@ def _factor(lexer):
         _expect_token(lexer, {LPAREN})
         tok = next(lexer)
         # OPN '(' ')'
-        if type(tok) is RPAREN:
+        if isinstance(tok, RPAREN):
             xs = tuple()
         # OPN '(' XS ')'
         else:
@@ -594,7 +594,7 @@ def _zom_arg(lexer):
     """Return zero or more arguments."""
     tok = next(lexer)
     # ',' EXPR ZOM_X
-    if type(tok) is COMMA:
+    if isinstance(tok, COMMA):
         return (_expr(lexer), ) + _zom_arg(lexer)
     # null
     else:
@@ -608,7 +608,7 @@ def _variable(lexer):
 
     tok = next(lexer)
     # NAMES '[' ... ']'
-    if type(tok) is LBRACK:
+    if isinstance(tok, LBRACK):
         indices = _indices(lexer)
         _expect_token(lexer, {RBRACK})
     # NAMES
@@ -631,7 +631,7 @@ def _zom_name(lexer):
     """Return zero or more names."""
     tok = next(lexer)
     # '.' NAME ZOM_NAME
-    if type(tok) is DOT:
+    if isinstance(tok, DOT):
         first = _expect_token(lexer, {NameToken}).value
         rest = _zom_name(lexer)
         return (first, ) + rest
@@ -652,7 +652,7 @@ def _zom_index(lexer):
     """Return zero or more indices."""
     tok = next(lexer)
     # ',' INT
-    if type(tok) is COMMA:
+    if isinstance(tok, COMMA):
         first = _expect_token(lexer, {IntegerToken}).value
         rest = _zom_index(lexer)
         return (first, ) + rest
