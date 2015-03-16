@@ -12,16 +12,6 @@ extern "C" {
 #endif
 
 
-/* bool, false, true */
-#include <stdbool.h>
-
-/* size_t */
-#include <stddef.h>
-
-/* NULL, malloc, realloc, free, labs */
-#include <stdlib.h>
-
-
 #define CHECK_NULL(y, x) \
 do { \
     if ((y = x) == NULL) \

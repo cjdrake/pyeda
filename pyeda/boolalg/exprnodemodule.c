@@ -6,6 +6,7 @@
 
 #include <Python.h>
 
+#include <stdbool.h>
 #include "boolexpr.h"
 
 #define NODE(x) (((ExprNode *) x)->ex)
