@@ -520,9 +520,12 @@ ExprNode_restrict(ExprNode *self, PyObject *args)
     }
 
     if ((ex = BoolExpr_Restrict(self->ex, var2ex)) == NULL) {
+        BoolExprDict_Del(var2ex);
         PyErr_SetString(Error, "BoolExpr_Restrict failed");
         return NULL;
     }
+
+    BoolExprDict_Del(var2ex);
 
     if (ex == self->ex) {
         BoolExpr_DecRef(ex);
@@ -568,9 +571,12 @@ ExprNode_compose(ExprNode *self, PyObject *args)
     }
 
     if ((ex = BoolExpr_Compose(self->ex, var2ex)) == NULL) {
+        BoolExprDict_Del(var2ex);
         PyErr_SetString(Error, "BoolExpr_Compose failed");
         return NULL;
     }
+
+    BoolExprDict_Del(var2ex);
 
     if (ex == self->ex) {
         BoolExpr_DecRef(ex);
