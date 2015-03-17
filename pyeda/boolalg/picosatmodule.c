@@ -360,6 +360,7 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
 
     /* Prepare Python return value */
     if (result == PICOSAT_UNSATISFIABLE) {
+        picosat_reset(picosat);
         Py_RETURN_NONE;
     }
     else if (result == PICOSAT_SATISFIABLE) {
