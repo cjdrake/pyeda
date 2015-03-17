@@ -7,6 +7,12 @@
 Release 0.27
 ============
 
+Version 0.27.2
+--------------
+
+Fixed a memory leak issue with the ``exprnodemodule.c``
+Boolean expressions C extension.
+
 Version 0.27.1
 --------------
 
