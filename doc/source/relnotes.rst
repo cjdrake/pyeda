@@ -7,11 +7,23 @@
 Release 0.27
 ============
 
+Version 0.27.3
+--------------
+
+Fixed two more issues with C extensions:
+
+* `Issue 118 <https://github.com/cjdrake/pyeda/issues/118>`_
+  - bug in dnf/cnf conversion
+* `Issue 117 <https://github.com/cjdrake/pyeda/issues/117>`_
+  - memory leak in picosatmodule.c
+
 Version 0.27.2
 --------------
 
-Fixed a memory leak issue with the ``exprnodemodule.c``
-Boolean expressions C extension.
+Fixed:
+
+* `Issue 116 <https://github.com/cjdrake/pyeda/issues/117>`_
+  - memory leak in exprnode.c
 
 Version 0.27.1
 --------------
