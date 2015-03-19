@@ -5,6 +5,7 @@
 */
 
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -59,6 +60,8 @@ _distribute(BoolExprType t, struct BoolExpr *nf)
     struct BoolExpr *temp;
     struct BoolExpr *dnf;
 
+    assert(nf->type == t);
+
     sets = _nf2sets(nf);
     if (sets == NULL)
         return NULL; // LCOV_EXCL_LINE
@@ -107,6 +110,8 @@ _set_cmp(struct BoolExprArray *xs, struct BoolExprArray *ys)
     while (i < xs->length && j < ys->length) {
         struct BoolExpr *x = xs->items[i];
         struct BoolExpr *y = ys->items[j];
+
+        assert(IS_LIT(x) && IS_LIT(y));
 
         if (x == y) {
             i += 1;
@@ -205,39 +210,37 @@ _to_dnf(struct BoolExpr *nnf)
     }
     else {
         struct BoolExpr *temp;
-        struct BoolExpr *nf1, *nf2, *nf3;
-        struct BoolExpr *dnf;
+        struct BoolExpr *nf;
 
         /* Convert sub-expressions to DNF */
         CHECK_NULL(temp, _op_transform(nnf, _to_dnf));
-        CHECK_NULL_1(nf1, _simplify(temp), temp);
+        CHECK_NULL_1(nf, _simplify(temp), temp);
         BoolExpr_DecRef(temp);
 
-        if (IS_ATOM(nf1) || _is_clause(nf1)) {
-            return nf1;
+        if (IS_ATOM(nf) || _is_clause(nf)) {
+            return nf;
         }
-        else {
-            CHECK_NULL_1(nf2, _absorb(nf1), nf1);
-            BoolExpr_DecRef(nf1);
+        else if (IS_OR(nf)) {
+            temp = nf;
+            CHECK_NULL_1(nf, _absorb(temp), temp);
+            BoolExpr_DecRef(temp);
+            return nf;
         }
-
-        /* a ; a | b | c ; a & b & c ; a & b | c & d */
-        if (IS_ATOM(nf2) || _is_clause(nf2) || IS_OR(nf2))
-            return nf2;
 
         /* (a | b) & (c | d) */
-        CHECK_NULL_1(nf3, _distribute(OP_AND, nf2), nf2);
-        BoolExpr_DecRef(nf2);
+        temp = nf;
+        CHECK_NULL_1(nf, _distribute(OP_AND, temp), temp);
+        BoolExpr_DecRef(temp);
 
-        if (IS_ATOM(nf3) || _is_clause(nf3)) {
-            return nf3;
+        if (IS_ATOM(nf) || _is_clause(nf)) {
+            return nf;
         }
         else {
-            CHECK_NULL_1(dnf, _absorb(nf3), nf3);
-            BoolExpr_DecRef(nf3);
+            temp = nf;
+            CHECK_NULL_1(nf, _absorb(temp), temp);
+            BoolExpr_DecRef(temp);
+            return nf;
         }
-
-        return dnf;
     }
 }
 
@@ -250,39 +253,37 @@ _to_cnf(struct BoolExpr *nnf)
     }
     else {
         struct BoolExpr *temp;
-        struct BoolExpr *nf1, *nf2, *nf3;
-        struct BoolExpr *cnf;
+        struct BoolExpr *nf;
 
         /* Convert sub-expressions to CNF */
         CHECK_NULL(temp, _op_transform(nnf, _to_cnf));
-        CHECK_NULL_1(nf1, _simplify(temp), temp);
+        CHECK_NULL_1(nf, _simplify(temp), temp);
         BoolExpr_DecRef(temp);
 
-        if (IS_ATOM(nf1) || _is_clause(nf1)) {
-            return nf1;
+        if (IS_ATOM(nf) || _is_clause(nf)) {
+            return nf;
         }
-        else {
-            CHECK_NULL_1(nf2, _absorb(nf1), nf1);
-            BoolExpr_DecRef(nf1);
+        else if (IS_AND(nf)) {
+            temp = nf;
+            CHECK_NULL_1(nf, _absorb(temp), temp);
+            BoolExpr_DecRef(temp);
+            return nf;
         }
-
-        /* a ; a | b | c ; a & b & c ; (a | b) & (c | d) */
-        if (IS_ATOM(nf2) || _is_clause(nf2) || IS_AND(nf2))
-            return nf2;
 
         /* a & b | c & d */
-        CHECK_NULL_1(nf3, _distribute(OP_OR, nf2), nf2);
-        BoolExpr_DecRef(nf2);
+        temp = nf;
+        CHECK_NULL_1(nf, _distribute(OP_OR, temp), temp);
+        BoolExpr_DecRef(temp);
 
-        if (IS_ATOM(nf3) || _is_clause(nf3)) {
-            return nf3;
+        if (IS_ATOM(nf) || _is_clause(nf)) {
+            return nf;
         }
         else {
-            CHECK_NULL_1(cnf, _absorb(nf3), nf3);
-            BoolExpr_DecRef(nf3);
+            temp = nf;
+            CHECK_NULL_1(nf, _absorb(temp), temp);
+            BoolExpr_DecRef(temp);
+            return nf;
         }
-
-        return cnf;
     }
 }
 
