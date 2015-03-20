@@ -124,7 +124,7 @@ _lit_new(struct BoolExprVector *lits, long uniqid)
         return NULL; // LCOV_EXCL_LINE
 
     lit->refcount = 1;
-    lit->type = uniqid < 0 ? COMP : VAR;
+    lit->kind = uniqid < 0 ? COMP : VAR;
     lit->data.lit.uniqid = uniqid;
     lit->data.lit.lits = lits;
     lit->flags = NNF | SIMPLE;
@@ -141,7 +141,7 @@ _lit_del(struct BoolExpr *lit)
 
 
 struct BoolExpr *
-_op_new(BoolExprType t, size_t n, struct BoolExpr **xs)
+_op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr *op;
 
@@ -156,7 +156,7 @@ _op_new(BoolExprType t, size_t n, struct BoolExpr **xs)
     }
 
     op->refcount = 1;
-    op->type = t;
+    op->kind = kind;
     op->flags = (BoolExprFlags) 0;
 
     return op;
@@ -164,25 +164,25 @@ _op_new(BoolExprType t, size_t n, struct BoolExpr **xs)
 
 
 struct BoolExpr *
-_opn_new(BoolExprType t, size_t n, ...)
+_opn_new(BoolExprKind kind, size_t n, ...)
 {
     struct BoolExpr *xs[n];
     READ_ARGS;
-    return _op_new(t, n, xs);
+    return _op_new(kind, n, xs);
 }
 
 
 struct BoolExpr *
-_orandxor_new(BoolExprType t, size_t n, struct BoolExpr **xs)
+_orandxor_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr *y;
 
     if (n == 0)
-        y = BoolExpr_IncRef(IDENTITY[t]);
+        y = BoolExpr_IncRef(IDENTITY[kind]);
     else if (n == 1)
         y = BoolExpr_IncRef(xs[0]);
     else
-        CHECK_NULL(y, _op_new(t, n, xs));
+        CHECK_NULL(y, _op_new(kind, n, xs));
 
     return y;
 }
@@ -345,7 +345,7 @@ static struct BoolExpr * (*_boolexpr_inv[16])(struct BoolExpr *ex) = {
 struct BoolExpr *
 Not(struct BoolExpr *x)
 {
-    return _boolexpr_inv[x->type](x);
+    return _boolexpr_inv[x->kind](x);
 }
 
 
@@ -483,7 +483,7 @@ BoolExpr_DecRef(struct BoolExpr * ex)
     if (ex->refcount == 0) {
         /* Constant refcount must never reach zero */
         assert(!IS_CONST(ex));
-        _boolexpr_del[ex->type](ex);
+        _boolexpr_del[ex->kind](ex);
     }
 }
 

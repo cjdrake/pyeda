@@ -48,11 +48,11 @@ TEST_F(BoolExprFlattenTest, Basic)
     ops[0] = XorN(4, xs[0], xs[1], xs[2], xs[3]);
 
     ops[1] = BoolExpr_ToDNF(ops[0]);
-    EXPECT_EQ(ops[1]->type, OP_OR);
+    EXPECT_EQ(ops[1]->kind, OP_OR);
     EXPECT_EQ(ops[1]->data.xs->length, 8);
 
     ops[2] = BoolExpr_ToCNF(ops[1]);
-    EXPECT_EQ(ops[2]->type, OP_AND);
+    EXPECT_EQ(ops[2]->kind, OP_AND);
     EXPECT_EQ(ops[2]->data.xs->length, 8);
 }
 

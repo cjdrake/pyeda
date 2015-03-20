@@ -59,25 +59,25 @@ do { \
 } while (0)
 
 
-/* Type checks */
-#define IS_ZERO(ex)  (((ex)->type) == ZERO)
-#define IS_ONE(ex)   (((ex)->type) == ONE)
-#define IS_COMP(ex)  (((ex)->type) == COMP)
-#define IS_VAR(ex)   (((ex)->type) == VAR)
-#define IS_OR(ex)    (((ex)->type) == OP_OR)
-#define IS_AND(ex)   (((ex)->type) == OP_AND)
-#define IS_XOR(ex)   (((ex)->type) == OP_XOR)
-#define IS_EQ(ex)    (((ex)->type) == OP_EQ)
-#define IS_NOT(ex)   (((ex)->type) == OP_NOT)
-#define IS_IMPL(ex)  (((ex)->type) == OP_IMPL)
-#define IS_ITE(ex)   (((ex)->type) == OP_ITE)
+/* Kind checks */
+#define IS_ZERO(ex)  (((ex)->kind) == ZERO)
+#define IS_ONE(ex)   (((ex)->kind) == ONE)
+#define IS_COMP(ex)  (((ex)->kind) == COMP)
+#define IS_VAR(ex)   (((ex)->kind) == VAR)
+#define IS_OR(ex)    (((ex)->kind) == OP_OR)
+#define IS_AND(ex)   (((ex)->kind) == OP_AND)
+#define IS_XOR(ex)   (((ex)->kind) == OP_XOR)
+#define IS_EQ(ex)    (((ex)->kind) == OP_EQ)
+#define IS_NOT(ex)   (((ex)->kind) == OP_NOT)
+#define IS_IMPL(ex)  (((ex)->kind) == OP_IMPL)
+#define IS_ITE(ex)   (((ex)->kind) == OP_ITE)
 
 
 /* Category checks */
-#define IS_ATOM(ex)   (((ex)->type) >> 3 == 0x0) // 0***
-#define IS_CONST(ex)  (((ex)->type) >> 2 == 0x0) // 00**
-#define IS_LIT(ex)    (((ex)->type) >> 1 == 0x2) // 010*
-#define IS_OP(ex)     (((ex)->type) >> 3 == 0x1) // 1***
+#define IS_ATOM(ex)   (((ex)->kind) >> 3 == 0x0) // 0***
+#define IS_CONST(ex)  (((ex)->kind) >> 2 == 0x0) // 00**
+#define IS_LIT(ex)    (((ex)->kind) >> 1 == 0x2) // 010*
+#define IS_OP(ex)     (((ex)->kind) >> 3 == 0x1) // 1***
 
 
 /* Flag definitions */
@@ -95,7 +95,7 @@ do { \
     (IS_LIT(x) && IS_LIT(y) && \
      ((x)->data.lit.uniqid == -((y)->data.lit.uniqid)))
 
-#define DUAL(t) (OP_OR + OP_AND - t)
+#define DUAL(kind) (OP_OR + OP_AND - kind)
 
 
 /* Expression types */
@@ -117,7 +117,7 @@ typedef enum {
     OP_NOT  = 0x0C,
     OP_IMPL = 0x0D,
     OP_ITE  = 0x0E,
-} BoolExprType;
+} BoolExprKind;
 
 
 /* Expression flags */
@@ -127,7 +127,7 @@ typedef unsigned char BoolExprFlags;
 struct BoolExpr {
     int refcount;
 
-    BoolExprType type;
+    BoolExprKind kind;
     BoolExprFlags flags;
 
     union {
@@ -389,7 +389,7 @@ void BoolExprArray2_Del(struct BoolExprArray2 *);
 bool BoolExprArray2_Equal(struct BoolExprArray2 *, struct BoolExprArray2 *);
 
 /* Return the cartesian product of two 2d arrays */
-struct BoolExprArray * BoolExprArray2_Product(struct BoolExprArray2 *, BoolExprType t);
+struct BoolExprArray * BoolExprArray2_Product(struct BoolExprArray2 *, BoolExprKind kind);
 
 
 /*

@@ -11,7 +11,7 @@
 bool
 Similar(BoolExpr * const self, BoolExpr * const other)
 {
-    if (self->type != other->type)
+    if (self->kind != other->kind)
         return false;
 
     if (IS_CONST(self)) {

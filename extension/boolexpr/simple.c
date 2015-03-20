@@ -26,16 +26,16 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
-struct BoolExpr * _orandxor_new(BoolExprType t, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _orandxor_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 /* util.c */
 struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
 void _mark_flags(struct BoolExpr *ex, BoolExprFlags f);
 
 /* simple.c */
-static struct BoolExpr * _simple_op(BoolExprType t, size_t n, struct BoolExpr **xs);
-static struct BoolExpr * _simple_opn(BoolExprType t, size_t n, ...);
+static struct BoolExpr * _simple_op(BoolExprKind kind, size_t n, struct BoolExpr **xs);
+static struct BoolExpr * _simple_opn(BoolExprKind kind, size_t n, ...);
 
 
 /* NOTE: Equality testing can get expensive, so keep it simple */
@@ -73,11 +73,11 @@ _cmp(const void *p1, const void *p2)
         else
             return CMP(a->data.lit.uniqid, b->data.lit.uniqid);
     }
-    else if (a->type == b->type) {
+    else if (a->kind == b->kind) {
         return 0;
     }
     else {
-        return CMP(a->type, b->type);
+        return CMP(a->kind, b->kind);
     }
 }
 
@@ -88,7 +88,7 @@ _count_assoc_args(struct BoolExpr *op)
     size_t count = 0;
 
     for (size_t i = 0; i < op->data.xs->length; ++i)
-        if (op->data.xs->items[i]->type == op->type)
+        if (op->data.xs->items[i]->kind == op->kind)
             count += op->data.xs->items[i]->data.xs->length;
         else
             count += 1;
@@ -112,27 +112,27 @@ _orand_simplify(struct BoolExpr *op)
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         struct BoolExpr *item_i = op->data.xs->items[i];
         /* Or(1, x) <=> 1 */
-        if (item_i == DOMINATOR[op->type]) {
-            y = BoolExpr_IncRef(DOMINATOR[op->type]);
+        if (item_i == DOMINATOR[op->kind]) {
+            y = BoolExpr_IncRef(DOMINATOR[op->kind]);
             goto done;
         }
         /* Or(Or(x0, x1), x2) <=> Or(x0, x1, x2) */
-        else if (item_i->type == op->type) {
+        else if (item_i->kind == op->kind) {
             for (size_t j = 0; j < item_i->data.xs->length; ++j) {
                 struct BoolExpr *item_j = item_i->data.xs->items[j];
                 /* Or(1, x) <=> 1 */
-                if (item_j == DOMINATOR[op->type]) {
-                    y = BoolExpr_IncRef(DOMINATOR[op->type]);
+                if (item_j == DOMINATOR[op->kind]) {
+                    y = BoolExpr_IncRef(DOMINATOR[op->kind]);
                     goto done;
                 }
                 /* Or(0, x) <=> x */
-                else if (item_j != IDENTITY[op->type]) {
+                else if (item_j != IDENTITY[op->kind]) {
                     flat[count++] = item_j;
                 }
             }
         }
         /* Or(0, x) <=> x */
-        else if (item_i != IDENTITY[op->type]) {
+        else if (item_i != IDENTITY[op->kind]) {
             flat[count++] = item_i;
         }
     }
@@ -150,7 +150,7 @@ _orand_simplify(struct BoolExpr *op)
         else {
             /* Or(~x, x) <=> 1 */
             if (COMPLEMENTARY(uniq[count-1], flat[i])) {
-                y = BoolExpr_IncRef(DOMINATOR[op->type]);
+                y = BoolExpr_IncRef(DOMINATOR[op->kind]);
                 goto done;
             }
             /* Or(x, x) <=> x */
@@ -161,7 +161,7 @@ _orand_simplify(struct BoolExpr *op)
     }
     uniq_len = count;
 
-    CHECK_NULL(y, _orandxor_new(op->type, uniq_len, uniq));
+    CHECK_NULL(y, _orandxor_new(op->kind, uniq_len, uniq));
 
 done:
 
@@ -185,14 +185,14 @@ _xor_simplify(struct BoolExpr *op)
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         struct BoolExpr *item_i = op->data.xs->items[i];
         if (IS_CONST(item_i)) {
-            parity ^= (bool) item_i->type;
+            parity ^= (bool) item_i->kind;
         }
         /* Xor(Xor(x0, x1), x2) <=> Xor(x0, x1, x2) */
-        else if (item_i->type == op->type) {
+        else if (item_i->kind == op->kind) {
             for (size_t j = 0; j < item_i->data.xs->length; ++j) {
                 struct BoolExpr *item_j = item_i->data.xs->items[j];
                 if (IS_CONST(item_j))
-                    parity ^= (bool) item_j->type;
+                    parity ^= (bool) item_j->kind;
                 else
                     flat[count++] = item_j;
             }
@@ -468,13 +468,13 @@ static struct BoolExpr * (*_op_simplify[16])(struct BoolExpr *op) = {
 
 
 static struct BoolExpr *
-_simple_op(BoolExprType t, size_t n, struct BoolExpr **xs)
+_simple_op(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
-    CHECK_NULL(temp, _op_new(t, n, xs));
-    CHECK_NULL_1(y, _op_simplify[t](temp), temp);
+    CHECK_NULL(temp, _op_new(kind, n, xs));
+    CHECK_NULL_1(y, _op_simplify[kind](temp), temp);
     BoolExpr_DecRef(temp);
 
     return y;
@@ -482,7 +482,7 @@ _simple_op(BoolExprType t, size_t n, struct BoolExpr **xs)
 
 
 static struct BoolExpr *
-_simple_opn(BoolExprType t, size_t n, ...)
+_simple_opn(BoolExprKind kind, size_t n, ...)
 {
     struct BoolExpr *xs[n];
     va_list vl;
@@ -492,7 +492,7 @@ _simple_opn(BoolExprType t, size_t n, ...)
         xs[i] = va_arg(vl, struct BoolExpr *);
     va_end(vl);
 
-    return _simple_op(t, n, xs);
+    return _simple_op(kind, n, xs);
 }
 
 
@@ -508,7 +508,7 @@ _simplify(struct BoolExpr *ex)
         struct BoolExpr *temp;
 
         CHECK_NULL(temp, _op_transform(ex, _simplify));
-        CHECK_NULL_1(y, _op_simplify[temp->type](temp), temp);
+        CHECK_NULL_1(y, _op_simplify[temp->kind](temp), temp);
         BoolExpr_DecRef(temp);
     }
 

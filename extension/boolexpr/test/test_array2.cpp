@@ -101,7 +101,7 @@ TEST_F(BoolExprArray2Test, Product)
     EXPECT_EQ(prod->length, 1 * 2 * 3);
 
     for (int i = 0; i < prod->length; ++i)
-        EXPECT_EQ(prod->items[i]->type, OP_OR);
+        EXPECT_EQ(prod->items[i]->kind, OP_OR);
 
     // [x0+x1+x3, x0+x2+x3, x0+x1+x4, x0+x2+x4, x0+x1+x5, x0+x2+x5]
     int p[6][3] = {{0, 1, 3}, {0, 2, 3}, {0, 1, 4},

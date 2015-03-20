@@ -12,7 +12,7 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 
 /*
@@ -44,7 +44,7 @@ _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
     }
 
     if (mod_count)
-        CHECK_NULL_N(y, _op_new(op->type, length, xs), length, xs);
+        CHECK_NULL_N(y, _op_new(op->kind, length, xs), length, xs);
     else
         y = BoolExpr_IncRef(op);
 

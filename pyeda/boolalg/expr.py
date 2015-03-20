@@ -188,7 +188,7 @@ def _exprcomp(node):
     return comp
 
 
-_TYPE2EXPR = {
+_KIND2EXPR = {
     exprnode.ZERO : lambda node: Zero,
     exprnode.ONE  : lambda node: One,
 
@@ -207,7 +207,7 @@ _TYPE2EXPR = {
 
 def _expr(node):
     """Expression constructor that returns unique atomic nodes."""
-    return _TYPE2EXPR[node.type()](node)
+    return _KIND2EXPR[node.kind()](node)
 
 
 def expr(obj, simplify=True):

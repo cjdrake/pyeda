@@ -115,7 +115,7 @@ _node2ast(struct BoolExpr *ex)
         if (s == NULL)
             return NULL;
 
-        l = PyLong_FromLong((long) ex->type);
+        l = PyLong_FromLong((long) ex->kind);
         if (l == NULL) {
             Py_DECREF(s);
             return NULL;
@@ -160,7 +160,7 @@ _node2ast(struct BoolExpr *ex)
         PyObject *asts[ex->data.xs->length];
 
         /* FIXME: magic number: 6 */
-        s = PyUnicode_FromString(ASTOPS[(int) (ex->type - 6)]);
+        s = PyUnicode_FromString(ASTOPS[(int) (ex->kind - 6)]);
         if (s == NULL)
             return NULL;
 
@@ -203,15 +203,15 @@ ExprNode_to_ast(ExprNode *self)
 }
 
 
-/* ExprNode.type() */
-PyDoc_STRVAR(type_doc,
-    "Return the int type of the expression."
+/* ExprNode.kind() */
+PyDoc_STRVAR(kind_doc,
+    "Return the int kind of the expression."
 );
 
 static PyObject *
-ExprNode_type(ExprNode *self)
+ExprNode_kind(ExprNode *self)
 {
-    return PyLong_FromLong((long) self->ex->type);
+    return PyLong_FromLong((long) self->ex->kind);
 }
 
 
@@ -379,7 +379,7 @@ ExprNode_methods[] = {
 
     {"id",           (PyCFunction) ExprNode_id,           METH_NOARGS, id_doc},
     {"to_ast",       (PyCFunction) ExprNode_to_ast,       METH_NOARGS, to_ast_doc},
-    {"type",         (PyCFunction) ExprNode_type,         METH_NOARGS, type_doc},
+    {"kind",         (PyCFunction) ExprNode_kind,         METH_NOARGS, kind_doc},
     {"data",         (PyCFunction) ExprNode_data,         METH_NOARGS, data_doc},
     {"depth",        (PyCFunction) ExprNode_depth,        METH_NOARGS, depth_doc},
     {"size",         (PyCFunction) ExprNode_size,         METH_NOARGS, size_doc},

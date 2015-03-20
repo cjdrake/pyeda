@@ -14,7 +14,7 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 /* nnf.c */
 struct BoolExpr * _to_nnf(struct BoolExpr *ex);
@@ -53,26 +53,26 @@ _nf2sets(struct BoolExpr *nf)
 
 /* NOTE: Return size is exponential */
 static struct BoolExpr *
-_distribute(BoolExprType t, struct BoolExpr *nf)
+_distribute(BoolExprKind kind, struct BoolExpr *nf)
 {
     struct BoolExprArray2 *sets;
     struct BoolExprArray *product;
     struct BoolExpr *temp;
     struct BoolExpr *dnf;
 
-    assert(nf->type == t);
+    assert(nf->kind == kind);
 
     sets = _nf2sets(nf);
     if (sets == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    product = BoolExprArray2_Product(sets, t);
+    product = BoolExprArray2_Product(sets, kind);
     if (product == NULL) {
         BoolExprArray2_Del(sets); // LCOV_EXCL_LINE
         return NULL;              // LCOV_EXCL_LINE
     }
 
-    temp = _op_new(DUAL(t), product->length, product->items);
+    temp = _op_new(DUAL(kind), product->length, product->items);
     if (temp == NULL) {
         BoolExprArray_Del(product); // LCOV_EXCL_LINE
         BoolExprArray2_Del(sets);   // LCOV_EXCL_LINE
@@ -193,7 +193,7 @@ _absorb(struct BoolExpr *dnf)
                 xs[index++] = dnf->data.xs->items[i];
         }
 
-        CHECK_NULL(temp, _op_new(dnf->type, count, xs));
+        CHECK_NULL(temp, _op_new(dnf->kind, count, xs));
         CHECK_NULL_1(dnf2, _simplify(temp), temp);
         BoolExpr_DecRef(temp);
 

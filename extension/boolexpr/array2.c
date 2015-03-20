@@ -11,7 +11,7 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _opn_new(BoolExprType t, size_t n, ...);
+struct BoolExpr * _opn_new(BoolExprKind kind, size_t n, ...);
 
 
 struct BoolExprArray2 *
@@ -64,7 +64,7 @@ BoolExprArray2_Equal(struct BoolExprArray2 *self, struct BoolExprArray2 *other)
 
 
 static struct BoolExprArray *
-_multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprType t)
+_multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
 {
     size_t length = a->length * b->length;
     struct BoolExpr **items;
@@ -76,7 +76,7 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprType t)
 
     for (size_t i = 0, index = 0; i < a->length; ++i) {
         for (size_t j = 0; j < b->length; ++j, ++index) {
-            items[index] = _opn_new(t, 2, a->items[i], b->items[j]);
+            items[index] = _opn_new(kind, 2, a->items[i], b->items[j]);
             if (items[index] == NULL) {
                 /* LCOV_EXCL_START */
                 for (size_t k = 0; k < index; ++k)
@@ -99,21 +99,21 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprType t)
 
 
 static struct BoolExprArray *
-_product(struct BoolExprArray2 *array2, BoolExprType t, size_t n)
+_product(struct BoolExprArray2 *array2, BoolExprKind kind, size_t n)
 {
     if (n == 0) {
-        struct BoolExpr *items[] = {IDENTITY[t]};
+        struct BoolExpr *items[] = {IDENTITY[kind]};
         return BoolExprArray_New(1, items);
     }
     else {
         struct BoolExprArray *prev;
         struct BoolExprArray *prod;
 
-        prev = _product(array2, t, n-1);
+        prev = _product(array2, kind, n-1);
         if (prev == NULL)
             return NULL; // LCOV_EXCL_LINE
 
-        prod = _multiply(array2->items[n-1], prev, t);
+        prod = _multiply(array2->items[n-1], prev, kind);
 
         BoolExprArray_Del(prev);
 
@@ -123,8 +123,8 @@ _product(struct BoolExprArray2 *array2, BoolExprType t, size_t n)
 
 
 struct BoolExprArray *
-BoolExprArray2_Product(struct BoolExprArray2 *self, BoolExprType t)
+BoolExprArray2_Product(struct BoolExprArray2 *self, BoolExprKind kind)
 {
-    return _product(self, t, self->length);
+    return _product(self, kind, self->length);
 }
 

@@ -13,7 +13,7 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 
 static struct BoolExpr *
@@ -67,7 +67,7 @@ _op_compose(struct BoolExpr *op, struct BoolExprDict *var2ex)
     }
 
     if (mod_count)
-        CHECK_NULL_N(y, _op_new(op->type, length, xs), length, xs);
+        CHECK_NULL_N(y, _op_new(op->kind, length, xs), length, xs);
     else
         y = BoolExpr_IncRef(op);
 
@@ -104,7 +104,7 @@ static struct BoolExpr * (*_compose[16])(struct BoolExpr *ex, struct BoolExprDic
 struct BoolExpr *
 BoolExpr_Compose(struct BoolExpr *ex, struct BoolExprDict *var2ex)
 {
-    return _compose[ex->type](ex, var2ex);
+    return _compose[ex->kind](ex, var2ex);
 }
 
 

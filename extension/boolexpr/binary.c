@@ -13,7 +13,7 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _op_new(BoolExprType t, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 /* util.c */
 struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
@@ -39,16 +39,16 @@ _commutative_binify(struct BoolExpr *op)
             xs[0] = BoolExpr_IncRef(items0[0]);
         }
         else {
-            CHECK_NULL(temp, _op_new(op->type, n0, items0));
+            CHECK_NULL(temp, _op_new(op->kind, n0, items0));
             CHECK_NULL_1(xs[0], _commutative_binify(temp), temp);
             BoolExpr_DecRef(temp);
         }
 
-        CHECK_NULL_1(temp, _op_new(op->type, n1, items1), xs[0]);
+        CHECK_NULL_1(temp, _op_new(op->kind, n1, items1), xs[0]);
         CHECK_NULL_2(xs[1], _commutative_binify(temp), xs[0], temp);
         BoolExpr_DecRef(temp);
 
-        CHECK_NULL_2(y, _op_new(op->type, 2, xs), xs[0], xs[1]);
+        CHECK_NULL_2(y, _op_new(op->kind, 2, xs), xs[0], xs[1]);
         BoolExpr_DecRef(xs[0]);
         BoolExpr_DecRef(xs[1]);
 
@@ -142,7 +142,7 @@ BoolExpr_ToBinary(struct BoolExpr *ex)
         struct BoolExpr *y;
 
         CHECK_NULL(temp, _op_transform(ex, BoolExpr_ToBinary));
-        CHECK_NULL_1(y, _op_binify[temp->type](temp), temp);
+        CHECK_NULL_1(y, _op_binify[temp->kind](temp), temp);
         BoolExpr_DecRef(temp);
 
         return y;

@@ -318,7 +318,7 @@ _nnfify(struct BoolExpr *ex)
         struct BoolExpr *temp;
 
         CHECK_NULL(temp, _op_transform(ex, _nnfify));
-        CHECK_NULL_1(y, _op_nnfify[temp->type](temp), temp);
+        CHECK_NULL_1(y, _op_nnfify[temp->kind](temp), temp);
         BoolExpr_DecRef(temp);
     }
 
