@@ -60,7 +60,7 @@ def test_issue75():
     assert f_out.equivalent(f_out_r)
 
 def _do_espresso(fname):
-    fpath = os.path.join('extension', 'espresso', 'test', 'bb_all', fname)
+    fpath = os.path.join('thirdparty', 'espresso', 'test', 'bb_all', fname)
     with open(fpath) as fin:
         d = pla.parse(fin.read())
     return espresso.espresso(d['ninputs'], d['noutputs'], d['cover'], intype=d['intype'])
