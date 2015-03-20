@@ -161,7 +161,7 @@ EXPRNODE = dict(
 )
 
 # PicoSAT C extension
-with open(pjoin('extension', 'picosat', 'VERSION')) as fin:
+with open(pjoin('thirdparty', 'picosat', 'VERSION')) as fin:
     PICOSAT_VERSION = '"' + fin.read().strip() + '"'
 
 PICOSAT = dict(
@@ -169,10 +169,10 @@ PICOSAT = dict(
         ('NDEBUG', None),
     ],
     include_dirs = [
-        pjoin('extension', 'picosat'),
+        pjoin('thirdparty', 'picosat'),
     ],
     sources = [
-        pjoin('extension', 'picosat', 'picosat.c'),
+        pjoin('thirdparty', 'picosat', 'picosat.c'),
         pjoin('pyeda', 'boolalg', 'picosatmodule.c'),
     ],
 )
