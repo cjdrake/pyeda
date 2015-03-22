@@ -101,71 +101,57 @@ _count_assoc_args(struct BoolExpr *op)
 static struct BoolExpr *
 _orand_simplify(struct BoolExpr *op)
 {
-    size_t count;
     size_t n = _count_assoc_args(op);
-    struct BoolExpr *flat[n], *uniq[n];
-    size_t flat_len, uniq_len;
-    struct BoolExpr *y;
+    struct BoolExpr *flat[n];
+    size_t flat_len = 0;
 
     /* 1. Flatten arguments, and eliminate {0, 1} */
-    count = 0;
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         struct BoolExpr *item_i = op->data.xs->items[i];
         /* Or(1, x) <=> 1 */
         if (item_i == DOMINATOR[op->kind]) {
-            y = BoolExpr_IncRef(DOMINATOR[op->kind]);
-            goto done;
+            return BoolExpr_IncRef(DOMINATOR[op->kind]);
         }
         /* Or(Or(x0, x1), x2) <=> Or(x0, x1, x2) */
         else if (item_i->kind == op->kind) {
             for (size_t j = 0; j < item_i->data.xs->length; ++j) {
                 struct BoolExpr *item_j = item_i->data.xs->items[j];
                 /* Or(1, x) <=> 1 */
-                if (item_j == DOMINATOR[op->kind]) {
-                    y = BoolExpr_IncRef(DOMINATOR[op->kind]);
-                    goto done;
-                }
+                if (item_j == DOMINATOR[op->kind])
+                    return BoolExpr_IncRef(DOMINATOR[op->kind]);
                 /* Or(0, x) <=> x */
-                else if (item_j != IDENTITY[op->kind]) {
-                    flat[count++] = item_j;
-                }
+                else if (item_j != IDENTITY[op->kind])
+                    flat[flat_len++] = item_j;
             }
         }
         /* Or(0, x) <=> x */
         else if (item_i != IDENTITY[op->kind]) {
-            flat[count++] = item_i;
+            flat[flat_len++] = item_i;
         }
     }
-    flat_len = count;
 
     /* 2. Sort arguments, so you get ~a, ~a, a, a, ~b, ... */
     qsort(flat, flat_len, sizeof(struct BoolExpr *), _cmp);
 
+    struct BoolExpr *uniq[flat_len];
+    size_t uniq_len = 0;
+
     /* 3. Apply: Or(~x, x) <=> 1, Or(x, x) <=> x */
-    count = 0;
     for (size_t i = 0; i < flat_len; ++i) {
-        if (count == 0) {
-            uniq[count++] = flat[i];
+        if (uniq_len == 0) {
+            uniq[uniq_len++] = flat[i];
         }
         else {
             /* Or(~x, x) <=> 1 */
-            if (COMPLEMENTARY(uniq[count-1], flat[i])) {
-                y = BoolExpr_IncRef(DOMINATOR[op->kind]);
-                goto done;
-            }
+            if (COMPLEMENTARY(uniq[uniq_len-1], flat[i]))
+                return BoolExpr_IncRef(DOMINATOR[op->kind]);
             /* Or(x, x) <=> x */
-            else if (!_eq(flat[i], uniq[count-1])) {
-                uniq[count++] = flat[i];
-            }
+            else if (!_eq(flat[i], uniq[uniq_len-1]))
+                uniq[uniq_len++] = flat[i];
         }
     }
-    uniq_len = count;
 
-    CHECK_NULL(y, _orandxor_new(op->kind, uniq_len, uniq));
-
-done:
-
-    return y;
+    return _orandxor_new(op->kind, uniq_len, uniq);
 }
 
 
@@ -173,15 +159,13 @@ done:
 static struct BoolExpr *
 _xor_simplify(struct BoolExpr *op)
 {
-    size_t n = _count_assoc_args(op);
-    size_t count;
     bool parity = true;
-    struct BoolExpr *flat[n], *uniq[n];
-    size_t flat_len, uniq_len;
-    struct BoolExpr *y;
+
+    size_t n = _count_assoc_args(op);
+    struct BoolExpr *flat[n];
+    size_t flat_len = 0;
 
     /* 1. Flatten arguments, and eliminate {0, 1} */
-    count = 0;
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         struct BoolExpr *item_i = op->data.xs->items[i];
         if (IS_CONST(item_i)) {
@@ -194,47 +178,42 @@ _xor_simplify(struct BoolExpr *op)
                 if (IS_CONST(item_j))
                     parity ^= (bool) item_j->kind;
                 else
-                    flat[count++] = item_j;
+                    flat[flat_len++] = item_j;
             }
         }
         else {
-            flat[count++] = item_i;
+            flat[flat_len++] = item_i;
         }
     }
-    flat_len = count;
 
     /* 2. Sort arguments, so you get ~a, ~a, a, a, ~b, ... */
     qsort(flat, flat_len, sizeof(struct BoolExpr *), _cmp);
 
+    struct BoolExpr *uniq[flat_len];
+    size_t uniq_len = 0;
+
     /* 3. Apply: Xor(~x, x) <=> 1, Xor(x, x) <=> 0 */
-    count = 0;
     for (size_t i = 0; i < flat_len; ++i) {
-        if (count == 0) {
-            uniq[count++] = flat[i];
+        if (uniq_len == 0) {
+            uniq[uniq_len++] = flat[i];
         }
         else {
             /* Xor(~x, x) <=> 1 */
-            if (COMPLEMENTARY(uniq[count-1], flat[i])) {
+            if (COMPLEMENTARY(uniq[uniq_len-1], flat[i])) {
                 parity ^= true;
-                count -= 1;
+                uniq_len -= 1;
             }
             /* Xor(x, x) <=> 0 */
-            else if (_eq(flat[i], uniq[count-1])) {
-                count -= 1;
+            else if (_eq(flat[i], uniq[uniq_len-1])) {
+                uniq_len -= 1;
             }
             else {
-                uniq[count++] = flat[i];
+                uniq[uniq_len++] = flat[i];
             }
         }
     }
-    uniq_len = count;
 
-    if (parity)
-        CHECK_NULL(y, Xor(uniq_len, uniq));
-    else
-        CHECK_NULL(y, Xnor(uniq_len, uniq));
-
-    return y;
+    return parity ? Xor(uniq_len, uniq) : Xnor(uniq_len, uniq);
 }
 
 
@@ -242,17 +221,14 @@ _xor_simplify(struct BoolExpr *op)
 static struct BoolExpr *
 _eq_simplify(struct BoolExpr *op)
 {
-    size_t count;
     bool found_zero = false;
     bool found_one = false;
+
     size_t length = op->data.xs->length;
     struct BoolExpr *flat[length];
-    struct BoolExpr *uniq[length];
-    size_t flat_len, uniq_len;
-    struct BoolExpr *y;
+    size_t flat_len = 0;
 
     /* 1. Eliminate {0, 1} */
-    count = 0;
     for (size_t i = 0; i < length; ++i) {
         struct BoolExpr *item_i = op->data.xs->items[i];
         if (IS_ZERO(item_i))
@@ -260,38 +236,35 @@ _eq_simplify(struct BoolExpr *op)
         else if (IS_ONE(item_i))
             found_one = true;
         else
-            flat[count++] = item_i;
+            flat[flat_len++] = item_i;
     }
-    flat_len = count;
 
     /* Equal(0, 1) <=> 0 */
-    if (found_zero && found_one) {
-        y = BoolExpr_IncRef(&Zero);
-        goto done;
-    }
+    if (found_zero && found_one)
+        return BoolExpr_IncRef(&Zero);
 
     /* 2. Sort arguments, so you get ~a, ~a, a, a, ~b, ... */
     qsort(flat, flat_len, sizeof(struct BoolExpr *), _cmp);
 
+    struct BoolExpr *uniq[flat_len];
+    size_t uniq_len = 0;
+
     /* 3. Apply: Equal(~x, x) <=> 0, Equal(x0, x0, x1) <=> Equal(x0, x1) */
-    count = 0;
     for (size_t i = 0; i < flat_len; ++i) {
-        if (count == 0) {
-            uniq[count++] = flat[i];
+        if (uniq_len == 0) {
+            uniq[uniq_len++] = flat[i];
         }
         else {
             /* Equal(~x, x) <=> 0 */
-            if (COMPLEMENTARY(uniq[count-1], flat[i])) {
-                y = BoolExpr_IncRef(&Zero);
-                goto done;
-            }
+            if (COMPLEMENTARY(uniq[uniq_len-1], flat[i]))
+                return BoolExpr_IncRef(&Zero);
             /* Equal(x0, x0, x1) <=> Equal(x0, x1) */
-            else if (!_eq(flat[i], uniq[count-1])) {
-                uniq[count++] = flat[i];
-            }
+            else if (!_eq(flat[i], uniq[uniq_len-1]))
+                uniq[uniq_len++] = flat[i];
         }
     }
-    uniq_len = count;
+
+    struct BoolExpr *y;
 
     if (found_zero) {
         /* Equal(0) <=> 1 */
@@ -331,8 +304,6 @@ _eq_simplify(struct BoolExpr *op)
         CHECK_NULL(y, Equal(uniq_len, uniq));
     }
 
-done:
-
     return y;
 }
 
@@ -351,27 +322,24 @@ _impl_simplify(struct BoolExpr *op)
 {
     struct BoolExpr *p = op->data.xs->items[0];
     struct BoolExpr *q = op->data.xs->items[1];
-    struct BoolExpr *y;
 
     /* Implies(0, q) <=> Implies(p, 1) <=> 1 */
     if (IS_ZERO(p) || IS_ONE(q))
-        y = BoolExpr_IncRef(&One);
+        return BoolExpr_IncRef(&One);
     /* Implies(1, q) <=> q */
     else if (IS_ONE(p))
-        y = BoolExpr_IncRef(q);
+        return BoolExpr_IncRef(q);
     /* Implies(p, 0) <=> ~p */
     else if (IS_ZERO(q))
-        CHECK_NULL(y, Not(p));
+        return Not(p);
     /* Implies(p, p) <=> 1 */
     else if (_eq(p, q))
-        y = BoolExpr_IncRef(&One);
+        return BoolExpr_IncRef(&One);
     /* Implies(~p, p) <=> p */
     else if (COMPLEMENTARY(p, q))
-        y = BoolExpr_IncRef(q);
+        return BoolExpr_IncRef(q);
     else
-        CHECK_NULL(y, Implies(p, q));
-
-    return y;
+        return Implies(p, q);
 }
 
 
@@ -382,6 +350,7 @@ _ite_simplify(struct BoolExpr *op)
     struct BoolExpr *s = op->data.xs->items[0];
     struct BoolExpr *d1 = op->data.xs->items[1];
     struct BoolExpr *d0 = op->data.xs->items[2];
+
     struct BoolExpr *y;
 
     /* ITE(0, d1, d0) <=> d0 */
@@ -506,7 +475,6 @@ _simplify(struct BoolExpr *ex)
     }
     else {
         struct BoolExpr *temp;
-
         CHECK_NULL(temp, _op_transform(ex, _simplify));
         CHECK_NULL_1(y, _op_simplify[temp->kind](temp), temp);
         BoolExpr_DecRef(temp);
