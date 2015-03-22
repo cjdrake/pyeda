@@ -15,8 +15,11 @@
 **     satisfy_all
 */
 
+
 #include <Python.h>
-#include <math.h>
+
+#include <math.h>       /* abs */
+#include <stdbool.h>    /* bool, false, true */
 
 #include "picosat.h"
 
@@ -48,131 +51,141 @@ _pyfree(void *pmgr, void *p, size_t nbytes)
     PyMem_Free(p);
 }
 
+
+static bool
+_add_clause(PicoSAT *picosat, PyObject *clause)
+{
+    int nvars = picosat_variables(picosat);
+    PyObject *iter;
+    PyObject *pylit;
+    long lit;
+
+    iter = PyObject_GetIter(clause);
+    if (iter == NULL)
+        return false;
+
+    while ((pylit = PyIter_Next(iter)) != 0) {
+        if (!PyLong_Check(pylit)) {
+            PyErr_SetString(PyExc_TypeError, "expected clause literal to be an int");
+            Py_DECREF(pylit);
+            Py_DECREF(iter);
+            return false;
+        }
+
+        lit = PyLong_AsLong(pylit);
+        if (lit == 0 || abs(lit) > nvars) {
+            PyErr_Format(
+                PyExc_ValueError,
+                "expected clause literal in range [-%d, 0), (0, %d], got: %ld",
+                nvars, nvars, lit
+            );
+            Py_DECREF(pylit);
+            Py_DECREF(iter);
+            return false;
+        }
+
+        /* Add clause literal */
+        picosat_add(picosat, lit);
+
+        Py_DECREF(pylit);
+    } /* for pylit in iter */
+
+    Py_DECREF(iter);
+
+    if (PyErr_Occurred())
+        return false;
+
+    /* Terminate clause */
+    picosat_add(picosat, 0);
+
+    return true;
+}
+
+
 /*
 ** Add all clause literals to a PicoSAT instance.
 **
 ** Returns
 ** -------
-**     0 : Exception
-**     1 : Success
+**     false : Exception
+**     true  : Success
 */
-static int
+static bool
 _add_clauses(PicoSAT *picosat, PyObject *clauses)
 {
-    int nvars;
-    PyObject *pyclauses, *pyclause;
-    PyObject *pylits, *pylit;
-    int lit;
+    PyObject *iter;
+    PyObject *clause;
 
-    nvars = picosat_variables(picosat);
+    iter = PyObject_GetIter(clauses);
+    if (iter == NULL)
+        return false;
 
-    pyclauses = PyObject_GetIter(clauses);
-    if (pyclauses == NULL)
-        goto error;
+    while ((clause = PyIter_Next(iter)) != 0) {
+        if (!_add_clause(picosat, clause)) {
+            Py_DECREF(clause);
+            Py_DECREF(iter);
+            return false;
+        }
+        Py_DECREF(clause);
+    }
 
-    while ((pyclause = PyIter_Next(pyclauses)) != 0) {
-        pylits = PyObject_GetIter(pyclause);
-        if (pylits == NULL)
-            goto decref_pyclauses;
-
-        while ((pylit = PyIter_Next(pylits)) != 0) {
-            if (!PyLong_Check(pylit)) {
-                PyErr_SetString(PyExc_TypeError, "expected clause literal to be an int");
-                goto decref_pylits;
-            }
-            lit = PyLong_AsLong(pylit);
-            if (lit == 0 || abs(lit) > nvars) {
-                PyErr_Format(
-                    PyExc_ValueError,
-                    "expected clause literal in range [-%d, 0), (0, %d], got: %d",
-                    nvars, nvars, lit
-                );
-                goto decref_pylits;
-            }
-
-            /* Add clause literal */
-            picosat_add(picosat, lit);
-
-            Py_DECREF(pylit);
-        } /* for pylit in pylits */
-        Py_DECREF(pylits);
-
-        if (PyErr_Occurred())
-            goto decref_pyclauses;
-
-        /* Terminate clause */
-        picosat_add(picosat, 0);
-
-        Py_DECREF(pyclause);
-    } /* for pyclause in pyclauses */
-    Py_DECREF(pyclauses);
+    Py_DECREF(iter);
 
     if (PyErr_Occurred())
-        goto error;
+        return false;
 
-    /* Success! */
-    return 1;
-
-decref_pylits:
-    Py_DECREF(pylit);
-    Py_DECREF(pylits);
-
-decref_pyclauses:
-    Py_DECREF(pyclause);
-    Py_DECREF(pyclauses);
-
-error:
-    return 0;
+    return true;
 }
+
 
 /*
 ** Add all assumptions to a PicoSAT instance.
 **
 ** Returns:
-**     0 : Exception
-**     1 : Success
+**     false : Exception
+**     true  : Success
 */
-static int
+static bool
 _add_assumptions(PicoSAT *picosat, PyObject *assumptions)
 {
-    PyObject *pylits, *pylit;
+    PyObject *iter;
+    PyObject *pylit;
     int lit;
 
-    pylits = PyObject_GetIter(assumptions);
-    if (pylits == NULL)
-        goto error;
+    iter = PyObject_GetIter(assumptions);
+    if (iter == NULL)
+        return false;
 
-    while ((pylit = PyIter_Next(pylits)) != 0) {
+    while ((pylit = PyIter_Next(iter)) != 0) {
         if (!PyLong_Check(pylit)) {
             PyErr_SetString(PyExc_TypeError, "expected assumption literal to be an int");
-            goto decref_pylits;
+            Py_DECREF(pylit);
+            Py_DECREF(iter);
+            return false;
         }
+
         lit = PyLong_AsLong(pylit);
         if (lit == 0) {
             PyErr_SetString(PyExc_ValueError, "expected nonzero assumption literal");
-            goto decref_pylits;
+            Py_DECREF(pylit);
+            Py_DECREF(iter);
+            return false;
         }
 
         /* Add assumption literal */
         picosat_assume(picosat, lit);
 
         Py_DECREF(pylit);
-    } /* for pylit in pylits */
-    Py_DECREF(pylits);
+    } /* for pylit in iter */
+
+    Py_DECREF(iter);
 
     if (PyErr_Occurred())
-        goto error;
+        return false;
 
-    /* Success! */
-    return 1;
-
-decref_pylits:
-    Py_DECREF(pylit);
-    Py_DECREF(pylits);
-
-error:
-    return 0;
+    return true;
 }
+
 
 /*
 ** Retrieve a solution from PicoSAT, and convert it to a Python tuple.
@@ -217,6 +230,7 @@ error:
     return NULL;
 }
 
+
 /*
 ** Add the inverse of the current solution to the clauses.
 ** Prevents repetition when finding all solutions.
@@ -241,6 +255,7 @@ _block_soln(PicoSAT *picosat, signed char *soln)
 
     return 1;
 }
+
 
 /*
 ** Python function definition: picosat.satisfy_one()
@@ -329,7 +344,9 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
         goto done;
     }
     if (default_phase < 0 || default_phase > 3) {
-        PyErr_Format(PyExc_ValueError, "expected default_phase in {0, 1, 2, 3}, got: %d", default_phase);
+        PyErr_Format(PyExc_ValueError,
+                     "expected default_phase in {0, 1, 2, 3}, got: %d",
+                     default_phase);
         goto done;
     }
 
@@ -383,6 +400,7 @@ done:
     return pyret;
 }
 
+
 /*
 ** Python iterator definition: picosat.satisfy_all()
 */
@@ -426,6 +444,7 @@ PyDoc_STRVAR(_satisfy_all_docstring,
     "
 );
 
+
 /* satisfy_all state */
 typedef struct {
     PyObject_HEAD
@@ -434,6 +453,7 @@ typedef struct {
     int decision_limit;
     signed char *soln;
 } _satisfy_all_state;
+
 
 /* satisfy_all.tp_new */
 static PyObject *
@@ -470,7 +490,9 @@ _satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
         goto error;
     }
     if (default_phase < 0 || default_phase > 3) {
-        PyErr_Format(PyExc_ValueError, "expected default_phase in {0, 1, 2, 3}, got: %d", default_phase);
+        PyErr_Format(PyExc_ValueError,
+                     "expected default_phase in {0, 1, 2, 3}, got: %d",
+                     default_phase);
         goto error;
     }
 
@@ -514,6 +536,7 @@ error:
     return NULL;
 }
 
+
 /* satisfy_all.tp_dealloc */
 static void
 _satisfy_all_dealloc(_satisfy_all_state *state)
@@ -523,6 +546,7 @@ _satisfy_all_dealloc(_satisfy_all_state *state)
 
     picosat_reset(state->picosat);
 }
+
 
 /* satisfy_all.tp_iternext */
 static PyObject *
@@ -563,9 +587,10 @@ _satisfy_all_next(_satisfy_all_state *state)
     return pyret;
 }
 
-/* satisfy_all.__class__ */
+
+/* SatisfyAll.__class__ */
 static PyTypeObject
-_satisfy_all_type = {
+SatisfyAll_T = {
     PyVarObject_HEAD_INIT(NULL, 0)
 
     "satisfy_all",                      /* tp_name */
@@ -607,10 +632,11 @@ _satisfy_all_type = {
     (newfunc) _satisfy_all_new,         /* tp_new */
 };
 
+
 /*
-** Python module definition: picosat
+** picosat module definition
 */
-PyDoc_STRVAR(_module_docstring,
+PyDoc_STRVAR(m_doc,
 "\n\
 Interface to PicoSAT SAT solver C extension\n\
 \n\
@@ -627,7 +653,7 @@ Interface Functions:\n\
 "
 );
 
-static PyMethodDef _module_methods[] = {
+static PyMethodDef m_methods[] = {
     {"satisfy_one", (PyCFunction) _satisfy_one, METH_VARARGS | METH_KEYWORDS, _satisfy_one_docstring},
 
     /* sentinel */
@@ -637,52 +663,54 @@ static PyMethodDef _module_methods[] = {
 static PyModuleDef _module = {
     PyModuleDef_HEAD_INIT,
 
-    "picosat",          /* m_name */
-    _module_docstring,  /* m_doc */
-    -1,                 /* m_size */
-    _module_methods,    /* m_methods */
+    "picosat", /* m_name */
+    m_doc,     /* m_doc */
+    -1,        /* m_size */
+    m_methods, /* m_methods */
 };
+
 
 PyMODINIT_FUNC
 PyInit_picosat(void)
 {
-    PyObject *pymodule;
+    PyObject *m;
 
     /* Create module */
-    pymodule = PyModule_Create(&_module);
-    if (pymodule == NULL)
+    m = PyModule_Create(&_module);
+    if (m == NULL)
         goto error;
 
-    /* Create constants */
-    if (PyModule_AddStringConstant(pymodule, "VERSION", "959") < 0)
+    /* Create picosat.VERSION */
+    if (PyModule_AddStringConstant(m, "VERSION", "960") < 0)
         goto error;
 
-    if (PyModule_AddStringConstant(pymodule, "COPYRIGHT", picosat_copyright()) < 0)
+    /* Create picosat.COPYRIGHT */
+    if (PyModule_AddStringConstant(m, "COPYRIGHT", picosat_copyright()) < 0)
         goto error;
 
-    /* Create Error */
+    /* Create picosat.Error */
     Error = PyErr_NewExceptionWithDoc("picosat.Error", Error_doc, NULL, NULL);
     if (Error == NULL)
         goto error;
-
     Py_INCREF(Error);
-    if (PyModule_AddObject(pymodule, "Error", Error) < 0) {
-        Py_DECREF(Error);
-        goto error;
-    }
+    if (PyModule_AddObject(m, "Error", Error) < 0)
+        goto decref_Error;
 
-    /* Create satisfy_all */
-    if (PyType_Ready(&_satisfy_all_type) < 0)
-        goto error;
-
-    Py_INCREF((PyObject *) &_satisfy_all_type);
-    if (PyModule_AddObject(pymodule, "satisfy_all", (PyObject *) &_satisfy_all_type) < 0) {
-        Py_DECREF((PyObject *) &_satisfy_all_type);
-        goto error;
-    }
+    /* Create picosat.satisfy_all */
+    if (PyType_Ready(&SatisfyAll_T) < 0)
+        goto decref_Error;
+    Py_INCREF((PyObject *) &SatisfyAll_T);
+    if (PyModule_AddObject(m, "satisfy_all", (PyObject *) &SatisfyAll_T) < 0)
+        goto decref_satisfy_all;
 
     /* Success! */
-    return pymodule;
+    return m;
+
+/* Error! */
+decref_satisfy_all:
+    Py_DECREF((PyObject *) &SatisfyAll_T);
+decref_Error:
+    Py_DECREF(Error);
 
 error:
     return NULL;

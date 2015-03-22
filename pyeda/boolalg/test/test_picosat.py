@@ -8,7 +8,7 @@ from pyeda.boolalg.expr import expr, expr2dimacscnf
 
 def test_basic():
     assert picosat.COPYRIGHT == "Copyright (c) 2006 - 2014 Armin Biere JKU Linz"
-    assert picosat.VERSION == "959"
+    assert picosat.VERSION == "960"
 
 def test_satisfy_one_errors():
     assert_raises(TypeError, picosat.satisfy_one, 6, ((1, -2, 'bad_lit'), (-4, 5, -6)))

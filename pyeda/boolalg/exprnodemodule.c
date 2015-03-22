@@ -1308,7 +1308,7 @@ PyInit_exprnode(void)
     /* Create exprnode.ExprNode */
     if (PyType_Ready(&ExprNode_T) < 0)
         goto decref_Error;
-    Py_INCREF(&ExprNode_T);
+    Py_INCREF((PyObject *) &ExprNode_T);
     if (PyModule_AddObject(m, "ExprNode", (PyObject *) &ExprNode_T) < 0)
         goto decref_ExprNode;
 
@@ -1370,7 +1370,7 @@ decref_One:
 decref_Zero:
     Py_DECREF(_Zero);
 decref_ExprNode:
-    Py_DECREF(&ExprNode_T);
+    Py_DECREF((PyObject *) &ExprNode_T);
 decref_Error:
     Py_DECREF(Error);
 
