@@ -517,9 +517,9 @@ static void
 _satisfy_all_dealloc(_satisfy_all_state *state)
 {
     PyMem_Free(state->soln);
-    Py_TYPE(state)->tp_free(state);
-
     picosat_reset(state->picosat);
+
+    Py_TYPE(state)->tp_free(state);
 }
 
 /* satisfy_all.tp_iternext */
