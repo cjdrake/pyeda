@@ -7,6 +7,13 @@
 Release 0.27
 ============
 
+Version 0.27.4
+--------------
+
+Fixed an invalid memory access with PicoSAT extension:
+
+* `Issue 119 <https://github.com/cjdrake/pyeda/issues/119>`_
+
 Version 0.27.3
 --------------
 
