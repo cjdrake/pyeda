@@ -169,19 +169,19 @@ Investigate Boolean identities::
    # Idempotence
    >>> a | a
    a
-   >>> a & a
+   >>> And(a, a)
    a
 
    # Identity
-   >>> a | 0
+   >>> Or(a, 0)
    a
-   >>> a & 1
+   >>> And(a, 1)
    a
 
    # Dominance
-   >>> a | 1
+   >>> Or(a, 1)
    1
-   >>> a & 0
+   >>> And(a, 0)
    0
 
    # Commutativity
@@ -191,9 +191,9 @@ Investigate Boolean identities::
    True
 
    # Associativity
-   >>> a | (b | c)
+   >>> Or(a, Or(b, c))
    Or(a, b, c)
-   >>> a & (b & c)
+   >>> And(a, And(b, c))
    And(a, b, c)
 
    # Distributive
@@ -207,12 +207,6 @@ Investigate Boolean identities::
    And(~a, ~b)
    >>> Not(a & b).to_nnf()
    Or(~a, ~b)
-
-   # Absorption
-   >>> (a | (a & b)).absorb()
-   a
-   >>> (a & (a | b)).absorb()
-   a
 
 Perform Shannon expansions::
 
@@ -325,8 +319,8 @@ of two-level covers of Boolean functions.
 
 Use the ``espresso_exprs`` function to minimize multiple expressions::
 
-   >>> f1 = ~a & ~b & ~c | ~a & ~b & c | a & ~b & c | a & b & c | a & b & ~c
-   >>> f2 = ~a & ~b & c | a & ~b & c
+   >>> f1 = Or(~a & ~b & ~c, ~a & ~b & c, a & ~b & c, a & b & c, a & b & ~c)
+   >>> f2 = Or(~a & ~b & c, a & ~b & c)
    >>> f1m, f2m = espresso_exprs(f1, f2)
    >>> f1m
    Or(And(~a, ~b), And(a, b), And(~b, c))
