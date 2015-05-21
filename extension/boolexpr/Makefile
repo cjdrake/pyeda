@@ -4,45 +4,41 @@ AR := ar
 CC := c99
 CXX := g++
 
-CPPFLAGS :=
-CFLAGS :=
-CXXFLAGS :=
-ARFLAGS := -crs
-LDFLAGS :=
-LDLIBS := -lgtest -lpthread
-
 GENHTML := genhtml
 LCOV := lcov
 VALGRIND := valgrind
 
-ifdef COVER_ON
-CFLAGS += --coverage
-LDFLAGS += --coverage
-endif
+.PHONY: help
+help:
+	@printf "Usage: make [options] [target] ...\n"
+	@printf "\n"
+	@printf "Valid targets:\n"
+	@printf "\n"
+	@printf "    help            Display this help message\n"
+	@printf "    test            Run unit test suite\n"
+	@printf "    memtest         Check for memory leaks\n"
+	@printf "    cover           Collect coverage\n"
+	@printf "    all             Build all binary targets\n"
 
-.PHONY: do_test
-do_test: a.out
+.PHONY: test
+test: bld/test/run
 	@./$<
 
-.PHONY: do_valgrind
-do_valgrind: a.out
+.PHONY: memtest
+memtest: bld/test/run
 	@$(VALGRIND) ./$<
 
-.PHONY: clean
-clean:
-	@rm -f *.o
-	@rm -f *.gcda *.gcno coverage.info
-	@rm -rf coverage
-
 .PHONY: cover
-cover: clean
-	@$(MAKE) clean
-	@$(MAKE) do_test COVER_ON=1
-	@$(LCOV) -c -d . -o coverage.info
-	@$(GENHTML) coverage.info -o coverage
+cover: bld/cover/run
+	@./$<
+	@$(LCOV) -c -d bld/cover -o bld/cover/coverage.info
+	@$(GENHTML) -o bld/cover/html bld/cover/coverage.info
+
+.PHONY: all
+all: bld/test/run bld/cover/run bld/lib/libboolexpr.a
 
 #===============================================================================
-# Source code
+# Source Code
 #===============================================================================
 
 BOOLEXPR_HDRS := boolexpr.h
@@ -62,9 +58,9 @@ BOOLEXPR_SRCS := \
     util.c \
     vector.c \
 
-TEST_HDRS := test/boolexprtest.hpp
+BOOLEXPR_TEST_HDRS := test/boolexprtest.hpp
 
-TEST_SRCS := \
+BOOLEXPR_TEST_SRCS := \
     test/main.cpp \
     test/boolexprtest.cpp \
     test/test_array.cpp \
@@ -81,30 +77,55 @@ TEST_SRCS := \
     test/test_vector.cpp \
 
 #===============================================================================
-# Generic rules
+# Build Rules
 #===============================================================================
 
-%.o: %.c $(BOOLEXPR_HDRS)
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
+bld/:
+	@mkdir $@
 
-test/%.o: test/%.cpp $(TEST_HDRS)
-	$(CXX) -c -I. $(CXXFLAGS) $(CPPFLAGS) -o $@ $<
-
-#===============================================================================
-# boolexpr library
-#===============================================================================
-
-BOOLEXPR_OBJS := $(patsubst %.c,%.o,$(BOOLEXPR_SRCS))
-
-libboolexpr.a: $(BOOLEXPR_OBJS)
-	$(AR) $(ARFLAGS) $@ $^
-
-#===============================================================================
 # Unit tests
-#===============================================================================
+bld/test/: | bld/
+	@mkdir $@
 
-TEST_OBJS := $(patsubst test/%.cpp,test/%.o,$(TEST_SRCS))
+bld/test/%.o: %.c $(BOOLEXPR_HDRS) | bld/test/
+	$(CC) -c -o $@ $<
 
-a.out: $(BOOLEXPR_OBJS) $(TEST_OBJS)
-	$(CXX) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+bld/test/%.o: test/%.cpp $(BOOLEXPR_TEST_HDRS) | bld/test/
+	$(CXX) -c -I. -o $@ $<
+
+TEST_OBJS := \
+    $(patsubst %.c,bld/test/%.o,$(BOOLEXPR_SRCS)) \
+    $(patsubst test/%.cpp,bld/test/%.o,$(BOOLEXPR_TEST_SRCS)) \
+
+bld/test/run: $(TEST_OBJS)
+	$(CXX) -o $@ $^ -lgtest -lpthread
+
+# Coverage
+bld/cover/: | bld/
+	@mkdir $@
+
+bld/cover/%.o: %.c $(BOOLEXPR_HDRS) | bld/cover/
+	$(CC) -c --coverage -o $@ $<
+
+bld/cover/%.o: test/%.cpp $(BOOLEXPR_TEST_HDRS) | bld/cover/
+	$(CXX) -c -I. -o $@ $<
+
+COVER_OBJS := \
+    $(patsubst %.c,bld/cover/%.o,$(BOOLEXPR_SRCS)) \
+    $(patsubst test/%.cpp,bld/cover/%.o,$(BOOLEXPR_TEST_SRCS)) \
+
+bld/cover/run: $(COVER_OBJS)
+	$(CXX) -o $@ --coverage $^ -lgtest -lpthread
+
+# Library archive
+bld/lib/: bld/
+	@mkdir $@
+
+bld/lib/%.o: %.c $(BOOLEXPR_HDRS) | bld/lib/
+	$(CC) -c -o $@ $<
+
+LIB_OBJS := $(patsubst %.c,bld/lib/%.o,$(BOOLEXPR_SRCS))
+
+bld/lib/libboolexpr.a: $(LIB_OBJS)
+	$(AR) -o $@ -crs $@ $^
 
