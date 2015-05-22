@@ -109,3 +109,45 @@ TEST_F(BoolExprSetTest, Removal)
     BoolExprSet_Del(set);
 }
 
+
+TEST_F(BoolExprSetTest, Equality)
+{
+    BoolExprSet *a = BoolExprSet_New();
+    BoolExprSet *b = BoolExprSet_New();
+    BoolExprSet *c = BoolExprSet_New();
+    BoolExprSet *d = BoolExprSet_New();
+
+    BoolExprSet_Insert(a, xns[0]);
+    BoolExprSet_Insert(a, xs[1]);
+    BoolExprSet_Insert(a, xns[2]);
+    BoolExprSet_Insert(a, xs[3]);
+
+    BoolExprSet_Insert(b, xns[0]);
+    BoolExprSet_Insert(b, xs[1]);
+    BoolExprSet_Insert(b, xns[2]);
+    BoolExprSet_Insert(b, xs[3]);
+    BoolExprSet_Insert(b, xns[4]);
+    BoolExprSet_Insert(b, xs[5]);
+
+    BoolExprSet_Insert(c, xs[3]);
+    BoolExprSet_Insert(c, xs[1]);
+    BoolExprSet_Insert(c, xns[0]);
+    BoolExprSet_Insert(c, xns[2]);
+
+    BoolExprSet_Insert(d, xns[0]);
+    BoolExprSet_Insert(d, xs[1]);
+    BoolExprSet_Insert(d, xns[2]);
+    BoolExprSet_Insert(d, xs[5]);
+
+    EXPECT_FALSE(BoolExprSet_Equal(a, b));
+    EXPECT_TRUE(BoolExprSet_Equal(a, c));
+    EXPECT_FALSE(BoolExprSet_Equal(a, d));
+    EXPECT_FALSE(BoolExprSet_Equal(b, c));
+    EXPECT_FALSE(BoolExprSet_Equal(b, d));
+    EXPECT_FALSE(BoolExprSet_Equal(c, d));
+
+    BoolExprSet_Del(a);
+    BoolExprSet_Del(b);
+    BoolExprSet_Del(c);
+    BoolExprSet_Del(d);
+}

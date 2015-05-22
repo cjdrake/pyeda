@@ -243,3 +243,19 @@ BoolExprSet_Contains(struct BoolExprSet *set, struct BoolExpr *key)
     return _list_contains(set->items[index], key);
 }
 
+
+bool
+BoolExprSet_Equal(struct BoolExprSet *self, struct BoolExprSet *other)
+{
+    if (self->length != other->length)
+        return false;
+
+    for (size_t i = 0; i < _primes[self->pridx]; ++i)
+        for (struct BoolExprSetItem *item = self->items[i];
+                 item != (struct BoolExprSetItem *) NULL; item = item->tail)
+            if (!BoolExprSet_Contains(other, item->key))
+                return false;
+
+    return true;
+}
+

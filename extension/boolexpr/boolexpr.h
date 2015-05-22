@@ -437,6 +437,8 @@ bool BoolExprSet_Remove(struct BoolExprSet *, struct BoolExpr *key);
 
 bool BoolExprSet_Contains(struct BoolExprSet *, struct BoolExpr *key);
 
+bool BoolExprSet_Equal(struct BoolExprSet *, struct BoolExprSet *);
+
 
 #ifdef __cplusplus
 }
