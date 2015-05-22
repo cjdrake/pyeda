@@ -130,16 +130,16 @@ _hash(struct BoolExprSet *set, struct BoolExpr *key)
 static bool
 _insert(struct BoolExprSet *set, struct BoolExpr *key)
 {
-    size_t index = _hash(set, key);;
-    struct BoolExprSetItem *item = set->items[index];
+    size_t index = _hash(set, key);
 
-    while (item != (struct BoolExprSetItem *) NULL) {
+    struct BoolExprSetItem *item;
+
+    for (item = set->items[index]; item; item = item->tail) {
         if (item->key == key) {
             BoolExpr_DecRef(item->key);
             item->key = BoolExpr_IncRef(key);
             return true;
         }
-        item = item->tail;
     }
 
     item = (struct BoolExprSetItem *) malloc(sizeof(struct BoolExprSetItem));
@@ -171,8 +171,7 @@ _enlarge(struct BoolExprSet *set)
         set->items[i] = (struct BoolExprSetItem *) NULL;
 
     for (size_t i = 0; i < _primes[pridx]; ++i) {
-        item = items[i];
-        while (item != (struct BoolExprSetItem *) NULL) {
+        for (item = items[i]; item; item = item->tail) {
             if (!_insert(set, item->key)) {
                 /* LCOV_EXCL_START */
                 for (size_t j = 0; j < i; ++j)
@@ -181,7 +180,6 @@ _enlarge(struct BoolExprSet *set)
                 return false;
                 /* LCOV_EXCL_STOP */
             }
-            item = item->tail;
         }
         _list_del(items[i]);
     }
@@ -214,10 +212,11 @@ bool
 BoolExprSet_Remove(struct BoolExprSet *set, struct BoolExpr *key)
 {
     size_t index = _hash(set, key);
+
     struct BoolExprSetItem **p = &set->items[index];
     struct BoolExprSetItem *item = set->items[index];
 
-    while (item != (struct BoolExprSetItem *) NULL) {
+    while (item) {
         if (item->key == key) {
             BoolExpr_DecRef(item->key);
             *p = item->tail;
@@ -250,9 +249,10 @@ BoolExprSet_Equal(struct BoolExprSet *self, struct BoolExprSet *other)
     if (self->length != other->length)
         return false;
 
+    struct BoolExprSetItem *item;
+
     for (size_t i = 0; i < _primes[self->pridx]; ++i)
-        for (struct BoolExprSetItem *item = self->items[i];
-                 item != (struct BoolExprSetItem *) NULL; item = item->tail)
+        for (item = self->items[i]; item; item = item->tail)
             if (!BoolExprSet_Contains(other, item->key))
                 return false;
 
