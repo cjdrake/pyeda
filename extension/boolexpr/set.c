@@ -83,7 +83,7 @@ _list_contains(struct BoolExprSetItem *list, struct BoolExpr *key)
 
 
 struct BoolExprSet *
-BoolExprSet_New(size_t (*prehash)(struct BoolExpr *))
+BoolExprSet_New(void)
 {
     struct BoolExprSet *set;
     size_t pridx = _MIN_IDX;
@@ -102,40 +102,10 @@ BoolExprSet_New(size_t (*prehash)(struct BoolExpr *))
     for (size_t i = 0; i < width; ++i)
         set->items[i] = (struct BoolExprSetItem *) NULL;
 
-    set->prehash = prehash;
     set->length = 0;
     set->pridx = pridx;
 
     return set;
-}
-
-
-static size_t
-_var2int(struct BoolExpr *var)
-{
-    return (size_t) (var->data.lit.uniqid - 1);
-}
-
-
-struct BoolExprSet *
-BoolExprVarSet_New(void)
-{
-    return BoolExprSet_New(_var2int);
-}
-
-
-static size_t
-_lit2int(struct BoolExpr *lit)
-{
-    return (size_t) (lit->data.lit.uniqid < 0 ? -2 * lit->data.lit.uniqid - 2
-                                              :  2 * lit->data.lit.uniqid - 1);
-}
-
-
-struct BoolExprSet *
-BoolExprLitSet_New(void)
-{
-    return BoolExprSet_New(_lit2int);
 }
 
 
@@ -153,7 +123,7 @@ BoolExprSet_Del(struct BoolExprSet *set)
 static size_t
 _hash(struct BoolExprSet *set, struct BoolExpr *key)
 {
-    return set->prehash(key) % _primes[set->pridx];
+    return (size_t) key % _primes[set->pridx];
 }
 
 

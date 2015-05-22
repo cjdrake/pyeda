@@ -174,7 +174,6 @@ struct BoolExprVector {
 
 
 struct BoolExprDict {
-    size_t (*prehash)(struct BoolExpr *);
     size_t length;
     size_t pridx;
     struct BoolExprDictItem **items;
@@ -182,7 +181,6 @@ struct BoolExprDict {
 
 
 struct BoolExprSet {
-    size_t (*prehash)(struct BoolExpr *);
     size_t length;
     size_t pridx;
     struct BoolExprSetItem **items;
@@ -410,13 +408,7 @@ bool BoolExprVector_Append(struct BoolExprVector *, struct BoolExpr *ex);
 /*
 ** Return a new dictionary of Boolean expressions.
 */
-struct BoolExprDict * BoolExprDict_New(size_t (*prehash)(struct BoolExpr *));
-
-/* Return a mapping from variables to arbitrary expressions. */
-struct BoolExprDict * BoolExprVarMap_New(void);
-
-/* Return a mapping from literals to arbitrary expressions. */
-struct BoolExprDict * BoolExprLitMap_New(void);
+struct BoolExprDict * BoolExprDict_New(void);
 
 /* Delete a dictionary of Boolean expressions. */
 void BoolExprDict_Del(struct BoolExprDict *);
@@ -435,13 +427,7 @@ bool BoolExprDict_Contains(struct BoolExprDict *, struct BoolExpr *key);
 /*
 ** Return a new set of Boolean expressions.
 */
-struct BoolExprSet * BoolExprSet_New(size_t (*prehash)(struct BoolExpr *));
-
-/* Return a set of variables */
-struct BoolExprSet * BoolExprVarSet_New(void);
-
-/* Return a set of literals */
-struct BoolExprSet * BoolExprLitSet_New(void);
+struct BoolExprSet * BoolExprSet_New(void);
 
 void BoolExprSet_Del(struct BoolExprSet *);
 

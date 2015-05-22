@@ -513,7 +513,7 @@ ExprNode_restrict(ExprNode *self, PyObject *args)
         return NULL;
     }
 
-    var2ex = BoolExprVarMap_New();
+    var2ex = BoolExprDict_New();
     /* FIXME: check var2ex == NULL */
     while (PyDict_Next(point, &pos, &key, &val)) {
         BoolExprDict_Insert(var2ex, NODE(key), NODE(val));
@@ -564,7 +564,7 @@ ExprNode_compose(ExprNode *self, PyObject *args)
         return NULL;
     }
 
-    var2ex = BoolExprVarMap_New();
+    var2ex = BoolExprDict_New();
     /* FIXME: check var2ex == NULL */
     while (PyDict_Next(mapping, &pos, &key, &val)) {
         BoolExprDict_Insert(var2ex, NODE(key), NODE(val));

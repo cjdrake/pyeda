@@ -13,7 +13,7 @@ class BoolExprDictTest: public BoolExprTest {};
 
 TEST_F(BoolExprDictTest, MinimumSize)
 {
-    BoolExprDict *dict = BoolExprDict_New(NULL);
+    BoolExprDict *dict = BoolExprDict_New();
     EXPECT_EQ(dict->pridx, 5);
 
     BoolExprDict_Del(dict);
@@ -22,7 +22,7 @@ TEST_F(BoolExprDictTest, MinimumSize)
 
 TEST_F(BoolExprDictTest, BasicReadWrite)
 {
-    BoolExprDict *dict = BoolExprLitMap_New();
+    BoolExprDict *dict = BoolExprDict_New();
 
     BoolExprDict_Insert(dict, xs[0], &Zero);
     EXPECT_EQ(BoolExprDict_Search(dict, xs[0]), &Zero);
@@ -49,7 +49,7 @@ TEST_F(BoolExprDictTest, BasicReadWrite)
 
 TEST_F(BoolExprDictTest, Collision)
 {
-    BoolExprDict *dict = BoolExprVarMap_New();
+    BoolExprDict *dict = BoolExprDict_New();
 
     // Create a few collisions
     for (int i = 0; i < 64; ++i)
@@ -67,7 +67,7 @@ TEST_F(BoolExprDictTest, Collision)
 
 TEST_F(BoolExprDictTest, Resize)
 {
-    BoolExprDict *dict = BoolExprLitMap_New();
+    BoolExprDict *dict = BoolExprDict_New();
 
     for (int i = 0; i < 512; ++i)
         BoolExprDict_Insert(dict, xns[i], xs[i]);
@@ -78,7 +78,7 @@ TEST_F(BoolExprDictTest, Resize)
 
 TEST_F(BoolExprDictTest, Removal)
 {
-    BoolExprDict *dict = BoolExprLitMap_New();
+    BoolExprDict *dict = BoolExprDict_New();
     int length = 0;
 
     for (int i = 0; i < 32; ++i) {

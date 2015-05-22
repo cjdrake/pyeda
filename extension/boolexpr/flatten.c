@@ -340,7 +340,7 @@ _cofactors(struct BoolExpr **fv0, struct BoolExpr **fv1, struct BoolExpr *f, str
 {
     struct BoolExprDict *v0, *v1;
 
-    v0 = BoolExprVarMap_New();
+    v0 = BoolExprDict_New();
     if (v0 == NULL)
         return false; // LCOV_EXCL_LINE
 
@@ -357,7 +357,7 @@ _cofactors(struct BoolExpr **fv0, struct BoolExpr **fv1, struct BoolExpr *f, str
 
     BoolExprDict_Del(v0);
 
-    v1 = BoolExprVarMap_New();
+    v1 = BoolExprDict_New();
     if (v1 == NULL)
         return false; // LCOV_EXCL_LINE
 

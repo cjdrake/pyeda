@@ -13,7 +13,7 @@ class BoolExprSetTest: public BoolExprTest {};
 
 TEST_F(BoolExprSetTest, MinimumSize)
 {
-    BoolExprSet *set = BoolExprSet_New(NULL);
+    BoolExprSet *set = BoolExprSet_New();
     EXPECT_EQ(set->pridx, 5);
 
     BoolExprSet_Del(set);
@@ -22,7 +22,7 @@ TEST_F(BoolExprSetTest, MinimumSize)
 
 TEST_F(BoolExprSetTest, BasicReadWrite)
 {
-    BoolExprSet *set = BoolExprLitSet_New();
+    BoolExprSet *set = BoolExprSet_New();
 
     BoolExprSet_Insert(set, xs[0]);
     EXPECT_TRUE(BoolExprSet_Contains(set, xs[0]));
@@ -45,7 +45,7 @@ TEST_F(BoolExprSetTest, BasicReadWrite)
 
 TEST_F(BoolExprSetTest, Collision)
 {
-    BoolExprSet *set = BoolExprVarSet_New();
+    BoolExprSet *set = BoolExprSet_New();
 
     // Create a few collisions
     for (int i = 0; i < 64; ++i)
@@ -61,7 +61,7 @@ TEST_F(BoolExprSetTest, Collision)
 
 TEST_F(BoolExprSetTest, Resize)
 {
-    BoolExprSet *set = BoolExprLitSet_New();
+    BoolExprSet *set = BoolExprSet_New();
 
     for (int i = 0; i < 512; ++i)
         BoolExprSet_Insert(set, xns[i]);
@@ -72,7 +72,7 @@ TEST_F(BoolExprSetTest, Resize)
 
 TEST_F(BoolExprSetTest, Removal)
 {
-    BoolExprSet *set = BoolExprLitSet_New();
+    BoolExprSet *set = BoolExprSet_New();
     int length = 0;
 
     for (int i = 0; i < 32; ++i) {

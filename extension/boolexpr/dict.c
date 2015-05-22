@@ -85,7 +85,7 @@ _list_search(struct BoolExprDictItem *list, struct BoolExpr *key)
 
 
 struct BoolExprDict *
-BoolExprDict_New(size_t (*prehash)(struct BoolExpr *))
+BoolExprDict_New(void)
 {
     struct BoolExprDict *dict;
     size_t pridx = _MIN_IDX;
@@ -104,42 +104,10 @@ BoolExprDict_New(size_t (*prehash)(struct BoolExpr *))
     for (size_t i = 0; i < width; ++i)
         dict->items[i] = (struct BoolExprDictItem *) NULL;
 
-    dict->prehash = prehash;
     dict->length = 0;
     dict->pridx = pridx;
 
     return dict;
-}
-
-
-static size_t
-_var2int(struct BoolExpr *var)
-{
-    return (size_t) (var->data.lit.uniqid - 1);
-}
-
-
-/* {var: ex} mapping */
-struct BoolExprDict *
-BoolExprVarMap_New(void)
-{
-    return BoolExprDict_New(_var2int);
-}
-
-
-static size_t
-_lit2int(struct BoolExpr *lit)
-{
-    return (size_t) (lit->data.lit.uniqid < 0 ? -2 * lit->data.lit.uniqid - 2
-                                              :  2 * lit->data.lit.uniqid - 1);
-}
-
-
-/* {lit: ex} mapping */
-struct BoolExprDict *
-BoolExprLitMap_New(void)
-{
-    return BoolExprDict_New(_lit2int);
 }
 
 
@@ -157,7 +125,7 @@ BoolExprDict_Del(struct BoolExprDict *dict)
 static size_t
 _hash(struct BoolExprDict *dict, struct BoolExpr *key)
 {
-    return dict->prehash(key) % _primes[dict->pridx];
+    return (size_t) key % _primes[dict->pridx];
 }
 
 

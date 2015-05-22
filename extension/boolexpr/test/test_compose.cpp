@@ -14,7 +14,7 @@ class BoolExprComposeTest: public BoolExprTest {};
 // Test composition on atoms
 TEST_F(BoolExprComposeTest, Atoms1)
 {
-    BoolExprDict *var2ex = BoolExprVarMap_New();
+    BoolExprDict *var2ex = BoolExprDict_New();
 
     BoolExprDict_Insert(var2ex, xs[0], &Zero);
     BoolExprDict_Insert(var2ex, xs[1], &One);
@@ -52,7 +52,7 @@ TEST_F(BoolExprComposeTest, Atoms1)
 // Test restriction on atoms
 TEST_F(BoolExprComposeTest, Atoms2)
 {
-    BoolExprDict *var2const = BoolExprVarMap_New();
+    BoolExprDict *var2const = BoolExprDict_New();
 
     BoolExprDict_Insert(var2const, xs[0], &Zero);
     BoolExprDict_Insert(var2const, xs[1], &One);
@@ -87,7 +87,7 @@ TEST_F(BoolExprComposeTest, Basic)
     ops[1] = XorN(2, xs[2], xs[3]);
     ops[2] = OrN(2, ops[0], ops[1]);
 
-    BoolExprDict *var2const = BoolExprVarMap_New();
+    BoolExprDict *var2const = BoolExprDict_New();
     BoolExprDict_Insert(var2const, xs[0], &Zero);
     BoolExprDict_Insert(var2const, xs[2], &One);
 
@@ -104,7 +104,7 @@ TEST_F(BoolExprComposeTest, Misc)
     ops[0] = OrN(4, xs[0], xs[1], xs[2], xs[3]);
     ops[1] = BoolExpr_Simplify(ops[0]);
 
-    BoolExprDict *var2const = BoolExprVarMap_New();
+    BoolExprDict *var2const = BoolExprDict_New();
     BoolExprDict_Insert(var2const, xs[8], &Zero);
     BoolExprDict_Insert(var2const, xs[9], &Zero);
 
