@@ -13,5 +13,3 @@ include thirdparty/picosat/*
 include pyeda/logic/test/top95.txt
 include pyeda/logic/test/top95_solns.txt
 
-include example/*
-
