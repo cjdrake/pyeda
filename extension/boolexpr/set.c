@@ -58,6 +58,20 @@ struct BoolExprSetItem {
 };
 
 
+static size_t
+_hash(struct BoolExprSet *set, struct BoolExpr *key)
+{
+    return (size_t) key % _primes[set->pridx];
+}
+
+
+static bool
+_eq(struct BoolExpr *key1, struct BoolExpr *key2)
+{
+    return key1 == key2;
+}
+
+
 static void
 _list_del(struct BoolExprSetItem *list)
 {
@@ -75,7 +89,7 @@ _list_contains(struct BoolExprSetItem *list, struct BoolExpr *key)
 {
     if (list == (struct BoolExprSetItem *) NULL)
         return false;
-    else if (list->key == key)
+    else if (_eq(list->key, key))
         return true;
     else
         return _list_contains(list->tail, key);
@@ -120,13 +134,6 @@ BoolExprSet_Del(struct BoolExprSet *set)
 }
 
 
-static size_t
-_hash(struct BoolExprSet *set, struct BoolExpr *key)
-{
-    return (size_t) key % _primes[set->pridx];
-}
-
-
 static bool
 _insert(struct BoolExprSet *set, struct BoolExpr *key)
 {
@@ -135,7 +142,7 @@ _insert(struct BoolExprSet *set, struct BoolExpr *key)
     struct BoolExprSetItem *item;
 
     for (item = set->items[index]; item; item = item->tail) {
-        if (item->key == key) {
+        if (_eq(item->key, key)) {
             BoolExpr_DecRef(item->key);
             item->key = BoolExpr_IncRef(key);
             return true;
@@ -217,7 +224,7 @@ BoolExprSet_Remove(struct BoolExprSet *set, struct BoolExpr *key)
     struct BoolExprSetItem *item = set->items[index];
 
     while (item) {
-        if (item->key == key) {
+        if (_eq(item->key, key)) {
             BoolExpr_DecRef(item->key);
             *p = item->tail;
             free(item);

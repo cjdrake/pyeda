@@ -59,6 +59,20 @@ struct BoolExprDictItem {
 };
 
 
+static size_t
+_hash(struct BoolExprDict *dict, struct BoolExpr *key)
+{
+    return (size_t) key % _primes[dict->pridx];
+}
+
+
+static bool
+_eq(struct BoolExpr *key1, struct BoolExpr *key2)
+{
+    return key1 == key2;
+}
+
+
 static void
 _list_del(struct BoolExprDictItem *list)
 {
@@ -77,7 +91,7 @@ _list_search(struct BoolExprDictItem *list, struct BoolExpr *key)
 {
     if (list == (struct BoolExprDictItem *) NULL)
         return (struct BoolExpr *) NULL;
-    else if (list->key == key)
+    else if (_eq(list->key, key))
         return list->val;
     else
         return _list_search(list->tail, key);
@@ -122,13 +136,6 @@ BoolExprDict_Del(struct BoolExprDict *dict)
 }
 
 
-static size_t
-_hash(struct BoolExprDict *dict, struct BoolExpr *key)
-{
-    return (size_t) key % _primes[dict->pridx];
-}
-
-
 static bool
 _insert(struct BoolExprDict *dict, struct BoolExpr *key, struct BoolExpr *val)
 {
@@ -137,7 +144,7 @@ _insert(struct BoolExprDict *dict, struct BoolExpr *key, struct BoolExpr *val)
     struct BoolExprDictItem *item;
 
     for (item = dict->items[index]; item; item = item->tail) {
-        if (item->key == key) {
+        if (_eq(item->key, key)) {
             BoolExpr_DecRef(item->key);
             BoolExpr_DecRef(item->val);
             item->key = BoolExpr_IncRef(key);
@@ -222,7 +229,7 @@ BoolExprDict_Remove(struct BoolExprDict *dict, struct BoolExpr *key)
     struct BoolExprDictItem *item = dict->items[index];
 
     while (item) {
-        if (item->key == key) {
+        if (_eq(item->key, key)) {
             BoolExpr_DecRef(item->key);
             BoolExpr_DecRef(item->val);
             *p = item->tail;
