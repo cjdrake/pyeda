@@ -151,3 +151,21 @@ TEST_F(BoolExprSetTest, Equality)
     BoolExprSet_Del(c);
     BoolExprSet_Del(d);
 }
+
+
+TEST_F(BoolExprSetTest, Clear)
+{
+    BoolExprSet *a = BoolExprSet_New();
+
+    BoolExprSet_Insert(a, xns[0]);
+    BoolExprSet_Insert(a, xs[1]);
+    BoolExprSet_Insert(a, xns[2]);
+    BoolExprSet_Insert(a, xs[3]);
+
+    ASSERT_EQ(a->length, 4);
+    BoolExprSet_Clear(a);
+    ASSERT_EQ(a->length, 0);
+
+    BoolExprSet_Del(a);
+}
+

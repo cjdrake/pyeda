@@ -264,3 +264,17 @@ BoolExprDict_Contains(struct BoolExprDict *dict, struct BoolExpr *key)
     return _list_search(dict->items[index], key) != (struct BoolExpr *) NULL;
 }
 
+
+void
+BoolExprDict_Clear(struct BoolExprDict *dict)
+{
+    for (size_t i = 0; i < _primes[dict->pridx]; ++i) {
+        if (dict->items[i] != (struct BoolExprDictItem *) NULL) {
+            _list_del(dict->items[i]);
+            dict->items[i] = (struct BoolExprDictItem *) NULL;
+        }
+    }
+
+    dict->length = 0;
+}
+

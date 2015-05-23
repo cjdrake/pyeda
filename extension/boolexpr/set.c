@@ -266,3 +266,17 @@ BoolExprSet_Equal(struct BoolExprSet *self, struct BoolExprSet *other)
     return true;
 }
 
+
+void
+BoolExprSet_Clear(struct BoolExprSet *set)
+{
+    for (size_t i = 0; i < _primes[set->pridx]; ++i) {
+        if (set->items[i] != (struct BoolExprSetItem *) NULL) {
+            _list_del(set->items[i]);
+            set->items[i] = (struct BoolExprSetItem *) NULL;
+        }
+    }
+
+    set->length = 0;
+}
+

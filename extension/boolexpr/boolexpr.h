@@ -423,6 +423,8 @@ struct BoolExpr * BoolExprDict_Search(struct BoolExprDict *, struct BoolExpr *ke
 
 bool BoolExprDict_Contains(struct BoolExprDict *, struct BoolExpr *key);
 
+void BoolExprDict_Clear(struct BoolExprDict *);
+
 
 /*
 ** Return a new set of Boolean expressions.
@@ -438,6 +440,8 @@ bool BoolExprSet_Remove(struct BoolExprSet *, struct BoolExpr *key);
 bool BoolExprSet_Contains(struct BoolExprSet *, struct BoolExpr *key);
 
 bool BoolExprSet_Equal(struct BoolExprSet *, struct BoolExprSet *);
+
+void BoolExprSet_Clear(struct BoolExprSet *);
 
 
 #ifdef __cplusplus

@@ -116,3 +116,20 @@ TEST_F(BoolExprDictTest, Removal)
     BoolExprDict_Del(dict);
 }
 
+
+TEST_F(BoolExprDictTest, Clear)
+{
+    BoolExprDict *dict = BoolExprDict_New();
+    int length = 0;
+
+    for (int i = 0; i < 32; ++i) {
+        BoolExprDict_Insert(dict, xns[i], xs[i]);
+        EXPECT_EQ(dict->length, ++length);
+    }
+
+    BoolExprDict_Clear(dict);
+    EXPECT_EQ(dict->length, 0);
+
+    BoolExprDict_Del(dict);
+}
+
