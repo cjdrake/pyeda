@@ -151,7 +151,7 @@ EXPRNODE = dict(
         pjoin('extension', 'boolexpr', 'dict.c'),
         pjoin('extension', 'boolexpr', 'flatten.c'),
         pjoin('extension', 'boolexpr', 'nnf.c'),
-        #pjoin('extension', 'boolexpr', 'set.c'),
+        pjoin('extension', 'boolexpr', 'set.c'),
         pjoin('extension', 'boolexpr', 'simple.c'),
         pjoin('extension', 'boolexpr', 'util.c'),
         pjoin('extension', 'boolexpr', 'vector.c'),
