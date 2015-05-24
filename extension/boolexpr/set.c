@@ -52,12 +52,6 @@ static size_t _primes[] = {
 };
 
 
-struct BoolExprSetItem {
-    struct BoolExpr *key;
-    struct BoolExprSetItem *tail;
-};
-
-
 static size_t
 _hash(struct BoolExprSet *set, struct BoolExpr *key)
 {

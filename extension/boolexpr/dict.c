@@ -52,13 +52,6 @@ static size_t _primes[] = {
 };
 
 
-struct BoolExprDictItem {
-    struct BoolExpr *key;
-    struct BoolExpr *val;
-    struct BoolExprDictItem *tail;
-};
-
-
 static size_t
 _hash(struct BoolExprDict *dict, struct BoolExpr *key)
 {
