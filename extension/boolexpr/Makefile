@@ -44,6 +44,7 @@ all: bld/test/run bld/cover/run bld/lib/libboolexpr.a
 BOOLEXPR_HDRS := boolexpr.h
 
 BOOLEXPR_SRCS := \
+    argset.c \
     array.c \
     array2.c \
     binary.c \
@@ -63,6 +64,7 @@ BOOLEXPR_TEST_HDRS := test/boolexprtest.hpp
 BOOLEXPR_TEST_SRCS := \
     test/main.cpp \
     test/boolexprtest.cpp \
+    test/test_argset.cpp \
     test/test_array.cpp \
     test/test_array2.cpp \
     test/test_basic.cpp \

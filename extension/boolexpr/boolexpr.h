@@ -209,6 +209,14 @@ struct BoolExprSetIter {
 };
 
 
+struct BoolExprOrAndArgSet {
+    BoolExprKind kind;
+    bool min;
+    bool max;
+    struct BoolExprSet *xs;
+};
+
+
 /* Constant expressions */
 extern struct BoolExpr Zero;
 extern struct BoolExpr One;
@@ -470,6 +478,16 @@ bool BoolExprSet_Contains(struct BoolExprSet *, struct BoolExpr *key);
 bool BoolExprSet_Equal(struct BoolExprSet *, struct BoolExprSet *);
 
 void BoolExprSet_Clear(struct BoolExprSet *);
+
+
+/*
+** Return a new OR/AND set
+*/
+struct BoolExprOrAndArgSet * BoolExprOrAndArgSet_New(BoolExprKind kind);
+
+void BoolExprOrAndArgSet_Del(struct BoolExprOrAndArgSet *);
+
+bool BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *, struct BoolExpr *key);
 
 
 #ifdef __cplusplus
