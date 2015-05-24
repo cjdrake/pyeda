@@ -69,7 +69,7 @@ _eq(struct BoolExpr *key1, struct BoolExpr *key2)
 static void
 _list_del(struct BoolExprSetItem *list)
 {
-    if (list != (struct BoolExprSetItem *) NULL) {
+    if (list) {
         _list_del(list->tail);
         BoolExpr_DecRef(list->key);
 
@@ -81,7 +81,7 @@ _list_del(struct BoolExprSetItem *list)
 static bool
 _list_contains(struct BoolExprSetItem *list, struct BoolExpr *key)
 {
-    if (list == (struct BoolExprSetItem *) NULL)
+    if (!list)
         return false;
     else if (_eq(list->key, key))
         return true;
@@ -125,6 +125,61 @@ BoolExprSet_Del(struct BoolExprSet *set)
 
     free(set->items);
     free(set);
+}
+
+
+struct BoolExprSetIter *
+BoolExprSetIter_New(struct BoolExprSet *set)
+{
+    struct BoolExprSetIter *it;
+
+    it = (struct BoolExprSetIter *) malloc(sizeof(struct BoolExprSetIter));
+    if (it == NULL)
+        return NULL; // LCOV_EXCL_LINE
+
+    it->_set = set;
+
+    it->done = true;
+    it->item = (struct BoolExprSetItem *) NULL;
+
+    for (it->_index = 0; it->_index < _primes[set->pridx]; it->_index += 1) {
+        if (set->items[it->_index]) {
+            it->done = false;
+            it->item = set->items[it->_index];
+            break;
+        }
+    }
+
+    return it;
+}
+
+
+void
+BoolExprSetIter_Del(struct BoolExprSetIter *it)
+{
+    free(it);
+}
+
+
+void
+BoolExprSetIter_Next(struct BoolExprSetIter *it)
+{
+    if (it->done)
+        return;
+
+    if (it->item->tail) {
+        it->item = it->item->tail;
+        return;
+    }
+
+    for (it->_index += 1; it->_index < _primes[it->_set->pridx]; it->_index += 1) {
+        if (it->_set->items[it->_index]) {
+            it->item = it->_set->items[it->_index];
+            return;
+        }
+    }
+
+    it->done = true;
 }
 
 
@@ -265,7 +320,7 @@ void
 BoolExprSet_Clear(struct BoolExprSet *set)
 {
     for (size_t i = 0; i < _primes[set->pridx]; ++i) {
-        if (set->items[i] != (struct BoolExprSetItem *) NULL) {
+        if (set->items[i]) {
             _list_del(set->items[i]);
             set->items[i] = (struct BoolExprSetItem *) NULL;
         }

@@ -69,7 +69,7 @@ _eq(struct BoolExpr *key1, struct BoolExpr *key2)
 static void
 _list_del(struct BoolExprDictItem *list)
 {
-    if (list != (struct BoolExprDictItem *) NULL) {
+    if (list) {
         _list_del(list->tail);
         BoolExpr_DecRef(list->key);
         BoolExpr_DecRef(list->val);
@@ -82,7 +82,7 @@ _list_del(struct BoolExprDictItem *list)
 static struct BoolExpr *
 _list_search(struct BoolExprDictItem *list, struct BoolExpr *key)
 {
-    if (list == (struct BoolExprDictItem *) NULL)
+    if (!list)
         return (struct BoolExpr *) NULL;
     else if (_eq(list->key, key))
         return list->val;
@@ -262,7 +262,7 @@ void
 BoolExprDict_Clear(struct BoolExprDict *dict)
 {
     for (size_t i = 0; i < _primes[dict->pridx]; ++i) {
-        if (dict->items[i] != (struct BoolExprDictItem *) NULL) {
+        if (dict->items[i]) {
             _list_del(dict->items[i]);
             dict->items[i] = (struct BoolExprDictItem *) NULL;
         }

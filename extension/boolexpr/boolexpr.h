@@ -200,6 +200,15 @@ struct BoolExprSet {
 };
 
 
+struct BoolExprSetIter {
+    struct BoolExprSet *_set;
+    size_t _index;
+
+    bool done;
+    struct BoolExprSetItem *item;
+};
+
+
 /* Constant expressions */
 extern struct BoolExpr Zero;
 extern struct BoolExpr One;
@@ -445,6 +454,12 @@ void BoolExprDict_Clear(struct BoolExprDict *);
 struct BoolExprSet * BoolExprSet_New(void);
 
 void BoolExprSet_Del(struct BoolExprSet *);
+
+struct BoolExprSetIter * BoolExprSetIter_New(struct BoolExprSet *);
+
+void BoolExprSetIter_Del(struct BoolExprSetIter *);
+
+void BoolExprSetIter_Next(struct BoolExprSetIter *);
 
 bool BoolExprSet_Insert(struct BoolExprSet *, struct BoolExpr *key);
 
