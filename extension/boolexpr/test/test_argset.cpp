@@ -13,7 +13,7 @@ class BoolExprArgSetTest: public BoolExprTest {};
 
 TEST_F(BoolExprArgSetTest, OrBasic)
 {
-    BoolExprOrAndArgSet *a = BoolExprOrAndArgSet_New(OP_OR);
+    struct BoolExprOrAndArgSet *a = BoolExprOrAndArgSet_New(OP_OR);
 
     EXPECT_EQ(a->kind, OP_OR);
     EXPECT_TRUE(a->min);
@@ -43,7 +43,7 @@ TEST_F(BoolExprArgSetTest, OrBasic)
 
 TEST_F(BoolExprArgSetTest, AndBasic)
 {
-    BoolExprOrAndArgSet *a = BoolExprOrAndArgSet_New(OP_AND);
+    struct BoolExprOrAndArgSet *a = BoolExprOrAndArgSet_New(OP_AND);
 
     EXPECT_EQ(a->kind, OP_AND);
     EXPECT_TRUE(a->min);
