@@ -85,3 +85,90 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
     return true;
 }
 
+
+struct BoolExprXorArgSet *
+BoolExprXorArgSet_New(bool parity)
+{
+    struct BoolExprXorArgSet *argset;
+
+    argset = (struct BoolExprXorArgSet *) malloc(sizeof(struct BoolExprXorArgSet));
+    if (argset == NULL)
+        return NULL; // LCOV_EXCL_LINE
+
+    argset->parity = parity;
+
+    argset->xs = BoolExprSet_New();
+    if (argset->xs == NULL) {
+        free(argset); // LCOV_EXCL_LINE
+        return NULL;  // LCOV_EXCL_LINE
+    }
+
+    return argset;
+}
+
+
+void
+BoolExprXorArgSet_Del(struct BoolExprXorArgSet *argset)
+{
+    BoolExprSet_Del(argset->xs);
+
+    free(argset);
+}
+
+
+bool
+BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
+{
+    if (IS_CONST(key)) {
+        argset->parity ^= (bool) key->kind;
+        return true;
+    }
+
+    // Xor(x, y, z, z) = Xor(x, y)
+    // Xnor(x, y, z, z) = Xor(x, y)
+    if (BoolExprSet_Contains(argset->xs, key)) {
+        BoolExprSet_Remove(argset->xs, key);
+        argset->parity = true;
+        return true;
+    }
+
+    // Xor(x, y, z, ~z) =
+    // Xnor(x, y, z, ~z) =
+    if (IS_LIT(key) || IS_NOT(key)) {
+        struct BoolExpr *ex = Not(key);
+        if (BoolExprSet_Contains(argset->xs, ex)) {
+            BoolExprSet_Remove(argset->xs, ex);
+            argset->parity = false;
+            BoolExpr_DecRef(ex);
+            return true;
+        }
+        BoolExpr_DecRef(ex);
+    }
+
+    // Xor (x, Xor(y, z)) = Xor (x, y, z)
+    // Xnor(x, Xor(y, z)) = Xnor(x, y, z)
+    if (IS_XOR(key)) {
+        for (size_t i = 0; i < key->data.xs->length; ++i) {
+            if (!BoolExprXorArgSet_Insert(argset, key->data.xs->items[i]))
+                return false; // LCOV_EXCL_LINE
+        }
+        return true;
+    }
+
+    // Xor (x, Xnor(y, z)) = Xnor(x, y, z)
+    // Xnor(x, Xnor(y, z)) = Xor (x, y, z)
+    if (IS_NOT(key) && IS_XOR(key->data.xs->items[0])) {
+        for (size_t i = 0; i < key->data.xs->length; ++i) {
+            if (!BoolExprXorArgSet_Insert(argset, key->data.xs->items[i]))
+                return false; // LCOV_EXCL_LINE
+        }
+        argset->parity ^= true;
+        return true;
+    }
+
+    if (!BoolExprSet_Insert(argset->xs, key))
+        return false; // LCOV_EXCL_LINE
+
+    return true;
+}
+

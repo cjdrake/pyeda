@@ -217,6 +217,12 @@ struct BoolExprOrAndArgSet {
 };
 
 
+struct BoolExprXorArgSet {
+    bool parity;
+    struct BoolExprSet *xs;
+};
+
+
 /* Constant expressions */
 extern struct BoolExpr Zero;
 extern struct BoolExpr One;
@@ -488,6 +494,16 @@ struct BoolExprOrAndArgSet * BoolExprOrAndArgSet_New(BoolExprKind kind);
 void BoolExprOrAndArgSet_Del(struct BoolExprOrAndArgSet *);
 
 bool BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *, struct BoolExpr *key);
+
+
+/*
+** Return a new XOR/XNOR set
+*/
+struct BoolExprXorArgSet * BoolExprXorArgSet_New(bool parity);
+
+void BoolExprXorArgSet_Del(struct BoolExprXorArgSet *);
+
+bool BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *, struct BoolExpr *key);
 
 
 #ifdef __cplusplus

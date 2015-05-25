@@ -70,3 +70,39 @@ TEST_F(BoolExprArgSetTest, AndBasic)
     BoolExprOrAndArgSet_Del(a);
 }
 
+
+TEST_F(BoolExprArgSetTest, XorBasic)
+{
+    struct BoolExprXorArgSet *a = BoolExprXorArgSet_New(true);
+
+    BoolExprXorArgSet_Insert(a, xs[0]);
+    BoolExprXorArgSet_Insert(a, xs[1]);
+    EXPECT_TRUE(a->parity);
+    EXPECT_EQ(a->xs->length, 2);
+
+    BoolExprXorArgSet_Insert(a, &Zero);
+    EXPECT_TRUE(a->parity);
+    EXPECT_EQ(a->xs->length, 2);
+
+    BoolExprXorArgSet_Insert(a, &One);
+    EXPECT_FALSE(a->parity);
+    EXPECT_EQ(a->xs->length, 2);
+
+    ops[0] = XorN(2, xs[2], xs[3]);
+    ops[1] = XnorN(2, xs[4], xs[5]);
+    ops[2] = XorN(2, ops[0], ops[1]);
+    BoolExprXorArgSet_Insert(a, ops[2]);
+    EXPECT_TRUE(a->parity);
+    EXPECT_EQ(a->xs->length, 6);
+
+    BoolExprXorArgSet_Insert(a, xs[0]);
+    EXPECT_TRUE(a->parity);
+    EXPECT_EQ(a->xs->length, 5);
+
+    BoolExprXorArgSet_Insert(a, xns[1]);
+    EXPECT_FALSE(a->parity);
+    EXPECT_EQ(a->xs->length, 4);
+
+    BoolExprXorArgSet_Del(a);
+}
+
