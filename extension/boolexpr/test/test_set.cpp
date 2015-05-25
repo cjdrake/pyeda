@@ -14,7 +14,7 @@ class BoolExprSetTest: public BoolExprTest {};
 TEST_F(BoolExprSetTest, MinimumSize)
 {
     BoolExprSet *set = BoolExprSet_New();
-    EXPECT_EQ(set->pridx, 5);
+    EXPECT_EQ(set->pridx, 4);
 
     BoolExprSet_Del(set);
 }
