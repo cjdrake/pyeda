@@ -223,6 +223,13 @@ struct BoolExprXorArgSet {
 };
 
 
+struct BoolExprEqArgSet {
+    bool zero;
+    bool one;
+    struct BoolExprSet *xs;
+};
+
+
 /* Constant expressions */
 extern struct BoolExpr Zero;
 extern struct BoolExpr One;
@@ -504,6 +511,16 @@ struct BoolExprXorArgSet * BoolExprXorArgSet_New(bool parity);
 void BoolExprXorArgSet_Del(struct BoolExprXorArgSet *);
 
 bool BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *, struct BoolExpr *key);
+
+
+/*
+** Return a new Equal set
+*/
+struct BoolExprEqArgSet * BoolExprEqArgSet_New(void);
+
+void BoolExprEqArgSet_Del(struct BoolExprEqArgSet *);
+
+bool BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *, struct BoolExpr *key);
 
 
 #ifdef __cplusplus
