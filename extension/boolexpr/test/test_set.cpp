@@ -53,7 +53,7 @@ TEST_F(BoolExprSetTest, Iteration)
         mark[i-1] = false;
     }
 
-    BoolExprSetIter *it;
+    struct BoolExprSetIter *it;
     for (it = BoolExprSetIter_New(set); !it->done; BoolExprSetIter_Next(it))
         mark[it->item->key->data.lit.uniqid-1] = true;
 
