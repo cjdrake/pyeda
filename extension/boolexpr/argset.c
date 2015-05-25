@@ -125,20 +125,19 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
     }
 
     // Xor(x, y, z, z) = Xor(x, y)
-    // Xnor(x, y, z, z) = Xor(x, y)
+    // Xnor(x, y, z, z) = Xnor(x, y)
     if (BoolExprSet_Contains(argset->xs, key)) {
         BoolExprSet_Remove(argset->xs, key);
-        argset->parity = true;
         return true;
     }
 
-    // Xor(x, y, z, ~z) =
-    // Xnor(x, y, z, ~z) =
+    // Xor(x, y, z, ~z) = Xnor(x, y)
+    // Xnor(x, y, z, ~z) = Xor(x, y)
     if (IS_LIT(key) || IS_NOT(key)) {
         struct BoolExpr *ex = Not(key);
         if (BoolExprSet_Contains(argset->xs, ex)) {
             BoolExprSet_Remove(argset->xs, ex);
-            argset->parity = false;
+            argset->parity ^= true;
             BoolExpr_DecRef(ex);
             return true;
         }
