@@ -26,7 +26,7 @@ test: bld/test/run
 
 .PHONY: memtest
 memtest: bld/test/run
-	@$(VALGRIND) ./$<
+	@$(VALGRIND) $(VALGRIND_FLAGS) ./$<
 
 .PHONY: cover
 cover: bld/cover/run
