@@ -56,13 +56,14 @@ TEST_F(BoolExprSetTest, Iteration)
     BoolExprSetIter *it;
     for (it = BoolExprSetIter_New(set); !it->done; BoolExprSetIter_Next(it))
         mark[it->item->key->data.lit.uniqid-1] = true;
-    BoolExprSetIter_Del(it);
 
     // Using Next method should have no effect
     struct BoolExprSetItem *item = it->item;
     BoolExprSetIter_Next(it);
     EXPECT_TRUE(it->done);
     EXPECT_EQ(it->item, item);
+
+    BoolExprSetIter_Del(it);
 
     for (size_t i = 0; i < N; ++i)
         EXPECT_TRUE(mark[i]);
