@@ -17,12 +17,13 @@
 ** From: http://planetmath.org/goodhashtableprimes
 */
 
-#define _MIN_IDX 5
+#define _MIN_IDX 4
 #define _MAX_IDX 30
 
 static size_t _primes[] = {
-    0, 0, 0, 0, 0,
+    0, 0, 0, 0,
 
+    /* (2^4,  2^5)  */ 23,
     /* (2^5,  2^6)  */ 53,
     /* (2^6,  2^7)  */ 97,
     /* (2^7,  2^8)  */ 193,
