@@ -488,7 +488,12 @@ bool BoolExprSet_Remove(struct BoolExprSet *, struct BoolExpr *key);
 
 bool BoolExprSet_Contains(struct BoolExprSet *, struct BoolExpr *key);
 
-bool BoolExprSet_Equal(struct BoolExprSet *, struct BoolExprSet *);
+bool BoolExprSet_EQ(struct BoolExprSet *, struct BoolExprSet *);
+bool BoolExprSet_NE(struct BoolExprSet *, struct BoolExprSet *);
+bool BoolExprSet_LTE(struct BoolExprSet *, struct BoolExprSet *);
+bool BoolExprSet_GT(struct BoolExprSet *, struct BoolExprSet *);
+bool BoolExprSet_GTE(struct BoolExprSet *, struct BoolExprSet *);
+bool BoolExprSet_LT(struct BoolExprSet *, struct BoolExprSet *);
 
 void BoolExprSet_Clear(struct BoolExprSet *);
 

@@ -301,13 +301,93 @@ BoolExprSet_Contains(struct BoolExprSet *set, struct BoolExpr *key)
 
 
 bool
-BoolExprSet_Equal(struct BoolExprSet *self, struct BoolExprSet *other)
+BoolExprSet_EQ(struct BoolExprSet *self, struct BoolExprSet *other)
 {
     if (self->length != other->length)
         return false;
 
     struct BoolExprSetItem *item;
 
+    // All items in self must also be in other (and vice versa)
+    for (size_t i = 0; i < _primes[self->pridx]; ++i)
+        for (item = self->items[i]; item; item = item->tail)
+            if (!BoolExprSet_Contains(other, item->key))
+                return false;
+
+    return true;
+}
+
+
+bool
+BoolExprSet_NE(struct BoolExprSet *self, struct BoolExprSet *other)
+{
+    return !BoolExprSet_EQ(self, other);
+}
+
+
+bool
+BoolExprSet_LTE(struct BoolExprSet *self, struct BoolExprSet *other)
+{
+    if (self->length > other->length)
+        return false;
+
+    struct BoolExprSetItem *item;
+
+    // All items in self must also be in other
+    for (size_t i = 0; i < _primes[self->pridx]; ++i)
+        for (item = self->items[i]; item; item = item->tail)
+            if (!BoolExprSet_Contains(other, item->key))
+                return false;
+
+    return true;
+}
+
+
+bool
+BoolExprSet_GT(struct BoolExprSet *self, struct BoolExprSet *other)
+{
+    if (self->length <= other->length)
+        return false;
+
+    struct BoolExprSetItem *item;
+
+    // All items in other must also be in self
+    for (size_t i = 0; i < _primes[other->pridx]; ++i)
+        for (item = other->items[i]; item; item = item->tail)
+            if (!BoolExprSet_Contains(self, item->key))
+                return false;
+
+    return true;
+}
+
+
+bool
+BoolExprSet_GTE(struct BoolExprSet *self, struct BoolExprSet *other)
+{
+    if (self->length < other->length)
+        return false;
+
+    struct BoolExprSetItem *item;
+
+    // All items in other must also be in self
+    for (size_t i = 0; i < _primes[other->pridx]; ++i)
+        for (item = other->items[i]; item; item = item->tail)
+            if (!BoolExprSet_Contains(self, item->key))
+                return false;
+
+    return true;
+}
+
+
+bool
+BoolExprSet_LT(struct BoolExprSet *self, struct BoolExprSet *other)
+{
+    if (self->length >= self->length)
+        return false;
+
+    struct BoolExprSetItem *item;
+
+    // All items in self must also be in other
     for (size_t i = 0; i < _primes[self->pridx]; ++i)
         for (item = self->items[i]; item; item = item->tail)
             if (!BoolExprSet_Contains(other, item->key))
