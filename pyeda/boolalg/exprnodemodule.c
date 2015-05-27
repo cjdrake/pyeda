@@ -479,17 +479,16 @@ ExprNode_next(ExprNode *self)
         /* StopIteration */
         return NULL;
     }
-    else {
-        struct BoolExpr *ex = BoolExprIter_Next(self->it);
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExprIter_Del(self->it);
-            return NULL;
-        }
-        pyex->ex = BoolExpr_IncRef(ex);
 
-        return (PyObject *) pyex;
+    struct BoolExpr *ex = BoolExprIter_Next(self->it);
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExprIter_Del(self->it);
+        return NULL;
     }
+    pyex->ex = BoolExpr_IncRef(ex);
+
+    return (PyObject *) pyex;
 }
 
 
@@ -532,15 +531,14 @@ ExprNode_restrict(ExprNode *self, PyObject *args)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -583,15 +581,14 @@ ExprNode_compose(ExprNode *self, PyObject *args)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -599,13 +596,13 @@ ExprNode_compose(ExprNode *self, PyObject *args)
 static PyObject *
 ExprNode_data(ExprNode *self)
 {
-    if (IS_CONST(self->ex)) {
+    if (IS_CONST(self->ex))
         return PyLong_FromLong((long) self->ex->data.pcval);
-    }
-    else if (IS_LIT(self->ex)) {
+
+    if (IS_LIT(self->ex))
         return PyLong_FromLong(self->ex->data.lit.uniqid);
-    }
-    else if (IS_OP(self->ex)) {
+
+    if (IS_OP(self->ex)) {
         int i, j;
         ExprNode *nodes[self->ex->data.xs->length];
         PyObject *xs;
@@ -632,9 +629,8 @@ ExprNode_data(ExprNode *self)
 
         return xs;
     }
-    else {
-        Py_RETURN_NONE;
-    }
+
+    Py_RETURN_NONE;
 }
 
 
@@ -654,15 +650,14 @@ ExprNode_pushdown_not(ExprNode *self)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -682,15 +677,14 @@ ExprNode_simplify(ExprNode *self)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -710,15 +704,14 @@ ExprNode_to_binary(ExprNode *self)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -737,15 +730,14 @@ ExprNode_to_nnf(ExprNode *self)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -764,15 +756,14 @@ ExprNode_to_dnf(ExprNode *self)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -791,15 +782,14 @@ ExprNode_to_cnf(ExprNode *self)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -818,15 +808,14 @@ ExprNode_complete_sum(ExprNode *self)
         Py_INCREF((PyObject *) self);
         return (PyObject *) self;
     }
-    else {
-        ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-        if (pyex == NULL) {
-            BoolExpr_DecRef(ex);
-            return NULL;
-        }
-        pyex->ex = ex;
-        return (PyObject *) pyex;
+
+    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (pyex == NULL) {
+        BoolExpr_DecRef(ex);
+        return NULL;
     }
+    pyex->ex = ex;
+    return (PyObject *) pyex;
 }
 
 
@@ -1215,10 +1204,12 @@ ite(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_TypeError, "expected s to be an ExprNode");
         return NULL;
     }
+
     if (!PyObject_IsInstance(d1, (PyObject *) &ExprNode_T)) {
         PyErr_SetString(PyExc_TypeError, "expected d1 to be an ExprNode");
         return NULL;
     }
+
     if (!PyObject_IsInstance(d0, (PyObject *) &ExprNode_T)) {
         PyErr_SetString(PyExc_TypeError, "expected d0 to be an ExprNode");
         return NULL;
