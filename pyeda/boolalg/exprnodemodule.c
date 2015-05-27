@@ -157,12 +157,19 @@ _node2ast(struct BoolExpr *ex)
     else {
         int i, j;
         PyObject *s;
-        PyObject *asts[ex->data.xs->length];
 
         /* FIXME: magic number: 6 */
         s = PyUnicode_FromString(ASTOPS[(int) (ex->kind - 6)]);
         if (s == NULL)
             return NULL;
+
+        PyObject **asts;
+
+        asts = (PyObject **) PyMem_Malloc(ex->data.xs->length * sizeof(PyObject *));
+        if (asts == NULL) {
+            Py_DECREF(s);
+            return NULL;
+        }
 
         for (i = 0; i < ex->data.xs->length; ++i) {
             asts[i] = _node2ast(ex->data.xs->items[i]);
@@ -170,6 +177,7 @@ _node2ast(struct BoolExpr *ex)
                 Py_DECREF(s);
                 for (j = 0; j < i; ++j)
                     Py_DECREF(asts[j]);
+                PyMem_Free(asts);
                 return NULL;
             }
         }
@@ -179,12 +187,15 @@ _node2ast(struct BoolExpr *ex)
             Py_DECREF(s);
             for (i = 0; i < ex->data.xs->length; ++i)
                 Py_DECREF(asts[i]);
+            PyMem_Free(asts);
             return NULL;
         }
 
         PyTuple_SET_ITEM(ast, 0, s);
         for (i = 0; i < ex->data.xs->length; ++i)
             PyTuple_SET_ITEM(ast, i+1, asts[i]);
+
+        PyMem_Free(asts);
     }
 
     return ast;
@@ -604,14 +615,19 @@ ExprNode_data(ExprNode *self)
 
     if (IS_OP(self->ex)) {
         int i, j;
-        ExprNode *nodes[self->ex->data.xs->length];
+        ExprNode **nodes;
         PyObject *xs;
+
+        nodes = (ExprNode **) PyMem_Malloc(self->ex->data.xs->length * sizeof(ExprNode *));
+        if (nodes == NULL)
+            return NULL;
 
         for (i = 0; i < self->ex->data.xs->length; ++i) {
             nodes[i] = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
             if (nodes[i] == NULL) {
                 for (j = 0; j < i; ++j)
                     Py_DECREF(nodes[j]);
+                PyMem_Free(nodes);
                 return NULL;
             }
             nodes[i]->ex = BoolExpr_IncRef(self->ex->data.xs->items[i]);
@@ -621,11 +637,14 @@ ExprNode_data(ExprNode *self)
         if (xs == NULL) {
             for (i = 0; i < self->ex->data.xs->length; ++i)
                 Py_DECREF(nodes[i]);
+            PyMem_Free(nodes);
             return NULL;
         }
 
         for (i = 0; i < self->ex->data.xs->length; ++i)
             PyTuple_SET_ITEM(xs, i, (PyObject *) nodes[i]);
+
+        PyMem_Free(nodes);
 
         return xs;
     }
