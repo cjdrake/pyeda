@@ -89,6 +89,14 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
     }
 
     prod = BoolExprArray_New(length, items);
+    if (prod == NULL) {
+        /* LCOV_EXCL_START */
+        for (size_t i = 0; i < length; ++i)
+            BoolExpr_DecRef(items[i]);
+        free(items);
+        return NULL;
+        /* LCOV_EXCL_STOP */
+    }
 
     for (size_t i = 0; i < length; ++i)
         BoolExpr_DecRef(items[i]);
@@ -114,6 +122,10 @@ _product(struct BoolExprArray2 *array2, BoolExprKind kind, size_t n)
             return NULL; // LCOV_EXCL_LINE
 
         prod = _multiply(array2->items[n-1], prev, kind);
+        if (prod == NULL) {
+            BoolExprArray_Del(prev);
+            return NULL;
+        }
 
         BoolExprArray_Del(prev);
 
