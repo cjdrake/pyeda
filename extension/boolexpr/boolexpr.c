@@ -72,23 +72,20 @@ BoolExprIter_Next(struct BoolExprIter *it)
         it->done = true;
         return it->ex;
     }
-    else {
-        if (it->it->done) {
-            BoolExprIter_Del(it->it);
-            it->index += 1;
-            if (it->index < it->ex->data.xs->length) {
-                CHECK_NULL(it->it, BoolExprIter_New(it->ex->data.xs->items[it->index]));
-                return BoolExprIter_Next(it->it);
-            }
-            else {
-                it->done = true;
-                return it->ex;
-            }
-        }
-        else {
+
+    if (it->it->done) {
+        BoolExprIter_Del(it->it);
+        it->index += 1;
+        if (it->index < it->ex->data.xs->length) {
+            CHECK_NULL(it->it, BoolExprIter_New(it->ex->data.xs->items[it->index]));
             return BoolExprIter_Next(it->it);
         }
+
+        it->done = true;
+        return it->ex;
     }
+
+    return BoolExprIter_Next(it->it);
 }
 
 
@@ -175,16 +172,13 @@ _opn_new(BoolExprKind kind, size_t n, ...)
 struct BoolExpr *
 _orandxor_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 {
-    struct BoolExpr *y;
-
     if (n == 0)
-        y = BoolExpr_IncRef(IDENTITY[kind]);
-    else if (n == 1)
-        y = BoolExpr_IncRef(xs[0]);
-    else
-        CHECK_NULL(y, _op_new(kind, n, xs));
+        return BoolExpr_IncRef(IDENTITY[kind]);
 
-    return y;
+    if (n == 1)
+        return BoolExpr_IncRef(xs[0]);
+
+    return _op_new(kind, n, xs);
 }
 
 
@@ -210,9 +204,8 @@ Literal(struct BoolExprVector *lits, long uniqid)
         BoolExprVector_Insert(lits, index, lit);
         return lit;
     }
-    else {
-        return BoolExpr_IncRef(lit);
-    }
+
+    return BoolExpr_IncRef(lit);
 }
 
 
@@ -282,17 +275,11 @@ Xnor(size_t n, struct BoolExpr **xs)
 struct BoolExpr *
 Equal(size_t n, struct BoolExpr **xs)
 {
-    struct BoolExpr *y;
-
     /* Equal() <=> Equal(0) <=> Equal(1) <=> 1 */
-    if (n <= 1) {
-        y = BoolExpr_IncRef(IDENTITY[OP_EQ]);
-    }
-    else {
-        CHECK_NULL(y, _op_new(OP_EQ, n, xs));
-    }
+    if (n <= 1)
+        return BoolExpr_IncRef(IDENTITY[OP_EQ]);
 
-    return y;
+    return _op_new(OP_EQ, n, xs);
 }
 
 
@@ -491,81 +478,73 @@ BoolExpr_DecRef(struct BoolExpr * ex)
 unsigned long
 BoolExpr_Depth(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex)) {
+    if (IS_ATOM(ex))
         return 0;
-    }
-    else {
-        unsigned long max_depth = 0;
 
-        for (size_t i = 0; i < ex->data.xs->length; ++i) {
-            unsigned long depth = BoolExpr_Depth(ex->data.xs->items[i]);
-            if (depth > max_depth)
-                max_depth = depth;
-        }
+    unsigned long max_depth = 0;
 
-        return max_depth + 1;
+    for (size_t i = 0; i < ex->data.xs->length; ++i) {
+        unsigned long depth = BoolExpr_Depth(ex->data.xs->items[i]);
+        if (depth > max_depth)
+            max_depth = depth;
     }
+
+    return max_depth + 1;
 }
 
 
 unsigned long
 BoolExpr_Size(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex)) {
+    if (IS_ATOM(ex))
         return 1;
-    }
-    else {
-        unsigned long size = 1;
 
-        for (size_t i = 0; i < ex->data.xs->length; ++i)
-            size += BoolExpr_Size(ex->data.xs->items[i]);
+    unsigned long size = 1;
 
-        return size;
-    }
+    for (size_t i = 0; i < ex->data.xs->length; ++i)
+        size += BoolExpr_Size(ex->data.xs->items[i]);
+
+    return size;
 }
 
 
 unsigned long
 BoolExpr_AtomCount(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex)) {
+    if (IS_ATOM(ex))
         return 1;
-    }
-    else {
-        unsigned long atom_count = 0;
 
-        for (size_t i = 0; i < ex->data.xs->length; ++i)
-            atom_count += BoolExpr_AtomCount(ex->data.xs->items[i]);
+    unsigned long atom_count = 0;
 
-        return atom_count;
-    }
+    for (size_t i = 0; i < ex->data.xs->length; ++i)
+        atom_count += BoolExpr_AtomCount(ex->data.xs->items[i]);
+
+    return atom_count;
 }
 
 
 unsigned long
 BoolExpr_OpCount(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex)) {
+    if (IS_ATOM(ex))
         return 0;
-    }
-    else {
-        unsigned long op_count = 1;
 
-        for (size_t i = 0; i < ex->data.xs->length; ++i)
-            op_count += BoolExpr_OpCount(ex->data.xs->items[i]);
+    unsigned long op_count = 1;
 
-        return op_count;
-    }
+    for (size_t i = 0; i < ex->data.xs->length; ++i)
+        op_count += BoolExpr_OpCount(ex->data.xs->items[i]);
+
+    return op_count;
 }
 
 
 bool
 BoolExpr_IsDNF(struct BoolExpr *ex)
 {
-    if (IS_ZERO(ex) || IS_LIT(ex)) {
+    if (IS_ZERO(ex) || IS_LIT(ex))
         return true;
-    }
-    else if (IS_OR(ex)) {
+
+    if (IS_OR(ex)) {
         for (size_t i = 0; i < ex->data.xs->length; ++i) {
             struct BoolExpr *x = ex->data.xs->items[i];
             if (!IS_LIT(x) && !(IS_AND(x) && _is_clause(x)))
@@ -573,25 +552,24 @@ BoolExpr_IsDNF(struct BoolExpr *ex)
         }
         return true;
     }
-    else if (IS_AND(ex)) {
+
+    if (IS_AND(ex))
         return _is_clause(ex);
-    }
-    else {
-        return false;
-    }
+
+    return false;
 }
 
 
 bool
 BoolExpr_IsCNF(struct BoolExpr *ex)
 {
-    if (IS_ONE(ex) || IS_LIT(ex)) {
+    if (IS_ONE(ex) || IS_LIT(ex))
         return true;
-    }
-    else if (IS_OR(ex)) {
+
+    if (IS_OR(ex))
         return _is_clause(ex);
-    }
-    else if (IS_AND(ex)) {
+
+    if (IS_AND(ex)) {
         for (size_t i = 0; i < ex->data.xs->length; ++i) {
             struct BoolExpr *x = ex->data.xs->items[i];
             if (!IS_LIT(x) && !(IS_OR(x) && _is_clause(x))) {
@@ -600,8 +578,7 @@ BoolExpr_IsCNF(struct BoolExpr *ex)
         }
         return true;
     }
-    else {
-        return false;
-    }
+
+    return false;
 }
 
