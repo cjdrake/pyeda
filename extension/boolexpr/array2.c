@@ -31,8 +31,16 @@ BoolExprArray2_New(size_t length, size_t *lengths, struct BoolExpr ***items)
 
     array2->length = length;
 
-    for (size_t i = 0; i < length; ++i)
+    for (size_t i = 0; i < length; ++i) {
         array2->items[i] = BoolExprArray_New(lengths[i], items[i]);
+        /* LCOV_EXCL_START */
+        if (array2->items[i] == NULL) {
+            for (size_t j = 0; j < i; ++j)
+                BoolExprArray_Del(array2->items[j]);
+            return NULL;
+        }
+        /* LCOV_EXCL_STOP */
+    }
 
     return array2;
 }
@@ -63,6 +71,17 @@ BoolExprArray2_Equal(struct BoolExprArray2 *self, struct BoolExprArray2 *other)
 }
 
 
+/* LCOV_EXCL_START */
+static void
+_free_items(int length, struct BoolExpr **items)
+{
+    for (size_t i = 0; i < length; ++i)
+        BoolExpr_DecRef(items[i]);
+    free(items);
+}
+/* LCOV_EXCL_STOP */
+
+
 static struct BoolExprArray *
 _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
 {
@@ -78,29 +97,19 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
         for (size_t j = 0; j < b->length; ++j, ++index) {
             items[index] = _opn_new(kind, 2, a->items[i], b->items[j]);
             if (items[index] == NULL) {
-                /* LCOV_EXCL_START */
-                for (size_t k = 0; k < index; ++k)
-                    BoolExpr_DecRef(items[k]);
-                free(items);
-                return NULL;
-                /* LCOV_EXCL_STOP */
+                _free_items(index, items); // LCOV_EXCL_LINE
+                return NULL;               // LCOV_EXCL_LINE
             }
         }
     }
 
     prod = BoolExprArray_New(length, items);
     if (prod == NULL) {
-        /* LCOV_EXCL_START */
-        for (size_t i = 0; i < length; ++i)
-            BoolExpr_DecRef(items[i]);
-        free(items);
-        return NULL;
-        /* LCOV_EXCL_STOP */
+        _free_items(length, items); // LCOV_EXCL_LINE
+        return NULL;                // LCOV_EXCL_LINE
     }
 
-    for (size_t i = 0; i < length; ++i)
-        BoolExpr_DecRef(items[i]);
-    free(items);
+    _free_items(length, items); // LCOV_EXCL_LINE
 
     return prod;
 }
@@ -123,8 +132,8 @@ _product(struct BoolExprArray2 *array2, BoolExprKind kind, size_t n)
 
         prod = _multiply(array2->items[n-1], prev, kind);
         if (prod == NULL) {
-            BoolExprArray_Del(prev);
-            return NULL;
+            BoolExprArray_Del(prev); // LCOV_EXCL_LINE
+            return NULL;             // LCOV_EXCL_LINE
         }
 
         BoolExprArray_Del(prev);
