@@ -78,11 +78,8 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
     }
 
     // x | x = x ; x & x = x
-    if (!BoolExprSet_Insert(argset->xs, key))
-        return false; // LCOV_EXCL_LINE
     argset->min = false;
-
-    return true;
+    return BoolExprSet_Insert(argset->xs, key);
 }
 
 
@@ -165,10 +162,7 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
         return true;
     }
 
-    if (!BoolExprSet_Insert(argset->xs, key))
-        return false; // LCOV_EXCL_LINE
-
-    return true;
+    return BoolExprSet_Insert(argset->xs, key);
 }
 
 
@@ -227,9 +221,9 @@ BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *argset, struct BoolExpr *key)
     if (IS_LIT(key) || IS_NOT(key)) {
         struct BoolExpr *ex = Not(key);
         if (BoolExprSet_Contains(argset->xs, ex)) {
+            BoolExprSet_Clear(argset->xs);
             argset->zero = true;
             argset->one = true;
-            BoolExprSet_Clear(argset->xs);
             BoolExpr_DecRef(ex);
             return true;
         }
@@ -237,9 +231,6 @@ BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *argset, struct BoolExpr *key)
     }
 
     /* Equal(x, x, y) = Equal(x, y) */
-    if (!BoolExprSet_Insert(argset->xs, key))
-        return false; // LCOV_EXCL_LINE
-
-    return true;
+    return BoolExprSet_Insert(argset->xs, key);
 }
 

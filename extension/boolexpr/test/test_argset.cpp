@@ -110,6 +110,8 @@ TEST_F(BoolExprArgSetTest, XorBasic)
 TEST_F(BoolExprArgSetTest, EqBasic)
 {
     struct BoolExprEqArgSet *a = BoolExprEqArgSet_New();
+    struct BoolExprEqArgSet *b = BoolExprEqArgSet_New();
+    struct BoolExprEqArgSet *c = BoolExprEqArgSet_New();
 
     BoolExprEqArgSet_Insert(a, xs[0]);
     BoolExprEqArgSet_Insert(a, xs[1]);
@@ -129,21 +131,37 @@ TEST_F(BoolExprArgSetTest, EqBasic)
     EXPECT_TRUE(a->one);
     EXPECT_EQ(a->xs->length, 0);
 
-    BoolExprEqArgSet_Del(a);
-
-    struct BoolExprEqArgSet *b = BoolExprEqArgSet_New();
-
     BoolExprEqArgSet_Insert(b, xs[0]);
     BoolExprEqArgSet_Insert(b, xs[1]);
-    BoolExprEqArgSet_Insert(b, xs[2]);
     EXPECT_FALSE(b->zero);
     EXPECT_FALSE(b->one);
-    EXPECT_EQ(b->xs->length, 3);
-    BoolExprEqArgSet_Insert(b, xns[1]);
+    EXPECT_EQ(b->xs->length, 2);
+
+    BoolExprEqArgSet_Insert(b, &One);
+    BoolExprEqArgSet_Insert(b, &Zero);
     EXPECT_TRUE(b->zero);
     EXPECT_TRUE(b->one);
     EXPECT_EQ(b->xs->length, 0);
 
+    BoolExprEqArgSet_Insert(b, xs[2]);
+    BoolExprEqArgSet_Insert(b, xs[3]);
+    EXPECT_TRUE(b->zero);
+    EXPECT_TRUE(b->one);
+    EXPECT_EQ(b->xs->length, 0);
+
+    BoolExprEqArgSet_Insert(c, xs[0]);
+    BoolExprEqArgSet_Insert(c, xs[1]);
+    BoolExprEqArgSet_Insert(c, xs[2]);
+    EXPECT_FALSE(c->zero);
+    EXPECT_FALSE(c->one);
+    EXPECT_EQ(c->xs->length, 3);
+    BoolExprEqArgSet_Insert(c, xns[1]);
+    EXPECT_TRUE(c->zero);
+    EXPECT_TRUE(c->one);
+    EXPECT_EQ(c->xs->length, 0);
+
+    BoolExprEqArgSet_Del(a);
     BoolExprEqArgSet_Del(b);
+    BoolExprEqArgSet_Del(c);
 }
 
