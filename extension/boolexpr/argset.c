@@ -134,8 +134,8 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
         struct BoolExpr *ex = Not(key);
         if (BoolExprSet_Contains(argset->xs, ex)) {
             BoolExprSet_Remove(argset->xs, ex);
-            argset->parity ^= true;
             BoolExpr_DecRef(ex);
+            argset->parity ^= true;
             return true;
         }
         BoolExpr_DecRef(ex);
@@ -221,10 +221,10 @@ BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *argset, struct BoolExpr *key)
     if (IS_LIT(key) || IS_NOT(key)) {
         struct BoolExpr *ex = Not(key);
         if (BoolExprSet_Contains(argset->xs, ex)) {
-            BoolExprSet_Clear(argset->xs);
+            BoolExpr_DecRef(ex);
             argset->zero = true;
             argset->one = true;
-            BoolExpr_DecRef(ex);
+            BoolExprSet_Clear(argset->xs);
             return true;
         }
         BoolExpr_DecRef(ex);
