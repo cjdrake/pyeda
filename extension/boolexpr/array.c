@@ -51,9 +51,10 @@ BoolExprArray_Equal(struct BoolExprArray *self, struct BoolExprArray *other)
     if (self->length != other->length)
         return false;
 
-    for (size_t i = 0; i < self->length; ++i)
+    for (size_t i = 0; i < self->length; ++i) {
         if (self->items[i] != other->items[i])
             return false;
+    }
 
     return true;
 }

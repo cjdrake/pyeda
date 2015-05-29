@@ -57,9 +57,9 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
     }
     // x | ~x = 1 ; x & ~x = 0
     else if (IS_LIT(key) || IS_NOT(key)) {
-        struct BoolExpr *ex = Not(key);
-        dominate = BoolExprSet_Contains(argset->xs, ex);
-        BoolExpr_DecRef(ex);
+        struct BoolExpr *temp = Not(key);
+        dominate = BoolExprSet_Contains(argset->xs, temp);
+        BoolExpr_DecRef(temp);
     }
     if (dominate) {
         argset->min = false;
@@ -131,14 +131,14 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
     /* Xor(x, y, z, ~z) = Xnor(x, y) */
     /* Xnor(x, y, z, ~z) = Xor(x, y) */
     if (IS_LIT(key) || IS_NOT(key)) {
-        struct BoolExpr *ex = Not(key);
-        if (BoolExprSet_Contains(argset->xs, ex)) {
-            BoolExprSet_Remove(argset->xs, ex);
-            BoolExpr_DecRef(ex);
+        struct BoolExpr *temp = Not(key);
+        bool inset = BoolExprSet_Contains(argset->xs, temp);
+        BoolExpr_DecRef(temp);
+        if (inset) {
+            BoolExprSet_Remove(argset->xs, temp);
             argset->parity ^= true;
             return true;
         }
-        BoolExpr_DecRef(ex);
     }
 
     /* Xor (x, Xor(y, z)) = Xor (x, y, z) */
@@ -219,15 +219,15 @@ BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *argset, struct BoolExpr *key)
 
     /* Equal(~x, x) = 0 */
     if (IS_LIT(key) || IS_NOT(key)) {
-        struct BoolExpr *ex = Not(key);
-        if (BoolExprSet_Contains(argset->xs, ex)) {
-            BoolExpr_DecRef(ex);
+        struct BoolExpr *temp = Not(key);
+        bool inset = BoolExprSet_Contains(argset->xs, temp);
+        BoolExpr_DecRef(temp);
+        if (inset) {
             argset->zero = true;
             argset->one = true;
             BoolExprSet_Clear(argset->xs);
             return true;
         }
-        BoolExpr_DecRef(ex);
     }
 
     /* Equal(x, x, y) = Equal(x, y) */

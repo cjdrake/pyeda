@@ -11,7 +11,7 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _opn_new(BoolExprKind kind, size_t n, ...);
+struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 
 struct BoolExprArray2 *
@@ -63,9 +63,10 @@ BoolExprArray2_Equal(struct BoolExprArray2 *self, struct BoolExprArray2 *other)
     if (self->length != other->length)
         return false;
 
-    for (size_t i = 0; i < self->length; ++i)
+    for (size_t i = 0; i < self->length; ++i) {
         if (!BoolExprArray_Equal(self->items[i], other->items[i]))
             return false;
+    }
 
     return true;
 }
@@ -82,9 +83,12 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
     if (items == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    for (size_t i = 0, index = 0; i < a->length; ++i)
-        for (size_t j = 0; j < b->length; ++j, ++index)
-            CHECK_NULL_N(items[index], _opn_new(kind, 2, a->items[i], b->items[j]), index, items);
+    for (size_t i = 0, index = 0; i < a->length; ++i) {
+        for (size_t j = 0; j < b->length; ++j, ++index) {
+            struct BoolExpr *xs[2] = {a->items[i], b->items[j]};
+            CHECK_NULL_N(items[index], _op_new(kind, 2, xs), index, items);
+        }
+    }
 
     CHECK_NULL_N(prod, BoolExprArray_New(length, items), length, items);
 
@@ -103,24 +107,23 @@ _product(struct BoolExprArray2 *array2, BoolExprKind kind, size_t n)
         struct BoolExpr *items[] = {IDENTITY[kind]};
         return BoolExprArray_New(1, items);
     }
-    else {
-        struct BoolExprArray *prev;
-        struct BoolExprArray *prod;
 
-        prev = _product(array2, kind, n-1);
-        if (prev == NULL)
-            return NULL; // LCOV_EXCL_LINE
+    struct BoolExprArray *prev;
+    struct BoolExprArray *prod;
 
-        prod = _multiply(array2->items[n-1], prev, kind);
-        if (prod == NULL) {
-            BoolExprArray_Del(prev); // LCOV_EXCL_LINE
-            return NULL;             // LCOV_EXCL_LINE
-        }
+    prev = _product(array2, kind, n-1);
+    if (prev == NULL)
+        return NULL; // LCOV_EXCL_LINE
 
-        BoolExprArray_Del(prev);
-
-        return prod;
+    prod = _multiply(array2->items[n-1], prev, kind);
+    if (prod == NULL) {
+        BoolExprArray_Del(prev); // LCOV_EXCL_LINE
+        return NULL;             // LCOV_EXCL_LINE
     }
+
+    BoolExprArray_Del(prev);
+
+    return prod;
 }
 
 

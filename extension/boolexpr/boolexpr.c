@@ -18,11 +18,11 @@
 #include "boolexpr.h"
 
 
-#define READ_ARGS \
+#define READ_ARGS(n, xs) \
 do { \
     va_list vl; \
     va_start(vl, n); \
-    for (int i = 0; i < n; ++i) \
+    for (size_t i = 0; i < n; ++i) \
         xs[i] = va_arg(vl, struct BoolExpr *); \
     va_end(vl); \
 } while (0)
@@ -161,15 +161,6 @@ _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 
 
 struct BoolExpr *
-_opn_new(BoolExprKind kind, size_t n, ...)
-{
-    struct BoolExpr *xs[n];
-    READ_ARGS;
-    return _op_new(kind, n, xs);
-}
-
-
-struct BoolExpr *
 _orandxor_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 {
     if (n == 0)
@@ -297,13 +288,42 @@ Unequal(size_t n, struct BoolExpr **xs)
 }
 
 
-static struct BoolExpr * _zero_inv(struct BoolExpr *x)  { return BoolExpr_IncRef(&One); }
-static struct BoolExpr * _one_inv(struct BoolExpr *x)   { return BoolExpr_IncRef(&Zero); }
-static struct BoolExpr * _log_inv(struct BoolExpr *x)   { return BoolExpr_IncRef(&Logical); }
-static struct BoolExpr * _ill_inv(struct BoolExpr *x)   { return BoolExpr_IncRef(&Illogical); }
-static struct BoolExpr * _not_inv(struct BoolExpr *x)   { return BoolExpr_IncRef(x->data.xs->items[0]); }
-static struct BoolExpr * _lit_inv(struct BoolExpr *lit) { return Literal(lit->data.lit.lits, -lit->data.lit.uniqid); }
-static struct BoolExpr * _op_inv(struct BoolExpr *op)   { return _opn_new(OP_NOT, 1, op); }
+static struct BoolExpr * _zero_inv(struct BoolExpr *x)
+{
+    return BoolExpr_IncRef(&One);
+}
+
+static struct BoolExpr * _one_inv(struct BoolExpr *x)
+{
+    return BoolExpr_IncRef(&Zero);
+}
+
+static struct BoolExpr * _log_inv(struct BoolExpr *x)
+{
+    return BoolExpr_IncRef(&Logical);
+}
+
+static struct BoolExpr * _ill_inv(struct BoolExpr *x)
+{
+    return BoolExpr_IncRef(&Illogical);
+}
+
+static struct BoolExpr * _not_inv(struct BoolExpr *x)
+{
+    return BoolExpr_IncRef(x->data.xs->items[0]);
+}
+
+static struct BoolExpr * _lit_inv(struct BoolExpr *lit)
+{
+    return Literal(lit->data.lit.lits, -lit->data.lit.uniqid);
+}
+
+static struct BoolExpr * _op_inv(struct BoolExpr *op)
+{
+    struct BoolExpr *xs[1] = {op};
+
+    return _op_new(OP_NOT, 1, xs);
+}
 
 
 static struct BoolExpr * (*_boolexpr_inv[16])(struct BoolExpr *ex) = {
@@ -339,14 +359,18 @@ Not(struct BoolExpr *x)
 struct BoolExpr *
 Implies(struct BoolExpr *p, struct BoolExpr *q)
 {
-    return _opn_new(OP_IMPL, 2, p, q);
+    struct BoolExpr *xs[2] = {p, q};
+
+    return _op_new(OP_IMPL, 2, xs);
 }
 
 
 struct BoolExpr *
 ITE(struct BoolExpr *s, struct BoolExpr *d1, struct BoolExpr *d0)
 {
-    return _opn_new(OP_ITE, 3, s, d1, d0);
+    struct BoolExpr *xs[3] = {s, d1, d0};
+
+    return _op_new(OP_ITE, 3, xs);
 }
 
 
@@ -354,7 +378,7 @@ struct BoolExpr *
 OrN(size_t n, ...)
 {
     struct BoolExpr *xs[n];
-    READ_ARGS;
+    READ_ARGS(n, xs);
     return Or(n, xs);
 }
 
@@ -363,7 +387,7 @@ struct BoolExpr *
 NorN(size_t n, ...)
 {
     struct BoolExpr *xs[n];
-    READ_ARGS;
+    READ_ARGS(n, xs);
     return Nor(n, xs);
 }
 
@@ -372,7 +396,7 @@ struct BoolExpr *
 AndN(size_t n, ...)
 {
     struct BoolExpr *xs[n];
-    READ_ARGS;
+    READ_ARGS(n, xs);
     return And(n, xs);
 }
 
@@ -381,7 +405,7 @@ struct BoolExpr *
 NandN(size_t n, ...)
 {
     struct BoolExpr *xs[n];
-    READ_ARGS;
+    READ_ARGS(n, xs);
     return Nand(n, xs);
 }
 
@@ -390,7 +414,7 @@ struct BoolExpr *
 XorN(size_t n, ...)
 {
     struct BoolExpr *xs[n];
-    READ_ARGS;
+    READ_ARGS(n, xs);
     return Xor(n, xs);
 }
 
@@ -399,7 +423,7 @@ struct BoolExpr *
 XnorN(size_t n, ...)
 {
     struct BoolExpr *xs[n];
-    READ_ARGS;
+    READ_ARGS(n, xs);
     return Xnor(n, xs);
 }
 
@@ -408,7 +432,7 @@ struct BoolExpr *
 EqualN(size_t n, ...)
 {
     struct BoolExpr *xs[n];
-    READ_ARGS;
+    READ_ARGS(n, xs);
     return Equal(n, xs);
 }
 
@@ -417,7 +441,7 @@ struct BoolExpr *
 UnequalN(size_t n, ...)
 {
     struct BoolExpr *xs[n];
-    READ_ARGS;
+    READ_ARGS(n, xs);
     return Unequal(n, xs);
 }
 
