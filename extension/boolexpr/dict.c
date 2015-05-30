@@ -56,7 +56,7 @@ static size_t _primes[] = {
 static size_t
 _hash(struct BoolExprDict *dict, struct BoolExpr *key)
 {
-    return (size_t) key % _primes[dict->pridx];
+    return (size_t) key % _primes[dict->_pridx];
 }
 
 
@@ -112,8 +112,8 @@ BoolExprDict_New(void)
     for (size_t i = 0; i < width; ++i)
         dict->items[i] = (struct BoolExprDictItem *) NULL;
 
+    dict->_pridx = pridx;
     dict->length = 0;
-    dict->pridx = pridx;
 
     return dict;
 }
@@ -122,7 +122,7 @@ BoolExprDict_New(void)
 void
 BoolExprDict_Del(struct BoolExprDict *dict)
 {
-    for (size_t i = 0; i < _primes[dict->pridx]; ++i)
+    for (size_t i = 0; i < _primes[dict->_pridx]; ++i)
         _list_del(dict->items[i]);
 
     free(dict->items);
@@ -167,13 +167,13 @@ _enlarge(struct BoolExprDict *dict)
 {
     struct BoolExprDictItem *item;
 
-    size_t pridx = dict->pridx;
+    size_t pridx = dict->_pridx;
     struct BoolExprDictItem **items = dict->items;
 
+    dict->_pridx += 1;
     dict->length = 0;
-    dict->pridx += 1;
-    dict->items = (struct BoolExprDictItem **) malloc(_primes[dict->pridx] * sizeof(struct BoolExprDictItem *));
-    for (size_t i = 0; i < _primes[dict->pridx]; ++i)
+    dict->items = (struct BoolExprDictItem **) malloc(_primes[dict->_pridx] * sizeof(struct BoolExprDictItem *));
+    for (size_t i = 0; i < _primes[dict->_pridx]; ++i)
         dict->items[i] = (struct BoolExprDictItem *) NULL;
 
     for (size_t i = 0; i < _primes[pridx]; ++i) {
@@ -203,9 +203,9 @@ BoolExprDict_Insert(struct BoolExprDict *dict, struct BoolExpr *key, struct Bool
     if (!_insert(dict, key, val))
         return false; // LCOV_EXCL_LINE
 
-    load = (double) dict->length / (double) _primes[dict->pridx];
+    load = (double) dict->length / (double) _primes[dict->_pridx];
 
-    if (dict->pridx < _MAX_IDX && load > MAX_LOAD) {
+    if (dict->_pridx < _MAX_IDX && load > MAX_LOAD) {
         if (!_enlarge(dict))
             return false; // LCOV_EXCL_LINE
     }
@@ -262,7 +262,7 @@ BoolExprDict_Contains(struct BoolExprDict *dict, struct BoolExpr *key)
 void
 BoolExprDict_Clear(struct BoolExprDict *dict)
 {
-    for (size_t i = 0; i < _primes[dict->pridx]; ++i) {
+    for (size_t i = 0; i < _primes[dict->_pridx]; ++i) {
         if (dict->items[i]) {
             _list_del(dict->items[i]);
             dict->items[i] = (struct BoolExprDictItem *) NULL;

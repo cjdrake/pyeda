@@ -181,8 +181,9 @@ struct BoolExprDictItem {
 
 
 struct BoolExprDict {
+    size_t _pridx;
+
     size_t length;
-    size_t pridx;
     struct BoolExprDictItem **items;
 };
 
@@ -194,8 +195,9 @@ struct BoolExprSetItem {
 
 
 struct BoolExprSet {
+    size_t _pridx;
+
     size_t length;
-    size_t pridx;
     struct BoolExprSetItem **items;
 };
 
@@ -459,13 +461,16 @@ void BoolExprDict_Del(struct BoolExprDict *);
 /* Insert an expression into the dictionary. */
 bool BoolExprDict_Insert(struct BoolExprDict *, struct BoolExpr *key, struct BoolExpr *val);
 
-/* Delete an expression from the dictionary. */
+/* Remove an expression from the dictionary. */
 bool BoolExprDict_Remove(struct BoolExprDict *, struct BoolExpr *key);
 
+/* If the dict contains the key, return its value. */
 struct BoolExpr * BoolExprDict_Search(struct BoolExprDict *, struct BoolExpr *key);
 
+/* Return true if the dict contains the key. */
 bool BoolExprDict_Contains(struct BoolExprDict *, struct BoolExpr *key);
 
+/* Remove all items from the dict. */
 void BoolExprDict_Clear(struct BoolExprDict *);
 
 
@@ -474,20 +479,29 @@ void BoolExprDict_Clear(struct BoolExprDict *);
 */
 struct BoolExprSet * BoolExprSet_New(void);
 
+/* Delete a set of Boolean expressions. */
 void BoolExprSet_Del(struct BoolExprSet *);
 
+/*
+** Return a new Boolean expression set iterator.
+*/
 struct BoolExprSetIter * BoolExprSetIter_New(struct BoolExprSet *);
 
+/* Delete a Boolean expression set iterator. */
 void BoolExprSetIter_Del(struct BoolExprSetIter *);
 
 void BoolExprSetIter_Next(struct BoolExprSetIter *);
 
+/* Insert an expression into the set. */
 bool BoolExprSet_Insert(struct BoolExprSet *, struct BoolExpr *key);
 
+/* Remove an expression from the set. */
 bool BoolExprSet_Remove(struct BoolExprSet *, struct BoolExpr *key);
 
+/* Return true if the set contains the key. */
 bool BoolExprSet_Contains(struct BoolExprSet *, struct BoolExpr *key);
 
+/* Set comparison operators */
 bool BoolExprSet_EQ(struct BoolExprSet *, struct BoolExprSet *);
 bool BoolExprSet_NE(struct BoolExprSet *, struct BoolExprSet *);
 bool BoolExprSet_LTE(struct BoolExprSet *, struct BoolExprSet *);
@@ -495,6 +509,7 @@ bool BoolExprSet_GT(struct BoolExprSet *, struct BoolExprSet *);
 bool BoolExprSet_GTE(struct BoolExprSet *, struct BoolExprSet *);
 bool BoolExprSet_LT(struct BoolExprSet *, struct BoolExprSet *);
 
+/* Remove all items from the set. */
 void BoolExprSet_Clear(struct BoolExprSet *);
 
 

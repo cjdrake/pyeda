@@ -596,9 +596,8 @@ BoolExpr_IsCNF(struct BoolExpr *ex)
     if (IS_AND(ex)) {
         for (size_t i = 0; i < ex->data.xs->length; ++i) {
             struct BoolExpr *x = ex->data.xs->items[i];
-            if (!IS_LIT(x) && !(IS_OR(x) && _is_clause(x))) {
+            if (!IS_LIT(x) && !(IS_OR(x) && _is_clause(x)))
                 return false;
-            }
         }
         return true;
     }

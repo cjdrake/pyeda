@@ -14,7 +14,7 @@ class BoolExprDictTest: public BoolExprTest {};
 TEST_F(BoolExprDictTest, MinimumSize)
 {
     BoolExprDict *dict = BoolExprDict_New();
-    EXPECT_EQ(dict->pridx, 4);
+    EXPECT_EQ(dict->_pridx, 4);
 
     BoolExprDict_Del(dict);
 }

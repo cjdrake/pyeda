@@ -56,7 +56,7 @@ static size_t _primes[] = {
 static size_t
 _hash(struct BoolExprSet *set, struct BoolExpr *key)
 {
-    return (size_t) key % _primes[set->pridx];
+    return (size_t) key % _primes[set->_pridx];
 }
 
 
@@ -111,8 +111,8 @@ BoolExprSet_New(void)
     for (size_t i = 0; i < width; ++i)
         set->items[i] = (struct BoolExprSetItem *) NULL;
 
+    set->_pridx = pridx;
     set->length = 0;
-    set->pridx = pridx;
 
     return set;
 }
@@ -121,7 +121,7 @@ BoolExprSet_New(void)
 void
 BoolExprSet_Del(struct BoolExprSet *set)
 {
-    for (size_t i = 0; i < _primes[set->pridx]; ++i)
+    for (size_t i = 0; i < _primes[set->_pridx]; ++i)
         _list_del(set->items[i]);
 
     free(set->items);
@@ -143,7 +143,7 @@ BoolExprSetIter_New(struct BoolExprSet *set)
     it->done = true;
     it->item = (struct BoolExprSetItem *) NULL;
 
-    for (it->_index = 0; it->_index < _primes[set->pridx]; it->_index += 1) {
+    for (it->_index = 0; it->_index < _primes[set->_pridx]; it->_index += 1) {
         if (set->items[it->_index]) {
             it->done = false;
             it->item = set->items[it->_index];
@@ -173,7 +173,7 @@ BoolExprSetIter_Next(struct BoolExprSetIter *it)
         return;
     }
 
-    for (it->_index += 1; it->_index < _primes[it->_set->pridx]; it->_index += 1) {
+    for (it->_index += 1; it->_index < _primes[it->_set->_pridx]; it->_index += 1) {
         if (it->_set->items[it->_index]) {
             it->item = it->_set->items[it->_index];
             return;
@@ -218,13 +218,13 @@ _enlarge(struct BoolExprSet *set)
 {
     struct BoolExprSetItem *item;
 
-    size_t pridx = set->pridx;
+    size_t pridx = set->_pridx;
     struct BoolExprSetItem **items = set->items;
 
+    set->_pridx += 1;
     set->length = 0;
-    set->pridx += 1;
-    set->items = (struct BoolExprSetItem **) malloc(_primes[set->pridx] * sizeof(struct BoolExprSetItem *));
-    for (size_t i = 0; i < _primes[set->pridx]; ++i)
+    set->items = (struct BoolExprSetItem **) malloc(_primes[set->_pridx] * sizeof(struct BoolExprSetItem *));
+    for (size_t i = 0; i < _primes[set->_pridx]; ++i)
         set->items[i] = (struct BoolExprSetItem *) NULL;
 
     for (size_t i = 0; i < _primes[pridx]; ++i) {
@@ -254,9 +254,9 @@ BoolExprSet_Insert(struct BoolExprSet *set, struct BoolExpr *key)
     if (!_insert(set, key))
         return false; // LCOV_EXCL_LINE
 
-    load = (double) set->length / (double) _primes[set->pridx];
+    load = (double) set->length / (double) _primes[set->_pridx];
 
-    if (set->pridx < _MAX_IDX && load > MAX_LOAD) {
+    if (set->_pridx < _MAX_IDX && load > MAX_LOAD) {
         if (!_enlarge(set))
             return false; // LCOV_EXCL_LINE
     }
@@ -309,7 +309,7 @@ BoolExprSet_EQ(struct BoolExprSet *self, struct BoolExprSet *other)
     struct BoolExprSetItem *item;
 
     // All items in self must also be in other (and vice versa)
-    for (size_t i = 0; i < _primes[self->pridx]; ++i)
+    for (size_t i = 0; i < _primes[self->_pridx]; ++i)
         for (item = self->items[i]; item; item = item->tail)
             if (!BoolExprSet_Contains(other, item->key))
                 return false;
@@ -334,7 +334,7 @@ BoolExprSet_LTE(struct BoolExprSet *self, struct BoolExprSet *other)
     struct BoolExprSetItem *item;
 
     // All items in self must also be in other
-    for (size_t i = 0; i < _primes[self->pridx]; ++i)
+    for (size_t i = 0; i < _primes[self->_pridx]; ++i)
         for (item = self->items[i]; item; item = item->tail)
             if (!BoolExprSet_Contains(other, item->key))
                 return false;
@@ -352,7 +352,7 @@ BoolExprSet_GT(struct BoolExprSet *self, struct BoolExprSet *other)
     struct BoolExprSetItem *item;
 
     // All items in other must also be in self
-    for (size_t i = 0; i < _primes[other->pridx]; ++i)
+    for (size_t i = 0; i < _primes[other->_pridx]; ++i)
         for (item = other->items[i]; item; item = item->tail)
             if (!BoolExprSet_Contains(self, item->key))
                 return false;
@@ -370,7 +370,7 @@ BoolExprSet_GTE(struct BoolExprSet *self, struct BoolExprSet *other)
     struct BoolExprSetItem *item;
 
     // All items in other must also be in self
-    for (size_t i = 0; i < _primes[other->pridx]; ++i)
+    for (size_t i = 0; i < _primes[other->_pridx]; ++i)
         for (item = other->items[i]; item; item = item->tail)
             if (!BoolExprSet_Contains(self, item->key))
                 return false;
@@ -388,7 +388,7 @@ BoolExprSet_LT(struct BoolExprSet *self, struct BoolExprSet *other)
     struct BoolExprSetItem *item;
 
     // All items in self must also be in other
-    for (size_t i = 0; i < _primes[self->pridx]; ++i)
+    for (size_t i = 0; i < _primes[self->_pridx]; ++i)
         for (item = self->items[i]; item; item = item->tail)
             if (!BoolExprSet_Contains(other, item->key))
                 return false;
@@ -400,7 +400,7 @@ BoolExprSet_LT(struct BoolExprSet *self, struct BoolExprSet *other)
 void
 BoolExprSet_Clear(struct BoolExprSet *set)
 {
-    for (size_t i = 0; i < _primes[set->pridx]; ++i) {
+    for (size_t i = 0; i < _primes[set->_pridx]; ++i) {
         if (set->items[i]) {
             _list_del(set->items[i]);
             set->items[i] = (struct BoolExprSetItem *) NULL;
