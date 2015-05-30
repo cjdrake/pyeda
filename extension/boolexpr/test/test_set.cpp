@@ -45,7 +45,7 @@ TEST_F(BoolExprSetTest, BasicReadWrite)
 
 TEST_F(BoolExprSetTest, Iteration)
 {
-    BoolExprSet *set = BoolExprSet_New();
+    struct BoolExprSet *set = BoolExprSet_New();
 
     bool mark[N];
     for (int i = 0; i < N; ++i) {
@@ -54,14 +54,16 @@ TEST_F(BoolExprSetTest, Iteration)
     }
 
     struct BoolExprSetIter *it;
-    for (it = BoolExprSetIter_New(set); !it->done; BoolExprSetIter_Next(it))
-        mark[it->item->key->data.lit.uniqid-1] = true;
+    for (it = BoolExprSetIter_New(set); !it->done; BoolExprSetIter_Next(it)) {
+        struct BoolExpr *key = BoolExprSetIter_Key(it);
+        mark[key->data.lit.uniqid-1] = true;
+    }
 
     // Using Next method should have no effect
-    struct BoolExprSetItem *item = it->item;
+    struct BoolExpr *prev_key = BoolExprSetIter_Key(it);
     BoolExprSetIter_Next(it);
     EXPECT_TRUE(it->done);
-    EXPECT_EQ(it->item, item);
+    EXPECT_EQ(BoolExprSetIter_Key(it), prev_key);
 
     BoolExprSetIter_Del(it);
 

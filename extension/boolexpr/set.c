@@ -137,13 +137,13 @@ BoolExprSetIter_New(struct BoolExprSet *set)
         return NULL; // LCOV_EXCL_LINE
 
     it->_set = set;
+    it->_item = (struct BoolExprSetItem *) NULL;
     it->done = true;
-    it->item = (struct BoolExprSetItem *) NULL;
 
     for (it->_index = 0; it->_index < _primes[set->_pridx]; it->_index += 1) {
         if (set->items[it->_index]) {
+            it->_item = set->items[it->_index];
             it->done = false;
-            it->item = set->items[it->_index];
             break;
         }
     }
@@ -165,19 +165,26 @@ BoolExprSetIter_Next(struct BoolExprSetIter *it)
     if (it->done)
         return;
 
-    if (it->item->tail) {
-        it->item = it->item->tail;
+    if (it->_item->tail) {
+        it->_item = it->_item->tail;
         return;
     }
 
     for (it->_index += 1; it->_index < _primes[it->_set->_pridx]; it->_index += 1) {
         if (it->_set->items[it->_index]) {
-            it->item = it->_set->items[it->_index];
+            it->_item = it->_set->items[it->_index];
             return;
         }
     }
 
     it->done = true;
+}
+
+
+struct BoolExpr *
+BoolExprSetIter_Key(struct BoolExprSetIter *it)
+{
+    return it->_item->key;
 }
 
 
