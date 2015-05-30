@@ -173,24 +173,11 @@ struct BoolExprVector {
 };
 
 
-struct BoolExprDictItem {
-    struct BoolExpr *key;
-    struct BoolExpr *val;
-    struct BoolExprDictItem *tail;
-};
-
-
 struct BoolExprDict {
     size_t _pridx;
 
     size_t length;
     struct BoolExprDictItem **items;
-};
-
-
-struct BoolExprSetItem {
-    struct BoolExpr *key;
-    struct BoolExprSetItem *tail;
 };
 
 
