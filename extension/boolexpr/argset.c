@@ -53,7 +53,7 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
     if (key == DOMINATOR[argset->kind]) {
         dominate = true;
     }
-    // x | ~x = 1 ; x & ~x = 0
+    /* x | ~x = 1 ; x & ~x = 0 */
     else if (IS_LIT(key) || IS_NOT(key)) {
         struct BoolExpr *temp = Not(key);
         dominate = BoolExprSet_Contains(argset->xs, temp);
@@ -66,7 +66,7 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
         return true;
     }
 
-    // x | (y | z) = x | y | z ; x & (y & z) = x & y & z
+    /* x | (y | z) = x | y | z ; x & (y & z) = x & y & z */
     if (key->kind == argset->kind) {
         for (size_t i = 0; i < key->data.xs->length; ++i) {
             if (!BoolExprOrAndArgSet_Insert(argset, key->data.xs->items[i]))
@@ -75,7 +75,7 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
         return true;
     }
 
-    // x | x = x ; x & x = x
+    /* x | x = x ; x & x = x */
     argset->min = false;
     return BoolExprSet_Insert(argset->xs, key);
 }
