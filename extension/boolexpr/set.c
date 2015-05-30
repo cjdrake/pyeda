@@ -17,8 +17,8 @@
 ** From: http://planetmath.org/goodhashtableprimes
 */
 
-#define _MIN_IDX 4
-#define _MAX_IDX 30
+#define MIN_IDX 4
+#define MAX_IDX 30
 
 static size_t _primes[] = {
     0, 0, 0, 0,
@@ -95,13 +95,13 @@ struct BoolExprSet *
 BoolExprSet_New(void)
 {
     struct BoolExprSet *set;
-    size_t width = _primes[_MIN_IDX];
+    size_t width = _primes[MIN_IDX];
 
     set = malloc(sizeof(struct BoolExprSet));
     if (set == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    set->_pridx = _MIN_IDX;
+    set->_pridx = MIN_IDX;
     set->length = 0;
     set->items = malloc(width * sizeof(struct BoolExprSetItem *));
     if (set->items == NULL) {
@@ -254,7 +254,7 @@ BoolExprSet_Insert(struct BoolExprSet *set, struct BoolExpr *key)
 
     load = (double) set->length / (double) _primes[set->_pridx];
 
-    if (set->_pridx < _MAX_IDX && load > MAX_LOAD) {
+    if (set->_pridx < MAX_IDX && load > MAX_LOAD) {
         if (!_enlarge(set))
             return false; // LCOV_EXCL_LINE
     }
