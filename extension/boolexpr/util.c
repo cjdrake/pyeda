@@ -29,27 +29,44 @@ _uniqid2index(long uniqid)
 }
 
 
+/* LCOV_EXCL_START */
+void
+_free_xs(int n, struct BoolExpr **xs)
+{
+    for (size_t i = 0; i < n; ++i)
+        BoolExpr_DecRef(xs[i]);
+    free(xs);
+}
+/* LCOV_EXCL_STOP */
+
+
 struct BoolExpr *
 _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
 {
     size_t length = op->data.xs->length;
-    struct BoolExpr *xs[length];
+    struct BoolExpr **xs;
     unsigned int mod_count = 0;
     struct BoolExpr *y;
 
+    xs = malloc(length * sizeof(struct BoolExpr *));
+    if (xs == NULL)
+        return NULL; // LCOV_EXCL_LINE
+
     for (size_t i = 0; i < length; ++i) {
-        CHECK_NULL_N(xs[i], fn(op->data.xs->items[i]), i, xs);
-        if (xs[i] != op->data.xs->items[i])
-            mod_count += 1;
+        xs[i] = fn(op->data.xs->items[i]);
+        if (xs[i] == NULL) {
+            _free_xs(i, xs); // LCOV_EXCL_LINE
+            return NULL;     // LCOV_EXCL_LINE
+        }
+        mod_count += (xs[i] != op->data.xs->items[i]);
     }
 
     if (mod_count)
-        CHECK_NULL_N(y, _op_new(op->kind, length, xs), length, xs);
+        y = _op_new(op->kind, length, xs);
     else
         y = BoolExpr_IncRef(op);
 
-    for (size_t i = 0; i < length; ++i)
-        BoolExpr_DecRef(xs[i]);
+    _free_xs(length, xs);
 
     return y;
 }
@@ -74,6 +91,7 @@ _is_clause(struct BoolExpr *op)
         if (!IS_LIT(op->data.xs->items[i]))
             return false;
     }
+
     return true;
 }
 

@@ -19,17 +19,16 @@ BoolExprArray2_New(size_t length, size_t *lengths, struct BoolExpr ***items)
 {
     struct BoolExprArray2 *array2;
 
-    array2 = (struct BoolExprArray2 *) malloc(sizeof(struct BoolExprArray2));
+    array2 = malloc(sizeof(struct BoolExprArray2));
     if (array2 == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    array2->items = (struct BoolExprArray **) malloc(length * sizeof(struct BoolExprArray *));
+    array2->length = length;
+    array2->items = malloc(length * sizeof(struct BoolExprArray *));
     if (array2->items == NULL) {
         free(array2); // LCOV_EXCL_LINE
         return NULL;  // LCOV_EXCL_LINE
     }
-
-    array2->length = length;
 
     for (size_t i = 0; i < length; ++i) {
         array2->items[i] = BoolExprArray_New(lengths[i], items[i]);
@@ -37,6 +36,8 @@ BoolExprArray2_New(size_t length, size_t *lengths, struct BoolExpr ***items)
         if (array2->items[i] == NULL) {
             for (size_t j = 0; j < i; ++j)
                 BoolExprArray_Del(array2->items[j]);
+            free(array2->items);
+            free(array2);
             return NULL;
         }
         /* LCOV_EXCL_STOP */
@@ -51,7 +52,6 @@ BoolExprArray2_Del(struct BoolExprArray2 *array2)
 {
     for (size_t i = 0; i < array2->length; ++i)
         BoolExprArray_Del(array2->items[i]);
-
     free(array2->items);
     free(array2);
 }
@@ -79,7 +79,7 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
     struct BoolExpr **items;
     struct BoolExprArray *prod;
 
-    items = (struct BoolExpr **) malloc(length * sizeof(struct BoolExpr *));
+    items = malloc(length * sizeof(struct BoolExpr *));
     if (items == NULL)
         return NULL; // LCOV_EXCL_LINE
 

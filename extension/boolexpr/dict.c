@@ -74,7 +74,6 @@ _list_del(struct BoolExprDictItem *list)
         _list_del(list->tail);
         BoolExpr_DecRef(list->key);
         BoolExpr_DecRef(list->val);
-
         free(list);
     }
 }
@@ -85,10 +84,11 @@ _list_search(struct BoolExprDictItem *list, struct BoolExpr *key)
 {
     if (!list)
         return (struct BoolExpr *) NULL;
-    else if (_eq(list->key, key))
+
+    if (_eq(list->key, key))
         return list->val;
-    else
-        return _list_search(list->tail, key);
+
+    return _list_search(list->tail, key);
 }
 
 
@@ -96,24 +96,23 @@ struct BoolExprDict *
 BoolExprDict_New(void)
 {
     struct BoolExprDict *dict;
-    size_t pridx = _MIN_IDX;
-    size_t width = _primes[pridx];
+    size_t width = _primes[_MIN_IDX];
 
-    dict = (struct BoolExprDict *) malloc(sizeof(struct BoolExprDict));
+    dict = malloc(sizeof(struct BoolExprDict));
     if (dict == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    dict->items = (struct BoolExprDictItem **) malloc(width * sizeof(struct BoolExprDictItem *));
+    dict->_pridx = _MIN_IDX;
+    dict->length = 0;
+    dict->items = malloc(width * sizeof(struct BoolExprDictItem *));
     if (dict->items == NULL) {
         free(dict);  // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
     }
 
+    /* Initialize items to NULL */
     for (size_t i = 0; i < width; ++i)
         dict->items[i] = (struct BoolExprDictItem *) NULL;
-
-    dict->_pridx = pridx;
-    dict->length = 0;
 
     return dict;
 }
@@ -124,7 +123,6 @@ BoolExprDict_Del(struct BoolExprDict *dict)
 {
     for (size_t i = 0; i < _primes[dict->_pridx]; ++i)
         _list_del(dict->items[i]);
-
     free(dict->items);
     free(dict);
 }
@@ -133,8 +131,7 @@ BoolExprDict_Del(struct BoolExprDict *dict)
 static bool
 _insert(struct BoolExprDict *dict, struct BoolExpr *key, struct BoolExpr *val)
 {
-    size_t index = _hash(dict, key);;
-
+    size_t index = _hash(dict, key);
     struct BoolExprDictItem *item;
 
     for (item = dict->items[index]; item; item = item->tail) {
@@ -147,7 +144,7 @@ _insert(struct BoolExprDict *dict, struct BoolExpr *key, struct BoolExpr *val)
         }
     }
 
-    item = (struct BoolExprDictItem *) malloc(sizeof(struct BoolExprDictItem));
+    item = malloc(sizeof(struct BoolExprDictItem));
     if (item == NULL)
         return false; // LCOV_EXCL_LINE
 
@@ -166,13 +163,15 @@ static bool
 _enlarge(struct BoolExprDict *dict)
 {
     struct BoolExprDictItem *item;
-
     size_t pridx = dict->_pridx;
     struct BoolExprDictItem **items = dict->items;
 
     dict->_pridx += 1;
     dict->length = 0;
-    dict->items = (struct BoolExprDictItem **) malloc(_primes[dict->_pridx] * sizeof(struct BoolExprDictItem *));
+    dict->items = malloc(_primes[dict->_pridx] * sizeof(struct BoolExprDictItem *));
+    if (dict->items == NULL)
+        return false; // LCOV_EXCL_LINE
+
     for (size_t i = 0; i < _primes[dict->_pridx]; ++i)
         dict->items[i] = (struct BoolExprDictItem *) NULL;
 
@@ -232,7 +231,6 @@ BoolExprDict_Remove(struct BoolExprDict *dict, struct BoolExpr *key)
 
             return true;
         }
-
         p = &item->tail;
         item = item->tail;
     }

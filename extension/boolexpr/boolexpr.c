@@ -38,7 +38,7 @@ BoolExprIter_New(struct BoolExpr *ex)
 {
     struct BoolExprIter *it;
 
-    it = (struct BoolExprIter *) malloc(sizeof(struct BoolExprIter));
+    it = malloc(sizeof(struct BoolExprIter));
     if (it == NULL)
         return NULL; // LCOV_EXCL_LINE
 
@@ -99,7 +99,7 @@ struct BoolExpr Illogical = {1, ILLOGICAL, NNF | SIMPLE, {.pcval=0}};
 struct BoolExpr * IDENTITY[16] = {
     NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
-    &Zero, &One, &Zero, &One,
+    &Zero, &One, &Zero, NULL,
     NULL, NULL, NULL, NULL,
 };
 
@@ -116,7 +116,7 @@ _lit_new(struct BoolExprVector *lits, long uniqid)
 {
     struct BoolExpr *lit;
 
-    lit = (struct BoolExpr *) malloc(sizeof(struct BoolExpr));
+    lit = malloc(sizeof(struct BoolExpr));
     if (lit == NULL)
         return NULL; // LCOV_EXCL_LINE
 
@@ -142,19 +142,18 @@ _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr *op;
 
-    op = (struct BoolExpr *) malloc(sizeof(struct BoolExpr));
+    op = malloc(sizeof(struct BoolExpr));
     if (op == NULL)
         return NULL; // LCOV_EXCL_LINE
 
+    op->refcount = 1;
+    op->kind = kind;
+    op->flags = (BoolExprFlags) 0;
     op->data.xs = BoolExprArray_New(n, xs);
     if (op->data.xs == NULL) {
         free(op);    // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
     }
-
-    op->refcount = 1;
-    op->kind = kind;
-    op->flags = (BoolExprFlags) 0;
 
     return op;
 }
@@ -184,12 +183,10 @@ _op_del(struct BoolExpr *op)
 struct BoolExpr *
 Literal(struct BoolExprVector *lits, long uniqid)
 {
-    size_t index;
+    size_t index = _uniqid2index(uniqid);
     struct BoolExpr *lit;
 
-    index = _uniqid2index(uniqid);
-
-    lit = index >= lits->length ? (struct BoolExpr *) NULL : lits->items[index];
+    lit = (index >= lits->length) ? (struct BoolExpr *) NULL : lits->items[index];
     if (lit == (struct BoolExpr *) NULL) {
         CHECK_NULL(lit, _lit_new(lits, uniqid));
         BoolExprVector_Insert(lits, index, lit);
@@ -268,7 +265,7 @@ Equal(size_t n, struct BoolExpr **xs)
 {
     /* Equal() <=> Equal(0) <=> Equal(1) <=> 1 */
     if (n <= 1)
-        return BoolExpr_IncRef(IDENTITY[OP_EQ]);
+        return BoolExpr_IncRef(&One);
 
     return _op_new(OP_EQ, n, xs);
 }
@@ -491,6 +488,7 @@ BoolExpr_DecRef(struct BoolExpr * ex)
     assert(ex->refcount > 0);
 
     ex->refcount -= 1;
+
     if (ex->refcount == 0) {
         /* Constant refcount must never reach zero */
         assert(!IS_CONST(ex));

@@ -15,14 +15,13 @@ BoolExprOrAndArgSet_New(BoolExprKind kind)
 {
     struct BoolExprOrAndArgSet *argset;
 
-    argset = (struct BoolExprOrAndArgSet *) malloc(sizeof(struct BoolExprOrAndArgSet));
+    argset = malloc(sizeof(struct BoolExprOrAndArgSet));
     if (argset == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     argset->kind = kind;
     argset->min = true;
     argset->max = false;
-
     argset->xs = BoolExprSet_New();
     if (argset->xs == NULL) {
         free(argset); // LCOV_EXCL_LINE
@@ -37,7 +36,6 @@ void
 BoolExprOrAndArgSet_Del(struct BoolExprOrAndArgSet *argset)
 {
     BoolExprSet_Del(argset->xs);
-
     free(argset);
 }
 
@@ -88,12 +86,11 @@ BoolExprXorArgSet_New(bool parity)
 {
     struct BoolExprXorArgSet *argset;
 
-    argset = (struct BoolExprXorArgSet *) malloc(sizeof(struct BoolExprXorArgSet));
+    argset = malloc(sizeof(struct BoolExprXorArgSet));
     if (argset == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     argset->parity = parity;
-
     argset->xs = BoolExprSet_New();
     if (argset->xs == NULL) {
         free(argset); // LCOV_EXCL_LINE
@@ -108,7 +105,6 @@ void
 BoolExprXorArgSet_Del(struct BoolExprXorArgSet *argset)
 {
     BoolExprSet_Del(argset->xs);
-
     free(argset);
 }
 
@@ -132,9 +128,9 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
     /* Xnor(x, y, z, ~z) = Xor(x, y) */
     if (IS_LIT(key) || IS_NOT(key)) {
         struct BoolExpr *temp = Not(key);
-        bool inset = BoolExprSet_Contains(argset->xs, temp);
+        bool flip = BoolExprSet_Contains(argset->xs, temp);
         BoolExpr_DecRef(temp);
-        if (inset) {
+        if (flip) {
             BoolExprSet_Remove(argset->xs, temp);
             argset->parity ^= true;
             return true;
@@ -171,13 +167,12 @@ BoolExprEqArgSet_New(void)
 {
     struct BoolExprEqArgSet *argset;
 
-    argset = (struct BoolExprEqArgSet *) malloc(sizeof(struct BoolExprEqArgSet));
+    argset = malloc(sizeof(struct BoolExprEqArgSet));
     if (argset == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     argset->zero = false;
     argset->one = false;
-
     argset->xs = BoolExprSet_New();
     if (argset->xs == NULL) {
         free(argset); // LCOV_EXCL_LINE
@@ -192,7 +187,6 @@ void
 BoolExprEqArgSet_Del(struct BoolExprEqArgSet *argset)
 {
     BoolExprSet_Del(argset->xs);
-
     free(argset);
 }
 
@@ -220,9 +214,9 @@ BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *argset, struct BoolExpr *key)
     /* Equal(~x, x) = 0 */
     if (IS_LIT(key) || IS_NOT(key)) {
         struct BoolExpr *temp = Not(key);
-        bool inset = BoolExprSet_Contains(argset->xs, temp);
+        bool contradict = BoolExprSet_Contains(argset->xs, temp);
         BoolExpr_DecRef(temp);
-        if (inset) {
+        if (contradict) {
             argset->zero = true;
             argset->one = true;
             BoolExprSet_Clear(argset->xs);

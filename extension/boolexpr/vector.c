@@ -10,7 +10,7 @@
 #include "boolexpr.h"
 
 
-#define CAPACITY 64
+#define _MIN_CAP 64
 
 
 struct BoolExprVector *
@@ -18,20 +18,19 @@ BoolExprVector_New()
 {
     struct BoolExprVector *vec;
 
-    vec = (struct BoolExprVector *) malloc(sizeof(struct BoolExprVector));
+    vec = malloc(sizeof(struct BoolExprVector));
     if (vec == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    vec->items = (struct BoolExpr **) malloc(CAPACITY * sizeof(struct BoolExpr *));
+    vec->length = 0;
+    vec->capacity = _MIN_CAP;
+    vec->items = malloc(_MIN_CAP * sizeof(struct BoolExpr *));
     if (vec->items == NULL) {
         free(vec);   // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
     }
 
-    vec->length = 0;
-    vec->capacity = CAPACITY;
-
-    /* Initialize items to NULL expression */
+    /* Initialize items to NULL */
     for (size_t i = 0; i < vec->capacity; ++i)
         vec->items[i] = (struct BoolExpr *) NULL;
 
@@ -46,7 +45,6 @@ BoolExprVector_Del(struct BoolExprVector *vec)
         if (vec->items[i] != (struct BoolExpr *) NULL)
             BoolExpr_DecRef(vec->items[i]);
     }
-
     free(vec->items);
     free(vec);
 }
@@ -66,11 +64,11 @@ BoolExprVector_Insert(struct BoolExprVector *vec, size_t index, struct BoolExpr 
         req_cap = (size_t) (SCALE_FACTOR * req_cap);
 
     if (req_cap > vec->capacity) {
-        vec->items = (struct BoolExpr **) realloc(vec->items, req_cap * sizeof(struct BoolExpr *));
+        vec->items = realloc(vec->items, req_cap * sizeof(struct BoolExpr *));
         if (vec->items == NULL)
             return false; // LCOV_EXCL_LINE
 
-        /* Initialize new items to NULL expression */
+        /* Initialize new items to NULL */
         for (size_t i = vec->capacity; i < req_cap; ++i)
             vec->items[i] = (struct BoolExpr *) NULL;
 
