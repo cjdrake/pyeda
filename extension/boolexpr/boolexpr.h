@@ -513,6 +513,8 @@ void BoolExprOrAndArgSet_Del(struct BoolExprOrAndArgSet *);
 
 bool BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *, struct BoolExpr *key);
 
+struct BoolExpr * BoolExprOrAndArgSet_Reduce(struct BoolExprOrAndArgSet *);
+
 
 /*
 ** Return a new XOR/XNOR set
@@ -523,6 +525,8 @@ void BoolExprXorArgSet_Del(struct BoolExprXorArgSet *);
 
 bool BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *, struct BoolExpr *key);
 
+struct BoolExpr * BoolExprXorArgSet_Reduce(struct BoolExprXorArgSet *);
+
 
 /*
 ** Return a new Equal set
@@ -532,6 +536,8 @@ struct BoolExprEqArgSet * BoolExprEqArgSet_New(void);
 void BoolExprEqArgSet_Del(struct BoolExprEqArgSet *);
 
 bool BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *, struct BoolExpr *key);
+
+struct BoolExpr * BoolExprEqArgSet_Reduce(struct BoolExprEqArgSet *);
 
 
 #ifdef __cplusplus

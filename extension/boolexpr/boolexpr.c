@@ -28,6 +28,9 @@ do { \
 } while (0)
 
 
+/* array.c */
+struct BoolExprArray * _bx_array_from(size_t length, struct BoolExpr **items);
+
 /* util.c */
 size_t _uniqid2index(long uniqid);
 bool _is_clause(struct BoolExpr *op);
@@ -138,7 +141,7 @@ _lit_del(struct BoolExpr *lit)
 
 
 struct BoolExpr *
-_op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
+_bx_op_from(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr *op;
 
@@ -149,13 +152,29 @@ _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
     op->refcount = 1;
     op->kind = kind;
     op->flags = (BoolExprFlags) 0;
-    op->data.xs = BoolExprArray_New(n, xs);
+    op->data.xs = _bx_array_from(n, xs);
     if (op->data.xs == NULL) {
         free(op);    // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
     }
 
     return op;
+}
+
+
+struct BoolExpr *
+_op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
+{
+    struct BoolExpr **xs_copy;
+
+    xs_copy = malloc(n * sizeof(struct BoolExpr *));
+    if (xs_copy == NULL)
+        return NULL; // LCOV_EXCL_LINE
+
+    for (size_t i = 0; i < n; ++i)
+        xs_copy[i] = xs[i];
+
+    return _bx_op_from(kind, n, xs_copy);
 }
 
 

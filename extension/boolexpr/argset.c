@@ -10,6 +10,35 @@
 #include "boolexpr.h"
 
 
+/* boolexpr.c */
+struct BoolExpr * _bx_op_from(BoolExprKind kind, size_t n, struct BoolExpr **xs);
+
+
+static struct BoolExpr **
+_set2array(struct BoolExprSet *set)
+{
+    struct BoolExpr **array;
+    struct BoolExprSetIter *it;
+
+    array = malloc(set->length * sizeof(struct BoolExpr *));
+    if (array == NULL)
+        return NULL; // LCOV_EXCL_LINE
+
+    it = BoolExprSetIter_New(set);
+    if (it == NULL) {
+        free(array); // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
+    }
+
+    for (size_t i = 0; !it->done; BoolExprSetIter_Next(it))
+        array[i++] = BoolExprSetIter_Key(it);
+
+    BoolExprSetIter_Del(it);
+
+    return array;
+}
+
+
 struct BoolExprOrAndArgSet *
 BoolExprOrAndArgSet_New(BoolExprKind kind)
 {
@@ -78,6 +107,30 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
     /* x | x = x ; x & x = x */
     argset->min = false;
     return BoolExprSet_Insert(argset->xs, key);
+}
+
+
+struct BoolExpr *
+BoolExprOrAndArgSet_Reduce(struct BoolExprOrAndArgSet *argset)
+{
+    struct BoolExpr **xs;
+    size_t length = argset->xs->length;
+
+    if (argset->min)
+        return BoolExpr_IncRef(IDENTITY[argset->kind]);
+
+    if (argset->max)
+        return BoolExpr_IncRef(DOMINATOR[argset->kind]);
+
+    CHECK_NULL(xs, _set2array(argset->xs));
+
+    if (length == 1) {
+        struct BoolExpr *y = BoolExpr_IncRef(xs[0]);
+        free(xs);
+        return y;
+    }
+
+    return _bx_op_from(argset->kind, length, xs);
 }
 
 
@@ -162,6 +215,42 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
 }
 
 
+struct BoolExpr *
+BoolExprXorArgSet_Reduce(struct BoolExprXorArgSet *argset)
+{
+    struct BoolExpr **xs;
+    struct BoolExpr *temp;
+    struct BoolExpr *y;
+    size_t length = argset->xs->length;
+
+    if (length == 0) {
+        temp = BoolExpr_IncRef(IDENTITY[OP_XOR]);
+        y = argset->parity ? BoolExpr_IncRef(temp) : Not(temp);
+        BoolExpr_DecRef(temp);
+        return y;
+    }
+
+    CHECK_NULL(xs, _set2array(argset->xs));
+
+    if (length == 1) {
+        temp = BoolExpr_IncRef(xs[0]);
+        free(xs);
+    }
+    else {
+        temp = _bx_op_from(OP_XOR, length, xs);
+        if (temp == NULL) {
+            free(xs);    // LCOV_EXCL_LINE
+            return NULL; // LCOV_EXCL_LINE
+        }
+    }
+
+    y = argset->parity ? BoolExpr_IncRef(temp) : Not(temp);
+    BoolExpr_DecRef(temp);
+
+    return y;
+}
+
+
 struct BoolExprEqArgSet *
 BoolExprEqArgSet_New(void)
 {
@@ -226,5 +315,64 @@ BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *argset, struct BoolExpr *key)
 
     /* Equal(x, x, y) = Equal(x, y) */
     return BoolExprSet_Insert(argset->xs, key);
+}
+
+
+struct BoolExpr *
+BoolExprEqArgSet_Reduce(struct BoolExprEqArgSet *argset)
+{
+    struct BoolExpr **xs;
+    struct BoolExpr *y;
+    size_t length = argset->xs->length;
+
+    /* Equal(0, 1) = 0 */
+    if (argset->zero && argset->one)
+        return BoolExpr_IncRef(&Zero);
+
+    /* Equal() = Equal(0) = Equal(1) = 1 */
+    if (((size_t) argset->zero + (size_t) argset->one + length) <= 1)
+        return BoolExpr_IncRef(&One);
+
+    CHECK_NULL(xs, _set2array(argset->xs));
+
+    /* Equal(0, x) = ~x */
+    if (argset->zero && length == 1) {
+        y = Not(xs[0]);
+        free(xs);
+        return y;
+    }
+
+    /* Equal(1, x) = x */
+    if (argset->one && length == 1) {
+        y = BoolExpr_IncRef(xs[0]);
+        free(xs);
+        return y;
+    }
+
+    /* Equal(0, x, y) = Nor(x, y) */
+    if (argset->zero) {
+        struct BoolExpr *temp = _bx_op_from(OP_OR, length, xs);
+        if (temp == NULL) {
+            free(xs);    // LCOV_EXCL_LINE
+            return NULL; // LCOV_EXCL_LINE
+        }
+        y = Not(temp);
+        BoolExpr_DecRef(temp);
+        return y;
+    }
+
+    /* Equal(1, x, y) = Nand(x, y) */
+    if (argset->one) {
+        struct BoolExpr *temp = _bx_op_from(OP_AND, length, xs);
+        if (temp == NULL) {
+            free(xs);    // LCOV_EXCL_LINE
+            return NULL; // LCOV_EXCL_LINE
+        }
+        y = Not(temp);
+        BoolExpr_DecRef(temp);
+        return y;
+    }
+
+    return _bx_op_from(OP_EQ, length, xs);
 }
 
