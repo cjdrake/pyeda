@@ -90,17 +90,17 @@ bld/test/: | bld/
 	@mkdir $@
 
 bld/test/%.o: %.c $(BOOLEXPR_HDRS) | bld/test/
-	$(CC) -c -o $@ $<
+	$(CC) -c -g -o $@ $<
 
 bld/test/%.o: test/%.cpp $(BOOLEXPR_TEST_HDRS) | bld/test/
-	$(CXX) -c -I. -o $@ $<
+	$(CXX) -c -g -I. -o $@ $<
 
 TEST_OBJS := \
     $(patsubst %.c,bld/test/%.o,$(BOOLEXPR_SRCS)) \
     $(patsubst test/%.cpp,bld/test/%.o,$(BOOLEXPR_TEST_SRCS)) \
 
 bld/test/run: $(TEST_OBJS)
-	$(CXX) -o $@ $^ -lgtest -lpthread
+	$(CXX) -o $@ -g $^ -lgtest -lpthread
 
 # Coverage
 bld/cover/: | bld/
