@@ -172,6 +172,16 @@ _orandxor_new(BoolExprKind kind, size_t n, struct BoolExpr **xs)
 }
 
 
+struct BoolExpr *
+_eq_new(size_t n, struct BoolExpr **xs)
+{
+    if (n <= 1)
+        return BoolExpr_IncRef(&One);
+
+    return _op_new(OP_EQ, n, xs);
+}
+
+
 static void
 _op_del(struct BoolExpr *op)
 {
@@ -263,11 +273,7 @@ Xnor(size_t n, struct BoolExpr **xs)
 struct BoolExpr *
 Equal(size_t n, struct BoolExpr **xs)
 {
-    /* Equal() <=> Equal(0) <=> Equal(1) <=> 1 */
-    if (n <= 1)
-        return BoolExpr_IncRef(&One);
-
-    return _op_new(OP_EQ, n, xs);
+    return _eq_new(n, xs);
 }
 
 
