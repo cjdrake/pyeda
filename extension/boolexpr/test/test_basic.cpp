@@ -202,7 +202,7 @@ TEST_F(BoolExprTest, IsCnfDnf)
     EXPECT_TRUE(BoolExpr_IsCNF(xs[0]));
 
     // OR clause
-    ops[0] = OrN(2, xns[0], xs[1], xns[2], xs[3]);
+    ops[0] = OrN(4, xns[0], xs[1], xns[2], xs[3]);
     EXPECT_TRUE(BoolExpr_IsDNF(ops[0]));
     EXPECT_TRUE(BoolExpr_IsCNF(ops[0]));
     ops[1] = BoolExpr_Simplify(ops[0]);
@@ -210,7 +210,7 @@ TEST_F(BoolExprTest, IsCnfDnf)
     EXPECT_TRUE(BoolExpr_IsCNF(ops[1]));
 
     // AND clause
-    ops[2] = AndN(2, xns[0], xs[1], xns[2], xs[3]);
+    ops[2] = AndN(4, xns[0], xs[1], xns[2], xs[3]);
     EXPECT_TRUE(BoolExpr_IsDNF(ops[2]));
     EXPECT_TRUE(BoolExpr_IsCNF(ops[2]));
     ops[3] = BoolExpr_Simplify(ops[2]);
