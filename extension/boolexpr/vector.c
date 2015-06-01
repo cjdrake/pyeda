@@ -10,7 +10,7 @@
 #include "boolexpr.h"
 
 
-#define _MIN_CAP 64
+#define MIN_CAP 64
 
 
 struct BoolExprVector *
@@ -23,8 +23,8 @@ BoolExprVector_New()
         return NULL; // LCOV_EXCL_LINE
 
     vec->length = 0;
-    vec->capacity = _MIN_CAP;
-    vec->items = malloc(_MIN_CAP * sizeof(struct BoolExpr *));
+    vec->capacity = MIN_CAP;
+    vec->items = malloc(MIN_CAP * sizeof(struct BoolExpr *));
     if (vec->items == NULL) {
         free(vec);   // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
