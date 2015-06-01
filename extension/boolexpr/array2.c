@@ -10,6 +10,9 @@
 #include "boolexpr.h"
 
 
+/* array.c */
+struct BoolExprArray * _bx_array_from(size_t length, struct BoolExpr **items);
+
 /* boolexpr.c */
 struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
@@ -86,15 +89,19 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
     for (size_t i = 0, index = 0; i < a->length; ++i) {
         for (size_t j = 0; j < b->length; ++j, ++index) {
             struct BoolExpr *xs[2] = {a->items[i], b->items[j]};
-            CHECK_NULL_N(items[index], _op_new(kind, 2, xs), index, items);
+            items[index] = _op_new(kind, 2, xs);
+            if (items[index] == NULL) {
+                for (size_t k = 0; k < j; ++k)
+                    BoolExpr_DecRef(items[k]);
+                free(items);
+            }
         }
     }
 
-    CHECK_NULL_N(prod, BoolExprArray_New(length, items), length, items);
+    prod = _bx_array_from(length, items);
 
     for (size_t i = 0; i < length; ++i)
         BoolExpr_DecRef(items[i]);
-    free(items);
 
     return prod;
 }
