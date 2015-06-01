@@ -91,9 +91,11 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
             struct BoolExpr *xs[2] = {a->items[i], b->items[j]};
             items[index] = _op_new(kind, 2, xs);
             if (items[index] == NULL) {
+                /* LCOV_EXCL_START */
                 for (size_t k = 0; k < j; ++k)
                     BoolExpr_DecRef(items[k]);
                 free(items);
+                /* LCOV_EXCL_STOP */
             }
         }
     }
