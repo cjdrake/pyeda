@@ -18,7 +18,7 @@
 
 
 struct BoolExprVector *
-BoolExprVector_New()
+BoolExprVector_New(void)
 {
     struct BoolExprVector *vec;
 
