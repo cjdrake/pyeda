@@ -35,7 +35,6 @@ void _mark_flags(struct BoolExpr *ex, BoolExprFlags f);
 
 /* simple.c */
 static struct BoolExpr * _simple_op(BoolExprKind kind, size_t n, struct BoolExpr **xs);
-static struct BoolExpr * _simple_opn(BoolExprKind kind, size_t n, ...);
 
 
 /* NOTE: Equality testing can get expensive, so keep it simple */
@@ -416,7 +415,8 @@ _ite_simplify(struct BoolExpr *op)
         /* ITE(s, 0, d0) <=> And(~s, d0) */
         struct BoolExpr *sn;
         CHECK_NULL(sn, Not(s));
-        CHECK_NULL_1(y, _simple_opn(OP_AND, 2, sn, d0), sn);
+        struct BoolExpr *xs[] = {sn, d0};
+        CHECK_NULL_1(y, _simple_op(OP_AND, 2, xs), sn);
         BoolExpr_DecRef(sn);
         return y;
     }
@@ -429,19 +429,24 @@ _ite_simplify(struct BoolExpr *op)
         /* ITE(s, 1, 1) <=> 1 */
         if (IS_ONE(d0))
             return BoolExpr_IncRef(&One);
+
         /* ITE(s, 1, d0) <=> Or(s, d0) */
-        return _simple_opn(OP_OR, 2, s, d0);
+        struct BoolExpr *xs[] = {s, d0};
+        return _simple_op(OP_OR, 2, xs);
     }
 
     /* ITE(s, d1, 0) <=> And(s, d1) */
-    if (IS_ZERO(d0))
-        return _simple_opn(OP_AND, 2, s, d1);
+    if (IS_ZERO(d0)) {
+        struct BoolExpr *xs[] = {s, d1};
+        return _simple_op(OP_AND, 2, xs);
+    }
 
     /* ITE(s, d1, 1) <=> Or(~s, d1) */
     if (IS_ONE(d0)) {
         struct BoolExpr *sn;
         CHECK_NULL(sn, Not(s));
-        CHECK_NULL_1(y, _simple_opn(OP_OR, 2, sn, d1), sn);
+        struct BoolExpr *xs[] = {sn, d1};
+        CHECK_NULL_1(y, _simple_op(OP_OR, 2, xs), sn);
         BoolExpr_DecRef(sn);
         return y;
     }
@@ -451,12 +456,16 @@ _ite_simplify(struct BoolExpr *op)
         return BoolExpr_IncRef(d1);
 
     /* ITE(s, s, d0) <=> Or(s, d0) */
-    if (_eq(s, d1))
-        return _simple_opn(OP_OR, 2, s, d0);
+    if (_eq(s, d1)) {
+        struct BoolExpr *xs[] = {s, d0};
+        return _simple_op(OP_OR, 2, xs);
+    }
 
     /* ITE(s, d1, s) <=> And(s, d1) */
-    if (_eq(s, d0))
-        return _simple_opn(OP_AND, 2, s, d1);
+    if (_eq(s, d0)) {
+        struct BoolExpr *xs[] = {s, d1};
+        return _simple_op(OP_AND, 2, xs);
+    }
 
     return ITE(s, d1, d0);
 }
@@ -489,21 +498,6 @@ _simple_op(BoolExprKind kind, size_t n, struct BoolExpr **xs)
     BoolExpr_DecRef(temp);
 
     return y;
-}
-
-
-static struct BoolExpr *
-_simple_opn(BoolExprKind kind, size_t n, ...)
-{
-    struct BoolExpr *xs[n];
-    va_list vl;
-
-    va_start(vl, n);
-    for (int i = 0; i < n; ++i)
-        xs[i] = va_arg(vl, struct BoolExpr *);
-    va_end(vl);
-
-    return _simple_op(kind, n, xs);
 }
 
 
