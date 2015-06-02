@@ -10,7 +10,11 @@
 #include "boolexpr.h"
 
 
+/* Minimum capacity */
 #define MIN_CAP 64
+
+/* Scale factor for resize */
+#define SCALE_FACTOR 2.0
 
 
 struct BoolExprVector *
@@ -49,8 +53,6 @@ BoolExprVector_Del(struct BoolExprVector *vec)
     free(vec);
 }
 
-
-#define SCALE_FACTOR 2.0
 
 bool
 BoolExprVector_Insert(struct BoolExprVector *vec, size_t index, struct BoolExpr *ex)
