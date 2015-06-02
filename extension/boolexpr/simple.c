@@ -365,20 +365,24 @@ _impl_simplify(struct BoolExpr *op)
     /* Implies(0, q) <=> Implies(p, 1) <=> 1 */
     if (IS_ZERO(p) || IS_ONE(q))
         return BoolExpr_IncRef(&One);
+
     /* Implies(1, q) <=> q */
-    else if (IS_ONE(p))
+    if (IS_ONE(p))
         return BoolExpr_IncRef(q);
+
     /* Implies(p, 0) <=> ~p */
-    else if (IS_ZERO(q))
+    if (IS_ZERO(q))
         return Not(p);
+
     /* Implies(p, p) <=> 1 */
-    else if (_eq(p, q))
+    if (_eq(p, q))
         return BoolExpr_IncRef(&One);
+
     /* Implies(~p, p) <=> p */
-    else if (COMPLEMENTARY(p, q))
+    if (COMPLEMENTARY(p, q))
         return BoolExpr_IncRef(q);
-    else
-        return Implies(p, q);
+
+    return Implies(p, q);
 }
 
 
@@ -393,69 +397,68 @@ _ite_simplify(struct BoolExpr *op)
     struct BoolExpr *y;
 
     /* ITE(0, d1, d0) <=> d0 */
-    if (IS_ZERO(s)) {
-        y = BoolExpr_IncRef(d0);
-    }
+    if (IS_ZERO(s))
+        return BoolExpr_IncRef(d0);
+
     /* ITE(1, d1, d0) <=> d1 */
-    else if (IS_ONE(s)) {
-        y = BoolExpr_IncRef(d1);
-    }
-    else if (IS_ZERO(d1)) {
+    if (IS_ONE(s))
+        return BoolExpr_IncRef(d1);
+
+    if (IS_ZERO(d1)) {
         /* ITE(s, 0, 0) <=> 0 */
-        if (IS_ZERO(d0)) {
-            y = BoolExpr_IncRef(&Zero);
-        }
+        if (IS_ZERO(d0))
+            return BoolExpr_IncRef(&Zero);
+
         /* ITE(s, 0, 1) <=> ~s */
-        else if (IS_ONE(d0)) {
-            CHECK_NULL(y, Not(s));
-        }
+        if (IS_ONE(d0))
+            return Not(s);
+
         /* ITE(s, 0, d0) <=> And(~s, d0) */
-        else {
-            struct BoolExpr *sn;
-            CHECK_NULL(sn, Not(s));
-            CHECK_NULL_1(y, _simple_opn(OP_AND, 2, sn, d0), sn);
-            BoolExpr_DecRef(sn);
-        }
+        struct BoolExpr *sn;
+        CHECK_NULL(sn, Not(s));
+        CHECK_NULL_1(y, _simple_opn(OP_AND, 2, sn, d0), sn);
+        BoolExpr_DecRef(sn);
+        return y;
     }
-    else if (IS_ONE(d1)) {
+
+    if (IS_ONE(d1)) {
         /* ITE(s, 1, 0) <=> s */
         if (IS_ZERO(d0))
-            y = BoolExpr_IncRef(s);
+            return BoolExpr_IncRef(s);
+
         /* ITE(s, 1, 1) <=> 1 */
-        else if (IS_ONE(d0))
-            y = BoolExpr_IncRef(&One);
+        if (IS_ONE(d0))
+            return BoolExpr_IncRef(&One);
         /* ITE(s, 1, d0) <=> Or(s, d0) */
-        else
-            CHECK_NULL(y, _simple_opn(OP_OR, 2, s, d0));
+        return _simple_opn(OP_OR, 2, s, d0);
     }
+
     /* ITE(s, d1, 0) <=> And(s, d1) */
-    else if (IS_ZERO(d0)) {
-        CHECK_NULL(y, _simple_opn(OP_AND, 2, s, d1));
-    }
+    if (IS_ZERO(d0))
+        return _simple_opn(OP_AND, 2, s, d1);
+
     /* ITE(s, d1, 1) <=> Or(~s, d1) */
-    else if (IS_ONE(d0)) {
+    if (IS_ONE(d0)) {
         struct BoolExpr *sn;
         CHECK_NULL(sn, Not(s));
         CHECK_NULL_1(y, _simple_opn(OP_OR, 2, sn, d1), sn);
         BoolExpr_DecRef(sn);
-    }
-    /* ITE(s, d1, d1) <=> d1 */
-    else if (_eq(d1, d0)) {
-        y = BoolExpr_IncRef(d1);
-    }
-    /* ITE(s, s, d0) <=> Or(s, d0) */
-    else if (_eq(s, d1)) {
-        CHECK_NULL(y, _simple_opn(OP_OR, 2, s, d0));
-    }
-    /* ITE(s, d1, s) <=> And(s, d1) */
-    else if (_eq(s, d0)) {
-        CHECK_NULL(y, _simple_opn(OP_AND, 2, s, d1));
-    }
-    else {
-        CHECK_NULL(y, ITE(s, d1, d0));
+        return y;
     }
 
-    return y;
+    /* ITE(s, d1, d1) <=> d1 */
+    if (_eq(d1, d0))
+        return BoolExpr_IncRef(d1);
+
+    /* ITE(s, s, d0) <=> Or(s, d0) */
+    if (_eq(s, d1))
+        return _simple_opn(OP_OR, 2, s, d0);
+
+    /* ITE(s, d1, s) <=> And(s, d1) */
+    if (_eq(s, d0))
+        return _simple_opn(OP_AND, 2, s, d1);
+
+    return ITE(s, d1, d0);
 }
 
 
