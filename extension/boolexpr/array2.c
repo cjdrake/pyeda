@@ -95,6 +95,7 @@ _multiply(struct BoolExprArray *a, struct BoolExprArray *b, BoolExprKind kind)
                 for (size_t k = 0; k < j; ++k)
                     BoolExpr_DecRef(items[k]);
                 free(items);
+                return NULL;
                 /* LCOV_EXCL_STOP */
             }
         }
