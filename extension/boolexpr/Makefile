@@ -46,7 +46,6 @@ BOOLEXPR_HDRS := boolexpr.h dict.h set.h primes-inl.c
 BOOLEXPR_SRCS := \
     argset.c \
     array.c \
-    array2.c \
     binary.c \
     boolexpr.c \
     bubble.c \
@@ -67,7 +66,6 @@ BOOLEXPR_TEST_SRCS := \
     test/boolexprtest.cpp \
     test/test_argset.cpp \
     test/test_array.cpp \
-    test/test_array2.cpp \
     test/test_basic.cpp \
     test/test_binary.cpp \
     test/test_bubble.cpp \
@@ -75,6 +73,7 @@ BOOLEXPR_TEST_SRCS := \
     test/test_dict.cpp \
     test/test_flatten.cpp \
     test/test_nnf.cpp \
+    test/test_product.cpp \
     test/test_set.cpp \
     test/test_simple.cpp \
     test/test_vector.cpp \

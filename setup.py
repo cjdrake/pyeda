@@ -144,7 +144,6 @@ EXPRNODE = dict(
     sources = [
         pjoin('extension', 'boolexpr', 'argset.c'),
         pjoin('extension', 'boolexpr', 'array.c'),
-        pjoin('extension', 'boolexpr', 'array2.c'),
         pjoin('extension', 'boolexpr', 'binary.c'),
         pjoin('extension', 'boolexpr', 'boolexpr.c'),
         pjoin('extension', 'boolexpr', 'bubble.c'),

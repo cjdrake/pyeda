@@ -66,7 +66,7 @@ _product(BoolExprKind kind, size_t n, struct BoolExprArray **arrays)
     if (prev == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    prod = _multiply(kind, prev, arrays[n-1]);
+    prod = _multiply(kind, arrays[n-1], prev);
     if (prod == NULL) {
         BoolExprArray_Del(prev); // LCOV_EXCL_LINE
         return NULL;             // LCOV_EXCL_LINE

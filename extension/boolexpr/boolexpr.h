@@ -160,12 +160,6 @@ struct BoolExprArray {
 };
 
 
-struct BoolExprArray2 {
-    size_t length;
-    struct BoolExprArray **items;
-};
-
-
 struct BoolExprVector {
     size_t length;
     size_t capacity;
@@ -410,19 +404,6 @@ bool BoolExprArray_Equal(struct BoolExprArray *, struct BoolExprArray *);
 
 /* Return the cartesian product of N arrays */
 struct BoolExprArray * BoolExpr_Product(BoolExprKind kind, size_t length, struct BoolExprArray **);
-
-
-/* Return a new 2d array of Boolean expressions. */
-struct BoolExprArray2 * BoolExprArray2_New(size_t length, size_t *lengths, struct BoolExpr ***items);
-
-/* Delete a two-dimensional array of Boolean expressions. */
-void BoolExprArray2_Del(struct BoolExprArray2 *);
-
-/* Return true if two 2d arrays are equal. */
-bool BoolExprArray2_Equal(struct BoolExprArray2 *, struct BoolExprArray2 *);
-
-/* Return the cartesian product of two 2d arrays */
-struct BoolExprArray * BoolExprArray2_Product(struct BoolExprArray2 *, BoolExprKind kind);
 
 
 /*
