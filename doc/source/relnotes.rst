@@ -7,6 +7,11 @@
 Release 0.27
 ============
 
+Version 0.27.5
+--------------
+
+Fixed `Issue 121 <https://github.com/cjdrake/pyeda/issues/121>`_.
+
 Version 0.27.4
 --------------
 
