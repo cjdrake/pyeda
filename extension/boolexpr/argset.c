@@ -361,17 +361,9 @@ BoolExprEqArgSet_Reduce(struct BoolExprEqArgSet *argset)
         return y;
     }
 
-    /* Equal(1, x, y) = Nand(x, y) */
-    if (argset->one) {
-        struct BoolExpr *temp = _bx_op_from(OP_AND, length, xs);
-        if (temp == NULL) {
-            free(xs);    // LCOV_EXCL_LINE
-            return NULL; // LCOV_EXCL_LINE
-        }
-        y = Not(temp);
-        BoolExpr_DecRef(temp);
-        return y;
-    }
+    /* Equal(1, x, y) = And(x, y) */
+    if (argset->one)
+        return _bx_op_from(OP_AND, length, xs);
 
     return _bx_op_from(OP_EQ, length, xs);
 }

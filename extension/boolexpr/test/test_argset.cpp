@@ -299,8 +299,7 @@ TEST_F(BoolExprArgSetTest, EqReduce)
     BoolExprEqArgSet_Insert(f, xs[0]);
     BoolExprEqArgSet_Insert(f, xs[1]);
     ops[3] = BoolExprEqArgSet_Reduce(f);
-    EXPECT_EQ(ops[3]->kind, OP_NOT);
-    EXPECT_EQ(ops[3]->data.xs->items[0]->kind, OP_AND);
+    EXPECT_EQ(ops[3]->kind, OP_AND);
 
     BoolExprEqArgSet_Insert(g, xs[0]);
     BoolExprEqArgSet_Insert(g, xs[1]);
