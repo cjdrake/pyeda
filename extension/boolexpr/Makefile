@@ -54,6 +54,7 @@ BOOLEXPR_SRCS := \
     dict.c \
     flatten.c \
     nnf.c \
+    product.c \
     set.c \
     simple.c \
     util.c \

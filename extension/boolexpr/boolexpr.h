@@ -408,6 +408,9 @@ void BoolExprArray_Del(struct BoolExprArray *);
 /* Return true if two arrays are equal. */
 bool BoolExprArray_Equal(struct BoolExprArray *, struct BoolExprArray *);
 
+/* Return the cartesian product of N arrays */
+struct BoolExprArray * BoolExpr_Product(BoolExprKind kind, size_t length, struct BoolExprArray **);
+
 
 /* Return a new 2d array of Boolean expressions. */
 struct BoolExprArray2 * BoolExprArray2_New(size_t length, size_t *lengths, struct BoolExpr ***items);
