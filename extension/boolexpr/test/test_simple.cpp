@@ -351,10 +351,10 @@ TEST_F(BoolExprSimpleTest, EqualCases)
     exps[0] = NorN(2, xs[0], xs[1]);
     EXPECT_TRUE(Similar(ops[7], exps[0]));
 
-    // eq(1, x0, x1) <=> Nand(x0, x1)
+    // eq(1, x0, x1) <=> And(x0, x1)
     ops[8] = EqualN(3, &One, xs[0], xs[1]);
     ops[9] = BoolExpr_Simplify(ops[8]);
-    exps[1] = NandN(2, xs[0], xs[1]);
+    exps[1] = AndN(2, xs[0], xs[1]);
     EXPECT_TRUE(Similar(ops[9], exps[1]));
 
     // eq(x1, x0, x1, x0) <=> x0 = x1

@@ -319,12 +319,9 @@ _eq_simplify(struct BoolExpr *op)
         else if (uniq_len == 1) {
             y = BoolExpr_IncRef(uniq[0]);
         }
-        /* Equal(1, x0, ...) <=> Nand(x0, ...) */
+        /* Equal(1, x0, ...) <=> And(x0, ...) */
         else {
-            struct BoolExpr *temp;
-            CHECK_NULL(temp, _simple_op(OP_AND, uniq_len, uniq));
-            CHECK_NULL_1(y, Not(temp), temp);
-            BoolExpr_DecRef(temp);
+            CHECK_NULL(y, _simple_op(OP_AND, uniq_len, uniq));
         }
     }
     else {
