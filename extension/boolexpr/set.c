@@ -88,35 +88,20 @@ BoolExprSet_Del(struct BoolExprSet *set)
 }
 
 
-struct BoolExprSetIter *
-BoolExprSetIter_New(struct BoolExprSet *set)
+void
+BoolExprSetIter_Init(struct BoolExprSetIter *it, struct BoolExprSet *set)
 {
-    struct BoolExprSetIter *it;
-
-    it = malloc(sizeof(struct BoolExprSetIter));
-    if (it == NULL)
-        return NULL; // LCOV_EXCL_LINE
-
     it->_set = set;
-    it->_item = (struct BoolExprSetItem *) NULL;
+    it->item = (struct BoolExprSetItem *) NULL;
     it->done = true;
 
     for (it->_index = 0; it->_index < _primes[set->_pridx]; it->_index += 1) {
         if (set->items[it->_index]) {
-            it->_item = set->items[it->_index];
+            it->item = set->items[it->_index];
             it->done = false;
             break;
         }
     }
-
-    return it;
-}
-
-
-void
-BoolExprSetIter_Del(struct BoolExprSetIter *it)
-{
-    free(it);
 }
 
 
@@ -126,26 +111,19 @@ BoolExprSetIter_Next(struct BoolExprSetIter *it)
     if (it->done)
         return;
 
-    if (it->_item->tail) {
-        it->_item = it->_item->tail;
+    if (it->item->tail) {
+        it->item = it->item->tail;
         return;
     }
 
     for (it->_index += 1; it->_index < _primes[it->_set->_pridx]; it->_index += 1) {
         if (it->_set->items[it->_index]) {
-            it->_item = it->_set->items[it->_index];
+            it->item = it->_set->items[it->_index];
             return;
         }
     }
 
     it->done = true;
-}
-
-
-struct BoolExpr *
-BoolExprSetIter_Key(struct BoolExprSetIter *it)
-{
-    return it->_item->key;
 }
 
 

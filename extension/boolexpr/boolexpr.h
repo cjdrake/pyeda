@@ -175,6 +175,12 @@ struct BoolExprDict {
 };
 
 
+struct BoolExprSetItem {
+    struct BoolExpr *key;
+    struct BoolExprSetItem *tail;
+};
+
+
 struct BoolExprSet {
     size_t _pridx;
 
@@ -186,8 +192,8 @@ struct BoolExprSet {
 struct BoolExprSetIter {
     struct BoolExprSet *_set;
     size_t _index;
-    struct BoolExprSetItem *_item;
 
+    struct BoolExprSetItem *item;
     bool done;
 };
 
@@ -454,18 +460,12 @@ struct BoolExprSet * BoolExprSet_New(void);
 void BoolExprSet_Del(struct BoolExprSet *);
 
 /*
-** Return a new Boolean expression set iterator.
+** Initialize a Boolean expression set iterator.
 */
-struct BoolExprSetIter * BoolExprSetIter_New(struct BoolExprSet *);
+void BoolExprSetIter_Init(struct BoolExprSetIter *, struct BoolExprSet *);
 
-/* Delete a Boolean expression set iterator. */
-void BoolExprSetIter_Del(struct BoolExprSetIter *);
-
-/* Move to the next items in the set iteration. */
+/* Move to the next item in the set iteration. */
 void BoolExprSetIter_Next(struct BoolExprSetIter *);
-
-/* Return the current key in the set iteration. */
-struct BoolExpr * BoolExprSetIter_Key(struct BoolExprSetIter *);
 
 /* Insert an expression into the set. */
 bool BoolExprSet_Insert(struct BoolExprSet *, struct BoolExpr *key);

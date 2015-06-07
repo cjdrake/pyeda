@@ -18,22 +18,15 @@ static struct BoolExpr **
 _set2array(struct BoolExprSet *set)
 {
     struct BoolExpr **array;
-    struct BoolExprSetIter *it;
+    struct BoolExprSetIter it;
 
     array = malloc(set->length * sizeof(struct BoolExpr *));
     if (array == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    it = BoolExprSetIter_New(set);
-    if (it == NULL) {
-        free(array); // LCOV_EXCL_LINE
-        return NULL; // LCOV_EXCL_LINE
-    }
-
-    for (size_t i = 0; !it->done; BoolExprSetIter_Next(it))
-        array[i++] = BoolExprSetIter_Key(it);
-
-    BoolExprSetIter_Del(it);
+    size_t i = 0;
+    for (BoolExprSetIter_Init(&it, set); !it.done; BoolExprSetIter_Next(&it))
+        array[i++] = it.item->key;
 
     return array;
 }

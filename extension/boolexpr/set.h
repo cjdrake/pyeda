@@ -15,11 +15,5 @@
 #define MAX_IDX 30
 
 
-struct BoolExprSetItem {
-    struct BoolExpr *key;
-    struct BoolExprSetItem *tail;
-};
-
-
 #endif /* SET_H */
 
