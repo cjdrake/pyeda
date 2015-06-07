@@ -123,6 +123,7 @@ BoolExprSetIter_Next(struct BoolExprSetIter *it)
         }
     }
 
+    it->item = (struct BoolExprSetItem *) NULL;
     it->done = true;
 }
 

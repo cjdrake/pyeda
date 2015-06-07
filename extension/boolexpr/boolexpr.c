@@ -45,17 +45,21 @@ BoolExprIter_New(struct BoolExpr *ex)
     if (it == NULL)
         return NULL; // LCOV_EXCL_LINE
 
+    it->_ex = ex;
     it->done = false;
-    it->ex = ex;
 
-    if (IS_OP(ex)) {
-        it->index = 0;
-        it->it = BoolExprIter_New(ex->data.xs->items[0]);
-        if (it->it == NULL) {
-            free(it);    // LCOV_EXCL_LINE
-            return NULL; // LCOV_EXCL_LINE
-        }
+    if (IS_ATOM(ex)) {
+        it->item = ex;
+        return it;
     }
+
+    it->_index = 0;
+    it->_it = BoolExprIter_New(ex->data.xs->items[it->_index]);
+    if (it->_it == NULL) {
+        free(it);    // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
+    }
+    it->item = it->_it->item;
 
     return it;
 }
@@ -68,27 +72,47 @@ BoolExprIter_Del(struct BoolExprIter *it)
 }
 
 
-struct BoolExpr *
+bool
 BoolExprIter_Next(struct BoolExprIter *it)
 {
-    if (IS_ATOM(it->ex)) {
+    if (it->done)
+        return true;
+
+    if (IS_ATOM(it->_ex)) {
         it->done = true;
-        return it->ex;
+        return true;
     }
 
-    if (it->it->done) {
-        BoolExprIter_Del(it->it);
-        it->index += 1;
-        if (it->index < it->ex->data.xs->length) {
-            CHECK_NULL(it->it, BoolExprIter_New(it->ex->data.xs->items[it->index]));
-            return BoolExprIter_Next(it->it);
+    if (it->_it) {
+        if (!BoolExprIter_Next(it->_it)) {
+            free(it->_it); // LCOV_EXCL_LINE
+            return false;  // LCOV_EXCL_LINE
         }
 
-        it->done = true;
-        return it->ex;
+        if (!it->_it->done) {
+            it->item = it->_it->item;
+            return true;
+        }
+
+        free(it->_it);
+        it->_index += 1;
+
+        if (it->_index < it->_ex->data.xs->length) {
+            it->_it = BoolExprIter_New(it->_ex->data.xs->items[it->_index]);
+            if (it->_it == NULL)
+                return false; // LCOV_EXCL_LINE
+            it->item = it->_it->item;
+            return true;
+        }
+
+        it->_it = (struct BoolExprIter *) NULL;
+        it->item = it->_ex;
+        return true;
     }
 
-    return BoolExprIter_Next(it->it);
+    it->item = (struct BoolExpr *) NULL;
+    it->done = true;
+    return true;
 }
 
 

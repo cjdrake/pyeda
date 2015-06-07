@@ -485,21 +485,24 @@ ExprNode_T = {
 static PyObject *
 ExprNode_next(ExprNode *self)
 {
+    ExprNode *node;
+
     if (self->it->done) {
         BoolExprIter_Del(self->it);
         /* StopIteration */
         return NULL;
     }
 
-    struct BoolExpr *ex = BoolExprIter_Next(self->it);
-    ExprNode *pyex = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
-    if (pyex == NULL) {
+    node = (ExprNode *) PyObject_CallObject((PyObject *) &ExprNode_T, NULL);
+    if (node == NULL) {
         BoolExprIter_Del(self->it);
         return NULL;
     }
-    pyex->ex = BoolExpr_IncRef(ex);
+    node->ex = BoolExpr_IncRef(self->it->item);
 
-    return (PyObject *) pyex;
+    BoolExprIter_Next(self->it);
+
+    return (PyObject *) node;
 }
 
 

@@ -112,9 +112,6 @@ TEST_F(BoolExprTest, DegenerateForms)
 
 TEST_F(BoolExprTest, Iterate)
 {
-    int i;
-    BoolExprIter *it;
-    BoolExpr *ex;
 
     ops[0] = AndN(2, xs[0], xs[1]);
     ops[1] = XorN(2, xs[2], xs[3]);
@@ -123,7 +120,30 @@ TEST_F(BoolExprTest, Iterate)
     ops[4] = ITE(xs[8], xs[9], xs[10]);
     ops[5] = NorN(5, ops[0], ops[1], ops[2], ops[3], ops[4]);
 
-    BoolExpr *expected[] = {
+    size_t count = 0;
+    struct BoolExprIter *it;
+
+    struct BoolExpr *exp0[] = {xs[0]};
+
+    it = BoolExprIter_New(xs[0]);
+    for (count = 0; !it->done; ++count) {
+        EXPECT_EQ(it->item, exp0[0]);
+        BoolExprIter_Next(it);
+    }
+    BoolExprIter_Del(it);
+    EXPECT_EQ(count, 1);
+
+    struct BoolExpr *exp1[] = {xs[0], xs[1], ops[0]};
+
+    it = BoolExprIter_New(ops[0]);
+    for (count = 0; !it->done; ++count) {
+        EXPECT_EQ(it->item, exp1[count]);
+        BoolExprIter_Next(it);
+    }
+    BoolExprIter_Del(it);
+    EXPECT_EQ(count, 3);
+
+    struct BoolExpr *exp2[] = {
         xs[0], xs[1], ops[0],
         xs[2], xs[3], ops[1],
         xs[4], xs[5], ops[2],
@@ -134,13 +154,13 @@ TEST_F(BoolExprTest, Iterate)
     };
 
     it = BoolExprIter_New(ops[5]);
-    for (i = 0; !it->done; ++i) {
-        ex = BoolExprIter_Next(it);
-        EXPECT_EQ(ex, expected[i]);
+    for (count = 0; !it->done; ++count) {
+        EXPECT_EQ(it->item, exp2[count]);
+        BoolExprIter_Next(it);
     }
     BoolExprIter_Del(it);
 
-    EXPECT_EQ(i, 18);
+    EXPECT_EQ(count, 18);
 }
 
 

@@ -147,10 +147,12 @@ struct BoolExpr {
 
 
 struct BoolExprIter {
+    struct BoolExpr *_ex;
+    size_t _index;
+    struct BoolExprIter *_it;
+
+    struct BoolExpr *item;
     bool done;
-    struct BoolExpr *ex;
-    size_t index;
-    struct BoolExprIter *it;
 };
 
 
@@ -396,7 +398,7 @@ struct BoolExprIter * BoolExprIter_New(struct BoolExpr *ex);
 void BoolExprIter_Del(struct BoolExprIter *);
 
 /* Return the next Boolean expression in an iteration. */
-struct BoolExpr * BoolExprIter_Next(struct BoolExprIter *);
+bool BoolExprIter_Next(struct BoolExprIter *);
 
 
 /* Return a new array of Boolean expressions. */
