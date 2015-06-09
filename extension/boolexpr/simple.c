@@ -82,15 +82,16 @@ _cmp(const void *p1, const void *p2)
 
 
 static size_t
-_count_assoc_args(struct BoolExpr *op)
+_count_orand_args(struct BoolExpr *op)
 {
     size_t count = 0;
 
-    for (size_t i = 0; i < op->data.xs->length; ++i)
+    for (size_t i = 0; i < op->data.xs->length; ++i) {
         if (op->data.xs->items[i]->kind == op->kind)
             count += op->data.xs->items[i]->data.xs->length;
         else
             count += 1;
+    }
 
     return count;
 }
@@ -100,7 +101,7 @@ _count_assoc_args(struct BoolExpr *op)
 static struct BoolExpr *
 _orand_simplify(struct BoolExpr *op)
 {
-    size_t n = _count_assoc_args(op);
+    size_t n = _count_orand_args(op);
     struct BoolExpr **flat;
     size_t flat_len = 0;
     struct BoolExpr **uniq;
@@ -172,13 +173,32 @@ _orand_simplify(struct BoolExpr *op)
 }
 
 
+static size_t
+_count_xor_args(struct BoolExpr *op)
+{
+    size_t count = 0;
+
+    for (size_t i = 0; i < op->data.xs->length; ++i) {
+        if (IS_XOR(op->data.xs->items[i]))
+            count += op->data.xs->items[i]->data.xs->length;
+        else if (IS_NOT(op->data.xs->items[i]) &&
+                 IS_XOR(op->data.xs->items[i]->data.xs->items[0]))
+            count += op->data.xs->items[i]->data.xs->items[0]->data.xs->length;
+        else
+            count += 1;
+    }
+
+    return count;
+}
+
+
 /* NOTE: assume operator arguments are already simple */
 static struct BoolExpr *
 _xor_simplify(struct BoolExpr *op)
 {
     bool parity = true;
 
-    size_t n = _count_assoc_args(op);
+    size_t n = _count_xor_args(op);
     struct BoolExpr **flat;
     size_t flat_len = 0;
     struct BoolExpr **uniq;
@@ -194,9 +214,20 @@ _xor_simplify(struct BoolExpr *op)
             parity ^= (bool) item_i->kind;
         }
         /* Xor(Xor(x0, x1), x2) <=> Xor(x0, x1, x2) */
-        else if (item_i->kind == op->kind) {
+        else if (IS_XOR(item_i)) {
             for (size_t j = 0; j < item_i->data.xs->length; ++j) {
                 struct BoolExpr *item_j = item_i->data.xs->items[j];
+                if (IS_CONST(item_j))
+                    parity ^= (bool) item_j->kind;
+                else
+                    flat[flat_len++] = item_j;
+            }
+        }
+        /* Xor(Xnor(x0, x1), x2) <=> Xnor(x0, x1, x2) */
+        else if (IS_NOT(item_i) && IS_XOR(item_i->data.xs->items[0])) {
+            parity ^= true;
+            for (size_t j = 0; j < item_i->data.xs->items[0]->data.xs->length; ++j) {
+                struct BoolExpr *item_j = item_i->data.xs->items[0]->data.xs->items[j];
                 if (IS_CONST(item_j))
                     parity ^= (bool) item_j->kind;
                 else
