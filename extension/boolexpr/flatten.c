@@ -260,7 +260,7 @@ _to_dnf(struct BoolExpr *nnf)
     /* a | b & c */
     if (IS_OR(ex)) {
         temp = ex;
-        CHECK_NULL_1(ex, _absorb(temp), temp);
+        ex = _absorb(temp);
         BoolExpr_DecRef(temp);
         return ex;
     }
@@ -275,7 +275,7 @@ _to_dnf(struct BoolExpr *nnf)
         return ex;
 
     temp = ex;
-    CHECK_NULL_1(ex, _absorb(temp), temp);
+    ex = _absorb(temp);
     BoolExpr_DecRef(temp);
     return ex;
 }
@@ -302,7 +302,7 @@ _to_cnf(struct BoolExpr *nnf)
     /* a & (b | c) */
     if (IS_AND(ex)) {
         temp = ex;
-        CHECK_NULL_1(ex, _absorb(temp), temp);
+        ex = _absorb(temp);
         BoolExpr_DecRef(temp);
         return ex;
     }
@@ -317,7 +317,7 @@ _to_cnf(struct BoolExpr *nnf)
         return ex;
 
     temp = ex;
-    CHECK_NULL_1(ex, _absorb(temp), temp);
+    ex = _absorb(temp);
     BoolExpr_DecRef(temp);
     return ex;
 }

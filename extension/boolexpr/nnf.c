@@ -174,17 +174,13 @@ _eq_nnfify(struct BoolExpr *op)
 
     xns = malloc(length * sizeof(struct BoolExpr *));
     if (xns == NULL)
-        return NULL;
+        return NULL; // LCOV_EXCL_LINE
 
     /* Equal(x0, x1, x2) <=> ~x0 & ~x1 & ~x2 | x0 & x1 & x2 */
     for (size_t i = 0; i < length; ++i)
         CHECK_NULL_N(xns[i], Not(xs[i]), i, xns);
 
-    all0 = And(length, xns);
-    if (all0 == NULL) {
-        _free_exs(length, xns);
-        return NULL;
-    }
+    CHECK_NULL_N(all0, And(length, xns), length, xns);
 
     _free_exs(length, xns);
 

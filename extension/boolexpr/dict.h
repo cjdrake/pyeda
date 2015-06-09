@@ -15,12 +15,5 @@
 #define MAX_IDX 30
 
 
-struct BoolExprDictItem {
-    struct BoolExpr *key;
-    struct BoolExpr *val;
-    struct BoolExprDictItem *tail;
-};
-
-
 #endif /* DICT_H */
 

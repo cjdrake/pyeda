@@ -158,6 +158,17 @@ TEST_F(BoolExprTest, Iterate)
         EXPECT_EQ(it->item, exp2[count]);
         BoolExprIter_Next(it);
     }
+
+    EXPECT_EQ(it->item, (struct BoolExpr *) NULL);
+
+    /* Should have no effect */
+    BoolExprIter_Next(it);
+    BoolExprIter_Next(it);
+    BoolExprIter_Next(it);
+    BoolExprIter_Next(it);
+
+    EXPECT_EQ(it->item, (struct BoolExpr *) NULL);
+
     BoolExprIter_Del(it);
 
     EXPECT_EQ(count, 18);

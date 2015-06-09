@@ -113,7 +113,7 @@ _orand_simplify(struct BoolExpr *op)
 
     flat = malloc(n * sizeof(struct BoolExpr *));
     if (flat == NULL)
-        return NULL;
+        return NULL; // LCOV_EXCL_LINE
 
     /* 1. Flatten arguments, and eliminate {0, 1} */
     for (size_t i = 0; i < op->data.xs->length; ++i) {
@@ -149,8 +149,8 @@ _orand_simplify(struct BoolExpr *op)
 
     uniq = malloc(flat_len * sizeof(struct BoolExpr *));
     if (uniq == NULL) {
-        free(flat);
-        return NULL;
+        free(flat);  // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
     }
 
     /* 3. Apply: Or(~x, x) <=> 1, Or(x, x) <=> x */
@@ -217,7 +217,7 @@ _xor_simplify(struct BoolExpr *op)
 
     flat = malloc(n * sizeof(struct BoolExpr *));
     if (flat == NULL)
-        return NULL;
+        return NULL; // LCOV_EXCL_LINE
 
     /* 1. Flatten arguments, and eliminate {0, 1} */
     for (size_t i = 0; i < op->data.xs->length; ++i) {
@@ -256,8 +256,8 @@ _xor_simplify(struct BoolExpr *op)
 
     uniq = malloc(flat_len * sizeof(struct BoolExpr *));
     if (uniq == NULL) {
-        free(flat);
-        return NULL;
+        free(flat);  // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
     }
 
     /* 3. Apply: Xor(~x, x) <=> 1, Xor(x, x) <=> 0 */
@@ -308,7 +308,7 @@ _eq_simplify(struct BoolExpr *op)
 
     flat = malloc(length * sizeof(struct BoolExpr *));
     if (flat == NULL)
-        return NULL;
+        return NULL; // LCOV_EXCL_LINE
 
     /* 1. Eliminate {0, 1} */
     for (size_t i = 0; i < length; ++i) {
@@ -332,8 +332,8 @@ _eq_simplify(struct BoolExpr *op)
 
     uniq = malloc(flat_len * sizeof(struct BoolExpr *));
     if (uniq == NULL) {
-        free(flat);
-        return NULL;
+        free(flat);  // LCOV_EXCL_LINE
+        return NULL; // LCOV_EXCL_LINE
     }
 
     /* 3. Apply: Equal(~x, x) <=> 0, Equal(x0, x0, x1) <=> Equal(x0, x1) */
