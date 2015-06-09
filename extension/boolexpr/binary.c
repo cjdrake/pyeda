@@ -16,7 +16,7 @@
 struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 /* util.c */
-void _free_xs(int n, struct BoolExpr **xs);
+void _free_exs(int n, struct BoolExpr **exs);
 struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
 
 
@@ -71,22 +71,15 @@ _eq_binify(struct BoolExpr *op)
     xs = malloc(length * sizeof(struct BoolExpr *));
 
     for (size_t i = 0, index = 0; i < (op->data.xs->length - 1); ++i) {
-        for (size_t j = i+1; j < op->data.xs->length; ++j, ++index) {
-            xs[index] = EqualN(2, op->data.xs->items[i], op->data.xs->items[j]);
-            if (xs[index] == NULL) {
-                _free_xs(index, xs); // LCOV_EXCL_LINE
-                return NULL;         // LCOV_EXCL_LINE
-            }
+        for (size_t j = i + 1; j < op->data.xs->length; ++j, ++index) {
+            CHECK_NULL_N(xs[index], EqualN(2, op->data.xs->items[i],
+                                              op->data.xs->items[j]), index, xs);
         }
     }
 
-    temp = And(length, xs);
-    if (temp == NULL) {
-        _free_xs(length, xs); // LCOV_EXCL_LINE
-        return NULL;          // LCOV_EXCL_LINE
-    }
+    CHECK_NULL_N(temp, And(length, xs), length, xs);
 
-    _free_xs(length, xs);
+    _free_exs(length, xs);
 
     CHECK_NULL_1(y, _commutative_binify(temp), temp);
     BoolExpr_DecRef(temp);

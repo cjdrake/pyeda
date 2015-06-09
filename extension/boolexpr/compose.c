@@ -16,7 +16,7 @@
 struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 /* util.c */
-void _free_xs(int n, struct BoolExpr **xs);
+void _free_exs(int n, struct BoolExpr **exs);
 
 
 static struct BoolExpr *
@@ -68,11 +68,7 @@ _op_compose(struct BoolExpr *op, struct BoolExprDict *var2ex)
         return NULL; // LCOV_EXCL_LINE
 
     for (size_t i = 0; i < length; ++i) {
-        xs[i] = BoolExpr_Compose(op->data.xs->items[i], var2ex);
-        if (xs[i] == NULL) {
-            _free_xs(i, xs); // LCOV_EXCL_LINE
-            return NULL;     // LCOV_EXCL_LINE
-        }
+        CHECK_NULL_N(xs[i], BoolExpr_Compose(op->data.xs->items[i], var2ex), i, xs);
         mod_count += (xs[i] != op->data.xs->items[i]);
     }
 
@@ -81,7 +77,7 @@ _op_compose(struct BoolExpr *op, struct BoolExprDict *var2ex)
     else
         y = BoolExpr_IncRef(op);
 
-    _free_xs(length, xs);
+    _free_exs(length, xs);
 
     return y;
 }

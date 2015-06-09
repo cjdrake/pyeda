@@ -13,7 +13,7 @@
 
 
 /* util.c */
-void _free_xs(int n, struct BoolExpr **xs);
+void _free_exs(int n, struct BoolExpr **exs);
 struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
 
 
@@ -36,19 +36,13 @@ _inv_or(struct BoolExpr *op)
             free(xs);    // LCOV_EXCL_LINE
             return NULL; // LCOV_EXCL_LINE
         }
-
-        xs[i] = BoolExpr_PushDownNot(temp);
-        if (xs[i] == NULL) {
-            _free_xs(i, xs); // LCOV_EXCL_LINE
-            return NULL;     // LCOV_EXCL_LINE
-        }
-
+        CHECK_NULL_N(xs[i], BoolExpr_PushDownNot(temp), i, xs);
         BoolExpr_DecRef(temp);
     }
 
     y = And(length, xs);
 
-    _free_xs(length, xs);
+    _free_exs(length, xs);
 
     return y;
 }
@@ -72,19 +66,13 @@ _inv_and(struct BoolExpr *op)
             free(xs);    // LCOV_EXCL_LINE
             return NULL; // LCOV_EXCL_LINE
         }
-
-        xs[i] = BoolExpr_PushDownNot(temp);
-        if (xs[i] == NULL) {
-            _free_xs(i, xs); // LCOV_EXCL_LINE
-            return NULL;     // LCOV_EXCL_LINE
-        }
-
+        CHECK_NULL_N(xs[i], BoolExpr_PushDownNot(temp), i, xs);
         BoolExpr_DecRef(temp);
     }
 
     y = Or(length, xs);
 
-    _free_xs(length, xs);
+    _free_exs(length, xs);
 
     return y;
 }

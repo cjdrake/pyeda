@@ -17,7 +17,7 @@ struct BoolExprArray * _bx_array_from(size_t length, struct BoolExpr **items);
 struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
 
 /* util.c */
-void _free_xs(int length, struct BoolExpr **xs);
+void _free_exs(int length, struct BoolExpr **exs);
 
 
 static struct BoolExprArray *
@@ -34,11 +34,7 @@ _multiply(BoolExprKind kind, struct BoolExprArray *a, struct BoolExprArray *b)
     for (size_t i = 0, index = 0; i < a->length; ++i) {
         for (size_t j = 0; j < b->length; ++j, ++index) {
             struct BoolExpr *xs[2] = {a->items[i], b->items[j]};
-            items[index] = _op_new(kind, 2, xs);
-            if (items[index] == NULL) {
-                _free_xs(index, items); // LCOV_EXCL_LINE
-                return NULL;            // LCOV_EXCL_LINE
-            }
+            CHECK_NULL_N(items[index], _op_new(kind, 2, xs), index, items);
         }
     }
 

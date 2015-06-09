@@ -54,6 +54,7 @@ do { \
     if ((y = x) == NULL) { \
         for (size_t i = 0; i < n; ++i) \
             BoolExpr_DecRef(temps[i]); \
+        free(temps); \
         return NULL; \
     } \
 } while (0)

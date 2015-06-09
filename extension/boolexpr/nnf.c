@@ -20,7 +20,7 @@ struct BoolExpr * _simplify(struct BoolExpr *ex);
 
 /* util.c */
 struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
-void _free_xs(int n, struct BoolExpr **xs);
+void _free_exs(int n, struct BoolExpr **exs);
 void _mark_flags(struct BoolExpr *ex, BoolExprFlags f);
 
 
@@ -177,21 +177,16 @@ _eq_nnfify(struct BoolExpr *op)
         return NULL;
 
     /* Equal(x0, x1, x2) <=> ~x0 & ~x1 & ~x2 | x0 & x1 & x2 */
-    for (size_t i = 0; i < length; ++i) {
-        xns[i] = Not(xs[i]);
-        if (xns[i] == NULL) {
-            _free_xs(i, xns);
-            return NULL;
-        }
-    }
+    for (size_t i = 0; i < length; ++i)
+        CHECK_NULL_N(xns[i], Not(xs[i]), i, xns);
 
     all0 = And(length, xns);
     if (all0 == NULL) {
-        _free_xs(length, xns);
+        _free_exs(length, xns);
         return NULL;
     }
 
-    _free_xs(length, xns);
+    _free_exs(length, xns);
 
     CHECK_NULL_1(all1, And(length, xs), all0);
     y = OrN(2, all0, all1);

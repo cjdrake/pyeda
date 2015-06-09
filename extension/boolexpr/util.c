@@ -31,11 +31,11 @@ _uniqid2index(long uniqid)
 
 /* LCOV_EXCL_START */
 void
-_free_xs(int n, struct BoolExpr **xs)
+_free_exs(int n, struct BoolExpr **exs)
 {
     for (size_t i = 0; i < n; ++i)
-        BoolExpr_DecRef(xs[i]);
-    free(xs);
+        BoolExpr_DecRef(exs[i]);
+    free(exs);
 }
 /* LCOV_EXCL_STOP */
 
@@ -53,11 +53,7 @@ _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
         return NULL; // LCOV_EXCL_LINE
 
     for (size_t i = 0; i < length; ++i) {
-        xs[i] = fn(op->data.xs->items[i]);
-        if (xs[i] == NULL) {
-            _free_xs(i, xs); // LCOV_EXCL_LINE
-            return NULL;     // LCOV_EXCL_LINE
-        }
+        CHECK_NULL_N(xs[i], fn(op->data.xs->items[i]), i, xs);
         mod_count += (xs[i] != op->data.xs->items[i]);
     }
 
@@ -66,7 +62,7 @@ _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
     else
         y = BoolExpr_IncRef(op);
 
-    _free_xs(length, xs);
+    _free_exs(length, xs);
 
     return y;
 }
