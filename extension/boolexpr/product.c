@@ -11,21 +11,21 @@
 
 
 /* array.c */
-struct BoolExprArray * _bx_array_from(size_t length, struct BoolExpr **items);
+struct BX_Array * _bx_array_from(size_t length, struct BoolExpr **items);
 
 /* boolexpr.c */
-struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _op_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
 
 /* util.c */
 void _free_exs(int length, struct BoolExpr **exs);
 
 
-static struct BoolExprArray *
-_multiply(BoolExprKind kind, struct BoolExprArray *a, struct BoolExprArray *b)
+static struct BX_Array *
+_multiply(BX_Kind kind, struct BX_Array *a, struct BX_Array *b)
 {
     size_t length = a->length * b->length;
     struct BoolExpr **items;
-    struct BoolExprArray *prod;
+    struct BX_Array *prod;
 
     items = malloc(length * sizeof(struct BoolExpr *));
     if (items == NULL)
@@ -41,22 +41,22 @@ _multiply(BoolExprKind kind, struct BoolExprArray *a, struct BoolExprArray *b)
     prod = _bx_array_from(length, items);
 
     for (size_t i = 0; i < length; ++i)
-        BoolExpr_DecRef(items[i]);
+        BX_DecRef(items[i]);
 
     return prod;
 }
 
 
-static struct BoolExprArray *
-_product(BoolExprKind kind, size_t n, struct BoolExprArray **arrays)
+static struct BX_Array *
+_product(BX_Kind kind, size_t n, struct BX_Array **arrays)
 {
     if (n == 0) {
         struct BoolExpr *items[] = {IDENTITY[kind]};
-        return BoolExprArray_New(1, items);
+        return BX_Array_New(1, items);
     }
 
-    struct BoolExprArray *prev;
-    struct BoolExprArray *prod;
+    struct BX_Array *prev;
+    struct BX_Array *prod;
 
     prev = _product(kind, n-1, arrays);
     if (prev == NULL)
@@ -64,18 +64,18 @@ _product(BoolExprKind kind, size_t n, struct BoolExprArray **arrays)
 
     prod = _multiply(kind, arrays[n-1], prev);
     if (prod == NULL) {
-        BoolExprArray_Del(prev); // LCOV_EXCL_LINE
+        BX_Array_Del(prev); // LCOV_EXCL_LINE
         return NULL;             // LCOV_EXCL_LINE
     }
 
-    BoolExprArray_Del(prev);
+    BX_Array_Del(prev);
 
     return prod;
 }
 
 
-struct BoolExprArray *
-BoolExpr_Product(BoolExprKind kind, size_t length, struct BoolExprArray **arrays)
+struct BX_Array *
+BX_Product(BX_Kind kind, size_t length, struct BX_Array **arrays)
 {
     return _product(kind, length, arrays);
 }

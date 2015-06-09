@@ -22,7 +22,7 @@ do { \
 #define CHECK_NULL_1(y, x, temp) \
 do { \
     if ((y = x) == NULL) { \
-        BoolExpr_DecRef(temp); \
+        BX_DecRef(temp); \
         return NULL; \
     } \
 } while (0)
@@ -31,8 +31,8 @@ do { \
 #define CHECK_NULL_2(y, x, t0, t1) \
 do { \
     if ((y = x) == NULL) { \
-        BoolExpr_DecRef(t0); \
-        BoolExpr_DecRef(t1); \
+        BX_DecRef(t0); \
+        BX_DecRef(t1); \
         return NULL; \
     } \
 } while (0)
@@ -41,9 +41,9 @@ do { \
 #define CHECK_NULL_3(y, x, t0, t1, t2) \
 do { \
     if ((y = x) == NULL) { \
-        BoolExpr_DecRef(t0); \
-        BoolExpr_DecRef(t1); \
-        BoolExpr_DecRef(t2); \
+        BX_DecRef(t0); \
+        BX_DecRef(t1); \
+        BX_DecRef(t2); \
         return NULL; \
     } \
 } while (0)
@@ -53,7 +53,7 @@ do { \
 do { \
     if ((y = x) == NULL) { \
         for (size_t i = 0; i < n; ++i) \
-            BoolExpr_DecRef(temps[i]); \
+            BX_DecRef(temps[i]); \
         free(temps); \
         return NULL; \
     } \
@@ -118,18 +118,18 @@ typedef enum {
     OP_NOT  = 0x0C,
     OP_IMPL = 0x0D,
     OP_ITE  = 0x0E,
-} BoolExprKind;
+} BX_Kind;
 
 
 /* Expression flags */
-typedef unsigned char BoolExprFlags;
+typedef unsigned char BX_Flags;
 
 
 struct BoolExpr {
     int refcount;
 
-    BoolExprKind kind;
-    BoolExprFlags flags;
+    BX_Kind kind;
+    BX_Flags flags;
 
     union {
         /* constant */
@@ -137,103 +137,103 @@ struct BoolExpr {
 
         /* literal */
         struct {
-            struct BoolExprVector *lits;
+            struct BX_Vector *lits;
             long uniqid;
         } lit;
 
         /* operator */
-        struct BoolExprArray *xs;
+        struct BX_Array *xs;
     } data;
 };
 
 
-struct BoolExprIter {
+struct BX_Iter {
     struct BoolExpr *_ex;
     size_t _index;
-    struct BoolExprIter *_it;
+    struct BX_Iter *_it;
 
     struct BoolExpr *item;
     bool done;
 };
 
 
-struct BoolExprArray {
+struct BX_Array {
     size_t length;
     struct BoolExpr **items;
 };
 
 
-struct BoolExprVector {
+struct BX_Vector {
     size_t length;
     size_t capacity;
     struct BoolExpr **items;
 };
 
 
-struct BoolExprDictItem {
+struct BX_DictItem {
     struct BoolExpr *key;
     struct BoolExpr *val;
-    struct BoolExprDictItem *tail;
+    struct BX_DictItem *tail;
 };
 
 
-struct BoolExprDict {
+struct BX_Dict {
     size_t _pridx;
 
     size_t length;
-    struct BoolExprDictItem **items;
+    struct BX_DictItem **items;
 };
 
 
-struct BoolExprSetItem {
+struct BX_SetItem {
     struct BoolExpr *key;
-    struct BoolExprSetItem *tail;
+    struct BX_SetItem *tail;
 };
 
 
-struct BoolExprSet {
+struct BX_Set {
     size_t _pridx;
 
     size_t length;
-    struct BoolExprSetItem **items;
+    struct BX_SetItem **items;
 };
 
 
-struct BoolExprSetIter {
-    struct BoolExprSet *_set;
+struct BX_SetIter {
+    struct BX_Set *_set;
     size_t _index;
 
-    struct BoolExprSetItem *item;
+    struct BX_SetItem *item;
     bool done;
 };
 
 
-struct BoolExprOrAndArgSet {
-    BoolExprKind kind;
+struct BX_OrAndArgSet {
+    BX_Kind kind;
     bool min;
     bool max;
-    struct BoolExprSet *xs;
+    struct BX_Set *xs;
 };
 
 
-struct BoolExprXorArgSet {
+struct BX_XorArgSet {
     bool parity;
-    struct BoolExprSet *xs;
+    struct BX_Set *xs;
 };
 
 
-struct BoolExprEqArgSet {
+struct BX_EqArgSet {
     bool zero;
     bool one;
-    struct BoolExprSet *xs;
+    struct BX_Set *xs;
 };
 
 
 /* Constant expressions */
-extern struct BoolExpr Zero;
-extern struct BoolExpr One;
-extern struct BoolExpr Logical;
-extern struct BoolExpr Illogical;
+extern struct BoolExpr BX_Zero;
+extern struct BoolExpr BX_One;
+extern struct BoolExpr BX_Logical;
+extern struct BoolExpr BX_Illogical;
 
 extern struct BoolExpr * IDENTITY[16];
 extern struct BoolExpr * DOMINATOR[16];
@@ -244,7 +244,7 @@ extern struct BoolExpr * DOMINATOR[16];
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * Literal(struct BoolExprVector *lits, long uniqid);
+struct BoolExpr * BX_Literal(struct BX_Vector *lits, long uniqid);
 
 
 /*
@@ -252,39 +252,39 @@ struct BoolExpr * Literal(struct BoolExprVector *lits, long uniqid);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * Or(size_t n, struct BoolExpr **xs);
-struct BoolExpr * Nor(size_t n, struct BoolExpr **xs);
-struct BoolExpr * And(size_t n, struct BoolExpr **xs);
-struct BoolExpr * Nand(size_t n, struct BoolExpr **xs);
-struct BoolExpr * Xor(size_t n, struct BoolExpr **xs);
-struct BoolExpr * Xnor(size_t n, struct BoolExpr **xs);
-struct BoolExpr * Equal(size_t n, struct BoolExpr **xs);
-struct BoolExpr * Unequal(size_t n, struct BoolExpr **xs);
+struct BoolExpr * BX_Or(size_t n, struct BoolExpr **xs);
+struct BoolExpr * BX_Nor(size_t n, struct BoolExpr **xs);
+struct BoolExpr * BX_And(size_t n, struct BoolExpr **xs);
+struct BoolExpr * BX_Nand(size_t n, struct BoolExpr **xs);
+struct BoolExpr * BX_Xor(size_t n, struct BoolExpr **xs);
+struct BoolExpr * BX_Xnor(size_t n, struct BoolExpr **xs);
+struct BoolExpr * BX_Equal(size_t n, struct BoolExpr **xs);
+struct BoolExpr * BX_Unequal(size_t n, struct BoolExpr **xs);
 
-struct BoolExpr * OrN(size_t n, ...);
-struct BoolExpr * NorN(size_t n, ...);
-struct BoolExpr * AndN(size_t n, ...);
-struct BoolExpr * NandN(size_t n, ...);
-struct BoolExpr * XorN(size_t n, ...);
-struct BoolExpr * XnorN(size_t n, ...);
-struct BoolExpr * EqualN(size_t n, ...);
-struct BoolExpr * UnequalN(size_t n, ...);
+struct BoolExpr * BX_OrN(size_t n, ...);
+struct BoolExpr * BX_NorN(size_t n, ...);
+struct BoolExpr * BX_AndN(size_t n, ...);
+struct BoolExpr * BX_NandN(size_t n, ...);
+struct BoolExpr * BX_XorN(size_t n, ...);
+struct BoolExpr * BX_XnorN(size_t n, ...);
+struct BoolExpr * BX_EqualN(size_t n, ...);
+struct BoolExpr * BX_UnequalN(size_t n, ...);
 
-struct BoolExpr * Not(struct BoolExpr *x);
-struct BoolExpr * Implies(struct BoolExpr *p, struct BoolExpr *q);
-struct BoolExpr * ITE(struct BoolExpr *s, struct BoolExpr *d1, struct BoolExpr *d0);
+struct BoolExpr * BX_Not(struct BoolExpr *x);
+struct BoolExpr * BX_Implies(struct BoolExpr *p, struct BoolExpr *q);
+struct BoolExpr * BX_ITE(struct BoolExpr *s, struct BoolExpr *d1, struct BoolExpr *d0);
 
 
 /*
 ** Increment the reference count of an expression.
 */
-struct BoolExpr * BoolExpr_IncRef(struct BoolExpr *);
+struct BoolExpr * BX_IncRef(struct BoolExpr *);
 
 
 /*
 ** Decrement the reference count of an expression.
 */
-void BoolExpr_DecRef(struct BoolExpr *);
+void BX_DecRef(struct BoolExpr *);
 
 
 /*
@@ -294,7 +294,7 @@ void BoolExpr_DecRef(struct BoolExpr *);
 ** 2. A branch node (operator) has depth equal to the maximum depth of
 **    its children (arguments) plus one.
 */
-unsigned long BoolExpr_Depth(struct BoolExpr *);
+unsigned long BX_Depth(struct BoolExpr *);
 
 
 /*
@@ -304,22 +304,22 @@ unsigned long BoolExpr_Depth(struct BoolExpr *);
 ** 2. A branch node (operator) has size equal to the sum of its children's
 **    sizes plus one.
 */
-unsigned long BoolExpr_Size(struct BoolExpr *);
+unsigned long BX_Size(struct BoolExpr *);
 
 
 /* Return the number of atoms in an expression tree. */
-unsigned long BoolExpr_AtomCount(struct BoolExpr *);
+unsigned long BX_AtomCount(struct BoolExpr *);
 
 
 /* Return the number of operators in an expression tree. */
-unsigned long BoolExpr_OpCount(struct BoolExpr *);
+unsigned long BX_OpCount(struct BoolExpr *);
 
 
 /* Return true if the expression is in disjunctive normal form. */
-bool BoolExpr_IsDNF(struct BoolExpr *);
+bool BX_IsDNF(struct BoolExpr *);
 
 /* Return true if the expression is in conjunctive normal form. */
-bool BoolExpr_IsCNF(struct BoolExpr *);
+bool BX_IsCNF(struct BoolExpr *);
 
 
 /*
@@ -332,7 +332,7 @@ bool BoolExpr_IsCNF(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_PushDownNot(struct BoolExpr *);
+struct BoolExpr * BX_PushDownNot(struct BoolExpr *);
 
 
 /*
@@ -340,7 +340,7 @@ struct BoolExpr * BoolExpr_PushDownNot(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_Simplify(struct BoolExpr *);
+struct BoolExpr * BX_Simplify(struct BoolExpr *);
 
 
 /*
@@ -348,7 +348,7 @@ struct BoolExpr * BoolExpr_Simplify(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_ToBinary(struct BoolExpr *);
+struct BoolExpr * BX_ToBinary(struct BoolExpr *);
 
 
 /*
@@ -356,7 +356,7 @@ struct BoolExpr * BoolExpr_ToBinary(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_ToNNF(struct BoolExpr *);
+struct BoolExpr * BX_ToNNF(struct BoolExpr *);
 
 
 /*
@@ -364,7 +364,7 @@ struct BoolExpr * BoolExpr_ToNNF(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_ToDNF(struct BoolExpr *);
+struct BoolExpr * BX_ToDNF(struct BoolExpr *);
 
 
 /*
@@ -372,7 +372,7 @@ struct BoolExpr * BoolExpr_ToDNF(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_ToCNF(struct BoolExpr *);
+struct BoolExpr * BX_ToCNF(struct BoolExpr *);
 
 
 /*
@@ -380,7 +380,7 @@ struct BoolExpr * BoolExpr_ToCNF(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_CompleteSum(struct BoolExpr *);
+struct BoolExpr * BX_CompleteSum(struct BoolExpr *);
 
 
 /*
@@ -388,7 +388,7 @@ struct BoolExpr * BoolExpr_CompleteSum(struct BoolExpr *);
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_Compose(struct BoolExpr *, struct BoolExprDict *var2ex);
+struct BoolExpr * BX_Compose(struct BoolExpr *, struct BX_Dict *var2ex);
 
 
 /*
@@ -396,30 +396,30 @@ struct BoolExpr * BoolExpr_Compose(struct BoolExpr *, struct BoolExprDict *var2e
 **
 ** NOTE: Returns a new reference.
 */
-struct BoolExpr * BoolExpr_Restrict(struct BoolExpr *, struct BoolExprDict *var2const);
+struct BoolExpr * BX_Restrict(struct BoolExpr *, struct BX_Dict *var2const);
 
 
 /* Return a new Boolean expression iterator. */
-struct BoolExprIter * BoolExprIter_New(struct BoolExpr *ex);
+struct BX_Iter * BX_Iter_New(struct BoolExpr *ex);
 
 /* Delete a Boolean expression iterator. */
-void BoolExprIter_Del(struct BoolExprIter *);
+void BX_Iter_Del(struct BX_Iter *);
 
 /* Return the next Boolean expression in an iteration. */
-bool BoolExprIter_Next(struct BoolExprIter *);
+bool BX_Iter_Next(struct BX_Iter *);
 
 
 /* Return a new array of Boolean expressions. */
-struct BoolExprArray * BoolExprArray_New(size_t length, struct BoolExpr **items);
+struct BX_Array * BX_Array_New(size_t length, struct BoolExpr **items);
 
 /* Delete an array of Boolean expressions. */
-void BoolExprArray_Del(struct BoolExprArray *);
+void BX_Array_Del(struct BX_Array *);
 
 /* Return true if two arrays are equal. */
-bool BoolExprArray_Equal(struct BoolExprArray *, struct BoolExprArray *);
+bool BX_Array_Equal(struct BX_Array *, struct BX_Array *);
 
 /* Return the cartesian product of N arrays */
-struct BoolExprArray * BoolExpr_Product(BoolExprKind kind, size_t length, struct BoolExprArray **);
+struct BX_Array * BX_Product(BX_Kind kind, size_t length, struct BX_Array **);
 
 
 /*
@@ -427,111 +427,111 @@ struct BoolExprArray * BoolExpr_Product(BoolExprKind kind, size_t length, struct
 **
 ** All items will be initialized to NULL.
 */
-struct BoolExprVector * BoolExprVector_New(void);
+struct BX_Vector * BX_Vector_New(void);
 
 /* Delete a vector of Boolean expressions. */
-void BoolExprVector_Del(struct BoolExprVector *);
+void BX_Vector_Del(struct BX_Vector *);
 
-bool BoolExprVector_Insert(struct BoolExprVector *, size_t index, struct BoolExpr *ex);
+bool BX_Vector_Insert(struct BX_Vector *, size_t index, struct BoolExpr *ex);
 
-bool BoolExprVector_Append(struct BoolExprVector *, struct BoolExpr *ex);
+bool BX_Vector_Append(struct BX_Vector *, struct BoolExpr *ex);
 
 
 /*
 ** Return a new dictionary of Boolean expressions.
 */
-struct BoolExprDict * BoolExprDict_New(void);
+struct BX_Dict * BX_Dict_New(void);
 
 /* Delete a dictionary of Boolean expressions. */
-void BoolExprDict_Del(struct BoolExprDict *);
+void BX_Dict_Del(struct BX_Dict *);
 
 /* Insert an expression into the dictionary. */
-bool BoolExprDict_Insert(struct BoolExprDict *, struct BoolExpr *key, struct BoolExpr *val);
+bool BX_Dict_Insert(struct BX_Dict *, struct BoolExpr *key, struct BoolExpr *val);
 
 /* Remove an expression from the dictionary. */
-bool BoolExprDict_Remove(struct BoolExprDict *, struct BoolExpr *key);
+bool BX_Dict_Remove(struct BX_Dict *, struct BoolExpr *key);
 
 /* If the dict contains the key, return its value. */
-struct BoolExpr * BoolExprDict_Search(struct BoolExprDict *, struct BoolExpr *key);
+struct BoolExpr * BX_Dict_Search(struct BX_Dict *, struct BoolExpr *key);
 
 /* Return true if the dict contains the key. */
-bool BoolExprDict_Contains(struct BoolExprDict *, struct BoolExpr *key);
+bool BX_Dict_Contains(struct BX_Dict *, struct BoolExpr *key);
 
 /* Remove all items from the dict. */
-void BoolExprDict_Clear(struct BoolExprDict *);
+void BX_Dict_Clear(struct BX_Dict *);
 
 
 /*
 ** Return a new set of Boolean expressions.
 */
-struct BoolExprSet * BoolExprSet_New(void);
+struct BX_Set * BX_Set_New(void);
 
 /* Delete a set of Boolean expressions. */
-void BoolExprSet_Del(struct BoolExprSet *);
+void BX_Set_Del(struct BX_Set *);
 
 /*
 ** Initialize a Boolean expression set iterator.
 */
-void BoolExprSetIter_Init(struct BoolExprSetIter *, struct BoolExprSet *);
+void BX_SetIter_Init(struct BX_SetIter *, struct BX_Set *);
 
 /* Move to the next item in the set iteration. */
-void BoolExprSetIter_Next(struct BoolExprSetIter *);
+void BX_SetIter_Next(struct BX_SetIter *);
 
 /* Insert an expression into the set. */
-bool BoolExprSet_Insert(struct BoolExprSet *, struct BoolExpr *key);
+bool BX_Set_Insert(struct BX_Set *, struct BoolExpr *key);
 
 /* Remove an expression from the set. */
-bool BoolExprSet_Remove(struct BoolExprSet *, struct BoolExpr *key);
+bool BX_Set_Remove(struct BX_Set *, struct BoolExpr *key);
 
 /* Return true if the set contains the key. */
-bool BoolExprSet_Contains(struct BoolExprSet *, struct BoolExpr *key);
+bool BX_Set_Contains(struct BX_Set *, struct BoolExpr *key);
 
 /* Set comparison operators */
-bool BoolExprSet_EQ(struct BoolExprSet *, struct BoolExprSet *);
-bool BoolExprSet_NE(struct BoolExprSet *, struct BoolExprSet *);
-bool BoolExprSet_LTE(struct BoolExprSet *, struct BoolExprSet *);
-bool BoolExprSet_GT(struct BoolExprSet *, struct BoolExprSet *);
-bool BoolExprSet_GTE(struct BoolExprSet *, struct BoolExprSet *);
-bool BoolExprSet_LT(struct BoolExprSet *, struct BoolExprSet *);
+bool BX_Set_EQ(struct BX_Set *, struct BX_Set *);
+bool BX_Set_NE(struct BX_Set *, struct BX_Set *);
+bool BX_Set_LTE(struct BX_Set *, struct BX_Set *);
+bool BX_Set_GT(struct BX_Set *, struct BX_Set *);
+bool BX_Set_GTE(struct BX_Set *, struct BX_Set *);
+bool BX_Set_LT(struct BX_Set *, struct BX_Set *);
 
 /* Remove all items from the set. */
-void BoolExprSet_Clear(struct BoolExprSet *);
+void BX_Set_Clear(struct BX_Set *);
 
 
 /*
 ** Return a new OR/AND set
 */
-struct BoolExprOrAndArgSet * BoolExprOrAndArgSet_New(BoolExprKind kind);
+struct BX_OrAndArgSet * BX_OrAndArgSet_New(BX_Kind kind);
 
-void BoolExprOrAndArgSet_Del(struct BoolExprOrAndArgSet *);
+void BX_OrAndArgSet_Del(struct BX_OrAndArgSet *);
 
-bool BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *, struct BoolExpr *key);
+bool BX_OrAndArgSet_Insert(struct BX_OrAndArgSet *, struct BoolExpr *key);
 
-struct BoolExpr * BoolExprOrAndArgSet_Reduce(struct BoolExprOrAndArgSet *);
+struct BoolExpr * BX_OrAndArgSet_Reduce(struct BX_OrAndArgSet *);
 
 
 /*
 ** Return a new XOR/XNOR set
 */
-struct BoolExprXorArgSet * BoolExprXorArgSet_New(bool parity);
+struct BX_XorArgSet * BX_XorArgSet_New(bool parity);
 
-void BoolExprXorArgSet_Del(struct BoolExprXorArgSet *);
+void BX_XorArgSet_Del(struct BX_XorArgSet *);
 
-bool BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *, struct BoolExpr *key);
+bool BX_XorArgSet_Insert(struct BX_XorArgSet *, struct BoolExpr *key);
 
-struct BoolExpr * BoolExprXorArgSet_Reduce(struct BoolExprXorArgSet *);
+struct BoolExpr * BX_XorArgSet_Reduce(struct BX_XorArgSet *);
 
 
 /*
 ** Return a new Equal set
 */
-struct BoolExprEqArgSet * BoolExprEqArgSet_New(void);
+struct BX_EqArgSet * BX_EqArgSet_New(void);
 
-void BoolExprEqArgSet_Del(struct BoolExprEqArgSet *);
+void BX_EqArgSet_Del(struct BX_EqArgSet *);
 
-bool BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *, struct BoolExpr *key);
+bool BX_EqArgSet_Insert(struct BX_EqArgSet *, struct BoolExpr *key);
 
-struct BoolExpr * BoolExprEqArgSet_Reduce(struct BoolExprEqArgSet *);
+struct BoolExpr * BX_EqArgSet_Reduce(struct BX_EqArgSet *);
 
 
 #ifdef __cplusplus

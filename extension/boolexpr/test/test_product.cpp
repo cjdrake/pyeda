@@ -8,22 +8,22 @@
 #include "boolexprtest.hpp"
 
 
-class BoolExprProductTest: public BoolExprTest {};
+class BX_Product_Test: public BoolExpr_Test {};
 
 
-TEST_F(BoolExprProductTest, Product)
+TEST_F(BX_Product_Test, Product)
 {
     struct BoolExpr *A[] = {xs[0]};
     struct BoolExpr *B[] = {xs[1], xs[2]};
     struct BoolExpr *C[] = {xs[3], xs[4], xs[5]};
 
-    struct BoolExprArray *arrays[3];
+    struct BX_Array *arrays[3];
 
-    arrays[0] = BoolExprArray_New(1, A);
-    arrays[1] = BoolExprArray_New(2, B);
-    arrays[2] = BoolExprArray_New(3, C);
+    arrays[0] = BX_Array_New(1, A);
+    arrays[1] = BX_Array_New(2, B);
+    arrays[2] = BX_Array_New(3, C);
 
-    struct BoolExprArray *prod = BoolExpr_Product(OP_OR, 3, arrays);
+    struct BX_Array *prod = BX_Product(OP_OR, 3, arrays);
 
     EXPECT_EQ(prod->length, 1 * 2 * 3);
 
@@ -37,35 +37,35 @@ TEST_F(BoolExprProductTest, Product)
     };
 
     for (int i = 0; i < 6; ++i) {
-        EXPECT_EQ(prod->items[i]->data.xs->items[1]->data.xs->items[1]->data.xs->items[1], &Zero);
+        EXPECT_EQ(prod->items[i]->data.xs->items[1]->data.xs->items[1]->data.xs->items[1], &BX_Zero);
         EXPECT_EQ(prod->items[i]->data.xs->items[1]->data.xs->items[1]->data.xs->items[0], xs[p[i][0]]);
         EXPECT_EQ(prod->items[i]->data.xs->items[1]->data.xs->items[0], xs[p[i][1]]);
         EXPECT_EQ(prod->items[i]->data.xs->items[0], xs[p[i][2]]);
     }
 
-    BoolExprArray_Del(prod);
+    BX_Array_Del(prod);
 
     for (int i = 0; i < 3; ++i)
-        BoolExprArray_Del(arrays[i]);
+        BX_Array_Del(arrays[i]);
 }
 
 
-TEST_F(BoolExprProductTest, Identity)
+TEST_F(BX_Product_Test, Identity)
 {
-    struct BoolExprArray **arrays;
+    struct BX_Array **arrays;
 
-    struct BoolExprArray *prod_and = BoolExpr_Product(OP_AND, 0, arrays);
+    struct BX_Array *prod_and = BX_Product(OP_AND, 0, arrays);
 
     EXPECT_EQ(prod_and->length, 1);
-    EXPECT_EQ(prod_and->items[0], &One);
+    EXPECT_EQ(prod_and->items[0], &BX_One);
 
-    BoolExprArray_Del(prod_and);
+    BX_Array_Del(prod_and);
 
-    struct BoolExprArray *prod_or = BoolExpr_Product(OP_OR, 0, arrays);
+    struct BX_Array *prod_or = BX_Product(OP_OR, 0, arrays);
 
     EXPECT_EQ(prod_or->length, 1);
-    EXPECT_EQ(prod_or->items[0], &Zero);
+    EXPECT_EQ(prod_or->items[0], &BX_Zero);
 
-    BoolExprArray_Del(prod_or);
+    BX_Array_Del(prod_or);
 }
 

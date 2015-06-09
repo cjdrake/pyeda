@@ -8,310 +8,310 @@
 #include "boolexprtest.hpp"
 
 
-class BoolExprArgSetTest: public BoolExprTest {};
+class BX_ArgSet_Test: public BoolExpr_Test {};
 
 
-TEST_F(BoolExprArgSetTest, OrBasic)
+TEST_F(BX_ArgSet_Test, OrBasic)
 {
-    struct BoolExprOrAndArgSet *a = BoolExprOrAndArgSet_New(OP_OR);
+    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(OP_OR);
 
     EXPECT_EQ(a->kind, OP_OR);
     EXPECT_TRUE(a->min);
     EXPECT_FALSE(a->max);
 
-    BoolExprOrAndArgSet_Insert(a, xns[0]);
+    BX_OrAndArgSet_Insert(a, xns[0]);
     EXPECT_FALSE(a->min);
     EXPECT_EQ(a->xs->length, 1);
 
-    BoolExprOrAndArgSet_Insert(a, &Zero);
+    BX_OrAndArgSet_Insert(a, &BX_Zero);
     EXPECT_EQ(a->xs->length, 1);
 
-    ops[0] = OrN(2, xs[1], xs[2]);
-    ops[1] = OrN(2, xs[3], xs[4]);
-    ops[2] = OrN(2, ops[0], ops[1]);
-    BoolExprOrAndArgSet_Insert(a, ops[2]);
+    ops[0] = BX_OrN(2, xs[1], xs[2]);
+    ops[1] = BX_OrN(2, xs[3], xs[4]);
+    ops[2] = BX_OrN(2, ops[0], ops[1]);
+    BX_OrAndArgSet_Insert(a, ops[2]);
     EXPECT_EQ(a->xs->length, 5);
 
-    BoolExprOrAndArgSet_Insert(a, xs[0]);
+    BX_OrAndArgSet_Insert(a, xs[0]);
     EXPECT_FALSE(a->min);
     EXPECT_TRUE(a->max);
     EXPECT_EQ(a->xs->length, 0);
 
-    BoolExprOrAndArgSet_Del(a);
+    BX_OrAndArgSet_Del(a);
 }
 
 
-TEST_F(BoolExprArgSetTest, AndBasic)
+TEST_F(BX_ArgSet_Test, AndBasic)
 {
-    struct BoolExprOrAndArgSet *a = BoolExprOrAndArgSet_New(OP_AND);
+    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(OP_AND);
 
     EXPECT_EQ(a->kind, OP_AND);
     EXPECT_TRUE(a->min);
     EXPECT_FALSE(a->max);
 
-    BoolExprOrAndArgSet_Insert(a, xns[0]);
+    BX_OrAndArgSet_Insert(a, xns[0]);
     EXPECT_FALSE(a->min);
     EXPECT_EQ(a->xs->length, 1);
 
-    BoolExprOrAndArgSet_Insert(a, &One);
+    BX_OrAndArgSet_Insert(a, &BX_One);
     EXPECT_EQ(a->xs->length, 1);
 
-    ops[0] = AndN(2, xs[1], xs[2]);
-    ops[1] = AndN(2, xs[3], xs[4]);
-    ops[2] = AndN(2, ops[0], ops[1]);
-    BoolExprOrAndArgSet_Insert(a, ops[2]);
+    ops[0] = BX_AndN(2, xs[1], xs[2]);
+    ops[1] = BX_AndN(2, xs[3], xs[4]);
+    ops[2] = BX_AndN(2, ops[0], ops[1]);
+    BX_OrAndArgSet_Insert(a, ops[2]);
     EXPECT_EQ(a->xs->length, 5);
 
-    BoolExprOrAndArgSet_Insert(a, &Zero);
+    BX_OrAndArgSet_Insert(a, &BX_Zero);
     EXPECT_FALSE(a->min);
     EXPECT_TRUE(a->max);
     EXPECT_EQ(a->xs->length, 0);
 
-    BoolExprOrAndArgSet_Del(a);
+    BX_OrAndArgSet_Del(a);
 }
 
 
-TEST_F(BoolExprArgSetTest, XorBasic)
+TEST_F(BX_ArgSet_Test, XorBasic)
 {
-    struct BoolExprXorArgSet *a = BoolExprXorArgSet_New(true);
+    struct BX_XorArgSet *a = BX_XorArgSet_New(true);
 
-    BoolExprXorArgSet_Insert(a, xs[0]);
-    BoolExprXorArgSet_Insert(a, xs[1]);
+    BX_XorArgSet_Insert(a, xs[0]);
+    BX_XorArgSet_Insert(a, xs[1]);
     EXPECT_TRUE(a->parity);
     EXPECT_EQ(a->xs->length, 2);
 
-    BoolExprXorArgSet_Insert(a, &Zero);
+    BX_XorArgSet_Insert(a, &BX_Zero);
     EXPECT_TRUE(a->parity);
     EXPECT_EQ(a->xs->length, 2);
 
-    BoolExprXorArgSet_Insert(a, &One);
+    BX_XorArgSet_Insert(a, &BX_One);
     EXPECT_FALSE(a->parity);
     EXPECT_EQ(a->xs->length, 2);
 
-    ops[0] = XorN(2, xs[2], xs[3]);
-    ops[1] = XnorN(2, xs[4], xs[5]);
-    ops[2] = XorN(2, ops[0], ops[1]);
-    BoolExprXorArgSet_Insert(a, ops[2]);
+    ops[0] = BX_XorN(2, xs[2], xs[3]);
+    ops[1] = BX_XnorN(2, xs[4], xs[5]);
+    ops[2] = BX_XorN(2, ops[0], ops[1]);
+    BX_XorArgSet_Insert(a, ops[2]);
     EXPECT_TRUE(a->parity);
     EXPECT_EQ(a->xs->length, 6);
 
-    BoolExprXorArgSet_Insert(a, xs[0]);
+    BX_XorArgSet_Insert(a, xs[0]);
     EXPECT_TRUE(a->parity);
     EXPECT_EQ(a->xs->length, 5);
 
-    BoolExprXorArgSet_Insert(a, xns[1]);
+    BX_XorArgSet_Insert(a, xns[1]);
     EXPECT_FALSE(a->parity);
     EXPECT_EQ(a->xs->length, 4);
 
-    BoolExprXorArgSet_Del(a);
+    BX_XorArgSet_Del(a);
 }
 
 
-TEST_F(BoolExprArgSetTest, EqBasic)
+TEST_F(BX_ArgSet_Test, EqBasic)
 {
-    struct BoolExprEqArgSet *a = BoolExprEqArgSet_New();
-    struct BoolExprEqArgSet *b = BoolExprEqArgSet_New();
-    struct BoolExprEqArgSet *c = BoolExprEqArgSet_New();
+    struct BX_EqArgSet *a = BX_EqArgSet_New();
+    struct BX_EqArgSet *b = BX_EqArgSet_New();
+    struct BX_EqArgSet *c = BX_EqArgSet_New();
 
-    BoolExprEqArgSet_Insert(a, xs[0]);
-    BoolExprEqArgSet_Insert(a, xs[1]);
+    BX_EqArgSet_Insert(a, xs[0]);
+    BX_EqArgSet_Insert(a, xs[1]);
     EXPECT_FALSE(a->zero);
     EXPECT_FALSE(a->one);
     EXPECT_EQ(a->xs->length, 2);
 
-    BoolExprEqArgSet_Insert(a, &Zero);
-    BoolExprEqArgSet_Insert(a, &One);
+    BX_EqArgSet_Insert(a, &BX_Zero);
+    BX_EqArgSet_Insert(a, &BX_One);
     EXPECT_TRUE(a->zero);
     EXPECT_TRUE(a->one);
     EXPECT_EQ(a->xs->length, 0);
 
-    BoolExprEqArgSet_Insert(a, xs[2]);
-    BoolExprEqArgSet_Insert(a, xs[3]);
+    BX_EqArgSet_Insert(a, xs[2]);
+    BX_EqArgSet_Insert(a, xs[3]);
     EXPECT_TRUE(a->zero);
     EXPECT_TRUE(a->one);
     EXPECT_EQ(a->xs->length, 0);
 
-    BoolExprEqArgSet_Insert(b, xs[0]);
-    BoolExprEqArgSet_Insert(b, xs[1]);
+    BX_EqArgSet_Insert(b, xs[0]);
+    BX_EqArgSet_Insert(b, xs[1]);
     EXPECT_FALSE(b->zero);
     EXPECT_FALSE(b->one);
     EXPECT_EQ(b->xs->length, 2);
 
-    BoolExprEqArgSet_Insert(b, &One);
-    BoolExprEqArgSet_Insert(b, &Zero);
+    BX_EqArgSet_Insert(b, &BX_One);
+    BX_EqArgSet_Insert(b, &BX_Zero);
     EXPECT_TRUE(b->zero);
     EXPECT_TRUE(b->one);
     EXPECT_EQ(b->xs->length, 0);
 
-    BoolExprEqArgSet_Insert(b, xs[2]);
-    BoolExprEqArgSet_Insert(b, xs[3]);
+    BX_EqArgSet_Insert(b, xs[2]);
+    BX_EqArgSet_Insert(b, xs[3]);
     EXPECT_TRUE(b->zero);
     EXPECT_TRUE(b->one);
     EXPECT_EQ(b->xs->length, 0);
 
-    BoolExprEqArgSet_Insert(c, xs[0]);
-    BoolExprEqArgSet_Insert(c, xs[1]);
-    BoolExprEqArgSet_Insert(c, xs[2]);
+    BX_EqArgSet_Insert(c, xs[0]);
+    BX_EqArgSet_Insert(c, xs[1]);
+    BX_EqArgSet_Insert(c, xs[2]);
     EXPECT_FALSE(c->zero);
     EXPECT_FALSE(c->one);
     EXPECT_EQ(c->xs->length, 3);
-    BoolExprEqArgSet_Insert(c, xns[1]);
+    BX_EqArgSet_Insert(c, xns[1]);
     EXPECT_TRUE(c->zero);
     EXPECT_TRUE(c->one);
     EXPECT_EQ(c->xs->length, 0);
 
-    BoolExprEqArgSet_Del(a);
-    BoolExprEqArgSet_Del(b);
-    BoolExprEqArgSet_Del(c);
+    BX_EqArgSet_Del(a);
+    BX_EqArgSet_Del(b);
+    BX_EqArgSet_Del(c);
 }
 
 
-TEST_F(BoolExprArgSetTest, OrReduce)
+TEST_F(BX_ArgSet_Test, OrReduce)
 {
-    struct BoolExprOrAndArgSet *a = BoolExprOrAndArgSet_New(OP_OR);
-    struct BoolExprOrAndArgSet *b = BoolExprOrAndArgSet_New(OP_OR);
-    struct BoolExprOrAndArgSet *c = BoolExprOrAndArgSet_New(OP_OR);
-    struct BoolExprOrAndArgSet *d = BoolExprOrAndArgSet_New(OP_OR);
+    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(OP_OR);
+    struct BX_OrAndArgSet *b = BX_OrAndArgSet_New(OP_OR);
+    struct BX_OrAndArgSet *c = BX_OrAndArgSet_New(OP_OR);
+    struct BX_OrAndArgSet *d = BX_OrAndArgSet_New(OP_OR);
 
-    EXPECT_EQ(BoolExprOrAndArgSet_Reduce(a), &Zero);
+    EXPECT_EQ(BX_OrAndArgSet_Reduce(a), &BX_Zero);
 
-    BoolExprOrAndArgSet_Insert(b, xs[0]);
-    BoolExprOrAndArgSet_Insert(b, xs[1]);
-    BoolExprOrAndArgSet_Insert(b, xs[2]);
-    BoolExprOrAndArgSet_Insert(b, xns[0]);
-    EXPECT_EQ(BoolExprOrAndArgSet_Reduce(b), &One);
+    BX_OrAndArgSet_Insert(b, xs[0]);
+    BX_OrAndArgSet_Insert(b, xs[1]);
+    BX_OrAndArgSet_Insert(b, xs[2]);
+    BX_OrAndArgSet_Insert(b, xns[0]);
+    EXPECT_EQ(BX_OrAndArgSet_Reduce(b), &BX_One);
 
-    BoolExprOrAndArgSet_Insert(c, xs[0]);
-    BoolExprOrAndArgSet_Insert(c, xs[0]);
-    BoolExprOrAndArgSet_Insert(c, xs[1]);
-    BoolExprOrAndArgSet_Insert(c, xs[1]);
-    ops[0] = BoolExprOrAndArgSet_Reduce(c);
+    BX_OrAndArgSet_Insert(c, xs[0]);
+    BX_OrAndArgSet_Insert(c, xs[0]);
+    BX_OrAndArgSet_Insert(c, xs[1]);
+    BX_OrAndArgSet_Insert(c, xs[1]);
+    ops[0] = BX_OrAndArgSet_Reduce(c);
     EXPECT_EQ(ops[0]->kind, OP_OR);
     EXPECT_EQ(ops[0]->data.xs->length, 2);
 
-    BoolExprOrAndArgSet_Insert(d, xs[0]);
-    ops[1] = BoolExprOrAndArgSet_Reduce(d);
+    BX_OrAndArgSet_Insert(d, xs[0]);
+    ops[1] = BX_OrAndArgSet_Reduce(d);
     EXPECT_EQ(ops[1], xs[0]);
 
-    BoolExprOrAndArgSet_Del(a);
-    BoolExprOrAndArgSet_Del(b);
-    BoolExprOrAndArgSet_Del(c);
-    BoolExprOrAndArgSet_Del(d);
+    BX_OrAndArgSet_Del(a);
+    BX_OrAndArgSet_Del(b);
+    BX_OrAndArgSet_Del(c);
+    BX_OrAndArgSet_Del(d);
 }
 
 
-TEST_F(BoolExprArgSetTest, AndReduce)
+TEST_F(BX_ArgSet_Test, AndReduce)
 {
-    struct BoolExprOrAndArgSet *a = BoolExprOrAndArgSet_New(OP_AND);
-    struct BoolExprOrAndArgSet *b = BoolExprOrAndArgSet_New(OP_AND);
-    struct BoolExprOrAndArgSet *c = BoolExprOrAndArgSet_New(OP_AND);
+    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(OP_AND);
+    struct BX_OrAndArgSet *b = BX_OrAndArgSet_New(OP_AND);
+    struct BX_OrAndArgSet *c = BX_OrAndArgSet_New(OP_AND);
 
-    EXPECT_EQ(BoolExprOrAndArgSet_Reduce(a), &One);
+    EXPECT_EQ(BX_OrAndArgSet_Reduce(a), &BX_One);
 
-    BoolExprOrAndArgSet_Insert(b, xs[0]);
-    BoolExprOrAndArgSet_Insert(b, xs[1]);
-    BoolExprOrAndArgSet_Insert(b, xs[2]);
-    BoolExprOrAndArgSet_Insert(b, xns[0]);
-    EXPECT_EQ(BoolExprOrAndArgSet_Reduce(b), &Zero);
+    BX_OrAndArgSet_Insert(b, xs[0]);
+    BX_OrAndArgSet_Insert(b, xs[1]);
+    BX_OrAndArgSet_Insert(b, xs[2]);
+    BX_OrAndArgSet_Insert(b, xns[0]);
+    EXPECT_EQ(BX_OrAndArgSet_Reduce(b), &BX_Zero);
 
-    BoolExprOrAndArgSet_Insert(c, xs[0]);
-    BoolExprOrAndArgSet_Insert(c, xs[0]);
-    BoolExprOrAndArgSet_Insert(c, xs[1]);
-    BoolExprOrAndArgSet_Insert(c, xs[1]);
-    ops[0] = BoolExprOrAndArgSet_Reduce(c);
+    BX_OrAndArgSet_Insert(c, xs[0]);
+    BX_OrAndArgSet_Insert(c, xs[0]);
+    BX_OrAndArgSet_Insert(c, xs[1]);
+    BX_OrAndArgSet_Insert(c, xs[1]);
+    ops[0] = BX_OrAndArgSet_Reduce(c);
     EXPECT_EQ(ops[0]->kind, OP_AND);
     EXPECT_EQ(ops[0]->data.xs->length, 2);
 
-    BoolExprOrAndArgSet_Del(a);
-    BoolExprOrAndArgSet_Del(b);
-    BoolExprOrAndArgSet_Del(c);
+    BX_OrAndArgSet_Del(a);
+    BX_OrAndArgSet_Del(b);
+    BX_OrAndArgSet_Del(c);
 }
 
 
-TEST_F(BoolExprArgSetTest, XorReduce)
+TEST_F(BX_ArgSet_Test, XorReduce)
 {
-    struct BoolExprXorArgSet *a = BoolExprXorArgSet_New(true);
-    struct BoolExprXorArgSet *b = BoolExprXorArgSet_New(false);
-    struct BoolExprXorArgSet *c = BoolExprXorArgSet_New(true);
-    struct BoolExprXorArgSet *d = BoolExprXorArgSet_New(true);
+    struct BX_XorArgSet *a = BX_XorArgSet_New(true);
+    struct BX_XorArgSet *b = BX_XorArgSet_New(false);
+    struct BX_XorArgSet *c = BX_XorArgSet_New(true);
+    struct BX_XorArgSet *d = BX_XorArgSet_New(true);
 
-    EXPECT_EQ(BoolExprXorArgSet_Reduce(a), &Zero);
-    EXPECT_EQ(BoolExprXorArgSet_Reduce(b), &One);
+    EXPECT_EQ(BX_XorArgSet_Reduce(a), &BX_Zero);
+    EXPECT_EQ(BX_XorArgSet_Reduce(b), &BX_One);
 
-    BoolExprXorArgSet_Insert(c, xs[0]);
-    BoolExprXorArgSet_Insert(c, xs[1]);
-    BoolExprXorArgSet_Insert(c, xs[2]);
-    ops[0] = BoolExprXorArgSet_Reduce(c);
+    BX_XorArgSet_Insert(c, xs[0]);
+    BX_XorArgSet_Insert(c, xs[1]);
+    BX_XorArgSet_Insert(c, xs[2]);
+    ops[0] = BX_XorArgSet_Reduce(c);
     EXPECT_EQ(ops[0]->kind, OP_XOR);
     EXPECT_EQ(ops[0]->data.xs->length, 3);
 
-    BoolExprXorArgSet_Insert(d, xs[0]);
-    ops[1] = BoolExprXorArgSet_Reduce(d);
+    BX_XorArgSet_Insert(d, xs[0]);
+    ops[1] = BX_XorArgSet_Reduce(d);
     EXPECT_EQ(ops[1], xs[0]);
 
-    BoolExprXorArgSet_Del(a);
-    BoolExprXorArgSet_Del(b);
-    BoolExprXorArgSet_Del(c);
-    BoolExprXorArgSet_Del(d);
+    BX_XorArgSet_Del(a);
+    BX_XorArgSet_Del(b);
+    BX_XorArgSet_Del(c);
+    BX_XorArgSet_Del(d);
 }
 
 
-TEST_F(BoolExprArgSetTest, EqReduce)
+TEST_F(BX_ArgSet_Test, EqReduce)
 {
-    struct BoolExprEqArgSet *a = BoolExprEqArgSet_New();
-    struct BoolExprEqArgSet *b = BoolExprEqArgSet_New();
-    struct BoolExprEqArgSet *c = BoolExprEqArgSet_New();
-    struct BoolExprEqArgSet *d = BoolExprEqArgSet_New();
-    struct BoolExprEqArgSet *e = BoolExprEqArgSet_New();
-    struct BoolExprEqArgSet *f = BoolExprEqArgSet_New();
-    struct BoolExprEqArgSet *g = BoolExprEqArgSet_New();
+    struct BX_EqArgSet *a = BX_EqArgSet_New();
+    struct BX_EqArgSet *b = BX_EqArgSet_New();
+    struct BX_EqArgSet *c = BX_EqArgSet_New();
+    struct BX_EqArgSet *d = BX_EqArgSet_New();
+    struct BX_EqArgSet *e = BX_EqArgSet_New();
+    struct BX_EqArgSet *f = BX_EqArgSet_New();
+    struct BX_EqArgSet *g = BX_EqArgSet_New();
 
-    EXPECT_EQ(BoolExprEqArgSet_Reduce(a), &One);
-    BoolExprEqArgSet_Insert(a, &Zero);
-    EXPECT_EQ(BoolExprEqArgSet_Reduce(a), &One);
-    BoolExprEqArgSet_Insert(a, &One);
-    EXPECT_EQ(BoolExprEqArgSet_Reduce(a), &Zero);
+    EXPECT_EQ(BX_EqArgSet_Reduce(a), &BX_One);
+    BX_EqArgSet_Insert(a, &BX_Zero);
+    EXPECT_EQ(BX_EqArgSet_Reduce(a), &BX_One);
+    BX_EqArgSet_Insert(a, &BX_One);
+    EXPECT_EQ(BX_EqArgSet_Reduce(a), &BX_Zero);
 
-    BoolExprEqArgSet_Insert(b, xs[0]);
-    BoolExprEqArgSet_Insert(b, xs[1]);
-    BoolExprEqArgSet_Insert(b, xs[2]);
-    BoolExprEqArgSet_Insert(b, xns[0]);
-    EXPECT_EQ(BoolExprEqArgSet_Reduce(b), &Zero);
+    BX_EqArgSet_Insert(b, xs[0]);
+    BX_EqArgSet_Insert(b, xs[1]);
+    BX_EqArgSet_Insert(b, xs[2]);
+    BX_EqArgSet_Insert(b, xns[0]);
+    EXPECT_EQ(BX_EqArgSet_Reduce(b), &BX_Zero);
 
-    BoolExprEqArgSet_Insert(c, &Zero);
-    BoolExprEqArgSet_Insert(c, xs[0]);
-    ops[0] = BoolExprEqArgSet_Reduce(c);
+    BX_EqArgSet_Insert(c, &BX_Zero);
+    BX_EqArgSet_Insert(c, xs[0]);
+    ops[0] = BX_EqArgSet_Reduce(c);
     EXPECT_EQ(ops[0], xns[0]);
 
-    BoolExprEqArgSet_Insert(d, &One);
-    BoolExprEqArgSet_Insert(d, xs[0]);
-    ops[1] = BoolExprEqArgSet_Reduce(d);
+    BX_EqArgSet_Insert(d, &BX_One);
+    BX_EqArgSet_Insert(d, xs[0]);
+    ops[1] = BX_EqArgSet_Reduce(d);
     EXPECT_EQ(ops[1], xs[0]);
 
-    BoolExprEqArgSet_Insert(e, &Zero);
-    BoolExprEqArgSet_Insert(e, xs[0]);
-    BoolExprEqArgSet_Insert(e, xs[1]);
-    ops[2] = BoolExprEqArgSet_Reduce(e);
+    BX_EqArgSet_Insert(e, &BX_Zero);
+    BX_EqArgSet_Insert(e, xs[0]);
+    BX_EqArgSet_Insert(e, xs[1]);
+    ops[2] = BX_EqArgSet_Reduce(e);
     EXPECT_EQ(ops[2]->kind, OP_NOT);
     EXPECT_EQ(ops[2]->data.xs->items[0]->kind, OP_OR);
 
-    BoolExprEqArgSet_Insert(f, &One);
-    BoolExprEqArgSet_Insert(f, xs[0]);
-    BoolExprEqArgSet_Insert(f, xs[1]);
-    ops[3] = BoolExprEqArgSet_Reduce(f);
+    BX_EqArgSet_Insert(f, &BX_One);
+    BX_EqArgSet_Insert(f, xs[0]);
+    BX_EqArgSet_Insert(f, xs[1]);
+    ops[3] = BX_EqArgSet_Reduce(f);
     EXPECT_EQ(ops[3]->kind, OP_AND);
 
-    BoolExprEqArgSet_Insert(g, xs[0]);
-    BoolExprEqArgSet_Insert(g, xs[1]);
-    ops[4] = BoolExprEqArgSet_Reduce(g);
+    BX_EqArgSet_Insert(g, xs[0]);
+    BX_EqArgSet_Insert(g, xs[1]);
+    ops[4] = BX_EqArgSet_Reduce(g);
     EXPECT_EQ(ops[4]->kind, OP_EQ);
 
-    BoolExprEqArgSet_Del(a);
-    BoolExprEqArgSet_Del(b);
-    BoolExprEqArgSet_Del(c);
-    BoolExprEqArgSet_Del(d);
-    BoolExprEqArgSet_Del(e);
-    BoolExprEqArgSet_Del(f);
-    BoolExprEqArgSet_Del(g);
+    BX_EqArgSet_Del(a);
+    BX_EqArgSet_Del(b);
+    BX_EqArgSet_Del(c);
+    BX_EqArgSet_Del(d);
+    BX_EqArgSet_Del(e);
+    BX_EqArgSet_Del(f);
+    BX_EqArgSet_Del(g);
 }
 

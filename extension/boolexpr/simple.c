@@ -26,17 +26,17 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
-struct BoolExpr * _orandxor_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _op_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
 
 /* util.c */
 struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
-void _mark_flags(struct BoolExpr *ex, BoolExprFlags f);
+void _mark_flags(struct BoolExpr *ex, BX_Flags f);
 
 /* simple.c */
-static struct BoolExpr * _simple_op(BoolExprKind kind, size_t n, struct BoolExpr **xs);
-static struct BoolExpr * _simple_op2(BoolExprKind kind, struct BoolExpr *x0, struct BoolExpr *x1);
-static struct BoolExpr * _simple_nop(BoolExprKind kind, size_t n, struct BoolExpr **xs);
+static struct BoolExpr * _simple_op(BX_Kind kind, size_t n, struct BoolExpr **xs);
+static struct BoolExpr * _simple_op2(BX_Kind kind, struct BoolExpr *x0, struct BoolExpr *x1);
+static struct BoolExpr * _simple_nop(BX_Kind kind, size_t n, struct BoolExpr **xs);
 
 
 /* NOTE: Equality testing can get expensive, so keep it simple */
@@ -121,7 +121,7 @@ _orand_simplify(struct BoolExpr *op)
         /* Or(1, x) <=> 1 */
         if (xi == DOMINATOR[op->kind]) {
             free(flat);
-            return BoolExpr_IncRef(DOMINATOR[op->kind]);
+            return BX_IncRef(DOMINATOR[op->kind]);
         }
         /* Or(Or(x0, x1), x2) <=> Or(x0, x1, x2) */
         else if (xi->kind == op->kind) {
@@ -130,7 +130,7 @@ _orand_simplify(struct BoolExpr *op)
                 /* Or(1, x) <=> 1 */
                 if (xj == DOMINATOR[op->kind]) {
                     free(flat);
-                    return BoolExpr_IncRef(DOMINATOR[op->kind]);
+                    return BX_IncRef(DOMINATOR[op->kind]);
                 }
                 /* Or(0, x) <=> x */
                 else if (xj != IDENTITY[op->kind]) {
@@ -163,7 +163,7 @@ _orand_simplify(struct BoolExpr *op)
             if (COMPLEMENTARY(uniq[uniq_len-1], flat[i])) {
                 free(flat);
                 free(uniq);
-                return BoolExpr_IncRef(DOMINATOR[op->kind]);
+                return BX_IncRef(DOMINATOR[op->kind]);
             }
             /* Or(x, x) <=> x */
             else if (!_eq(flat[i], uniq[uniq_len-1])) {
@@ -283,7 +283,7 @@ _xor_simplify(struct BoolExpr *op)
 
     free(flat);
 
-    y = parity ? Xor(uniq_len, uniq) : Xnor(uniq_len, uniq);
+    y = parity ? BX_Xor(uniq_len, uniq) : BX_Xnor(uniq_len, uniq);
 
     free(uniq);
 
@@ -324,7 +324,7 @@ _eq_simplify(struct BoolExpr *op)
     /* Equal(0, 1) <=> 0 */
     if (found_zero && found_one) {
         free(flat);
-        return BoolExpr_IncRef(&Zero);
+        return BX_IncRef(&BX_Zero);
     }
 
     /* 2. Sort arguments, so you get ~a, ~a, a, a, ~b, ... */
@@ -346,7 +346,7 @@ _eq_simplify(struct BoolExpr *op)
             if (COMPLEMENTARY(uniq[uniq_len-1], flat[i])) {
                 free(flat);
                 free(uniq);
-                return BoolExpr_IncRef(&Zero);
+                return BX_IncRef(&BX_Zero);
             }
             /* Equal(x0, x0, x1) <=> Equal(x0, x1) */
             else if (!_eq(flat[i], uniq[uniq_len-1]))
@@ -359,10 +359,10 @@ _eq_simplify(struct BoolExpr *op)
     if (found_zero) {
         /* Equal(0) <=> 1 */
         if (uniq_len == 0)
-            y = BoolExpr_IncRef(&One);
+            y = BX_IncRef(&BX_One);
         /* Equal(0, x) <=> ~x */
         else if (uniq_len == 1)
-            y = Not(uniq[0]);
+            y = BX_Not(uniq[0]);
         /* Equal(0, x0, x1) <=> Nor(x0, x1) */
         else
             y = _simple_nop(OP_OR, uniq_len, uniq);
@@ -370,16 +370,16 @@ _eq_simplify(struct BoolExpr *op)
     else if (found_one) {
         /* Equal(1) <=> 1 */
         if (uniq_len == 0)
-            y = BoolExpr_IncRef(&One);
+            y = BX_IncRef(&BX_One);
         /* Equal(1, x) <=> x */
         else if (uniq_len == 1)
-            y = BoolExpr_IncRef(uniq[0]);
+            y = BX_IncRef(uniq[0]);
         /* Equal(1, x0, ...) <=> And(x0, ...) */
         else
             y = _simple_op(OP_AND, uniq_len, uniq);
     }
     else {
-        y = Equal(uniq_len, uniq);
+        y = BX_Equal(uniq_len, uniq);
     }
 
     free(uniq);
@@ -392,7 +392,7 @@ _eq_simplify(struct BoolExpr *op)
 static struct BoolExpr *
 _not_simplify(struct BoolExpr *op)
 {
-    return Not(op->data.xs->items[0]);
+    return BX_Not(op->data.xs->items[0]);
 }
 
 
@@ -405,25 +405,25 @@ _impl_simplify(struct BoolExpr *op)
 
     /* Implies(0, q) <=> Implies(p, 1) <=> 1 */
     if (IS_ZERO(p) || IS_ONE(q))
-        return BoolExpr_IncRef(&One);
+        return BX_IncRef(&BX_One);
 
     /* Implies(1, q) <=> q */
     if (IS_ONE(p))
-        return BoolExpr_IncRef(q);
+        return BX_IncRef(q);
 
     /* Implies(p, 0) <=> ~p */
     if (IS_ZERO(q))
-        return Not(p);
+        return BX_Not(p);
 
     /* Implies(p, p) <=> 1 */
     if (_eq(p, q))
-        return BoolExpr_IncRef(&One);
+        return BX_IncRef(&BX_One);
 
     /* Implies(~p, p) <=> p */
     if (COMPLEMENTARY(p, q))
-        return BoolExpr_IncRef(q);
+        return BX_IncRef(q);
 
-    return Implies(p, q);
+    return BX_Implies(p, q);
 }
 
 
@@ -440,36 +440,36 @@ _ite_simplify(struct BoolExpr *op)
 
     /* ITE(0, d1, d0) <=> d0 */
     if (IS_ZERO(s))
-        return BoolExpr_IncRef(d0);
+        return BX_IncRef(d0);
 
     /* ITE(1, d1, d0) <=> d1 */
     if (IS_ONE(s))
-        return BoolExpr_IncRef(d1);
+        return BX_IncRef(d1);
 
     if (IS_ZERO(d1)) {
         /* ITE(s, 0, 0) <=> 0 */
         if (IS_ZERO(d0))
-            return BoolExpr_IncRef(&Zero);
+            return BX_IncRef(&BX_Zero);
 
         /* ITE(s, 0, 1) <=> ~s */
         if (IS_ONE(d0))
-            return Not(s);
+            return BX_Not(s);
 
         /* ITE(s, 0, d0) <=> And(~s, d0) */
-        CHECK_NULL(sn, Not(s));
+        CHECK_NULL(sn, BX_Not(s));
         y = _simple_op2(OP_AND, sn, d0);
-        BoolExpr_DecRef(sn);
+        BX_DecRef(sn);
         return y;
     }
 
     if (IS_ONE(d1)) {
         /* ITE(s, 1, 0) <=> s */
         if (IS_ZERO(d0))
-            return BoolExpr_IncRef(s);
+            return BX_IncRef(s);
 
         /* ITE(s, 1, 1) <=> 1 */
         if (IS_ONE(d0))
-            return BoolExpr_IncRef(&One);
+            return BX_IncRef(&BX_One);
 
         /* ITE(s, 1, d0) <=> Or(s, d0) */
         return _simple_op2(OP_OR, s, d0);
@@ -481,15 +481,15 @@ _ite_simplify(struct BoolExpr *op)
 
     /* ITE(s, d1, 1) <=> Or(~s, d1) */
     if (IS_ONE(d0)) {
-        CHECK_NULL(sn, Not(s));
+        CHECK_NULL(sn, BX_Not(s));
         y = _simple_op2(OP_OR, sn, d1);
-        BoolExpr_DecRef(sn);
+        BX_DecRef(sn);
         return y;
     }
 
     /* ITE(s, d1, d1) <=> d1 */
     if (_eq(d1, d0))
-        return BoolExpr_IncRef(d1);
+        return BX_IncRef(d1);
 
     /* ITE(s, s, d0) <=> Or(s, d0) */
     if (_eq(s, d1))
@@ -499,7 +499,7 @@ _ite_simplify(struct BoolExpr *op)
     if (_eq(s, d0))
         return _simple_op2(OP_AND, s, d1);
 
-    return ITE(s, d1, d0);
+    return BX_ITE(s, d1, d0);
 }
 
 
@@ -520,21 +520,21 @@ static struct BoolExpr * (*_op_simplify[16])(struct BoolExpr *op) = {
 
 
 static struct BoolExpr *
-_simple_op(BoolExprKind kind, size_t n, struct BoolExpr **xs)
+_simple_op(BX_Kind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
     CHECK_NULL(temp, _op_new(kind, n, xs));
     y = _op_simplify[kind](temp);
-    BoolExpr_DecRef(temp);
+    BX_DecRef(temp);
 
     return y;
 }
 
 
 static struct BoolExpr *
-_simple_op2(BoolExprKind kind, struct BoolExpr *x0, struct BoolExpr *x1)
+_simple_op2(BX_Kind kind, struct BoolExpr *x0, struct BoolExpr *x1)
 {
     struct BoolExpr *xs[2] = {x0, x1};
 
@@ -543,14 +543,14 @@ _simple_op2(BoolExprKind kind, struct BoolExpr *x0, struct BoolExpr *x1)
 
 
 static struct BoolExpr *
-_simple_nop(BoolExprKind kind, size_t n, struct BoolExpr **xs)
+_simple_nop(BX_Kind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
     temp = _simple_op(kind, n, xs);
-    y = Not(temp);
-    BoolExpr_DecRef(temp);
+    y = BX_Not(temp);
+    BX_DecRef(temp);
 
     return y;
 }
@@ -560,21 +560,21 @@ struct BoolExpr *
 _simplify(struct BoolExpr *ex)
 {
     if (IS_SIMPLE(ex))
-        return BoolExpr_IncRef(ex);
+        return BX_IncRef(ex);
 
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
     CHECK_NULL(temp, _op_transform(ex, _simplify));
     y = _op_simplify[temp->kind](temp);
-    BoolExpr_DecRef(temp);
+    BX_DecRef(temp);
 
     return y;
 }
 
 
 struct BoolExpr *
-BoolExpr_Simplify(struct BoolExpr *ex)
+BX_Simplify(struct BoolExpr *ex)
 {
     struct BoolExpr *y;
 

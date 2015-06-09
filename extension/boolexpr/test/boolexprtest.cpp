@@ -38,15 +38,15 @@ Similar(BoolExpr * const self, BoolExpr * const other)
 
 
 void
-BoolExprTest::SetUp()
+BoolExpr_Test::SetUp()
 {
-    lits = BoolExprVector_New();
+    lits = BX_Vector_New();
 
     // Initialize local literals
     for (int i = 0; i < N; ++i) {
         long uniqid = (long) (i + 1);
-        xns[i] = Literal(lits, -uniqid);
-        xs[i] = Literal(lits, uniqid);
+        xns[i] = BX_Literal(lits, -uniqid);
+        xs[i] = BX_Literal(lits, uniqid);
     }
 
     // Initialize scratchpad operators
@@ -60,25 +60,25 @@ BoolExprTest::SetUp()
 
 
 void
-BoolExprTest::TearDown()
+BoolExpr_Test::TearDown()
 {
     // Clear local literals
     for (int i = 0; i < N; ++i) {
-        BoolExpr_DecRef(xns[i]);
-        BoolExpr_DecRef(xs[i]);
+        BX_DecRef(xns[i]);
+        BX_DecRef(xs[i]);
     }
-    BoolExprVector_Del(lits);
+    BX_Vector_Del(lits);
 
     // Clear scratchpad operators
     for (int i = 0; i < N; ++i) {
         if (ops[i] != (BoolExpr *) NULL)
-            BoolExpr_DecRef(ops[i]);
+            BX_DecRef(ops[i]);
     }
 
     // Clear expected operators
     for (int i = 0; i < N; ++i) {
         if (exps[i] != (BoolExpr *) NULL)
-            BoolExpr_DecRef(exps[i]);
+            BX_DecRef(exps[i]);
     }
 }
 

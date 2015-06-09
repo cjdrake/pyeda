@@ -18,7 +18,7 @@
 bool Similar(BoolExpr * const, BoolExpr * const);
 
 
-class BoolExprTest: public ::testing::Test
+class BoolExpr_Test: public ::testing::Test
 {
 
 protected:
@@ -28,7 +28,7 @@ protected:
 
     static const int N = 1024;
 
-    BoolExprVector *lits;
+    struct BX_Vector *lits;
 
     BoolExpr *xns[N];
     BoolExpr *xs[N];

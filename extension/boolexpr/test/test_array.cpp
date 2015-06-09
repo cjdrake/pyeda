@@ -1,65 +1,65 @@
 /*
 ** Filename: test_array.cpp
 **
-** Test the BoolExprArray data type.
+** Test the BX_Array data type.
 */
 
 
 #include "boolexprtest.hpp"
 
 
-class BoolExprArrayTest: public BoolExprTest {};
+class BX_Array_Test: public BoolExpr_Test {};
 
 
-TEST_F(BoolExprArrayTest, Basic)
+TEST_F(BX_Array_Test, Basic)
 {
-    BoolExpr *items[] = {xs[0], xs[1], xs[2], xs[3]};
+    struct BoolExpr *items[] = {xs[0], xs[1], xs[2], xs[3]};
 
-    BoolExprArray *array = BoolExprArray_New(4, items);
+    struct BX_Array *array = BX_Array_New(4, items);
 
-    // BoolExprArray_Length
+    // BX_Array_Length
     EXPECT_EQ(array->length, 4);
 
-    // BoolExprArray_GetItem
+    // BX_Array_GetItem
     for (int i = 0; i < array->length; ++i)
         EXPECT_EQ(array->items[i], xs[i]);
 
-    BoolExprArray_Del(array);
+    BX_Array_Del(array);
 }
 
 
-TEST_F(BoolExprArrayTest, Equal)
+TEST_F(BX_Array_Test, Equal)
 {
-    BoolExpr *itemsA[] = {xs[0], xs[1], xs[2], xs[3]};
-    BoolExpr *itemsB[] = {xs[0], xs[1], xs[2], xs[3]};
+    struct BoolExpr *itemsA[] = {xs[0], xs[1], xs[2], xs[3]};
+    struct BoolExpr *itemsB[] = {xs[0], xs[1], xs[2], xs[3]};
 
-    BoolExprArray *a = BoolExprArray_New(4, itemsA);
-    BoolExprArray *b = BoolExprArray_New(4, itemsB);
+    struct BX_Array *a = BX_Array_New(4, itemsA);
+    struct BX_Array *b = BX_Array_New(4, itemsB);
 
-    EXPECT_TRUE(BoolExprArray_Equal(a, b));
+    EXPECT_TRUE(BX_Array_Equal(a, b));
 
-    BoolExprArray_Del(a);
-    BoolExprArray_Del(b);
+    BX_Array_Del(a);
+    BX_Array_Del(b);
 }
 
 
-TEST_F(BoolExprArrayTest, NotEqual)
+TEST_F(BX_Array_Test, NotEqual)
 {
-    BoolExpr *itemsA[] = {xs[0], xs[1], xs[2], xs[3]};
-    BoolExpr *itemsB[] = {xs[0], xs[1], xs[3], xs[2]};
-    BoolExpr *itemsC[] = {xs[0], xs[1]};
+    struct BoolExpr *itemsA[] = {xs[0], xs[1], xs[2], xs[3]};
+    struct BoolExpr *itemsB[] = {xs[0], xs[1], xs[3], xs[2]};
+    struct BoolExpr *itemsC[] = {xs[0], xs[1]};
 
-    BoolExprArray *a = BoolExprArray_New(4, itemsA);
-    BoolExprArray *b = BoolExprArray_New(4, itemsB);
-    BoolExprArray *c = BoolExprArray_New(2, itemsC);
+    struct BX_Array *a = BX_Array_New(4, itemsA);
+    struct BX_Array *b = BX_Array_New(4, itemsB);
+    struct BX_Array *c = BX_Array_New(2, itemsC);
 
     // Unequal items
-    EXPECT_FALSE(BoolExprArray_Equal(a, b));
+    EXPECT_FALSE(BX_Array_Equal(a, b));
     // Unequal lengths
-    EXPECT_FALSE(BoolExprArray_Equal(a, c));
+    EXPECT_FALSE(BX_Array_Equal(a, c));
 
-    BoolExprArray_Del(a);
-    BoolExprArray_Del(b);
-    BoolExprArray_Del(c);
+    BX_Array_Del(a);
+    BX_Array_Del(b);
+    BX_Array_Del(c);
 }
 

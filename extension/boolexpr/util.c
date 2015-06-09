@@ -12,7 +12,7 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _op_new(BoolExprKind kind, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _op_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
 
 
 /*
@@ -34,7 +34,7 @@ void
 _free_exs(int n, struct BoolExpr **exs)
 {
     for (size_t i = 0; i < n; ++i)
-        BoolExpr_DecRef(exs[i]);
+        BX_DecRef(exs[i]);
     free(exs);
 }
 /* LCOV_EXCL_STOP */
@@ -60,7 +60,7 @@ _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
     if (mod_count)
         y = _op_new(op->kind, length, xs);
     else
-        y = BoolExpr_IncRef(op);
+        y = BX_IncRef(op);
 
     _free_exs(length, xs);
 
@@ -69,7 +69,7 @@ _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
 
 
 void
-_mark_flags(struct BoolExpr *ex, BoolExprFlags f)
+_mark_flags(struct BoolExpr *ex, BX_Flags f)
 {
     if ((ex->flags & f) != f) {
         for (size_t i = 0; i < ex->data.xs->length; ++i)

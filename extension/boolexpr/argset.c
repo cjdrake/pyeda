@@ -11,40 +11,40 @@
 
 
 /* boolexpr.c */
-struct BoolExpr * _bx_op_from(BoolExprKind kind, size_t n, struct BoolExpr **xs);
+struct BoolExpr * _bx_op_from(BX_Kind kind, size_t n, struct BoolExpr **xs);
 
 
 static struct BoolExpr **
-_set2array(struct BoolExprSet *set)
+_set2array(struct BX_Set *set)
 {
     struct BoolExpr **array;
-    struct BoolExprSetIter it;
+    struct BX_SetIter it;
 
     array = malloc(set->length * sizeof(struct BoolExpr *));
     if (array == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     size_t i = 0;
-    for (BoolExprSetIter_Init(&it, set); !it.done; BoolExprSetIter_Next(&it))
+    for (BX_SetIter_Init(&it, set); !it.done; BX_SetIter_Next(&it))
         array[i++] = it.item->key;
 
     return array;
 }
 
 
-struct BoolExprOrAndArgSet *
-BoolExprOrAndArgSet_New(BoolExprKind kind)
+struct BX_OrAndArgSet *
+BX_OrAndArgSet_New(BX_Kind kind)
 {
-    struct BoolExprOrAndArgSet *argset;
+    struct BX_OrAndArgSet *argset;
 
-    argset = malloc(sizeof(struct BoolExprOrAndArgSet));
+    argset = malloc(sizeof(struct BX_OrAndArgSet));
     if (argset == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     argset->kind = kind;
     argset->min = true;
     argset->max = false;
-    argset->xs = BoolExprSet_New();
+    argset->xs = BX_Set_New();
     if (argset->xs == NULL) {
         free(argset); // LCOV_EXCL_LINE
         return NULL;  // LCOV_EXCL_LINE
@@ -55,15 +55,15 @@ BoolExprOrAndArgSet_New(BoolExprKind kind)
 
 
 void
-BoolExprOrAndArgSet_Del(struct BoolExprOrAndArgSet *argset)
+BX_OrAndArgSet_Del(struct BX_OrAndArgSet *argset)
 {
-    BoolExprSet_Del(argset->xs);
+    BX_Set_Del(argset->xs);
     free(argset);
 }
 
 
 bool
-BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *key)
+BX_OrAndArgSet_Insert(struct BX_OrAndArgSet *argset, struct BoolExpr *key)
 {
     /* 1 | x = 1 ; 0 & x = 0 */
     /* x | 0 = x ; x & 1 = x */
@@ -77,21 +77,21 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
     }
     /* x | ~x = 1 ; x & ~x = 0 */
     else if (IS_LIT(key) || IS_NOT(key)) {
-        struct BoolExpr *temp = Not(key);
-        dominate = BoolExprSet_Contains(argset->xs, temp);
-        BoolExpr_DecRef(temp);
+        struct BoolExpr *temp = BX_Not(key);
+        dominate = BX_Set_Contains(argset->xs, temp);
+        BX_DecRef(temp);
     }
     if (dominate) {
         argset->min = false;
         argset->max = true;
-        BoolExprSet_Clear(argset->xs);
+        BX_Set_Clear(argset->xs);
         return true;
     }
 
     /* x | (y | z) = x | y | z ; x & (y & z) = x & y & z */
     if (key->kind == argset->kind) {
         for (size_t i = 0; i < key->data.xs->length; ++i) {
-            if (!BoolExprOrAndArgSet_Insert(argset, key->data.xs->items[i]))
+            if (!BX_OrAndArgSet_Insert(argset, key->data.xs->items[i]))
                 return false; // LCOV_EXCL_LINE
         }
         return true;
@@ -99,26 +99,26 @@ BoolExprOrAndArgSet_Insert(struct BoolExprOrAndArgSet *argset, struct BoolExpr *
 
     /* x | x = x ; x & x = x */
     argset->min = false;
-    return BoolExprSet_Insert(argset->xs, key);
+    return BX_Set_Insert(argset->xs, key);
 }
 
 
 struct BoolExpr *
-BoolExprOrAndArgSet_Reduce(struct BoolExprOrAndArgSet *argset)
+BX_OrAndArgSet_Reduce(struct BX_OrAndArgSet *argset)
 {
     struct BoolExpr **xs;
     size_t length = argset->xs->length;
 
     if (argset->min)
-        return BoolExpr_IncRef(IDENTITY[argset->kind]);
+        return BX_IncRef(IDENTITY[argset->kind]);
 
     if (argset->max)
-        return BoolExpr_IncRef(DOMINATOR[argset->kind]);
+        return BX_IncRef(DOMINATOR[argset->kind]);
 
     CHECK_NULL(xs, _set2array(argset->xs));
 
     if (length == 1) {
-        struct BoolExpr *y = BoolExpr_IncRef(xs[0]);
+        struct BoolExpr *y = BX_IncRef(xs[0]);
         free(xs);
         return y;
     }
@@ -127,17 +127,17 @@ BoolExprOrAndArgSet_Reduce(struct BoolExprOrAndArgSet *argset)
 }
 
 
-struct BoolExprXorArgSet *
-BoolExprXorArgSet_New(bool parity)
+struct BX_XorArgSet *
+BX_XorArgSet_New(bool parity)
 {
-    struct BoolExprXorArgSet *argset;
+    struct BX_XorArgSet *argset;
 
-    argset = malloc(sizeof(struct BoolExprXorArgSet));
+    argset = malloc(sizeof(struct BX_XorArgSet));
     if (argset == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     argset->parity = parity;
-    argset->xs = BoolExprSet_New();
+    argset->xs = BX_Set_New();
     if (argset->xs == NULL) {
         free(argset); // LCOV_EXCL_LINE
         return NULL;  // LCOV_EXCL_LINE
@@ -148,15 +148,15 @@ BoolExprXorArgSet_New(bool parity)
 
 
 void
-BoolExprXorArgSet_Del(struct BoolExprXorArgSet *argset)
+BX_XorArgSet_Del(struct BX_XorArgSet *argset)
 {
-    BoolExprSet_Del(argset->xs);
+    BX_Set_Del(argset->xs);
     free(argset);
 }
 
 
 bool
-BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
+BX_XorArgSet_Insert(struct BX_XorArgSet *argset, struct BoolExpr *key)
 {
     if (IS_CONST(key)) {
         argset->parity ^= (bool) key->kind;
@@ -165,19 +165,19 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
 
     /* Xor(x, y, z, z) = Xor(x, y) */
     /* Xnor(x, y, z, z) = Xnor(x, y) */
-    if (BoolExprSet_Contains(argset->xs, key)) {
-        BoolExprSet_Remove(argset->xs, key);
+    if (BX_Set_Contains(argset->xs, key)) {
+        BX_Set_Remove(argset->xs, key);
         return true;
     }
 
     /* Xor(x, y, z, ~z) = Xnor(x, y) */
     /* Xnor(x, y, z, ~z) = Xor(x, y) */
     if (IS_LIT(key) || IS_NOT(key)) {
-        struct BoolExpr *temp = Not(key);
-        bool flip = BoolExprSet_Contains(argset->xs, temp);
-        BoolExpr_DecRef(temp);
+        struct BoolExpr *temp = BX_Not(key);
+        bool flip = BX_Set_Contains(argset->xs, temp);
+        BX_DecRef(temp);
         if (flip) {
-            BoolExprSet_Remove(argset->xs, temp);
+            BX_Set_Remove(argset->xs, temp);
             argset->parity ^= true;
             return true;
         }
@@ -187,7 +187,7 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
     /* Xnor(x, Xor(y, z)) = Xnor(x, y, z) */
     if (IS_XOR(key)) {
         for (size_t i = 0; i < key->data.xs->length; ++i) {
-            if (!BoolExprXorArgSet_Insert(argset, key->data.xs->items[i]))
+            if (!BX_XorArgSet_Insert(argset, key->data.xs->items[i]))
                 return false; // LCOV_EXCL_LINE
         }
         return true;
@@ -197,19 +197,19 @@ BoolExprXorArgSet_Insert(struct BoolExprXorArgSet *argset, struct BoolExpr *key)
     /* Xnor(x, Xnor(y, z)) = Xor (x, y, z) */
     if (IS_NOT(key) && IS_XOR(key->data.xs->items[0])) {
         for (size_t i = 0; i < key->data.xs->length; ++i) {
-            if (!BoolExprXorArgSet_Insert(argset, key->data.xs->items[i]))
+            if (!BX_XorArgSet_Insert(argset, key->data.xs->items[i]))
                 return false; // LCOV_EXCL_LINE
         }
         argset->parity ^= true;
         return true;
     }
 
-    return BoolExprSet_Insert(argset->xs, key);
+    return BX_Set_Insert(argset->xs, key);
 }
 
 
 struct BoolExpr *
-BoolExprXorArgSet_Reduce(struct BoolExprXorArgSet *argset)
+BX_XorArgSet_Reduce(struct BX_XorArgSet *argset)
 {
     struct BoolExpr **xs;
     struct BoolExpr *temp;
@@ -217,16 +217,16 @@ BoolExprXorArgSet_Reduce(struct BoolExprXorArgSet *argset)
     size_t length = argset->xs->length;
 
     if (length == 0) {
-        temp = BoolExpr_IncRef(IDENTITY[OP_XOR]);
-        y = argset->parity ? BoolExpr_IncRef(temp) : Not(temp);
-        BoolExpr_DecRef(temp);
+        temp = BX_IncRef(IDENTITY[OP_XOR]);
+        y = argset->parity ? BX_IncRef(temp) : BX_Not(temp);
+        BX_DecRef(temp);
         return y;
     }
 
     CHECK_NULL(xs, _set2array(argset->xs));
 
     if (length == 1) {
-        temp = BoolExpr_IncRef(xs[0]);
+        temp = BX_IncRef(xs[0]);
         free(xs);
     }
     else {
@@ -237,25 +237,25 @@ BoolExprXorArgSet_Reduce(struct BoolExprXorArgSet *argset)
         }
     }
 
-    y = argset->parity ? BoolExpr_IncRef(temp) : Not(temp);
-    BoolExpr_DecRef(temp);
+    y = argset->parity ? BX_IncRef(temp) : BX_Not(temp);
+    BX_DecRef(temp);
 
     return y;
 }
 
 
-struct BoolExprEqArgSet *
-BoolExprEqArgSet_New(void)
+struct BX_EqArgSet *
+BX_EqArgSet_New(void)
 {
-    struct BoolExprEqArgSet *argset;
+    struct BX_EqArgSet *argset;
 
-    argset = malloc(sizeof(struct BoolExprEqArgSet));
+    argset = malloc(sizeof(struct BX_EqArgSet));
     if (argset == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     argset->zero = false;
     argset->one = false;
-    argset->xs = BoolExprSet_New();
+    argset->xs = BX_Set_New();
     if (argset->xs == NULL) {
         free(argset); // LCOV_EXCL_LINE
         return NULL;  // LCOV_EXCL_LINE
@@ -266,53 +266,53 @@ BoolExprEqArgSet_New(void)
 
 
 void
-BoolExprEqArgSet_Del(struct BoolExprEqArgSet *argset)
+BX_EqArgSet_Del(struct BX_EqArgSet *argset)
 {
-    BoolExprSet_Del(argset->xs);
+    BX_Set_Del(argset->xs);
     free(argset);
 }
 
 
 bool
-BoolExprEqArgSet_Insert(struct BoolExprEqArgSet *argset, struct BoolExpr *key)
+BX_EqArgSet_Insert(struct BX_EqArgSet *argset, struct BoolExpr *key)
 {
     if (argset->zero && argset->one)
         return true;
 
-    if (key == &Zero) {
+    if (key == &BX_Zero) {
         argset->zero = true;
         if (argset->one)
-            BoolExprSet_Clear(argset->xs);
+            BX_Set_Clear(argset->xs);
         return true;
     }
 
-    if (key == &One) {
+    if (key == &BX_One) {
         argset->one = true;
         if (argset->zero)
-            BoolExprSet_Clear(argset->xs);
+            BX_Set_Clear(argset->xs);
         return true;
     }
 
     /* Equal(~x, x) = 0 */
     if (IS_LIT(key) || IS_NOT(key)) {
-        struct BoolExpr *temp = Not(key);
-        bool contradict = BoolExprSet_Contains(argset->xs, temp);
-        BoolExpr_DecRef(temp);
+        struct BoolExpr *temp = BX_Not(key);
+        bool contradict = BX_Set_Contains(argset->xs, temp);
+        BX_DecRef(temp);
         if (contradict) {
             argset->zero = true;
             argset->one = true;
-            BoolExprSet_Clear(argset->xs);
+            BX_Set_Clear(argset->xs);
             return true;
         }
     }
 
     /* Equal(x, x, y) = Equal(x, y) */
-    return BoolExprSet_Insert(argset->xs, key);
+    return BX_Set_Insert(argset->xs, key);
 }
 
 
 struct BoolExpr *
-BoolExprEqArgSet_Reduce(struct BoolExprEqArgSet *argset)
+BX_EqArgSet_Reduce(struct BX_EqArgSet *argset)
 {
     struct BoolExpr **xs;
     struct BoolExpr *y;
@@ -320,24 +320,24 @@ BoolExprEqArgSet_Reduce(struct BoolExprEqArgSet *argset)
 
     /* Equal(0, 1) = 0 */
     if (argset->zero && argset->one)
-        return BoolExpr_IncRef(&Zero);
+        return BX_IncRef(&BX_Zero);
 
     /* Equal() = Equal(0) = Equal(1) = 1 */
     if (((size_t) argset->zero + (size_t) argset->one + length) <= 1)
-        return BoolExpr_IncRef(&One);
+        return BX_IncRef(&BX_One);
 
     CHECK_NULL(xs, _set2array(argset->xs));
 
     /* Equal(0, x) = ~x */
     if (argset->zero && length == 1) {
-        y = Not(xs[0]);
+        y = BX_Not(xs[0]);
         free(xs);
         return y;
     }
 
     /* Equal(1, x) = x */
     if (argset->one && length == 1) {
-        y = BoolExpr_IncRef(xs[0]);
+        y = BX_IncRef(xs[0]);
         free(xs);
         return y;
     }
@@ -349,8 +349,8 @@ BoolExprEqArgSet_Reduce(struct BoolExprEqArgSet *argset)
             free(xs);    // LCOV_EXCL_LINE
             return NULL; // LCOV_EXCL_LINE
         }
-        y = Not(temp);
-        BoolExpr_DecRef(temp);
+        y = BX_Not(temp);
+        BX_DecRef(temp);
         return y;
     }
 

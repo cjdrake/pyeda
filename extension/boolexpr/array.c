@@ -10,12 +10,12 @@
 #include "boolexpr.h"
 
 
-struct BoolExprArray *
+struct BX_Array *
 _bx_array_from(size_t length, struct BoolExpr **items)
 {
-    struct BoolExprArray *array;
+    struct BX_Array *array;
 
-    array = malloc(sizeof(struct BoolExprArray));
+    array = malloc(sizeof(struct BX_Array));
     if (array == NULL)
         return NULL; // LCOV_EXCL_LINE
 
@@ -23,14 +23,14 @@ _bx_array_from(size_t length, struct BoolExpr **items)
     array->items = items;
 
     for (size_t i = 0; i < length; ++i)
-        BoolExpr_IncRef(array->items[i]);
+        BX_IncRef(array->items[i]);
 
     return array;
 }
 
 
-struct BoolExprArray *
-BoolExprArray_New(size_t length, struct BoolExpr **items)
+struct BX_Array *
+BX_Array_New(size_t length, struct BoolExpr **items)
 {
     struct BoolExpr **items_copy;
 
@@ -46,17 +46,17 @@ BoolExprArray_New(size_t length, struct BoolExpr **items)
 
 
 void
-BoolExprArray_Del(struct BoolExprArray *array)
+BX_Array_Del(struct BX_Array *array)
 {
     for (size_t i = 0; i < array->length; ++i)
-        BoolExpr_DecRef(array->items[i]);
+        BX_DecRef(array->items[i]);
     free(array->items);
     free(array);
 }
 
 
 bool
-BoolExprArray_Equal(struct BoolExprArray *self, struct BoolExprArray *other)
+BX_Array_Equal(struct BX_Array *self, struct BX_Array *other)
 {
     if (self->length != other->length)
         return false;

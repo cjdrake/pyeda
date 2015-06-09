@@ -17,12 +17,12 @@
 #define SCALE_FACTOR 2.0
 
 
-struct BoolExprVector *
-BoolExprVector_New(void)
+struct BX_Vector *
+BX_Vector_New(void)
 {
-    struct BoolExprVector *vec;
+    struct BX_Vector *vec;
 
-    vec = malloc(sizeof(struct BoolExprVector));
+    vec = malloc(sizeof(struct BX_Vector));
     if (vec == NULL)
         return NULL; // LCOV_EXCL_LINE
 
@@ -43,11 +43,11 @@ BoolExprVector_New(void)
 
 
 void
-BoolExprVector_Del(struct BoolExprVector *vec)
+BX_Vector_Del(struct BX_Vector *vec)
 {
     for (size_t i = 0; i < vec->length; ++i) {
         if (vec->items[i] != (struct BoolExpr *) NULL)
-            BoolExpr_DecRef(vec->items[i]);
+            BX_DecRef(vec->items[i]);
     }
     free(vec->items);
     free(vec);
@@ -55,7 +55,7 @@ BoolExprVector_Del(struct BoolExprVector *vec)
 
 
 bool
-BoolExprVector_Insert(struct BoolExprVector *vec, size_t index, struct BoolExpr *ex)
+BX_Vector_Insert(struct BX_Vector *vec, size_t index, struct BoolExpr *ex)
 {
     /* Required length and capacity */
     size_t req_len = index + 1;
@@ -77,7 +77,7 @@ BoolExprVector_Insert(struct BoolExprVector *vec, size_t index, struct BoolExpr 
         vec->capacity = req_cap;
     }
 
-    vec->items[index] = BoolExpr_IncRef(ex);
+    vec->items[index] = BX_IncRef(ex);
     if (req_len > vec->length)
         vec->length = req_len;
 
@@ -86,8 +86,8 @@ BoolExprVector_Insert(struct BoolExprVector *vec, size_t index, struct BoolExpr 
 
 
 bool
-BoolExprVector_Append(struct BoolExprVector *vec, struct BoolExpr *ex)
+BX_Vector_Append(struct BX_Vector *vec, struct BoolExpr *ex)
 {
-    return BoolExprVector_Insert(vec, vec->length, ex);
+    return BX_Vector_Insert(vec, vec->length, ex);
 }
 
