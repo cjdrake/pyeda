@@ -41,7 +41,7 @@ all: bld/test/run bld/cover/run bld/lib/libboolexpr.a
 # Source Code
 #===============================================================================
 
-BOOLEXPR_HDRS := boolexpr.h dict.h set.h primes-inl.c
+BOOLEXPR_HDRS := boolexpr.h primes-inl.c
 
 BOOLEXPR_SRCS := \
     argset.c \

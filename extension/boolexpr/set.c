@@ -7,10 +7,18 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "set.h"
 #include "boolexpr.h"
 
 
+/* Maximum load allowed before enlargement */
+#define MAX_LOAD 1.5
+
+/* Min/Max indices in the primes table */
+#define MIN_IDX 4
+#define MAX_IDX 30
+
+
+/* Define static size_t _primes[] */
 #include "primes-inl.c"
 
 
