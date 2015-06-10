@@ -16,6 +16,7 @@
 #include <stdlib.h>
 
 #include "boolexpr.h"
+#include "memcheck.h"
 
 
 #define READ_ARGS(n, xs) \

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include "boolexpr.h"
+#include "memcheck.h"
 
 
 /* boolexpr.c */

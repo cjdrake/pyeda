@@ -21,6 +21,8 @@
 #include <stdlib.h>
 
 #include "boolexpr.h"
+#include "memcheck.h"
+
 
 #define CMP(x, y) ((x) < (y) ? -1 : (x) > (y))
 

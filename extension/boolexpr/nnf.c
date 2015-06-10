@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #include "boolexpr.h"
+#include "memcheck.h"
 
 
 /* nnf.c */

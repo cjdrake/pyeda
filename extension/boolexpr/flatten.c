@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "boolexpr.h"
+#include "memcheck.h"
 
 
 #define DUAL(kind) (OP_OR + OP_AND - kind)
