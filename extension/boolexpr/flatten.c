@@ -13,6 +13,9 @@
 #include "boolexpr.h"
 
 
+#define DUAL(kind) (OP_OR + OP_AND - kind)
+
+
 /* boolexpr.c */
 struct BoolExpr * _orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
 

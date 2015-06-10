@@ -24,6 +24,10 @@
 
 #define CMP(x, y) ((x) < (y) ? -1 : (x) > (y))
 
+#define COMPLEMENTARY(x, y) \
+    (IS_LIT(x) && IS_LIT(y) && \
+     ((x)->data.lit.uniqid == -((y)->data.lit.uniqid)))
+
 
 /* boolexpr.c */
 struct BoolExpr * _op_new(BX_Kind kind, size_t n, struct BoolExpr **xs);

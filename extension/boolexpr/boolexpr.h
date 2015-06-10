@@ -91,14 +91,6 @@ do { \
 #define IS_NNF(ex)    (((ex)->flags) & NNF)
 
 
-/* Other */
-#define COMPLEMENTARY(x, y) \
-    (IS_LIT(x) && IS_LIT(y) && \
-     ((x)->data.lit.uniqid == -((y)->data.lit.uniqid)))
-
-#define DUAL(kind) (OP_OR + OP_AND - kind)
-
-
 /* Expression types */
 typedef enum {
     ZERO = 0x00,
