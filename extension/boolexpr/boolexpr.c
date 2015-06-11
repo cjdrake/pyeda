@@ -164,6 +164,10 @@ _bx_op_from(BX_Kind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr *op;
 
+    /* Do not allow degenerate OR/AND/XOR/EQ operators */
+    assert(!(kind == BX_OP_OR || kind == BX_OP_AND ||
+             kind == BX_OP_XOR || kind == BX_OP_EQ) || n >= 2);
+
     op = malloc(sizeof(struct BoolExpr));
     if (op == NULL)
         return NULL; // LCOV_EXCL_LINE
