@@ -196,8 +196,7 @@ _count_xor_args(struct BoolExpr *op)
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         if (BX_IS_XOR(op->data.xs->items[i]))
             count += op->data.xs->items[i]->data.xs->length;
-        else if (BX_IS_NOT(op->data.xs->items[i]) &&
-                 BX_IS_XOR(op->data.xs->items[i]->data.xs->items[0]))
+        else if (BX_IS_XNOR(op->data.xs->items[i]))
             count += op->data.xs->items[i]->data.xs->items[0]->data.xs->length;
         else
             count += 1;
@@ -242,7 +241,7 @@ _xor_simplify(struct BoolExpr *op)
             }
         }
         /* Xor(Xnor(x0, x1), x2) <=> Xnor(x0, x1, x2) */
-        else if (BX_IS_NOT(xi) && BX_IS_XOR(xi->data.xs->items[0])) {
+        else if (BX_IS_XNOR(xi)) {
             parity ^= true;
             for (size_t j = 0; j < xi->data.xs->items[0]->data.xs->length; ++j) {
                 xj = xi->data.xs->items[0]->data.xs->items[j];

@@ -108,10 +108,10 @@ BX_PushDownNot(struct BoolExpr *ex)
     if (BX_IS_ATOM(ex))
         return BX_IncRef(ex);
 
-    if (BX_IS_NOT(ex) && BX_IS_OR(ex->data.xs->items[0]))
+    if (BX_IS_NOR(ex))
         return _inv_or(ex->data.xs->items[0]);
 
-    if (BX_IS_NOT(ex) && BX_IS_AND(ex->data.xs->items[0]))
+    if (BX_IS_NAND(ex))
         return _inv_and(ex->data.xs->items[0]);
 
     if (BX_IS_NOT(ex) && BX_IS_ITE(ex->data.xs->items[0]))

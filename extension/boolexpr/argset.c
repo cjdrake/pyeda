@@ -196,7 +196,7 @@ BX_XorArgSet_Insert(struct BX_XorArgSet *argset, struct BoolExpr *key)
 
     /* Xor (x, Xnor(y, z)) = Xnor(x, y, z) */
     /* Xnor(x, Xnor(y, z)) = Xor (x, y, z) */
-    if (BX_IS_NOT(key) && BX_IS_XOR(key->data.xs->items[0])) {
+    if (BX_IS_XNOR(key)) {
         for (size_t i = 0; i < key->data.xs->length; ++i) {
             if (!BX_XorArgSet_Insert(argset, key->data.xs->items[i]))
                 return false; // LCOV_EXCL_LINE

@@ -25,6 +25,11 @@ extern "C" {
 #define BX_IS_IMPL(ex)  (((ex)->kind) == OP_IMPL)
 #define BX_IS_ITE(ex)   (((ex)->kind) == OP_ITE)
 
+#define BX_IS_NOR(ex)   (BX_IS_NOT(ex) && BX_IS_OR(ex->data.xs->items[0]))
+#define BX_IS_NAND(ex)  (BX_IS_NOT(ex) && BX_IS_AND(ex->data.xs->items[0]))
+#define BX_IS_XNOR(ex)  (BX_IS_NOT(ex) && BX_IS_XOR(ex->data.xs->items[0]))
+#define BX_IS_UNEQ(ex)  (BX_IS_NOT(ex) && BX_IS_EQ(ex->data.xs->items[0]))
+
 
 /* Category checks */
 #define BX_IS_ATOM(ex)   (((ex)->kind) >> 3 == 0x0) // 0***
