@@ -173,7 +173,7 @@ _orand_simplify(struct BoolExpr *op)
 
     free(flat);
 
-    y = _orandxor_new(op->kind, uniq_len, uniq);
+    y = _bx_orandxor_new(op->kind, uniq_len, uniq);
 
     free(uniq);
 
@@ -523,7 +523,7 @@ _simple_op(BX_Kind kind, size_t n, struct BoolExpr **xs)
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
-    CHECK_NULL(temp, _op_new(kind, n, xs));
+    CHECK_NULL(temp, _bx_op_new(kind, n, xs));
     y = _op_simplify[kind](temp);
     BX_DecRef(temp);
 
@@ -555,7 +555,7 @@ _simple_nop(BX_Kind kind, size_t n, struct BoolExpr **xs)
 
 
 struct BoolExpr *
-_simplify(struct BoolExpr *ex)
+_bx_simplify(struct BoolExpr *ex)
 {
     if (BX_IS_SIMPLE(ex))
         return BX_IncRef(ex);
@@ -563,7 +563,7 @@ _simplify(struct BoolExpr *ex)
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
-    CHECK_NULL(temp, _op_transform(ex, _simplify));
+    CHECK_NULL(temp, _bx_op_transform(ex, _bx_simplify));
     y = _op_simplify[temp->kind](temp);
     BX_DecRef(temp);
 
@@ -576,9 +576,9 @@ BX_Simplify(struct BoolExpr *ex)
 {
     struct BoolExpr *y;
 
-    CHECK_NULL(y, _simplify(ex));
+    CHECK_NULL(y, _bx_simplify(ex));
 
-    _mark_flags(y, BX_SIMPLE);
+    _bx_mark_flags(y, BX_SIMPLE);
 
     return y;
 }

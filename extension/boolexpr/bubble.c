@@ -39,7 +39,7 @@ _inv_or(struct BoolExpr *op)
 
     y = BX_And(length, xs);
 
-    _free_exs(length, xs);
+    _bx_free_exs(length, xs);
 
     return y;
 }
@@ -69,7 +69,7 @@ _inv_and(struct BoolExpr *op)
 
     y = BX_Or(length, xs);
 
-    _free_exs(length, xs);
+    _bx_free_exs(length, xs);
 
     return y;
 }
@@ -113,6 +113,6 @@ BX_PushDownNot(struct BoolExpr *ex)
     if (BX_IS_NOT(ex) && BX_IS_ITE(ex->data.xs->items[0]))
         return _inv_ite(ex->data.xs->items[0]);
 
-    return _op_transform(ex, BX_PushDownNot);
+    return _bx_op_transform(ex, BX_PushDownNot);
 }
 

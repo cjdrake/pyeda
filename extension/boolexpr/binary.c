@@ -33,16 +33,16 @@ _commutative_binify(struct BoolExpr *op)
         xs[0] = BX_IncRef(items0[0]);
     }
     else {
-        CHECK_NULL(temp, _op_new(op->kind, n0, items0));
+        CHECK_NULL(temp, _bx_op_new(op->kind, n0, items0));
         CHECK_NULL_1(xs[0], _commutative_binify(temp), temp);
         BX_DecRef(temp);
     }
 
-    CHECK_NULL_1(temp, _op_new(op->kind, n1, items1), xs[0]);
+    CHECK_NULL_1(temp, _bx_op_new(op->kind, n1, items1), xs[0]);
     CHECK_NULL_2(xs[1], _commutative_binify(temp), xs[0], temp);
     BX_DecRef(temp);
 
-    CHECK_NULL_2(y, _op_new(op->kind, 2, xs), xs[0], xs[1]);
+    CHECK_NULL_2(y, _bx_op_new(op->kind, 2, xs), xs[0], xs[1]);
     BX_DecRef(xs[0]);
     BX_DecRef(xs[1]);
 
@@ -73,7 +73,7 @@ _eq_binify(struct BoolExpr *op)
 
     CHECK_NULL_N(temp, BX_And(length, xs), length, xs);
 
-    _free_exs(length, xs);
+    _bx_free_exs(length, xs);
 
     CHECK_NULL_1(y, _commutative_binify(temp), temp);
     BX_DecRef(temp);
@@ -114,7 +114,7 @@ BX_ToBinary(struct BoolExpr *ex)
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
-    CHECK_NULL(temp, _op_transform(ex, BX_ToBinary));
+    CHECK_NULL(temp, _bx_op_transform(ex, BX_ToBinary));
     CHECK_NULL_1(y, _op_binify[temp->kind](temp), temp);
     BX_DecRef(temp);
 

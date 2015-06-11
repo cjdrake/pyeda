@@ -181,7 +181,7 @@ _bx_op_from(BX_Kind kind, size_t n, struct BoolExpr **xs)
 
 
 struct BoolExpr *
-_op_new(BX_Kind kind, size_t n, struct BoolExpr **xs)
+_bx_op_new(BX_Kind kind, size_t n, struct BoolExpr **xs)
 {
     struct BoolExpr **xs_copy;
 
@@ -197,7 +197,7 @@ _op_new(BX_Kind kind, size_t n, struct BoolExpr **xs)
 
 
 struct BoolExpr *
-_orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs)
+_bx_orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs)
 {
     if (n == 0)
         return BX_IncRef(IDENTITY[kind]);
@@ -205,7 +205,7 @@ _orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs)
     if (n == 1)
         return BX_IncRef(xs[0]);
 
-    return _op_new(kind, n, xs);
+    return _bx_op_new(kind, n, xs);
 }
 
 
@@ -215,7 +215,7 @@ _eq_new(size_t n, struct BoolExpr **xs)
     if (n <= 1)
         return BX_IncRef(&BX_One);
 
-    return _op_new(BX_OP_EQ, n, xs);
+    return _bx_op_new(BX_OP_EQ, n, xs);
 }
 
 
@@ -247,7 +247,7 @@ BX_Literal(struct BX_Vector *lits, long uniqid)
 struct BoolExpr *
 BX_Or(size_t n, struct BoolExpr **xs)
 {
-    return _orandxor_new(BX_OP_OR, n, xs);
+    return _bx_orandxor_new(BX_OP_OR, n, xs);
 }
 
 
@@ -268,7 +268,7 @@ BX_Nor(size_t n, struct BoolExpr **xs)
 struct BoolExpr *
 BX_And(size_t n, struct BoolExpr **xs)
 {
-    return _orandxor_new(BX_OP_AND, n, xs);
+    return _bx_orandxor_new(BX_OP_AND, n, xs);
 }
 
 
@@ -289,7 +289,7 @@ BX_Nand(size_t n, struct BoolExpr **xs)
 struct BoolExpr *
 BX_Xor(size_t n, struct BoolExpr **xs)
 {
-    return _orandxor_new(BX_OP_XOR, n, xs);
+    return _bx_orandxor_new(BX_OP_XOR, n, xs);
 }
 
 
@@ -362,7 +362,7 @@ static struct BoolExpr * _op_inv(struct BoolExpr *op)
 {
     struct BoolExpr *xs[1] = {op};
 
-    return _op_new(BX_OP_NOT, 1, xs);
+    return _bx_op_new(BX_OP_NOT, 1, xs);
 }
 
 
@@ -401,7 +401,7 @@ BX_Implies(struct BoolExpr *p, struct BoolExpr *q)
 {
     struct BoolExpr *xs[2] = {p, q};
 
-    return _op_new(BX_OP_IMPL, 2, xs);
+    return _bx_op_new(BX_OP_IMPL, 2, xs);
 }
 
 
@@ -410,7 +410,7 @@ BX_ITE(struct BoolExpr *s, struct BoolExpr *d1, struct BoolExpr *d0)
 {
     struct BoolExpr *xs[3] = {s, d1, d0};
 
-    return _op_new(BX_OP_ITE, 3, xs);
+    return _bx_op_new(BX_OP_ITE, 3, xs);
 }
 
 
@@ -612,14 +612,14 @@ BX_IsDNF(struct BoolExpr *ex)
     if (BX_IS_OR(ex)) {
         for (size_t i = 0; i < ex->data.xs->length; ++i) {
             struct BoolExpr *x = ex->data.xs->items[i];
-            if (!BX_IS_LIT(x) && !(BX_IS_AND(x) && _is_clause(x)))
+            if (!BX_IS_LIT(x) && !(BX_IS_AND(x) && _bx_is_clause(x)))
                 return false;
         }
         return true;
     }
 
     if (BX_IS_AND(ex))
-        return _is_clause(ex);
+        return _bx_is_clause(ex);
 
     return false;
 }
@@ -632,12 +632,12 @@ BX_IsCNF(struct BoolExpr *ex)
         return true;
 
     if (BX_IS_OR(ex))
-        return _is_clause(ex);
+        return _bx_is_clause(ex);
 
     if (BX_IS_AND(ex)) {
         for (size_t i = 0; i < ex->data.xs->length; ++i) {
             struct BoolExpr *x = ex->data.xs->items[i];
-            if (!BX_IS_LIT(x) && !(BX_IS_OR(x) && _is_clause(x)))
+            if (!BX_IS_LIT(x) && !(BX_IS_OR(x) && _bx_is_clause(x)))
                 return false;
         }
         return true;

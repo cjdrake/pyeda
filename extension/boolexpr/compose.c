@@ -68,11 +68,11 @@ _op_compose(struct BoolExpr *op, struct BX_Dict *var2ex)
     }
 
     if (mod_count)
-        y = _op_new(op->kind, length, xs);
+        y = _bx_op_new(op->kind, length, xs);
     else
         y = BX_IncRef(op);
 
-    _free_exs(length, xs);
+    _bx_free_exs(length, xs);
 
     return y;
 }

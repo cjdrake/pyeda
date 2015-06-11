@@ -28,7 +28,7 @@ _uniqid2index(long uniqid)
 
 
 void
-_free_exs(int n, struct BoolExpr **exs)
+_bx_free_exs(int n, struct BoolExpr **exs)
 {
     for (size_t i = 0; i < n; ++i)
         BX_DecRef(exs[i]);
@@ -37,7 +37,7 @@ _free_exs(int n, struct BoolExpr **exs)
 
 
 struct BoolExpr *
-_op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
+_bx_op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
 {
     size_t length = op->data.xs->length;
     struct BoolExpr **xs;
@@ -54,22 +54,22 @@ _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *))
     }
 
     if (mod_count)
-        y = _op_new(op->kind, length, xs);
+        y = _bx_op_new(op->kind, length, xs);
     else
         y = BX_IncRef(op);
 
-    _free_exs(length, xs);
+    _bx_free_exs(length, xs);
 
     return y;
 }
 
 
 void
-_mark_flags(struct BoolExpr *ex, BX_Flags f)
+_bx_mark_flags(struct BoolExpr *ex, BX_Flags f)
 {
     if ((ex->flags & f) != f) {
         for (size_t i = 0; i < ex->data.xs->length; ++i)
-            _mark_flags(ex->data.xs->items[i], f);
+            _bx_mark_flags(ex->data.xs->items[i], f);
         ex->flags |= f;
     }
 }
@@ -77,7 +77,7 @@ _mark_flags(struct BoolExpr *ex, BX_Flags f)
 
 /* Return true if the operator is a clause, containing only literals */
 bool
-_is_clause(struct BoolExpr *op)
+_bx_is_clause(struct BoolExpr *op)
 {
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         if (!BX_IS_LIT(op->data.xs->items[i]))

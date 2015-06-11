@@ -176,7 +176,7 @@ _eq_nnfify(struct BoolExpr *op)
 
     CHECK_NULL_N(all0, BX_And(length, xns), length, xns);
 
-    _free_exs(length, xns);
+    _bx_free_exs(length, xns);
 
     CHECK_NULL_1(all1, BX_And(length, xs), all0);
     y = BX_OrN(2, all0, all1);
@@ -305,7 +305,7 @@ _nnfify(struct BoolExpr *ex)
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
-    CHECK_NULL(temp, _op_transform(ex, _nnfify));
+    CHECK_NULL(temp, _bx_op_transform(ex, _nnfify));
     y = _op_nnfify[temp->kind](temp);
     BX_DecRef(temp);
 
@@ -314,7 +314,7 @@ _nnfify(struct BoolExpr *ex)
 
 
 struct BoolExpr *
-_to_nnf(struct BoolExpr *ex)
+_bx_to_nnf(struct BoolExpr *ex)
 {
     struct BoolExpr *t0, *t1;
     struct BoolExpr *nnf;
@@ -324,7 +324,7 @@ _to_nnf(struct BoolExpr *ex)
     CHECK_NULL_1(t1, BX_PushDownNot(t0), t0);
     BX_DecRef(t0);
 
-    CHECK_NULL_1(nnf, _simplify(t1), t1);
+    CHECK_NULL_1(nnf, _bx_simplify(t1), t1);
     BX_DecRef(t1);
 
     return nnf;
@@ -336,9 +336,9 @@ BX_ToNNF(struct BoolExpr *ex)
 {
     struct BoolExpr *nnf;
 
-    CHECK_NULL(nnf, _to_nnf(ex));
+    CHECK_NULL(nnf, _bx_to_nnf(ex));
 
-    _mark_flags(nnf, BX_NNF | BX_SIMPLE);
+    _bx_mark_flags(nnf, BX_NNF | BX_SIMPLE);
 
     return nnf;
 }

@@ -74,7 +74,7 @@ _distribute(BX_Kind kind, struct BoolExpr *nf)
         return NULL;                  // LCOV_EXCL_LINE
     }
 
-    temp = _orandxor_new(DUAL(kind), product->length, product->items);
+    temp = _bx_orandxor_new(DUAL(kind), product->length, product->items);
     if (temp == NULL) {
         BX_Array_Del(product);   // LCOV_EXCL_LINE
         _free_arrays(length, arrays); // LCOV_EXCL_LINE
@@ -83,7 +83,7 @@ _distribute(BX_Kind kind, struct BoolExpr *nf)
     BX_Array_Del(product);
     _free_arrays(length, arrays);
 
-    CHECK_NULL_1(y, _simplify(temp), temp);
+    CHECK_NULL_1(y, _bx_simplify(temp), temp);
     BX_DecRef(temp);
 
     return y;
@@ -214,13 +214,13 @@ _absorb(struct BoolExpr *nf)
 
     free(keep);
 
-    temp = _orandxor_new(nf->kind, count, xs);
+    temp = _bx_orandxor_new(nf->kind, count, xs);
     if (temp == NULL) {
         free(xs);    // LCOV_EXCL_LINE
         return NULL; // LCOV_EXCL_LINE
     }
 
-    y = _simplify(temp);
+    y = _bx_simplify(temp);
     BX_DecRef(temp);
 
     free(xs);
@@ -232,19 +232,19 @@ _absorb(struct BoolExpr *nf)
 static struct BoolExpr *
 _to_dnf(struct BoolExpr *nnf)
 {
-    if (BX_IS_ATOM(nnf) || _is_clause(nnf))
+    if (BX_IS_ATOM(nnf) || _bx_is_clause(nnf))
         return BX_IncRef(nnf);
 
     struct BoolExpr *temp;
     struct BoolExpr *ex;
 
     /* Convert sub-expressions to DNF */
-    CHECK_NULL(temp, _op_transform(nnf, _to_dnf));
-    CHECK_NULL_1(ex, _simplify(temp), temp);
+    CHECK_NULL(temp, _bx_op_transform(nnf, _to_dnf));
+    CHECK_NULL_1(ex, _bx_simplify(temp), temp);
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
-    if (BX_IS_ATOM(ex) || _is_clause(ex))
+    if (BX_IS_ATOM(ex) || _bx_is_clause(ex))
         return ex;
 
     /* a | b & c */
@@ -261,7 +261,7 @@ _to_dnf(struct BoolExpr *nnf)
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
-    if (BX_IS_ATOM(ex) || _is_clause(ex))
+    if (BX_IS_ATOM(ex) || _bx_is_clause(ex))
         return ex;
 
     temp = ex;
@@ -274,19 +274,19 @@ _to_dnf(struct BoolExpr *nnf)
 static struct BoolExpr *
 _to_cnf(struct BoolExpr *nnf)
 {
-    if (BX_IS_ATOM(nnf) || _is_clause(nnf))
+    if (BX_IS_ATOM(nnf) || _bx_is_clause(nnf))
         return BX_IncRef(nnf);
 
     struct BoolExpr *temp;
     struct BoolExpr *ex;
 
     /* Convert sub-expressions to CNF */
-    CHECK_NULL(temp, _op_transform(nnf, _to_cnf));
-    CHECK_NULL_1(ex, _simplify(temp), temp);
+    CHECK_NULL(temp, _bx_op_transform(nnf, _to_cnf));
+    CHECK_NULL_1(ex, _bx_simplify(temp), temp);
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
-    if (BX_IS_ATOM(ex) || _is_clause(ex))
+    if (BX_IS_ATOM(ex) || _bx_is_clause(ex))
         return ex;
 
     /* a & (b | c) */
@@ -303,7 +303,7 @@ _to_cnf(struct BoolExpr *nnf)
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
-    if (BX_IS_ATOM(ex) || _is_clause(ex))
+    if (BX_IS_ATOM(ex) || _bx_is_clause(ex))
         return ex;
 
     temp = ex;
@@ -319,11 +319,11 @@ BX_ToDNF(struct BoolExpr *ex)
     struct BoolExpr *nnf;
     struct BoolExpr *dnf;
 
-    CHECK_NULL(nnf, _to_nnf(ex));
+    CHECK_NULL(nnf, _bx_to_nnf(ex));
     CHECK_NULL_1(dnf, _to_dnf(nnf), nnf);
     BX_DecRef(nnf);
 
-    _mark_flags(dnf, BX_NNF | BX_SIMPLE);
+    _bx_mark_flags(dnf, BX_NNF | BX_SIMPLE);
 
     return dnf;
 }
@@ -335,11 +335,11 @@ BX_ToCNF(struct BoolExpr *ex)
     struct BoolExpr *nnf;
     struct BoolExpr *cnf;
 
-    CHECK_NULL(nnf, _to_nnf(ex));
+    CHECK_NULL(nnf, _bx_to_nnf(ex));
     CHECK_NULL_1(cnf, _to_cnf(nnf), nnf);
     BX_DecRef(nnf);
 
-    _mark_flags(cnf, BX_NNF | BX_SIMPLE);
+    _bx_mark_flags(cnf, BX_NNF | BX_SIMPLE);
 
     return cnf;
 }
