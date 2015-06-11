@@ -30,7 +30,6 @@ _uniqid2index(long uniqid)
 }
 
 
-/* LCOV_EXCL_START */
 void
 _free_exs(int n, struct BoolExpr **exs)
 {
@@ -38,7 +37,6 @@ _free_exs(int n, struct BoolExpr **exs)
         BX_DecRef(exs[i]);
     free(exs);
 }
-/* LCOV_EXCL_STOP */
 
 
 struct BoolExpr *

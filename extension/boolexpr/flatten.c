@@ -33,9 +33,9 @@ bool _is_clause(struct BoolExpr *op);
 
 
 static void
-_free_arrays(size_t length, struct BX_Array **arrays)
+_free_arrays(size_t n, struct BX_Array **arrays)
 {
-    for (size_t i = 0; i < length; ++i)
+    for (size_t i = 0; i < n; ++i)
         BX_Array_Del(arrays[i]);
     free(arrays);
 }
