@@ -13,20 +13,6 @@
 #include "share.h"
 
 
-/*
-** Map negative lits onto evens, and positive lits onto odds.
-** ~x : {-1, -2, -3, -4, ...} => {0, 2, 4, 6, ...}
-**  x : { 1,  2,  3,  4, ...} => {1, 3, 5, 7, ...}
-*/
-size_t
-_uniqid2index(long uniqid)
-{
-    assert(uniqid != 0);
-
-    return (size_t) (uniqid < 0 ? -2 * uniqid - 2 : 2 * uniqid - 1);
-}
-
-
 void
 _bx_free_exs(int n, struct BoolExpr **exs)
 {

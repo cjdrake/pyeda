@@ -227,6 +227,20 @@ _op_del(struct BoolExpr *op)
 }
 
 
+/*
+** Map negative lits onto evens, and positive lits onto odds.
+** ~x : {-1, -2, -3, -4, ...} => {0, 2, 4, 6, ...}
+**  x : { 1,  2,  3,  4, ...} => {1, 3, 5, 7, ...}
+*/
+static size_t
+_uniqid2index(long uniqid)
+{
+    assert(uniqid != 0);
+
+    return (size_t) (uniqid < 0 ? -2 * uniqid - 2 : 2 * uniqid - 1);
+}
+
+
 struct BoolExpr *
 BX_Literal(struct BX_Vector *lits, long uniqid)
 {
