@@ -12,24 +12,10 @@
 
 #include "boolexpr.h"
 #include "memcheck.h"
+#include "share.h"
 
 
 #define DUAL(kind) (BX_OP_OR + BX_OP_AND - kind)
-
-
-/* boolexpr.c */
-struct BoolExpr * _orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
-
-/* nnf.c */
-struct BoolExpr * _to_nnf(struct BoolExpr *ex);
-
-/* simple.c */
-struct BoolExpr * _simplify(struct BoolExpr *ex);
-
-/* util.c */
-struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
-void _mark_flags(struct BoolExpr *ex, BX_Flags f);
-bool _is_clause(struct BoolExpr *op);
 
 
 static void

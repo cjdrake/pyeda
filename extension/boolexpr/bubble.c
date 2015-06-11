@@ -11,11 +11,7 @@
 
 #include "boolexpr.h"
 #include "memcheck.h"
-
-
-/* util.c */
-void _free_exs(int n, struct BoolExpr **exs);
-struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
+#include "share.h"
 
 
 /* ~(a | b | ...) = ~a & ~b & ... */

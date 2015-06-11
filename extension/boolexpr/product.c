@@ -9,16 +9,7 @@
 
 #include "boolexpr.h"
 #include "memcheck.h"
-
-
-/* array.c */
-struct BX_Array * _bx_array_from(size_t length, struct BoolExpr **items);
-
-/* boolexpr.c */
-struct BoolExpr * _op_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
-
-/* util.c */
-void _free_exs(int length, struct BoolExpr **exs);
+#include "share.h"
 
 
 static struct BX_Array *

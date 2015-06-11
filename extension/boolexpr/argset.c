@@ -9,10 +9,7 @@
 
 #include "boolexpr.h"
 #include "memcheck.h"
-
-
-/* boolexpr.c */
-struct BoolExpr * _bx_op_from(BX_Kind kind, size_t n, struct BoolExpr **xs);
+#include "share.h"
 
 
 static struct BoolExpr **

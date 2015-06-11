@@ -17,6 +17,7 @@
 
 #include "boolexpr.h"
 #include "memcheck.h"
+#include "share.h"
 
 
 #define READ_ARGS(n, xs) \
@@ -27,14 +28,6 @@ do { \
         xs[i] = va_arg(vl, struct BoolExpr *); \
     va_end(vl); \
 } while (0)
-
-
-/* array.c */
-struct BX_Array * _bx_array_from(size_t length, struct BoolExpr **items);
-
-/* util.c */
-size_t _uniqid2index(long uniqid);
-bool _is_clause(struct BoolExpr *op);
 
 
 struct BX_Iter *

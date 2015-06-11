@@ -22,6 +22,7 @@
 
 #include "boolexpr.h"
 #include "memcheck.h"
+#include "share.h"
 
 
 #define CMP(x, y) ((x) < (y) ? -1 : (x) > (y))
@@ -30,14 +31,6 @@
     (BX_IS_LIT(x) && BX_IS_LIT(y) && \
      ((x)->data.lit.uniqid == -((y)->data.lit.uniqid)))
 
-
-/* boolexpr.c */
-struct BoolExpr * _op_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
-struct BoolExpr * _orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
-
-/* util.c */
-struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
-void _mark_flags(struct BoolExpr *ex, BX_Flags f);
 
 /* simple.c */
 static struct BoolExpr * _simple_op(BX_Kind kind, size_t n, struct BoolExpr **xs);

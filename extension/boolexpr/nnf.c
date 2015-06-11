@@ -11,18 +11,11 @@
 
 #include "boolexpr.h"
 #include "memcheck.h"
+#include "share.h"
 
 
 /* nnf.c */
 static struct BoolExpr * _xor_nnfify(struct BoolExpr *op);
-
-/* simple.c */
-struct BoolExpr * _simplify(struct BoolExpr *ex);
-
-/* util.c */
-struct BoolExpr * _op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *));
-void _free_exs(int n, struct BoolExpr **exs);
-void _mark_flags(struct BoolExpr *ex, BX_Flags f);
 
 
 /* NOTE: assume operator arguments are already NNF */
