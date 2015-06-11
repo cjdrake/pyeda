@@ -13,6 +13,7 @@
 #include "boolexpr.h"
 #include "memcheck.h"
 #include "share.h"
+#include "util.h"
 
 
 #define DUAL(kind) (BX_OP_OR + BX_OP_AND - kind)

@@ -23,6 +23,7 @@
 #include "boolexpr.h"
 #include "memcheck.h"
 #include "share.h"
+#include "util.h"
 
 
 #define CMP(x, y) ((x) < (y) ? -1 : (x) > (y))

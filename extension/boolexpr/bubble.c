@@ -12,6 +12,7 @@
 #include "boolexpr.h"
 #include "memcheck.h"
 #include "share.h"
+#include "util.h"
 
 
 /* ~(a | b | ...) = ~a & ~b & ... */

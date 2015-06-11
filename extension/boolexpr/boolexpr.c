@@ -18,6 +18,7 @@
 #include "boolexpr.h"
 #include "memcheck.h"
 #include "share.h"
+#include "util.h"
 
 
 #define READ_ARGS(n, xs) \
