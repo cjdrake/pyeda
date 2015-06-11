@@ -77,7 +77,7 @@ BX_OrAndArgSet_Insert(struct BX_OrAndArgSet *argset, struct BoolExpr *key)
         dominate = true;
     }
     /* x | ~x = 1 ; x & ~x = 0 */
-    else if (IS_LIT(key) || IS_NOT(key)) {
+    else if (BX_IS_LIT(key) || BX_IS_NOT(key)) {
         struct BoolExpr *temp = BX_Not(key);
         dominate = BX_Set_Contains(argset->xs, temp);
         BX_DecRef(temp);
@@ -159,7 +159,7 @@ BX_XorArgSet_Del(struct BX_XorArgSet *argset)
 bool
 BX_XorArgSet_Insert(struct BX_XorArgSet *argset, struct BoolExpr *key)
 {
-    if (IS_CONST(key)) {
+    if (BX_IS_CONST(key)) {
         argset->parity ^= (bool) key->kind;
         return true;
     }
@@ -173,7 +173,7 @@ BX_XorArgSet_Insert(struct BX_XorArgSet *argset, struct BoolExpr *key)
 
     /* Xor(x, y, z, ~z) = Xnor(x, y) */
     /* Xnor(x, y, z, ~z) = Xor(x, y) */
-    if (IS_LIT(key) || IS_NOT(key)) {
+    if (BX_IS_LIT(key) || BX_IS_NOT(key)) {
         struct BoolExpr *temp = BX_Not(key);
         bool flip = BX_Set_Contains(argset->xs, temp);
         BX_DecRef(temp);
@@ -186,7 +186,7 @@ BX_XorArgSet_Insert(struct BX_XorArgSet *argset, struct BoolExpr *key)
 
     /* Xor (x, Xor(y, z)) = Xor (x, y, z) */
     /* Xnor(x, Xor(y, z)) = Xnor(x, y, z) */
-    if (IS_XOR(key)) {
+    if (BX_IS_XOR(key)) {
         for (size_t i = 0; i < key->data.xs->length; ++i) {
             if (!BX_XorArgSet_Insert(argset, key->data.xs->items[i]))
                 return false; // LCOV_EXCL_LINE
@@ -196,7 +196,7 @@ BX_XorArgSet_Insert(struct BX_XorArgSet *argset, struct BoolExpr *key)
 
     /* Xor (x, Xnor(y, z)) = Xnor(x, y, z) */
     /* Xnor(x, Xnor(y, z)) = Xor (x, y, z) */
-    if (IS_NOT(key) && IS_XOR(key->data.xs->items[0])) {
+    if (BX_IS_NOT(key) && BX_IS_XOR(key->data.xs->items[0])) {
         for (size_t i = 0; i < key->data.xs->length; ++i) {
             if (!BX_XorArgSet_Insert(argset, key->data.xs->items[i]))
                 return false; // LCOV_EXCL_LINE
@@ -295,7 +295,7 @@ BX_EqArgSet_Insert(struct BX_EqArgSet *argset, struct BoolExpr *key)
     }
 
     /* Equal(~x, x) = 0 */
-    if (IS_LIT(key) || IS_NOT(key)) {
+    if (BX_IS_LIT(key) || BX_IS_NOT(key)) {
         struct BoolExpr *temp = BX_Not(key);
         bool contradict = BX_Set_Contains(argset->xs, temp);
         BX_DecRef(temp);

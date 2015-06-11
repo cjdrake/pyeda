@@ -85,7 +85,7 @@ bool
 _is_clause(struct BoolExpr *op)
 {
     for (size_t i = 0; i < op->data.xs->length; ++i) {
-        if (!IS_LIT(op->data.xs->items[i]))
+        if (!BX_IS_LIT(op->data.xs->items[i]))
             return false;
     }
 

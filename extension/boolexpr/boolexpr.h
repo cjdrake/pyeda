@@ -13,34 +13,34 @@ extern "C" {
 
 
 /* Kind checks */
-#define IS_ZERO(ex)  (((ex)->kind) == ZERO)
-#define IS_ONE(ex)   (((ex)->kind) == ONE)
-#define IS_COMP(ex)  (((ex)->kind) == COMP)
-#define IS_VAR(ex)   (((ex)->kind) == VAR)
-#define IS_OR(ex)    (((ex)->kind) == OP_OR)
-#define IS_AND(ex)   (((ex)->kind) == OP_AND)
-#define IS_XOR(ex)   (((ex)->kind) == OP_XOR)
-#define IS_EQ(ex)    (((ex)->kind) == OP_EQ)
-#define IS_NOT(ex)   (((ex)->kind) == OP_NOT)
-#define IS_IMPL(ex)  (((ex)->kind) == OP_IMPL)
-#define IS_ITE(ex)   (((ex)->kind) == OP_ITE)
+#define BX_IS_ZERO(ex)  (((ex)->kind) == ZERO)
+#define BX_IS_ONE(ex)   (((ex)->kind) == ONE)
+#define BX_IS_COMP(ex)  (((ex)->kind) == COMP)
+#define BX_IS_VAR(ex)   (((ex)->kind) == VAR)
+#define BX_IS_OR(ex)    (((ex)->kind) == OP_OR)
+#define BX_IS_AND(ex)   (((ex)->kind) == OP_AND)
+#define BX_IS_XOR(ex)   (((ex)->kind) == OP_XOR)
+#define BX_IS_EQ(ex)    (((ex)->kind) == OP_EQ)
+#define BX_IS_NOT(ex)   (((ex)->kind) == OP_NOT)
+#define BX_IS_IMPL(ex)  (((ex)->kind) == OP_IMPL)
+#define BX_IS_ITE(ex)   (((ex)->kind) == OP_ITE)
 
 
 /* Category checks */
-#define IS_ATOM(ex)   (((ex)->kind) >> 3 == 0x0) // 0***
-#define IS_CONST(ex)  (((ex)->kind) >> 2 == 0x0) // 00**
-#define IS_LIT(ex)    (((ex)->kind) >> 1 == 0x2) // 010*
-#define IS_OP(ex)     (((ex)->kind) >> 3 == 0x1) // 1***
+#define BX_IS_ATOM(ex)   (((ex)->kind) >> 3 == 0x0) // 0***
+#define BX_IS_CONST(ex)  (((ex)->kind) >> 2 == 0x0) // 00**
+#define BX_IS_LIT(ex)    (((ex)->kind) >> 1 == 0x2) // 010*
+#define BX_IS_OP(ex)     (((ex)->kind) >> 3 == 0x1) // 1***
 
 
 /* Flag definitions */
-#define SIMPLE 0x01
-#define NNF    0x02
+#define BX_SIMPLE 0x01
+#define BX_NNF    0x02
 
 
 /* Flag checks */
-#define IS_SIMPLE(ex) (((ex)->flags) & SIMPLE)
-#define IS_NNF(ex)    (((ex)->flags) & NNF)
+#define BX_IS_SIMPLE(ex) (((ex)->flags) & BX_SIMPLE)
+#define BX_IS_NNF(ex)    (((ex)->flags) & BX_NNF)
 
 
 /* Expression types */

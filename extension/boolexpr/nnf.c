@@ -150,9 +150,9 @@ _xor_nnfify(struct BoolExpr *op)
     unsigned int num_ands = 0;
 
     for (size_t i = 0; i < op->data.xs->length; ++i) {
-        if (IS_OR(op->data.xs->items[i]))
+        if (BX_IS_OR(op->data.xs->items[i]))
             num_ors += 1;
-        else if (IS_AND(op->data.xs->items[i]))
+        else if (BX_IS_AND(op->data.xs->items[i]))
             num_ands += 1;
     }
 
@@ -274,9 +274,9 @@ _ite_nnfify(struct BoolExpr *op)
     unsigned int num_ands = 0;
 
     for (size_t i = 0; i < 3; ++i) {
-        if (IS_OR(op->data.xs->items[i]))
+        if (BX_IS_OR(op->data.xs->items[i]))
             num_ors += 1;
-        else if (IS_AND(op->data.xs->items[i]))
+        else if (BX_IS_AND(op->data.xs->items[i]))
             num_ands += 1;
     }
 
@@ -306,7 +306,7 @@ static struct BoolExpr * (*_op_nnfify[16])(struct BoolExpr *op) = {
 struct BoolExpr *
 _nnfify(struct BoolExpr *ex)
 {
-    if (IS_NNF(ex))
+    if (BX_IS_NNF(ex))
         return BX_IncRef(ex);
 
     struct BoolExpr *temp;
@@ -345,7 +345,7 @@ BX_ToNNF(struct BoolExpr *ex)
 
     CHECK_NULL(nnf, _to_nnf(ex));
 
-    _mark_flags(nnf, NNF | SIMPLE);
+    _mark_flags(nnf, BX_NNF | BX_SIMPLE);
 
     return nnf;
 }

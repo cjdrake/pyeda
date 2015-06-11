@@ -105,16 +105,16 @@ _inv_ite(struct BoolExpr *op)
 struct BoolExpr *
 BX_PushDownNot(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex))
+    if (BX_IS_ATOM(ex))
         return BX_IncRef(ex);
 
-    if (IS_NOT(ex) && IS_OR(ex->data.xs->items[0]))
+    if (BX_IS_NOT(ex) && BX_IS_OR(ex->data.xs->items[0]))
         return _inv_or(ex->data.xs->items[0]);
 
-    if (IS_NOT(ex) && IS_AND(ex->data.xs->items[0]))
+    if (BX_IS_NOT(ex) && BX_IS_AND(ex->data.xs->items[0]))
         return _inv_and(ex->data.xs->items[0]);
 
-    if (IS_NOT(ex) && IS_ITE(ex->data.xs->items[0]))
+    if (BX_IS_NOT(ex) && BX_IS_ITE(ex->data.xs->items[0]))
         return _inv_ite(ex->data.xs->items[0]);
 
     return _op_transform(ex, BX_PushDownNot);

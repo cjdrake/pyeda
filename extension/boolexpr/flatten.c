@@ -51,7 +51,7 @@ _nf2arrays(struct BoolExpr *nf)
     arrays = malloc(length * sizeof(struct BX_Array *));
 
     for (size_t i = 0; i < length; ++i) {
-        if (IS_LIT(nf->data.xs->items[i]))
+        if (BX_IS_LIT(nf->data.xs->items[i]))
             arrays[i] = BX_Array_New(1, &nf->data.xs->items[i]);
         else
             arrays[i] = BX_Array_New(nf->data.xs->items[i]->data.xs->length,
@@ -127,7 +127,7 @@ _lits_cmp(struct BX_Array *xs, struct BX_Array *ys)
         struct BoolExpr *x = xs->items[i];
         struct BoolExpr *y = ys->items[j];
 
-        assert(IS_LIT(x) && IS_LIT(y));
+        assert(BX_IS_LIT(x) && BX_IS_LIT(y));
 
         if (x == y) {
             i += 1;
@@ -246,7 +246,7 @@ _absorb(struct BoolExpr *nf)
 static struct BoolExpr *
 _to_dnf(struct BoolExpr *nnf)
 {
-    if (IS_ATOM(nnf) || _is_clause(nnf))
+    if (BX_IS_ATOM(nnf) || _is_clause(nnf))
         return BX_IncRef(nnf);
 
     struct BoolExpr *temp;
@@ -258,11 +258,11 @@ _to_dnf(struct BoolExpr *nnf)
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
-    if (IS_ATOM(ex) || _is_clause(ex))
+    if (BX_IS_ATOM(ex) || _is_clause(ex))
         return ex;
 
     /* a | b & c */
-    if (IS_OR(ex)) {
+    if (BX_IS_OR(ex)) {
         temp = ex;
         ex = _absorb(temp);
         BX_DecRef(temp);
@@ -275,7 +275,7 @@ _to_dnf(struct BoolExpr *nnf)
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
-    if (IS_ATOM(ex) || _is_clause(ex))
+    if (BX_IS_ATOM(ex) || _is_clause(ex))
         return ex;
 
     temp = ex;
@@ -288,7 +288,7 @@ _to_dnf(struct BoolExpr *nnf)
 static struct BoolExpr *
 _to_cnf(struct BoolExpr *nnf)
 {
-    if (IS_ATOM(nnf) || _is_clause(nnf))
+    if (BX_IS_ATOM(nnf) || _is_clause(nnf))
         return BX_IncRef(nnf);
 
     struct BoolExpr *temp;
@@ -300,11 +300,11 @@ _to_cnf(struct BoolExpr *nnf)
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
-    if (IS_ATOM(ex) || _is_clause(ex))
+    if (BX_IS_ATOM(ex) || _is_clause(ex))
         return ex;
 
     /* a & (b | c) */
-    if (IS_AND(ex)) {
+    if (BX_IS_AND(ex)) {
         temp = ex;
         ex = _absorb(temp);
         BX_DecRef(temp);
@@ -317,7 +317,7 @@ _to_cnf(struct BoolExpr *nnf)
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
-    if (IS_ATOM(ex) || _is_clause(ex))
+    if (BX_IS_ATOM(ex) || _is_clause(ex))
         return ex;
 
     temp = ex;
@@ -337,7 +337,7 @@ BX_ToDNF(struct BoolExpr *ex)
     CHECK_NULL_1(dnf, _to_dnf(nnf), nnf);
     BX_DecRef(nnf);
 
-    _mark_flags(dnf, NNF | SIMPLE);
+    _mark_flags(dnf, BX_NNF | BX_SIMPLE);
 
     return dnf;
 }
@@ -353,7 +353,7 @@ BX_ToCNF(struct BoolExpr *ex)
     CHECK_NULL_1(cnf, _to_cnf(nnf), nnf);
     BX_DecRef(nnf);
 
-    _mark_flags(cnf, NNF | SIMPLE);
+    _mark_flags(cnf, BX_NNF | BX_SIMPLE);
 
     return cnf;
 }
@@ -363,11 +363,11 @@ BX_ToCNF(struct BoolExpr *ex)
 static struct BoolExpr *
 _choose_var(struct BoolExpr *dnf)
 {
-    struct BoolExpr *lit = IS_LIT(dnf->data.xs->items[0])
+    struct BoolExpr *lit = BX_IS_LIT(dnf->data.xs->items[0])
                          ? dnf->data.xs->items[0]
                          : dnf->data.xs->items[0]->data.xs->items[0];
 
-    if (IS_COMP(lit))
+    if (BX_IS_COMP(lit))
         return BX_Not(lit);
     else
         return BX_IncRef(lit);

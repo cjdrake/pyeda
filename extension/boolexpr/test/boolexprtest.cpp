@@ -14,10 +14,10 @@ Similar(BoolExpr * const self, BoolExpr * const other)
     if (self->kind != other->kind)
         return false;
 
-    if (IS_CONST(self)) {
+    if (BX_IS_CONST(self)) {
         return true;
     }
-    else if (IS_LIT(self)) {
+    else if (BX_IS_LIT(self)) {
         return (self->data.lit.lits == other->data.lit.lits) &&
                (self->data.lit.uniqid == other->data.lit.uniqid);
     }

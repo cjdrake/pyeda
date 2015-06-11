@@ -108,7 +108,7 @@ _node2ast(struct BoolExpr *ex)
 {
     PyObject *ast;
 
-    if (IS_CONST(ex)) {
+    if (BX_IS_CONST(ex)) {
         PyObject *s, *l;
 
         s = PyUnicode_FromString(ASTOPS[0]);
@@ -131,7 +131,7 @@ _node2ast(struct BoolExpr *ex)
         PyTuple_SET_ITEM(ast, 0, s);
         PyTuple_SET_ITEM(ast, 1, l);
     }
-    else if (IS_LIT(ex)) {
+    else if (BX_IS_LIT(ex)) {
         PyObject *s, *l;
 
         s = PyUnicode_FromString(ASTOPS[1]);
@@ -343,7 +343,7 @@ PyDoc_STRVAR(simple_doc,
 static PyObject *
 ExprNode_simple(ExprNode *self)
 {
-    return PyBool_FromLong((long) self->ex->flags & SIMPLE);
+    return PyBool_FromLong((long) self->ex->flags & BX_SIMPLE);
 }
 
 
@@ -610,13 +610,13 @@ ExprNode_compose(ExprNode *self, PyObject *args)
 static PyObject *
 ExprNode_data(ExprNode *self)
 {
-    if (IS_CONST(self->ex))
+    if (BX_IS_CONST(self->ex))
         return PyLong_FromLong((long) self->ex->data.pcval);
 
-    if (IS_LIT(self->ex))
+    if (BX_IS_LIT(self->ex))
         return PyLong_FromLong(self->ex->data.lit.uniqid);
 
-    if (IS_OP(self->ex)) {
+    if (BX_IS_OP(self->ex)) {
         int i, j;
         ExprNode **nodes;
         PyObject *xs;

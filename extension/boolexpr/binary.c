@@ -115,7 +115,7 @@ static struct BoolExpr * (*_op_binify[16])(struct BoolExpr *ex) = {
 struct BoolExpr *
 BX_ToBinary(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex))
+    if (BX_IS_ATOM(ex))
         return BX_IncRef(ex);
 
     struct BoolExpr *temp;

@@ -49,7 +49,7 @@ BX_Iter_New(struct BoolExpr *ex)
     it->_ex = ex;
     it->done = false;
 
-    if (IS_ATOM(ex)) {
+    if (BX_IS_ATOM(ex)) {
         it->item = ex;
         return it;
     }
@@ -79,7 +79,7 @@ BX_Iter_Next(struct BX_Iter *it)
     if (it->done)
         return true;
 
-    if (IS_ATOM(it->_ex)) {
+    if (BX_IS_ATOM(it->_ex)) {
         it->done = true;
         return true;
     }
@@ -118,11 +118,11 @@ BX_Iter_Next(struct BX_Iter *it)
 
 
 /* Initialize global constants */
-struct BoolExpr BX_Zero = {1, ZERO, NNF | SIMPLE, {.pcval=1}};
-struct BoolExpr BX_One  = {1, ONE,  NNF | SIMPLE, {.pcval=2}};
+struct BoolExpr BX_Zero = {1, ZERO, BX_NNF | BX_SIMPLE, {.pcval=1}};
+struct BoolExpr BX_One  = {1, ONE,  BX_NNF | BX_SIMPLE, {.pcval=2}};
 
-struct BoolExpr BX_Logical   = {1, LOGICAL,   NNF | SIMPLE, {.pcval=3}};
-struct BoolExpr BX_Illogical = {1, ILLOGICAL, NNF | SIMPLE, {.pcval=0}};
+struct BoolExpr BX_Logical   = {1, LOGICAL,   BX_NNF | BX_SIMPLE, {.pcval=3}};
+struct BoolExpr BX_Illogical = {1, ILLOGICAL, BX_NNF | BX_SIMPLE, {.pcval=0}};
 
 struct BoolExpr * IDENTITY[16] = {
     NULL, NULL, NULL, NULL,
@@ -152,7 +152,7 @@ _lit_new(struct BX_Vector *lits, long uniqid)
     lit->kind = uniqid < 0 ? COMP : VAR;
     lit->data.lit.uniqid = uniqid;
     lit->data.lit.lits = lits;
-    lit->flags = NNF | SIMPLE;
+    lit->flags = BX_NNF | BX_SIMPLE;
 
     return lit;
 }
@@ -541,7 +541,7 @@ BX_DecRef(struct BoolExpr * ex)
 
     if (ex->refcount == 0) {
         /* Constant refcount must never reach zero */
-        assert(!IS_CONST(ex));
+        assert(!BX_IS_CONST(ex));
         _boolexpr_del[ex->kind](ex);
     }
 }
@@ -550,7 +550,7 @@ BX_DecRef(struct BoolExpr * ex)
 unsigned long
 BX_Depth(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex))
+    if (BX_IS_ATOM(ex))
         return 0;
 
     unsigned long max_depth = 0;
@@ -568,7 +568,7 @@ BX_Depth(struct BoolExpr *ex)
 unsigned long
 BX_Size(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex))
+    if (BX_IS_ATOM(ex))
         return 1;
 
     unsigned long size = 1;
@@ -583,7 +583,7 @@ BX_Size(struct BoolExpr *ex)
 unsigned long
 BX_AtomCount(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex))
+    if (BX_IS_ATOM(ex))
         return 1;
 
     unsigned long atom_count = 0;
@@ -598,7 +598,7 @@ BX_AtomCount(struct BoolExpr *ex)
 unsigned long
 BX_OpCount(struct BoolExpr *ex)
 {
-    if (IS_ATOM(ex))
+    if (BX_IS_ATOM(ex))
         return 0;
 
     unsigned long op_count = 1;
@@ -613,19 +613,19 @@ BX_OpCount(struct BoolExpr *ex)
 bool
 BX_IsDNF(struct BoolExpr *ex)
 {
-    if (IS_ZERO(ex) || IS_LIT(ex))
+    if (BX_IS_ZERO(ex) || BX_IS_LIT(ex))
         return true;
 
-    if (IS_OR(ex)) {
+    if (BX_IS_OR(ex)) {
         for (size_t i = 0; i < ex->data.xs->length; ++i) {
             struct BoolExpr *x = ex->data.xs->items[i];
-            if (!IS_LIT(x) && !(IS_AND(x) && _is_clause(x)))
+            if (!BX_IS_LIT(x) && !(BX_IS_AND(x) && _is_clause(x)))
                 return false;
         }
         return true;
     }
 
-    if (IS_AND(ex))
+    if (BX_IS_AND(ex))
         return _is_clause(ex);
 
     return false;
@@ -635,16 +635,16 @@ BX_IsDNF(struct BoolExpr *ex)
 bool
 BX_IsCNF(struct BoolExpr *ex)
 {
-    if (IS_ONE(ex) || IS_LIT(ex))
+    if (BX_IS_ONE(ex) || BX_IS_LIT(ex))
         return true;
 
-    if (IS_OR(ex))
+    if (BX_IS_OR(ex))
         return _is_clause(ex);
 
-    if (IS_AND(ex)) {
+    if (BX_IS_AND(ex)) {
         for (size_t i = 0; i < ex->data.xs->length; ++i) {
             struct BoolExpr *x = ex->data.xs->items[i];
-            if (!IS_LIT(x) && !(IS_OR(x) && _is_clause(x)))
+            if (!BX_IS_LIT(x) && !(BX_IS_OR(x) && _is_clause(x)))
                 return false;
         }
         return true;
