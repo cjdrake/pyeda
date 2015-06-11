@@ -48,11 +48,11 @@ TEST_F(BX_Flatten_Test, Basic)
     ops[0] = BX_XorN(4, xs[0], xs[1], xs[2], xs[3]);
 
     ops[1] = BX_ToDNF(ops[0]);
-    EXPECT_EQ(ops[1]->kind, OP_OR);
+    EXPECT_EQ(ops[1]->kind, BX_OP_OR);
     EXPECT_EQ(ops[1]->data.xs->length, 8);
 
     ops[2] = BX_ToCNF(ops[1]);
-    EXPECT_EQ(ops[2]->kind, OP_AND);
+    EXPECT_EQ(ops[2]->kind, BX_OP_AND);
     EXPECT_EQ(ops[2]->data.xs->length, 8);
 }
 

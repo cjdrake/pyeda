@@ -23,12 +23,12 @@ TEST_F(BX_Product_Test, Product)
     arrays[1] = BX_Array_New(2, B);
     arrays[2] = BX_Array_New(3, C);
 
-    struct BX_Array *prod = BX_Product(OP_OR, 3, arrays);
+    struct BX_Array *prod = BX_Product(BX_OP_OR, 3, arrays);
 
     EXPECT_EQ(prod->length, 1 * 2 * 3);
 
     for (int i = 0; i < prod->length; ++i)
-        EXPECT_EQ(prod->items[i]->kind, OP_OR);
+        EXPECT_EQ(prod->items[i]->kind, BX_OP_OR);
 
     // [x0+x1+x3, x0+x2+x3, x0+x1+x4, x0+x2+x4, x0+x1+x5, x0+x2+x5]
     int p[6][3] = {
@@ -54,14 +54,14 @@ TEST_F(BX_Product_Test, Identity)
 {
     struct BX_Array **arrays;
 
-    struct BX_Array *prod_and = BX_Product(OP_AND, 0, arrays);
+    struct BX_Array *prod_and = BX_Product(BX_OP_AND, 0, arrays);
 
     EXPECT_EQ(prod_and->length, 1);
     EXPECT_EQ(prod_and->items[0], &BX_One);
 
     BX_Array_Del(prod_and);
 
-    struct BX_Array *prod_or = BX_Product(OP_OR, 0, arrays);
+    struct BX_Array *prod_or = BX_Product(BX_OP_OR, 0, arrays);
 
     EXPECT_EQ(prod_or->length, 1);
     EXPECT_EQ(prod_or->items[0], &BX_Zero);

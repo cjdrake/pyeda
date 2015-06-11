@@ -13,17 +13,17 @@ extern "C" {
 
 
 /* Kind checks */
-#define BX_IS_ZERO(ex)  (((ex)->kind) == ZERO)
-#define BX_IS_ONE(ex)   (((ex)->kind) == ONE)
-#define BX_IS_COMP(ex)  (((ex)->kind) == COMP)
-#define BX_IS_VAR(ex)   (((ex)->kind) == VAR)
-#define BX_IS_OR(ex)    (((ex)->kind) == OP_OR)
-#define BX_IS_AND(ex)   (((ex)->kind) == OP_AND)
-#define BX_IS_XOR(ex)   (((ex)->kind) == OP_XOR)
-#define BX_IS_EQ(ex)    (((ex)->kind) == OP_EQ)
-#define BX_IS_NOT(ex)   (((ex)->kind) == OP_NOT)
-#define BX_IS_IMPL(ex)  (((ex)->kind) == OP_IMPL)
-#define BX_IS_ITE(ex)   (((ex)->kind) == OP_ITE)
+#define BX_IS_ZERO(ex)  (((ex)->kind) == BX_ZERO)
+#define BX_IS_ONE(ex)   (((ex)->kind) == BX_ONE)
+#define BX_IS_COMP(ex)  (((ex)->kind) == BX_COMP)
+#define BX_IS_VAR(ex)   (((ex)->kind) == BX_VAR)
+#define BX_IS_OR(ex)    (((ex)->kind) == BX_OP_OR)
+#define BX_IS_AND(ex)   (((ex)->kind) == BX_OP_AND)
+#define BX_IS_XOR(ex)   (((ex)->kind) == BX_OP_XOR)
+#define BX_IS_EQ(ex)    (((ex)->kind) == BX_OP_EQ)
+#define BX_IS_NOT(ex)   (((ex)->kind) == BX_OP_NOT)
+#define BX_IS_IMPL(ex)  (((ex)->kind) == BX_OP_IMPL)
+#define BX_IS_ITE(ex)   (((ex)->kind) == BX_OP_ITE)
 
 #define BX_IS_NOR(ex)   (BX_IS_NOT(ex) && BX_IS_OR(ex->data.xs->items[0]))
 #define BX_IS_NAND(ex)  (BX_IS_NOT(ex) && BX_IS_AND(ex->data.xs->items[0]))
@@ -50,23 +50,23 @@ extern "C" {
 
 /* Expression types */
 typedef enum {
-    ZERO = 0x00,
-    ONE  = 0x01,
+    BX_ZERO = 0x00,
+    BX_ONE  = 0x01,
 
-    LOGICAL   = 0x02,
-    ILLOGICAL = 0x03,
+    BX_LOGICAL   = 0x02,
+    BX_ILLOGICAL = 0x03,
 
-    COMP = 0x04,
-    VAR  = 0x05,
+    BX_COMP = 0x04,
+    BX_VAR  = 0x05,
 
-    OP_OR  = 0x08,
-    OP_AND = 0x09,
-    OP_XOR = 0x0A,
-    OP_EQ  = 0x0B,
+    BX_OP_OR  = 0x08,
+    BX_OP_AND = 0x09,
+    BX_OP_XOR = 0x0A,
+    BX_OP_EQ  = 0x0B,
 
-    OP_NOT  = 0x0C,
-    OP_IMPL = 0x0D,
-    OP_ITE  = 0x0E,
+    BX_OP_NOT  = 0x0C,
+    BX_OP_IMPL = 0x0D,
+    BX_OP_ITE  = 0x0E,
 } BX_Kind;
 
 

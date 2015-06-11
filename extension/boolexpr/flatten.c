@@ -14,7 +14,7 @@
 #include "memcheck.h"
 
 
-#define DUAL(kind) (OP_OR + OP_AND - kind)
+#define DUAL(kind) (BX_OP_OR + BX_OP_AND - kind)
 
 
 /* boolexpr.c */
@@ -271,7 +271,7 @@ _to_dnf(struct BoolExpr *nnf)
 
     /* (a | b) & (c | d) */
     temp = ex;
-    CHECK_NULL_1(ex, _distribute(OP_AND, temp), temp);
+    CHECK_NULL_1(ex, _distribute(BX_OP_AND, temp), temp);
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */
@@ -313,7 +313,7 @@ _to_cnf(struct BoolExpr *nnf)
 
     /* a & b | c & d */
     temp = ex;
-    CHECK_NULL_1(ex, _distribute(OP_OR, temp), temp);
+    CHECK_NULL_1(ex, _distribute(BX_OP_OR, temp), temp);
     BX_DecRef(temp);
 
     /* a ; a | b ; a & b */

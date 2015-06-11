@@ -13,9 +13,9 @@ class BX_ArgSet_Test: public BoolExpr_Test {};
 
 TEST_F(BX_ArgSet_Test, OrBasic)
 {
-    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(OP_OR);
+    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(BX_OP_OR);
 
-    EXPECT_EQ(a->kind, OP_OR);
+    EXPECT_EQ(a->kind, BX_OP_OR);
     EXPECT_TRUE(a->min);
     EXPECT_FALSE(a->max);
 
@@ -43,9 +43,9 @@ TEST_F(BX_ArgSet_Test, OrBasic)
 
 TEST_F(BX_ArgSet_Test, AndBasic)
 {
-    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(OP_AND);
+    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(BX_OP_AND);
 
-    EXPECT_EQ(a->kind, OP_AND);
+    EXPECT_EQ(a->kind, BX_OP_AND);
     EXPECT_TRUE(a->min);
     EXPECT_FALSE(a->max);
 
@@ -168,10 +168,10 @@ TEST_F(BX_ArgSet_Test, EqBasic)
 
 TEST_F(BX_ArgSet_Test, OrReduce)
 {
-    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(OP_OR);
-    struct BX_OrAndArgSet *b = BX_OrAndArgSet_New(OP_OR);
-    struct BX_OrAndArgSet *c = BX_OrAndArgSet_New(OP_OR);
-    struct BX_OrAndArgSet *d = BX_OrAndArgSet_New(OP_OR);
+    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(BX_OP_OR);
+    struct BX_OrAndArgSet *b = BX_OrAndArgSet_New(BX_OP_OR);
+    struct BX_OrAndArgSet *c = BX_OrAndArgSet_New(BX_OP_OR);
+    struct BX_OrAndArgSet *d = BX_OrAndArgSet_New(BX_OP_OR);
 
     EXPECT_EQ(BX_OrAndArgSet_Reduce(a), &BX_Zero);
 
@@ -186,7 +186,7 @@ TEST_F(BX_ArgSet_Test, OrReduce)
     BX_OrAndArgSet_Insert(c, xs[1]);
     BX_OrAndArgSet_Insert(c, xs[1]);
     ops[0] = BX_OrAndArgSet_Reduce(c);
-    EXPECT_EQ(ops[0]->kind, OP_OR);
+    EXPECT_EQ(ops[0]->kind, BX_OP_OR);
     EXPECT_EQ(ops[0]->data.xs->length, 2);
 
     BX_OrAndArgSet_Insert(d, xs[0]);
@@ -202,9 +202,9 @@ TEST_F(BX_ArgSet_Test, OrReduce)
 
 TEST_F(BX_ArgSet_Test, AndReduce)
 {
-    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(OP_AND);
-    struct BX_OrAndArgSet *b = BX_OrAndArgSet_New(OP_AND);
-    struct BX_OrAndArgSet *c = BX_OrAndArgSet_New(OP_AND);
+    struct BX_OrAndArgSet *a = BX_OrAndArgSet_New(BX_OP_AND);
+    struct BX_OrAndArgSet *b = BX_OrAndArgSet_New(BX_OP_AND);
+    struct BX_OrAndArgSet *c = BX_OrAndArgSet_New(BX_OP_AND);
 
     EXPECT_EQ(BX_OrAndArgSet_Reduce(a), &BX_One);
 
@@ -219,7 +219,7 @@ TEST_F(BX_ArgSet_Test, AndReduce)
     BX_OrAndArgSet_Insert(c, xs[1]);
     BX_OrAndArgSet_Insert(c, xs[1]);
     ops[0] = BX_OrAndArgSet_Reduce(c);
-    EXPECT_EQ(ops[0]->kind, OP_AND);
+    EXPECT_EQ(ops[0]->kind, BX_OP_AND);
     EXPECT_EQ(ops[0]->data.xs->length, 2);
 
     BX_OrAndArgSet_Del(a);
@@ -242,7 +242,7 @@ TEST_F(BX_ArgSet_Test, XorReduce)
     BX_XorArgSet_Insert(c, xs[1]);
     BX_XorArgSet_Insert(c, xs[2]);
     ops[0] = BX_XorArgSet_Reduce(c);
-    EXPECT_EQ(ops[0]->kind, OP_XOR);
+    EXPECT_EQ(ops[0]->kind, BX_OP_XOR);
     EXPECT_EQ(ops[0]->data.xs->length, 3);
 
     BX_XorArgSet_Insert(d, xs[0]);
@@ -292,19 +292,19 @@ TEST_F(BX_ArgSet_Test, EqReduce)
     BX_EqArgSet_Insert(e, xs[0]);
     BX_EqArgSet_Insert(e, xs[1]);
     ops[2] = BX_EqArgSet_Reduce(e);
-    EXPECT_EQ(ops[2]->kind, OP_NOT);
-    EXPECT_EQ(ops[2]->data.xs->items[0]->kind, OP_OR);
+    EXPECT_EQ(ops[2]->kind, BX_OP_NOT);
+    EXPECT_EQ(ops[2]->data.xs->items[0]->kind, BX_OP_OR);
 
     BX_EqArgSet_Insert(f, &BX_One);
     BX_EqArgSet_Insert(f, xs[0]);
     BX_EqArgSet_Insert(f, xs[1]);
     ops[3] = BX_EqArgSet_Reduce(f);
-    EXPECT_EQ(ops[3]->kind, OP_AND);
+    EXPECT_EQ(ops[3]->kind, BX_OP_AND);
 
     BX_EqArgSet_Insert(g, xs[0]);
     BX_EqArgSet_Insert(g, xs[1]);
     ops[4] = BX_EqArgSet_Reduce(g);
-    EXPECT_EQ(ops[4]->kind, OP_EQ);
+    EXPECT_EQ(ops[4]->kind, BX_OP_EQ);
 
     BX_EqArgSet_Del(a);
     BX_EqArgSet_Del(b);

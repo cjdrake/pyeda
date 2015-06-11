@@ -1347,27 +1347,27 @@ PyInit_exprnode(void)
         goto decref_One;
 
     /* Create constants */
-    if (PyModule_AddIntConstant(m, "ZERO", ZERO))
+    if (PyModule_AddIntConstant(m, "ZERO", BX_ZERO))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "ONE", ONE))
+    if (PyModule_AddIntConstant(m, "ONE", BX_ONE))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "COMP", COMP))
+    if (PyModule_AddIntConstant(m, "COMP", BX_COMP))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "VAR", VAR))
+    if (PyModule_AddIntConstant(m, "VAR", BX_VAR))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "OP_OR", OP_OR))
+    if (PyModule_AddIntConstant(m, "OP_OR", BX_OP_OR))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "OP_AND", OP_AND))
+    if (PyModule_AddIntConstant(m, "OP_AND", BX_OP_AND))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "OP_XOR", OP_XOR))
+    if (PyModule_AddIntConstant(m, "OP_XOR", BX_OP_XOR))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "OP_EQ", OP_EQ))
+    if (PyModule_AddIntConstant(m, "OP_EQ", BX_OP_EQ))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "OP_NOT", OP_NOT))
+    if (PyModule_AddIntConstant(m, "OP_NOT", BX_OP_NOT))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "OP_IMPL", OP_IMPL))
+    if (PyModule_AddIntConstant(m, "OP_IMPL", BX_OP_IMPL))
         goto undo_all;
-    if (PyModule_AddIntConstant(m, "OP_ITE", OP_ITE))
+    if (PyModule_AddIntConstant(m, "OP_ITE", BX_OP_ITE))
         goto undo_all;
 
     /* Success! */

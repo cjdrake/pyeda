@@ -218,7 +218,7 @@ BX_XorArgSet_Reduce(struct BX_XorArgSet *argset)
     size_t length = argset->xs->length;
 
     if (length == 0) {
-        temp = BX_IncRef(IDENTITY[OP_XOR]);
+        temp = BX_IncRef(IDENTITY[BX_OP_XOR]);
         y = argset->parity ? BX_IncRef(temp) : BX_Not(temp);
         BX_DecRef(temp);
         return y;
@@ -231,7 +231,7 @@ BX_XorArgSet_Reduce(struct BX_XorArgSet *argset)
         free(xs);
     }
     else {
-        temp = _bx_op_from(OP_XOR, length, xs);
+        temp = _bx_op_from(BX_OP_XOR, length, xs);
         if (temp == NULL) {
             free(xs);    // LCOV_EXCL_LINE
             return NULL; // LCOV_EXCL_LINE
@@ -345,7 +345,7 @@ BX_EqArgSet_Reduce(struct BX_EqArgSet *argset)
 
     /* Equal(0, x, y) = Nor(x, y) */
     if (argset->zero) {
-        struct BoolExpr *temp = _bx_op_from(OP_OR, length, xs);
+        struct BoolExpr *temp = _bx_op_from(BX_OP_OR, length, xs);
         if (temp == NULL) {
             free(xs);    // LCOV_EXCL_LINE
             return NULL; // LCOV_EXCL_LINE
@@ -357,8 +357,8 @@ BX_EqArgSet_Reduce(struct BX_EqArgSet *argset)
 
     /* Equal(1, x, y) = And(x, y) */
     if (argset->one)
-        return _bx_op_from(OP_AND, length, xs);
+        return _bx_op_from(BX_OP_AND, length, xs);
 
-    return _bx_op_from(OP_EQ, length, xs);
+    return _bx_op_from(BX_OP_EQ, length, xs);
 }
 

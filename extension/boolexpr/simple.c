@@ -370,7 +370,7 @@ _eq_simplify(struct BoolExpr *op)
             y = BX_Not(uniq[0]);
         /* Equal(0, x0, x1) <=> Nor(x0, x1) */
         else
-            y = _simple_nop(OP_OR, uniq_len, uniq);
+            y = _simple_nop(BX_OP_OR, uniq_len, uniq);
     }
     else if (found_one) {
         /* Equal(1) <=> 1 */
@@ -381,7 +381,7 @@ _eq_simplify(struct BoolExpr *op)
             y = BX_IncRef(uniq[0]);
         /* Equal(1, x0, ...) <=> And(x0, ...) */
         else
-            y = _simple_op(OP_AND, uniq_len, uniq);
+            y = _simple_op(BX_OP_AND, uniq_len, uniq);
     }
     else {
         y = BX_Equal(uniq_len, uniq);
@@ -462,7 +462,7 @@ _ite_simplify(struct BoolExpr *op)
 
         /* ITE(s, 0, d0) <=> And(~s, d0) */
         CHECK_NULL(sn, BX_Not(s));
-        y = _simple_op2(OP_AND, sn, d0);
+        y = _simple_op2(BX_OP_AND, sn, d0);
         BX_DecRef(sn);
         return y;
     }
@@ -477,17 +477,17 @@ _ite_simplify(struct BoolExpr *op)
             return BX_IncRef(&BX_One);
 
         /* ITE(s, 1, d0) <=> Or(s, d0) */
-        return _simple_op2(OP_OR, s, d0);
+        return _simple_op2(BX_OP_OR, s, d0);
     }
 
     /* ITE(s, d1, 0) <=> And(s, d1) */
     if (BX_IS_ZERO(d0))
-        return _simple_op2(OP_AND, s, d1);
+        return _simple_op2(BX_OP_AND, s, d1);
 
     /* ITE(s, d1, 1) <=> Or(~s, d1) */
     if (BX_IS_ONE(d0)) {
         CHECK_NULL(sn, BX_Not(s));
-        y = _simple_op2(OP_OR, sn, d1);
+        y = _simple_op2(BX_OP_OR, sn, d1);
         BX_DecRef(sn);
         return y;
     }
@@ -498,11 +498,11 @@ _ite_simplify(struct BoolExpr *op)
 
     /* ITE(s, s, d0) <=> Or(s, d0) */
     if (_eq(s, d1))
-        return _simple_op2(OP_OR, s, d0);
+        return _simple_op2(BX_OP_OR, s, d0);
 
     /* ITE(s, d1, s) <=> And(s, d1) */
     if (_eq(s, d0))
-        return _simple_op2(OP_AND, s, d1);
+        return _simple_op2(BX_OP_AND, s, d1);
 
     return BX_ITE(s, d1, d0);
 }

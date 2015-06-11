@@ -118,11 +118,11 @@ BX_Iter_Next(struct BX_Iter *it)
 
 
 /* Initialize global constants */
-struct BoolExpr BX_Zero = {1, ZERO, BX_NNF | BX_SIMPLE, {.pcval=1}};
-struct BoolExpr BX_One  = {1, ONE,  BX_NNF | BX_SIMPLE, {.pcval=2}};
+struct BoolExpr BX_Zero = {1, BX_ZERO, BX_NNF | BX_SIMPLE, {.pcval=1}};
+struct BoolExpr BX_One  = {1, BX_ONE,  BX_NNF | BX_SIMPLE, {.pcval=2}};
 
-struct BoolExpr BX_Logical   = {1, LOGICAL,   BX_NNF | BX_SIMPLE, {.pcval=3}};
-struct BoolExpr BX_Illogical = {1, ILLOGICAL, BX_NNF | BX_SIMPLE, {.pcval=0}};
+struct BoolExpr BX_Logical   = {1, BX_LOGICAL,   BX_NNF | BX_SIMPLE, {.pcval=3}};
+struct BoolExpr BX_Illogical = {1, BX_ILLOGICAL, BX_NNF | BX_SIMPLE, {.pcval=0}};
 
 struct BoolExpr * IDENTITY[16] = {
     NULL, NULL, NULL, NULL,
@@ -149,7 +149,7 @@ _lit_new(struct BX_Vector *lits, long uniqid)
         return NULL; // LCOV_EXCL_LINE
 
     lit->refcount = 1;
-    lit->kind = uniqid < 0 ? COMP : VAR;
+    lit->kind = uniqid < 0 ? BX_COMP : BX_VAR;
     lit->data.lit.uniqid = uniqid;
     lit->data.lit.lits = lits;
     lit->flags = BX_NNF | BX_SIMPLE;
@@ -222,7 +222,7 @@ _eq_new(size_t n, struct BoolExpr **xs)
     if (n <= 1)
         return BX_IncRef(&BX_One);
 
-    return _op_new(OP_EQ, n, xs);
+    return _op_new(BX_OP_EQ, n, xs);
 }
 
 
@@ -254,7 +254,7 @@ BX_Literal(struct BX_Vector *lits, long uniqid)
 struct BoolExpr *
 BX_Or(size_t n, struct BoolExpr **xs)
 {
-    return _orandxor_new(OP_OR, n, xs);
+    return _orandxor_new(BX_OP_OR, n, xs);
 }
 
 
@@ -275,7 +275,7 @@ BX_Nor(size_t n, struct BoolExpr **xs)
 struct BoolExpr *
 BX_And(size_t n, struct BoolExpr **xs)
 {
-    return _orandxor_new(OP_AND, n, xs);
+    return _orandxor_new(BX_OP_AND, n, xs);
 }
 
 
@@ -296,7 +296,7 @@ BX_Nand(size_t n, struct BoolExpr **xs)
 struct BoolExpr *
 BX_Xor(size_t n, struct BoolExpr **xs)
 {
-    return _orandxor_new(OP_XOR, n, xs);
+    return _orandxor_new(BX_OP_XOR, n, xs);
 }
 
 
@@ -369,7 +369,7 @@ static struct BoolExpr * _op_inv(struct BoolExpr *op)
 {
     struct BoolExpr *xs[1] = {op};
 
-    return _op_new(OP_NOT, 1, xs);
+    return _op_new(BX_OP_NOT, 1, xs);
 }
 
 
@@ -408,7 +408,7 @@ BX_Implies(struct BoolExpr *p, struct BoolExpr *q)
 {
     struct BoolExpr *xs[2] = {p, q};
 
-    return _op_new(OP_IMPL, 2, xs);
+    return _op_new(BX_OP_IMPL, 2, xs);
 }
 
 
@@ -417,7 +417,7 @@ BX_ITE(struct BoolExpr *s, struct BoolExpr *d1, struct BoolExpr *d0)
 {
     struct BoolExpr *xs[3] = {s, d1, d0};
 
-    return _op_new(OP_ITE, 3, xs);
+    return _op_new(BX_OP_ITE, 3, xs);
 }
 
 
