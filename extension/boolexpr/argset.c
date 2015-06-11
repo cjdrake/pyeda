@@ -65,12 +65,12 @@ BX_OrAndArgSet_Insert(struct BX_OrAndArgSet *argset, struct BoolExpr *key)
 {
     /* 1 | x = 1 ; 0 & x = 0 */
     /* x | 0 = x ; x & 1 = x */
-    if (argset->max || key == IDENTITY[argset->kind])
+    if (argset->max || key == _bx_identity[argset->kind])
         return true;
 
     bool dominate = false;
     /* x | 1 = 1 ; x & 0 = 0 */
-    if (key == DOMINATOR[argset->kind]) {
+    if (key == _bx_dominator[argset->kind]) {
         dominate = true;
     }
     /* x | ~x = 1 ; x & ~x = 0 */
@@ -108,10 +108,10 @@ BX_OrAndArgSet_Reduce(struct BX_OrAndArgSet *argset)
     size_t length = argset->xs->length;
 
     if (argset->min)
-        return BX_IncRef(IDENTITY[argset->kind]);
+        return BX_IncRef(_bx_identity[argset->kind]);
 
     if (argset->max)
-        return BX_IncRef(DOMINATOR[argset->kind]);
+        return BX_IncRef(_bx_dominator[argset->kind]);
 
     CHECK_NULL(xs, _set2array(argset->xs));
 
@@ -215,7 +215,7 @@ BX_XorArgSet_Reduce(struct BX_XorArgSet *argset)
     size_t length = argset->xs->length;
 
     if (length == 0) {
-        temp = BX_IncRef(IDENTITY[BX_OP_XOR]);
+        temp = BX_IncRef(_bx_identity[BX_OP_XOR]);
         y = argset->parity ? BX_IncRef(temp) : BX_Not(temp);
         BX_DecRef(temp);
         return y;

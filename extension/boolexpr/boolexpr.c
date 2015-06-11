@@ -118,14 +118,14 @@ struct BoolExpr BX_One  = {1, BX_ONE,  BX_NNF | BX_SIMPLE, {.pcval=2}};
 struct BoolExpr BX_Logical   = {1, BX_LOGICAL,   BX_NNF | BX_SIMPLE, {.pcval=3}};
 struct BoolExpr BX_Illogical = {1, BX_ILLOGICAL, BX_NNF | BX_SIMPLE, {.pcval=0}};
 
-struct BoolExpr * IDENTITY[16] = {
+struct BoolExpr * _bx_identity[16] = {
     NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
     &BX_Zero, &BX_One, &BX_Zero, NULL,
     NULL, NULL, NULL, NULL,
 };
 
-struct BoolExpr * DOMINATOR[16] = {
+struct BoolExpr * _bx_dominator[16] = {
     NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
     &BX_One, &BX_Zero, NULL, NULL,
@@ -205,7 +205,7 @@ struct BoolExpr *
 _bx_orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs)
 {
     if (n == 0)
-        return BX_IncRef(IDENTITY[kind]);
+        return BX_IncRef(_bx_identity[kind]);
 
     if (n == 1)
         return BX_IncRef(xs[0]);

@@ -184,9 +184,6 @@ extern struct BoolExpr BX_One;
 extern struct BoolExpr BX_Logical;
 extern struct BoolExpr BX_Illogical;
 
-extern struct BoolExpr * IDENTITY[16];
-extern struct BoolExpr * DOMINATOR[16];
-
 
 /*
 ** Return a literal expression.

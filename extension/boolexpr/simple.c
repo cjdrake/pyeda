@@ -119,27 +119,27 @@ _orand_simplify(struct BoolExpr *op)
     for (size_t i = 0; i < op->data.xs->length; ++i) {
         xi = op->data.xs->items[i];
         /* Or(1, x) <=> 1 */
-        if (xi == DOMINATOR[op->kind]) {
+        if (xi == _bx_dominator[op->kind]) {
             free(flat);
-            return BX_IncRef(DOMINATOR[op->kind]);
+            return BX_IncRef(_bx_dominator[op->kind]);
         }
         /* Or(Or(x0, x1), x2) <=> Or(x0, x1, x2) */
         else if (xi->kind == op->kind) {
             for (size_t j = 0; j < xi->data.xs->length; ++j) {
                 xj = xi->data.xs->items[j];
                 /* Or(1, x) <=> 1 */
-                if (xj == DOMINATOR[op->kind]) {
+                if (xj == _bx_dominator[op->kind]) {
                     free(flat);
-                    return BX_IncRef(DOMINATOR[op->kind]);
+                    return BX_IncRef(_bx_dominator[op->kind]);
                 }
                 /* Or(0, x) <=> x */
-                else if (xj != IDENTITY[op->kind]) {
+                else if (xj != _bx_identity[op->kind]) {
                     flat[flat_len++] = xj;
                 }
             }
         }
         /* Or(0, x) <=> x */
-        else if (xi != IDENTITY[op->kind]) {
+        else if (xi != _bx_identity[op->kind]) {
             flat[flat_len++] = xi;
         }
     }
@@ -163,7 +163,7 @@ _orand_simplify(struct BoolExpr *op)
             if (COMPLEMENTARY(uniq[uniq_len-1], flat[i])) {
                 free(flat);
                 free(uniq);
-                return BX_IncRef(DOMINATOR[op->kind]);
+                return BX_IncRef(_bx_dominator[op->kind]);
             }
             /* Or(x, x) <=> x */
             else if (!_eq(flat[i], uniq[uniq_len-1])) {

@@ -43,7 +43,7 @@ static struct BX_Array *
 _product(BX_Kind kind, size_t n, struct BX_Array **arrays)
 {
     if (n == 0) {
-        struct BoolExpr *items[] = {IDENTITY[kind]};
+        struct BoolExpr *items[] = {_bx_identity[kind]};
         return BX_Array_New(1, items);
     }
 

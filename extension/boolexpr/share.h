@@ -9,6 +9,9 @@
 struct BX_Array * _bx_array_from(size_t length, struct BoolExpr **items);
 
 /* boolexpr.c */
+extern struct BoolExpr * _bx_identity[16];
+extern struct BoolExpr * _bx_dominator[16];
+
 struct BoolExpr * _bx_op_from(BX_Kind kind, size_t n, struct BoolExpr **xs);
 struct BoolExpr * _bx_op_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
 struct BoolExpr * _bx_orandxor_new(BX_Kind kind, size_t n, struct BoolExpr **xs);
