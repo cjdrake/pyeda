@@ -172,31 +172,41 @@ static bool
 _enlarge(struct BX_Set *set)
 {
     struct BX_SetItem *item;
+
     size_t pridx = set->_pridx;
+    size_t length = set->length;
     struct BX_SetItem **items = set->items;
+
+    size_t old_width = _primes[pridx];
+    size_t new_width = _primes[pridx + 1];
 
     set->_pridx += 1;
     set->length = 0;
-    set->items = malloc(_primes[set->_pridx] * sizeof(struct BX_SetItem *));
+    set->items = malloc(new_width * sizeof(struct BX_SetItem *));
     if (set->items == NULL)
         return false; // LCOV_EXCL_LINE
 
-    for (size_t i = 0; i < _primes[set->_pridx]; ++i)
+    for (size_t i = 0; i < new_width; ++i)
         set->items[i] = (struct BX_SetItem *) NULL;
 
-    for (size_t i = 0; i < _primes[pridx]; ++i) {
+    for (size_t i = 0; i < old_width; ++i) {
         for (item = items[i]; item; item = item->tail) {
             if (!_set_insert(set, item->key)) {
                 /* LCOV_EXCL_START */
                 for (size_t j = 0; j < i; ++j)
-                    _list_del(items[j]);
-                free(items);
+                    _list_del(set->items[j]);
+                free(set->items);
+                set->_pridx = pridx;
+                set->length = length;
+                set->items = items;
                 return false;
                 /* LCOV_EXCL_STOP */
             }
         }
-        _list_del(items[i]);
     }
+
+    for (size_t i = 0; i < old_width; ++i)
+        _list_del(items[i]);
     free(items);
 
     return true;

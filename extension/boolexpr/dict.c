@@ -136,31 +136,41 @@ static bool
 _enlarge(struct BX_Dict *dict)
 {
     struct BX_DictItem *item;
+
     size_t pridx = dict->_pridx;
+    size_t length = dict->length;
     struct BX_DictItem **items = dict->items;
+
+    size_t old_width = _primes[pridx];
+    size_t new_width = _primes[pridx + 1];
 
     dict->_pridx += 1;
     dict->length = 0;
-    dict->items = malloc(_primes[dict->_pridx] * sizeof(struct BX_DictItem *));
+    dict->items = malloc(new_width * sizeof(struct BX_DictItem *));
     if (dict->items == NULL)
         return false; // LCOV_EXCL_LINE
 
-    for (size_t i = 0; i < _primes[dict->_pridx]; ++i)
+    for (size_t i = 0; i < new_width; ++i)
         dict->items[i] = (struct BX_DictItem *) NULL;
 
-    for (size_t i = 0; i < _primes[pridx]; ++i) {
+    for (size_t i = 0; i < old_width; ++i) {
         for (item = items[i]; item; item = item->tail) {
             if (!_dict_insert(dict, item->key, item->val)) {
                 /* LCOV_EXCL_START */
                 for (size_t j = 0; j < i; ++j)
-                    _list_del(items[j]);
-                free(items);
+                    _list_del(dict->items[j]);
+                free(dict->items);
+                dict->_pridx = pridx;
+                dict->length = length;
+                dict->items = items;
                 return false;
                 /* LCOV_EXCL_STOP */
             }
         }
-        _list_del(items[i]);
     }
+
+    for (size_t i = 0; i < old_width; ++i)
+        _list_del(items[i]);
     free(items);
 
     return true;
