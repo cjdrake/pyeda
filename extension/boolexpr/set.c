@@ -137,17 +137,20 @@ BX_SetIter_Next(struct BX_SetIter *it)
 
 
 static bool
-_insert(struct BX_Set *set, struct BoolExpr *key)
+_set_insert(struct BX_Set *set, struct BoolExpr *key)
 {
     size_t index = _hash(set, key);
     struct BX_SetItem *item;
+    struct BX_SetItem **tail;
 
+    tail = &set->items[index];
     for (item = set->items[index]; item; item = item->tail) {
         if (_eq(item->key, key)) {
             BX_DecRef(item->key);
             item->key = BX_IncRef(key);
             return true;
         }
+        tail = &item->tail;
     }
 
     item = malloc(sizeof(struct BX_SetItem));
@@ -155,9 +158,10 @@ _insert(struct BX_Set *set, struct BoolExpr *key)
         return false; // LCOV_EXCL_LINE
 
     item->key = BX_IncRef(key);
-    item->tail = set->items[index];
+    item->tail = (struct BX_SetItem *) NULL;
 
-    set->items[index] = item;
+    *tail = item;
+
     set->length += 1;
 
     return true;
@@ -182,7 +186,7 @@ _enlarge(struct BX_Set *set)
 
     for (size_t i = 0; i < _primes[pridx]; ++i) {
         for (item = items[i]; item; item = item->tail) {
-            if (!_insert(set, item->key)) {
+            if (!_set_insert(set, item->key)) {
                 /* LCOV_EXCL_START */
                 for (size_t j = 0; j < i; ++j)
                     _list_del(items[j]);
@@ -204,7 +208,7 @@ BX_Set_Insert(struct BX_Set *set, struct BoolExpr *key)
 {
     double load;
 
-    if (!_insert(set, key))
+    if (!_set_insert(set, key))
         return false; // LCOV_EXCL_LINE
 
     load = (double) set->length / (double) _primes[set->_pridx];
@@ -222,21 +226,19 @@ bool
 BX_Set_Remove(struct BX_Set *set, struct BoolExpr *key)
 {
     size_t index = _hash(set, key);
+    struct BX_SetItem *item;
+    struct BX_SetItem **tail;
 
-    struct BX_SetItem **p = &set->items[index];
-    struct BX_SetItem *item = set->items[index];
-
-    while (item) {
+    tail = &set->items[index];
+    for (item = set->items[index]; item; item = item->tail) {
         if (_eq(item->key, key)) {
             BX_DecRef(item->key);
-            *p = item->tail;
+            *tail = item->tail;
             free(item);
             set->length -= 1;
-
             return true;
         }
-        p = &item->tail;
-        item = item->tail;
+        tail = &item->tail;
     }
 
     return false;

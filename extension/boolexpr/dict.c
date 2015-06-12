@@ -98,11 +98,13 @@ BX_Dict_Del(struct BX_Dict *dict)
 
 
 static bool
-_insert(struct BX_Dict *dict, struct BoolExpr *key, struct BoolExpr *val)
+_dict_insert(struct BX_Dict *dict, struct BoolExpr *key, struct BoolExpr *val)
 {
     size_t index = _hash(dict, key);
     struct BX_DictItem *item;
+    struct BX_DictItem **tail;
 
+    tail = &dict->items[index];
     for (item = dict->items[index]; item; item = item->tail) {
         if (_eq(item->key, key)) {
             BX_DecRef(item->key);
@@ -111,6 +113,7 @@ _insert(struct BX_Dict *dict, struct BoolExpr *key, struct BoolExpr *val)
             item->val = BX_IncRef(val);
             return true;
         }
+        tail = &item->tail;
     }
 
     item = malloc(sizeof(struct BX_DictItem));
@@ -119,9 +122,10 @@ _insert(struct BX_Dict *dict, struct BoolExpr *key, struct BoolExpr *val)
 
     item->key = BX_IncRef(key);
     item->val = BX_IncRef(val);
-    item->tail = dict->items[index];
+    item->tail = (struct BX_DictItem *) NULL;
 
-    dict->items[index] = item;
+    *tail = item;
+
     dict->length += 1;
 
     return true;
@@ -146,7 +150,7 @@ _enlarge(struct BX_Dict *dict)
 
     for (size_t i = 0; i < _primes[pridx]; ++i) {
         for (item = items[i]; item; item = item->tail) {
-            if (!_insert(dict, item->key, item->val)) {
+            if (!_dict_insert(dict, item->key, item->val)) {
                 /* LCOV_EXCL_START */
                 for (size_t j = 0; j < i; ++j)
                     _list_del(items[j]);
@@ -168,7 +172,7 @@ BX_Dict_Insert(struct BX_Dict *dict, struct BoolExpr *key, struct BoolExpr *val)
 {
     double load;
 
-    if (!_insert(dict, key, val))
+    if (!_dict_insert(dict, key, val))
         return false; // LCOV_EXCL_LINE
 
     load = (double) dict->length / (double) _primes[dict->_pridx];
@@ -186,22 +190,20 @@ bool
 BX_Dict_Remove(struct BX_Dict *dict, struct BoolExpr *key)
 {
     size_t index = _hash(dict, key);
+    struct BX_DictItem *item;
+    struct BX_DictItem **tail;
 
-    struct BX_DictItem **p = &dict->items[index];
-    struct BX_DictItem *item = dict->items[index];
-
-    while (item) {
+    tail = &dict->items[index];
+    for (item = dict->items[index]; item; item = item->tail) {
         if (_eq(item->key, key)) {
             BX_DecRef(item->key);
             BX_DecRef(item->val);
-            *p = item->tail;
+            *tail = item->tail;
             free(item);
             dict->length -= 1;
-
             return true;
         }
-        p = &item->tail;
-        item = item->tail;
+        tail = &item->tail;
     }
 
     return false;
