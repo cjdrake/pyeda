@@ -4,7 +4,7 @@
   Overview
 ************
 
-What is Electronic Design Eutomation (EDA)?
+What is Electronic Design Automation (EDA)?
 ===========================================
 
 The Intel 4004, the world's first commercially available microprocessor,
