@@ -12,24 +12,6 @@
 #include "share.h"
 
 
-static struct BoolExpr **
-_set2array(struct BX_Set *set)
-{
-    struct BoolExpr **array;
-    struct BX_SetIter it;
-
-    array = malloc(set->length * sizeof(struct BoolExpr *));
-    if (array == NULL)
-        return NULL; // LCOV_EXCL_LINE
-
-    size_t i = 0;
-    for (BX_SetIter_Init(&it, set); !it.done; BX_SetIter_Next(&it))
-        array[i++] = it.item->key;
-
-    return array;
-}
-
-
 struct BX_OrAndArgSet *
 BX_OrAndArgSet_New(BX_Kind kind)
 {
@@ -113,7 +95,7 @@ BX_OrAndArgSet_Reduce(struct BX_OrAndArgSet *argset)
     if (argset->max)
         return BX_IncRef(_bx_dominator[argset->kind]);
 
-    CHECK_NULL(xs, _set2array(argset->xs));
+    CHECK_NULL(xs, BX_Set_ToExprs(argset->xs));
 
     if (length == 1) {
         struct BoolExpr *y = BX_IncRef(xs[0]);
@@ -221,7 +203,7 @@ BX_XorArgSet_Reduce(struct BX_XorArgSet *argset)
         return y;
     }
 
-    CHECK_NULL(xs, _set2array(argset->xs));
+    CHECK_NULL(xs, BX_Set_ToExprs(argset->xs));
 
     if (length == 1) {
         temp = BX_IncRef(xs[0]);
@@ -324,7 +306,7 @@ BX_EqArgSet_Reduce(struct BX_EqArgSet *argset)
     if (((size_t) argset->zero + (size_t) argset->one + length) <= 1)
         return BX_IncRef(&BX_One);
 
-    CHECK_NULL(xs, _set2array(argset->xs));
+    CHECK_NULL(xs, BX_Set_ToExprs(argset->xs));
 
     /* Equal(0, x) = ~x */
     if (argset->zero && length == 1) {

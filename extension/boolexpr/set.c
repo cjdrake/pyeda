@@ -384,3 +384,21 @@ BX_Set_Clear(struct BX_Set *set)
     set->length = 0;
 }
 
+
+struct BoolExpr **
+BX_Set_ToExprs(struct BX_Set *set)
+{
+    struct BoolExpr **exprs;
+
+    exprs = malloc(set->length * sizeof(struct BoolExpr *));
+    if (exprs == NULL)
+        return NULL; // LCOV_EXCL_LINE
+
+    for (size_t i = 0, count = 0; i < _primes[set->_pridx]; ++i) {
+        for (struct BX_SetItem *item = set->items[i]; item; item = item->tail)
+            exprs[count++] = item->key;
+    }
+
+    return exprs;
+}
+

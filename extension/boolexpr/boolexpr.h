@@ -443,6 +443,10 @@ bool BX_Set_LT(struct BX_Set *, struct BX_Set *);
 /* Remove all items from the set. */
 void BX_Set_Clear(struct BX_Set *);
 
+/* Convert the set to a simple array of expressions */
+struct BoolExpr **
+BX_Set_ToExprs(struct BX_Set *);
+
 
 /*
 ** Return a new OR/AND set
