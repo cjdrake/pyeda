@@ -33,7 +33,7 @@ Consider the three-input function
 
 To use Espresso to perform minimization::
 
-   >>> f1m, = espresso_exprs(f1)
+   >>> f1m, = espresso_exprs(f1.to_dnf())
    >>> f1m
    Or(And(~a, ~b), And(a, b), And(~b, c))
 
