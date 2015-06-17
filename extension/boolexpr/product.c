@@ -16,24 +16,24 @@ static struct BX_Array *
 _multiply(BX_Kind kind, struct BX_Array *a, struct BX_Array *b)
 {
     size_t length = a->length * b->length;
-    struct BoolExpr **items;
+    struct BoolExpr **exprs;
     struct BX_Array *prod;
 
-    items = malloc(length * sizeof(struct BoolExpr *));
-    if (items == NULL)
+    exprs = malloc(length * sizeof(struct BoolExpr *));
+    if (exprs == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     for (size_t i = 0, index = 0; i < a->length; ++i) {
         for (size_t j = 0; j < b->length; ++j, ++index) {
             struct BoolExpr *xs[2] = {a->items[i], b->items[j]};
-            CHECK_NULL_N(items[index], _bx_op_new(kind, 2, xs), index, items);
+            CHECK_NULL_N(exprs[index], _bx_op_new(kind, 2, xs), index, exprs);
         }
     }
 
-    prod = _bx_array_from(length, items);
+    prod = _bx_array_from(length, exprs);
 
     for (size_t i = 0; i < length; ++i)
-        BX_DecRef(items[i]);
+        BX_DecRef(exprs[i]);
 
     return prod;
 }

@@ -54,22 +54,22 @@ _xor_nnfify_conj(struct BoolExpr *op)
     size_t mid = op->data.xs->length / 2;
     size_t n0 = mid;
     size_t n1 = op->data.xs->length - mid;
-    struct BoolExpr **items0 = op->data.xs->items;
-    struct BoolExpr **items1 = op->data.xs->items + mid;
+    struct BoolExpr **left = op->data.xs->items;
+    struct BoolExpr **right = op->data.xs->items + mid;
     struct BoolExpr *xs[2];
     struct BoolExpr *temp;
 
     /* Xor(a, b, c, d) <=> Xor(Xor(a, b), Xor(c, d)) */
     if (n0 == 1) {
-        xs[0] = BX_IncRef(items0[0]);
+        xs[0] = BX_IncRef(left[0]);
     }
     else {
-        CHECK_NULL(temp, BX_Xor(n0, items0));
+        CHECK_NULL(temp, BX_Xor(n0, left));
         CHECK_NULL_1(xs[0], _xor_nnfify(temp), temp);
         BX_DecRef(temp);
     }
 
-    CHECK_NULL_1(temp, BX_Xor(n1, items1), xs[0]);
+    CHECK_NULL_1(temp, BX_Xor(n1, right), xs[0]);
     CHECK_NULL_2(xs[1], _xor_nnfify(temp), xs[0], temp);
     BX_DecRef(temp);
     CHECK_NULL_2(temp, BX_Xor(2, xs), xs[0], xs[1]);
@@ -109,21 +109,21 @@ _xor_nnfify_disj(struct BoolExpr *op)
     size_t mid = op->data.xs->length / 2;
     size_t n0 = mid;
     size_t n1 = op->data.xs->length - mid;
-    struct BoolExpr **items0 = op->data.xs->items;
-    struct BoolExpr **items1 = op->data.xs->items + mid;
+    struct BoolExpr **left = op->data.xs->items;
+    struct BoolExpr **right = op->data.xs->items + mid;
     struct BoolExpr *xs[2];
     struct BoolExpr *temp;
 
     if (n0 == 1) {
-        xs[0] = BX_IncRef(items0[0]);
+        xs[0] = BX_IncRef(left[0]);
     }
     else {
-        CHECK_NULL(temp, BX_Xor(n0, items0));
+        CHECK_NULL(temp, BX_Xor(n0, left));
         CHECK_NULL_1(xs[0], _xor_nnfify(temp), temp);
         BX_DecRef(temp);
     }
 
-    CHECK_NULL_1(temp, BX_Xor(n1, items1), xs[0]);
+    CHECK_NULL_1(temp, BX_Xor(n1, right), xs[0]);
     CHECK_NULL_2(xs[1], _xor_nnfify(temp), xs[0], temp);
     BX_DecRef(temp);
     CHECK_NULL_2(temp, BX_Xor(2, xs), xs[0], xs[1]);

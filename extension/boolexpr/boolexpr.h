@@ -356,7 +356,7 @@ bool BX_Iter_Next(struct BX_Iter *);
 
 
 /* Return a new array of Boolean expressions. */
-struct BX_Array * BX_Array_New(size_t length, struct BoolExpr **items);
+struct BX_Array * BX_Array_New(size_t length, struct BoolExpr **exprs);
 
 /* Delete an array of Boolean expressions. */
 void BX_Array_Del(struct BX_Array *);

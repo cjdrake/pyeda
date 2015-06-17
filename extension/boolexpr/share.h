@@ -6,7 +6,7 @@
 
 
 /* array.c */
-struct BX_Array * _bx_array_from(size_t length, struct BoolExpr **items);
+struct BX_Array * _bx_array_from(size_t length, struct BoolExpr **exprs);
 
 /* boolexpr.c */
 extern struct BoolExpr * _bx_identity[16];

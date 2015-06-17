@@ -24,22 +24,22 @@ _commutative_binify(struct BoolExpr *op)
     size_t mid = op->data.xs->length / 2;
     size_t n0 = mid;
     size_t n1 = op->data.xs->length - mid;
-    struct BoolExpr **items0 = op->data.xs->items;
-    struct BoolExpr **items1 = op->data.xs->items + mid;
+    struct BoolExpr **left = op->data.xs->items;
+    struct BoolExpr **right = op->data.xs->items + mid;
     struct BoolExpr *xs[2];
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
     if (n0 == 1) {
-        xs[0] = BX_IncRef(items0[0]);
+        xs[0] = BX_IncRef(left[0]);
     }
     else {
-        CHECK_NULL(temp, _bx_op_new(op->kind, n0, items0));
+        CHECK_NULL(temp, _bx_op_new(op->kind, n0, left));
         CHECK_NULL_1(xs[0], _commutative_binify(temp), temp);
         BX_DecRef(temp);
     }
 
-    CHECK_NULL_1(temp, _bx_op_new(op->kind, n1, items1), xs[0]);
+    CHECK_NULL_1(temp, _bx_op_new(op->kind, n1, right), xs[0]);
     CHECK_NULL_2(xs[1], _commutative_binify(temp), xs[0], temp);
     BX_DecRef(temp);
 

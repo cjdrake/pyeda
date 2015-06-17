@@ -11,7 +11,7 @@
 
 
 struct BX_Array *
-_bx_array_from(size_t length, struct BoolExpr **items)
+_bx_array_from(size_t length, struct BoolExpr **exprs)
 {
     struct BX_Array *array;
 
@@ -20,7 +20,7 @@ _bx_array_from(size_t length, struct BoolExpr **items)
         return NULL; // LCOV_EXCL_LINE
 
     array->length = length;
-    array->items = items;
+    array->items = exprs;
 
     for (size_t i = 0; i < length; ++i)
         BX_IncRef(array->items[i]);
@@ -30,18 +30,18 @@ _bx_array_from(size_t length, struct BoolExpr **items)
 
 
 struct BX_Array *
-BX_Array_New(size_t length, struct BoolExpr **items)
+BX_Array_New(size_t length, struct BoolExpr **exprs)
 {
-    struct BoolExpr **items_copy;
+    struct BoolExpr **exprs_copy;
 
-    items_copy = malloc(length * sizeof(struct BoolExpr *));
-    if (items_copy == NULL)
+    exprs_copy = malloc(length * sizeof(struct BoolExpr *));
+    if (exprs_copy == NULL)
         return NULL; // LCOV_EXCL_LINE
 
     for (size_t i = 0; i < length; ++i)
-        items_copy[i] = items[i];
+        exprs_copy[i] = exprs[i];
 
-    return _bx_array_from(length, items_copy);
+    return _bx_array_from(length, exprs_copy);
 }
 
 
