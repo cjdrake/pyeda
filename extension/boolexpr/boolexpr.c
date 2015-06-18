@@ -561,6 +561,45 @@ BX_DecRef(struct BoolExpr * ex)
 }
 
 
+struct BX_Set *
+BX_Support(struct BoolExpr *ex)
+{
+    struct BX_Set *s;
+    struct BX_Iter *it;
+
+    s = BX_Set_New();
+    if (s == NULL)
+        return NULL; // LCOV_EXCL_LINE
+
+    it = BX_Iter_New(ex);
+    if (it == NULL) {
+        BX_Set_Del(s); // LCOV_EXCL_LINE
+        return NULL;   // LCOV_EXCL_LINE
+    }
+
+    while (!it->done) {
+        bool status = true;
+        if (BX_IS_VAR(it->item)) {
+            status = BX_Set_Insert(s, it->item);
+        }
+        else if (BX_IS_COMP(it->item)) {
+            struct BoolExpr *var = BX_Not(it->item);
+            status = BX_Set_Insert(s, var);
+            BX_DecRef(var);
+        }
+        if (!status || !BX_Iter_Next(it)) {
+            BX_Set_Del(s);   // LCOV_EXCL_LINE
+            BX_Iter_Del(it); // LCOV_EXCL_LINE
+            return NULL;     // LCOV_EXCL_LINE
+        }
+    }
+
+    BX_Iter_Del(it);
+
+    return s;
+}
+
+
 unsigned long
 BX_Depth(struct BoolExpr *ex)
 {

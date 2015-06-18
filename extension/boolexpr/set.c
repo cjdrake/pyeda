@@ -371,6 +371,22 @@ BX_Set_LT(struct BX_Set *self, struct BX_Set *other)
 }
 
 
+bool
+BX_Set_Update(struct BX_Set *self, struct BX_Set *other)
+{
+    struct BX_SetItem *item;
+
+    for (size_t i = 0; i < _primes[other->_pridx]; ++i) {
+        for (item = other->items[i]; item; item = item->tail) {
+            if (!BX_Set_Insert(self, item->key))
+                return false; // LCOV_EXCL_LINE
+        }
+    }
+
+    return true;
+}
+
+
 void
 BX_Set_Clear(struct BX_Set *set)
 {

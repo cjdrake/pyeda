@@ -177,11 +177,11 @@ TEST_F(BoolExpr_Test, Iterate)
 
 TEST_F(BoolExpr_Test, Properties)
 {
-    ops[0] = BX_AndN(2, xs[0], xs[1]);
-    ops[1] = BX_XorN(2, xs[2], xs[3]);
-    ops[2] = BX_EqualN(2, xs[4], xs[5]);
-    ops[3] = BX_Implies(xs[6], xs[7]);
-    ops[4] = BX_ITE(xs[8], xs[9], xs[10]);
+    ops[0] = BX_AndN(2, xs[0], xns[1]);
+    ops[1] = BX_XorN(2, xs[2], xns[3]);
+    ops[2] = BX_EqualN(2, xs[4], xns[5]);
+    ops[3] = BX_Implies(xs[6], xns[7]);
+    ops[4] = BX_ITE(xs[8], xns[9], xs[10]);
     ops[5] = BX_NorN(5, ops[0], ops[1], ops[2], ops[3], ops[4]);
 
     EXPECT_EQ(BX_Depth(xs[0]), 0);
@@ -215,6 +215,24 @@ TEST_F(BoolExpr_Test, Properties)
     EXPECT_EQ(BX_OpCount(ops[3]), 1);
     EXPECT_EQ(BX_OpCount(ops[4]), 1);
     EXPECT_EQ(BX_OpCount(ops[5]), 7);
+
+    struct BX_Set *s = BX_Set_New();
+    for (int i = 0; i <= 10; ++i)
+        BX_Set_Insert(s, xs[i]);
+    struct BX_Set *t = BX_Support(ops[5]);
+
+    struct BX_Set *u = BX_Support(&BX_Zero);
+    EXPECT_EQ(u->length, 0);
+
+    struct BX_Set *v = BX_Support(&BX_One);
+    EXPECT_EQ(v->length, 0);
+
+    EXPECT_TRUE(BX_Set_EQ(s, t));
+
+    BX_Set_Del(s);
+    BX_Set_Del(t);
+    BX_Set_Del(u);
+    BX_Set_Del(v);
 }
 
 

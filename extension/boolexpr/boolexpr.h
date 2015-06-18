@@ -233,6 +233,10 @@ struct BoolExpr * BX_IncRef(struct BoolExpr *);
 void BX_DecRef(struct BoolExpr *);
 
 
+/* Return the support set of an expression. */
+struct BX_Set * BX_Support(struct BoolExpr *);
+
+
 /*
 ** Return the depth of an expression tree.
 **
@@ -439,6 +443,8 @@ bool BX_Set_LTE(struct BX_Set *, struct BX_Set *);
 bool BX_Set_GT(struct BX_Set *, struct BX_Set *);
 bool BX_Set_GTE(struct BX_Set *, struct BX_Set *);
 bool BX_Set_LT(struct BX_Set *, struct BX_Set *);
+
+bool BX_Set_Update(struct BX_Set *, struct BX_Set *);
 
 /* Remove all items from the set. */
 void BX_Set_Clear(struct BX_Set *);
