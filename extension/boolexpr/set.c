@@ -394,9 +394,9 @@ BX_Set_ToExprs(struct BX_Set *set)
     if (exprs == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    for (size_t i = 0, count = 0; i < _primes[set->_pridx]; ++i) {
+    for (size_t i = 0, index = 0; i < _primes[set->_pridx]; ++i) {
         for (struct BX_SetItem *item = set->items[i]; item; item = item->tail)
-            exprs[count++] = item->key;
+            exprs[index++] = item->key;
     }
 
     return exprs;

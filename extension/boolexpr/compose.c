@@ -79,7 +79,8 @@ _op_compose(struct BoolExpr *op, struct BX_Dict *var2ex)
 }
 
 
-static struct BoolExpr * (*_compose[16])(struct BoolExpr *ex, struct BX_Dict *var2ex) = {
+static struct BoolExpr *
+(*_compose[16])(struct BoolExpr *ex, struct BX_Dict *var2ex) = {
     _const_compose,
     _const_compose,
     _const_compose,

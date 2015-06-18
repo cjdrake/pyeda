@@ -281,7 +281,8 @@ _ite_nnfify(struct BoolExpr *op)
 }
 
 
-static struct BoolExpr * (*_op_nnfify[16])(struct BoolExpr *op) = {
+static struct BoolExpr *
+(*_op_nnfify[16])(struct BoolExpr *op) = {
     NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
 

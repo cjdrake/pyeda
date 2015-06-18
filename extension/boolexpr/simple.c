@@ -502,7 +502,8 @@ _ite_simplify(struct BoolExpr *op)
 }
 
 
-static struct BoolExpr * (*_op_simplify[16])(struct BoolExpr *op) = {
+static struct BoolExpr *
+(*_op_simplify[16])(struct BoolExpr *op) = {
     NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
 

@@ -90,7 +90,8 @@ _fixed_binify(struct BoolExpr *op)
 }
 
 
-static struct BoolExpr * (*_op_binify[16])(struct BoolExpr *ex) = {
+static struct BoolExpr *
+(*_op_binify[16])(struct BoolExpr *ex) = {
     NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
 

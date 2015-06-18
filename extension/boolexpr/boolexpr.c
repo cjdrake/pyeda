@@ -385,7 +385,8 @@ static struct BoolExpr * _op_inv(struct BoolExpr *op)
 }
 
 
-static struct BoolExpr * (*_boolexpr_inv[16])(struct BoolExpr *ex) = {
+static struct BoolExpr *
+(*_boolexpr_inv[16])(struct BoolExpr *ex) = {
     _zero_inv,
     _one_inv,
     _log_inv,
@@ -520,7 +521,8 @@ BX_IncRef(struct BoolExpr *ex)
 }
 
 
-static void (*_boolexpr_del[16])(struct BoolExpr * ex) = {
+static void
+(*_boolexpr_del[16])(struct BoolExpr * ex) = {
     NULL, NULL, NULL, NULL,
 
     _lit_del,
