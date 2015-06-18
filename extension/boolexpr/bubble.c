@@ -40,7 +40,7 @@ _inv_or(struct BoolExpr *op)
 
     y = BX_And(length, xs);
 
-    _bx_free_exs(length, xs);
+    _bx_free_exprs(length, xs);
 
     return y;
 }
@@ -70,7 +70,7 @@ _inv_and(struct BoolExpr *op)
 
     y = BX_Or(length, xs);
 
-    _bx_free_exs(length, xs);
+    _bx_free_exprs(length, xs);
 
     return y;
 }

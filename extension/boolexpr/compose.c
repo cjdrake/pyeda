@@ -73,7 +73,7 @@ _op_compose(struct BoolExpr *op, struct BX_Dict *var2ex)
     else
         y = BX_IncRef(op);
 
-    _bx_free_exs(length, xs);
+    _bx_free_exprs(length, xs);
 
     return y;
 }

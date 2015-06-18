@@ -177,7 +177,7 @@ _eq_nnfify(struct BoolExpr *op)
 
     CHECK_NULL_N(all0, BX_And(length, xns), length, xns);
 
-    _bx_free_exs(length, xns);
+    _bx_free_exprs(length, xns);
 
     CHECK_NULL_1(all1, BX_And(length, xs), all0);
     y = BX_OrN(2, all0, all1);

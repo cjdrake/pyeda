@@ -14,11 +14,12 @@
 
 
 void
-_bx_free_exs(int n, struct BoolExpr **exs)
+_bx_free_exprs(int length, struct BoolExpr **exprs)
 {
-    for (size_t i = 0; i < n; ++i)
-        BX_DecRef(exs[i]);
-    free(exs);
+    for (size_t i = 0; i < length; ++i)
+        BX_DecRef(exprs[i]);
+
+    free(exprs);
 }
 
 
@@ -44,7 +45,7 @@ _bx_op_transform(struct BoolExpr *op, struct BoolExpr * (*fn)(struct BoolExpr *)
     else
         y = BX_IncRef(op);
 
-    _bx_free_exs(length, xs);
+    _bx_free_exprs(length, xs);
 
     return y;
 }

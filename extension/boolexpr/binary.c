@@ -74,7 +74,7 @@ _eq_binify(struct BoolExpr *op)
 
     CHECK_NULL_N(temp, BX_And(length, xs), length, xs);
 
-    _bx_free_exs(length, xs);
+    _bx_free_exprs(length, xs);
 
     CHECK_NULL_1(y, _commutative_binify(temp), temp);
     BX_DecRef(temp);

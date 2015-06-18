@@ -3,7 +3,7 @@
 */
 
 
-void _bx_free_exs(int n, struct BoolExpr **exs);
+void _bx_free_exprs(int length, struct BoolExpr **exprs);
 
 struct BoolExpr * _bx_op_transform(struct BoolExpr *op,
                                    struct BoolExpr * (*fn)(struct BoolExpr *));
