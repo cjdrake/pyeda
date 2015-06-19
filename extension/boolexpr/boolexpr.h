@@ -410,6 +410,9 @@ bool BX_Dict_Contains(struct BX_Dict *, struct BoolExpr *key);
 /* Remove all items from the dict. */
 void BX_Dict_Clear(struct BX_Dict *);
 
+/* Return true if two dicts are equal. */
+bool BX_Dict_Equal(struct BX_Dict *, struct BX_Dict *);
+
 
 /*
 ** Return a new set of Boolean expressions.

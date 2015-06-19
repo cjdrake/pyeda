@@ -251,3 +251,23 @@ BX_Dict_Clear(struct BX_Dict *dict)
     dict->length = 0;
 }
 
+
+bool
+BX_Dict_Equal(struct BX_Dict *self, struct BX_Dict *other)
+{
+    if (self->length != other->length)
+        return false;
+
+    struct BX_DictItem *item;
+
+    /* All items in self must also be in other (and vice versa) */
+    for (size_t i = 0; i < _primes[self->_pridx]; ++i) {
+        for (item = self->items[i]; item; item = item->tail) {
+            if (item->val != BX_Dict_Search(other, item->key))
+                return false;
+        }
+    }
+
+    return true;
+}
+

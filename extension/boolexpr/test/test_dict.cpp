@@ -133,3 +133,28 @@ TEST_F(BX_Dict_Test, Clear)
     BX_Dict_Del(dict);
 }
 
+
+TEST_F(BX_Dict_Test, Equal)
+{
+    struct BX_Dict *A = BX_Dict_New();
+    struct BX_Dict *B = BX_Dict_New();
+
+    for (size_t i = 0; i < 8; ++i) {
+        BX_Dict_Insert(A, xs[i], xns[i]);
+        BX_Dict_Insert(B, xs[i], xns[i]);
+    }
+
+    EXPECT_TRUE(BX_Dict_Equal(A, B));
+
+    BX_Dict_Remove(B, xs[4]);
+
+    EXPECT_FALSE(BX_Dict_Equal(A, B));
+
+    BX_Dict_Remove(A, xs[5]);
+
+    EXPECT_FALSE(BX_Dict_Equal(A, B));
+
+    BX_Dict_Del(A);
+    BX_Dict_Del(B);
+}
+
