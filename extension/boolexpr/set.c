@@ -276,7 +276,7 @@ BX_Set_EQ(struct BX_Set *self, struct BX_Set *other)
     for (size_t i = 0; i < _primes[self->_pridx]; ++i) {
         for (item = self->items[i]; item; item = item->tail) {
             if (!BX_Set_Contains(other, item->key))
-                return false; // LCOV_EXCL_LINE
+                return false;
         }
     }
 
