@@ -57,7 +57,7 @@ _product(BX_Kind kind, size_t n, struct BX_Array **arrays)
     prod = _multiply(kind, arrays[n-1], prev);
     if (prod == NULL) {
         BX_Array_Del(prev); // LCOV_EXCL_LINE
-        return NULL;             // LCOV_EXCL_LINE
+        return NULL;        // LCOV_EXCL_LINE
     }
 
     BX_Array_Del(prev);

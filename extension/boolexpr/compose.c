@@ -16,33 +16,37 @@
 
 
 static struct BoolExpr *
-_const_compose(struct BoolExpr *ex, struct BX_Dict *var2ex)
+_const_compose(struct BoolExpr *c, struct BX_Dict *var2ex)
 {
-    return BX_IncRef(ex);
+    return BX_IncRef(c);
 }
 
 
 static struct BoolExpr *
-_var_compose(struct BoolExpr *x, struct BX_Dict *var2ex)
+_var_compose(struct BoolExpr *var, struct BX_Dict *var2ex)
 {
-    struct BoolExpr *ex = BX_Dict_Search(var2ex, x);
+    struct BoolExpr *ex;
+
+    ex = BX_Dict_Search(var2ex, var);
 
     if (ex == (struct BoolExpr *) NULL)
-        return BX_IncRef(x);
+        return BX_IncRef(var);
 
     return BX_IncRef(ex);
 }
 
 
 static struct BoolExpr *
-_comp_compose(struct BoolExpr *xn, struct BX_Dict *var2ex)
+_comp_compose(struct BoolExpr *comp, struct BX_Dict *var2ex)
 {
-    struct BoolExpr *lit = BX_Literal(xn->data.lit.lits, -xn->data.lit.uniqid);
+    struct BoolExpr *var;
     struct BoolExpr *temp;
     struct BoolExpr *y;
 
-    CHECK_NULL_1(temp, _var_compose(lit, var2ex), lit);
-    BX_DecRef(lit);
+    CHECK_NULL(var, BX_Not(comp));
+
+    CHECK_NULL_1(temp, _var_compose(var, var2ex), var);
+    BX_DecRef(var);
 
     CHECK_NULL_1(y, BX_Not(temp), temp);
     BX_DecRef(temp);
@@ -54,26 +58,26 @@ _comp_compose(struct BoolExpr *xn, struct BX_Dict *var2ex)
 static struct BoolExpr *
 _op_compose(struct BoolExpr *op, struct BX_Dict *var2ex)
 {
-    size_t length = op->data.xs->length;
+    size_t n = op->data.xs->length;
     struct BoolExpr **xs;
     unsigned int mod_count = 0;
     struct BoolExpr *y;
 
-    xs = malloc(length * sizeof(struct BoolExpr *));
+    xs = malloc(n * sizeof(struct BoolExpr *));
     if (xs == NULL)
         return NULL; // LCOV_EXCL_LINE
 
-    for (size_t i = 0; i < length; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         CHECK_NULL_N(xs[i], BX_Compose(op->data.xs->items[i], var2ex), i, xs);
         mod_count += (xs[i] != op->data.xs->items[i]);
     }
 
     if (mod_count)
-        y = _bx_op_new(op->kind, length, xs);
+        y = _bx_op_new(op->kind, n, xs);
     else
         y = BX_IncRef(op);
 
-    _bx_free_exprs(length, xs);
+    _bx_free_exprs(n, xs);
 
     return y;
 }
