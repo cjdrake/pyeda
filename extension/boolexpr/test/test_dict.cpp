@@ -47,6 +47,33 @@ TEST_F(BX_Dict_Test, BasicReadWrite)
 }
 
 
+TEST_F(BX_Dict_Test, Iteration)
+{
+    struct BX_Dict *dict = BX_Dict_New();
+
+    bool mark[N];
+    for (int i = 0; i < N; ++i) {
+        BX_Dict_Insert(dict, xs[i], xns[i]);
+        mark[i-1] = false;
+    }
+
+    struct BX_DictIter it;
+    for (BX_DictIter_Init(&it, dict); !it.done; BX_DictIter_Next(&it))
+        mark[it.item->key->data.lit.uniqid-1] = true;
+
+    // Using Next method should have no effect
+    struct BX_DictItem *prev_item = it.item;
+    BX_DictIter_Next(&it);
+    EXPECT_TRUE(it.done);
+    EXPECT_EQ(it.item, prev_item);
+
+    for (size_t i = 0; i < N; ++i)
+        EXPECT_TRUE(mark[i]);
+
+    BX_Dict_Del(dict);
+}
+
+
 TEST_F(BX_Dict_Test, Collision)
 {
     struct BX_Dict *dict = BX_Dict_New();

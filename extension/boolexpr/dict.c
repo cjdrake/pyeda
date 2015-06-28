@@ -97,6 +97,46 @@ BX_Dict_Del(struct BX_Dict *dict)
 }
 
 
+void
+BX_DictIter_Init(struct BX_DictIter *it, struct BX_Dict *dict)
+{
+    it->_dict = dict;
+    it->item = (struct BX_DictItem *) NULL;
+    it->done = true;
+
+    for (it->_index = 0; it->_index < _primes[dict->_pridx]; it->_index += 1) {
+        if (dict->items[it->_index]) {
+            it->item = dict->items[it->_index];
+            it->done = false;
+            break;
+        }
+    }
+}
+
+
+void
+BX_DictIter_Next(struct BX_DictIter *it)
+{
+    if (it->done)
+        return;
+
+    if (it->item->tail) {
+        it->item = it->item->tail;
+        return;
+    }
+
+    for (it->_index += 1; it->_index < _primes[it->_dict->_pridx]; it->_index += 1) {
+        if (it->_dict->items[it->_index]) {
+            it->item = it->_dict->items[it->_index];
+            return;
+        }
+    }
+
+    it->item = (struct BX_DictItem *) NULL;
+    it->done = true;
+}
+
+
 static bool
 _dict_insert(struct BX_Dict *dict, struct BoolExpr *key, struct BoolExpr *val)
 {

@@ -134,6 +134,15 @@ struct BX_Dict {
 };
 
 
+struct BX_DictIter {
+    struct BX_Dict *_dict;
+    size_t _index;
+
+    struct BX_DictItem *item;
+    bool done;
+};
+
+
 struct BX_SetItem {
     struct BoolExpr *key;
     struct BX_SetItem *tail;
@@ -414,6 +423,14 @@ void BX_Dict_Clear(struct BX_Dict *);
 bool BX_Dict_Equal(struct BX_Dict *, struct BX_Dict *);
 
 bool BX_Dict_Update(struct BX_Dict *, struct BX_Dict *);
+
+/*
+** Initialize a Boolean expression set iterator.
+*/
+void BX_DictIter_Init(struct BX_DictIter *, struct BX_Dict *);
+
+/* Move to the next item in the set iteration. */
+void BX_DictIter_Next(struct BX_DictIter *);
 
 
 /*
