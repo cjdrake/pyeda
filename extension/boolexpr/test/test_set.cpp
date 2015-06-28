@@ -233,3 +233,29 @@ TEST_F(BX_Set_Test, Clear)
     BX_Set_Del(a);
 }
 
+
+TEST_F(BX_Set_Test, Update)
+{
+    struct BX_Set *a = BX_Set_New();
+    struct BX_Set *b = BX_Set_New();
+    struct BX_Set *c = BX_Set_New();
+
+    BX_Set_Insert(a, xs[0]);
+    BX_Set_Insert(a, xs[1]);
+    BX_Set_Insert(a, xs[2]);
+
+    BX_Set_Insert(b, xs[3]);
+    BX_Set_Insert(b, xs[4]);
+    BX_Set_Insert(b, xs[5]);
+
+    for (int i = 0; i < 6; ++i)
+        BX_Set_Insert(c, xs[i]);
+
+    BX_Set_Update(a, b);
+    ASSERT_TRUE(BX_Set_EQ(a, c));
+
+    BX_Set_Del(a);
+    BX_Set_Del(b);
+    BX_Set_Del(c);
+}
+
