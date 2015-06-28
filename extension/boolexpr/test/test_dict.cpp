@@ -158,3 +158,28 @@ TEST_F(BX_Dict_Test, Equal)
     BX_Dict_Del(B);
 }
 
+
+TEST_F(BX_Dict_Test, Update)
+{
+    struct BX_Dict *a = BX_Dict_New();
+    struct BX_Dict *b = BX_Dict_New();
+    struct BX_Dict *c = BX_Dict_New();
+
+    BX_Dict_Insert(a, xs[0], xns[0]);
+    BX_Dict_Insert(a, xs[1], xns[1]);
+    BX_Dict_Insert(a, xs[2], xns[2]);
+
+    BX_Dict_Insert(b, xs[3], xns[3]);
+    BX_Dict_Insert(b, xs[4], xns[4]);
+    BX_Dict_Insert(b, xs[5], xns[5]);
+
+    for (int i = 0; i < 6; ++i)
+        BX_Dict_Insert(c, xs[i], xns[i]);
+
+    BX_Dict_Update(a, b);
+    ASSERT_TRUE(BX_Dict_Equal(a, c));
+
+    BX_Dict_Del(a);
+    BX_Dict_Del(b);
+    BX_Dict_Del(c);
+}

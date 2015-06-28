@@ -413,6 +413,8 @@ void BX_Dict_Clear(struct BX_Dict *);
 /* Return true if two dicts are equal. */
 bool BX_Dict_Equal(struct BX_Dict *, struct BX_Dict *);
 
+bool BX_Dict_Update(struct BX_Dict *, struct BX_Dict *);
+
 
 /*
 ** Return a new set of Boolean expressions.

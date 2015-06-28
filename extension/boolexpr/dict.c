@@ -271,3 +271,19 @@ BX_Dict_Equal(struct BX_Dict *self, struct BX_Dict *other)
     return true;
 }
 
+
+bool
+BX_Dict_Update(struct BX_Dict *self, struct BX_Dict *other)
+{
+    struct BX_DictItem *item;
+
+    for (size_t i = 0; i < _primes[other->_pridx]; ++i) {
+        for (item = other->items[i]; item; item = item->tail) {
+            if (!BX_Dict_Insert(self, item->key, item->val))
+                return false; // LCOV_EXCL_LINE
+        }
+    }
+
+    return true;
+}
+
