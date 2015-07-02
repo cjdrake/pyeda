@@ -602,10 +602,6 @@ class Function:
 
         :math:`f \: | \: x_i = b`
         """
-        return self.urestrict(point2upoint(point))
-
-    def urestrict(self, upoint):
-        """Implementation of restrict that requires an untyped point."""
         raise NotImplementedError()
 
     def vrestrict(self, vpoint):
