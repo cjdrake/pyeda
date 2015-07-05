@@ -4,6 +4,25 @@
   Release Notes
 *****************
 
+Version 0.28
+============
+
+Moved the PicoSAT and Espresso code to a top-level ``thirdparty`` directory.
+
+Did lots of work in the ``boolexpr`` library.
+Primary change was to get rid of all dynamic stack allocations,
+replacing them with heap allocations.
+Most of this was internal stuff which won't be noticeable at the UI.
+This includes a mega rename of ``boolexpr`` public functions and variables
+to have a ``BX_*`` prefix.
+
+Also added a new simplification:
+
+.. code-block:: pycon
+
+   >>> Xor(a, Xnor(b, c))
+   Not(Xor(a, b, c))
+
 Release 0.27
 ============
 
