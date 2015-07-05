@@ -216,6 +216,10 @@ struct BoolExpr * BX_Xnor(size_t n, struct BoolExpr **xs);
 struct BoolExpr * BX_Equal(size_t n, struct BoolExpr **xs);
 struct BoolExpr * BX_Unequal(size_t n, struct BoolExpr **xs);
 
+struct BoolExpr * BX_Not(struct BoolExpr *x);
+struct BoolExpr * BX_Implies(struct BoolExpr *p, struct BoolExpr *q);
+struct BoolExpr * BX_ITE(struct BoolExpr *s, struct BoolExpr *d1, struct BoolExpr *d0);
+
 struct BoolExpr * BX_OrN(size_t n, ...);
 struct BoolExpr * BX_NorN(size_t n, ...);
 struct BoolExpr * BX_AndN(size_t n, ...);
@@ -224,10 +228,6 @@ struct BoolExpr * BX_XorN(size_t n, ...);
 struct BoolExpr * BX_XnorN(size_t n, ...);
 struct BoolExpr * BX_EqualN(size_t n, ...);
 struct BoolExpr * BX_UnequalN(size_t n, ...);
-
-struct BoolExpr * BX_Not(struct BoolExpr *x);
-struct BoolExpr * BX_Implies(struct BoolExpr *p, struct BoolExpr *q);
-struct BoolExpr * BX_ITE(struct BoolExpr *s, struct BoolExpr *d1, struct BoolExpr *d0);
 
 
 /*
