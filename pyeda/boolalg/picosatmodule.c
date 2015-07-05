@@ -295,6 +295,10 @@ PyDoc_STRVAR(_satisfy_one_docstring,
         Set a limit on the number of decisions. A negative value sets no\n\
         decision limit.\n\
 \n\
+    seed : int\n\
+        Set a seed for PicoSAT's random number generator.\n\
+        Defaults to 1.\n\
+\n\
     Returns\n\
     -------\n\
     tuple of {-1, 0, 1}\n\
@@ -311,6 +315,7 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
         "nvars", "clauses",
         "assumptions",
         "verbosity", "default_phase", "propagation_limit", "decision_limit",
+        "seed",
         NULL
     };
 
@@ -325,6 +330,7 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
     int default_phase = 2; /* Jeroslow-Wang */
     int propagation_limit = -1;
     int decision_limit = -1;
+    unsigned seed = 1;
 
     /* PicoSAT return value */
     int result;
@@ -333,10 +339,11 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
     PyObject *pyret = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "iO|Oiiii:satisfy_one", keywords,
+            args, kwargs, "iO|OiiiiI:satisfy_one", keywords,
             &nvars, &clauses,
             &assumptions,
-            &verbosity, &default_phase, &propagation_limit, &decision_limit))
+            &verbosity, &default_phase, &propagation_limit, &decision_limit,
+            &seed))
         goto done;
 
     if (nvars < 0) {
@@ -359,6 +366,7 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
     picosat_set_verbosity(picosat, verbosity);
     picosat_set_global_default_phase(picosat, default_phase);
     picosat_set_propagation_limit(picosat, propagation_limit);
+    picosat_set_seed(picosat, seed);
 
     picosat_adjust(picosat, nvars);
 
@@ -369,8 +377,6 @@ _satisfy_one(PyObject *self, PyObject *args, PyObject *kwargs)
         if (!_add_assumptions(picosat, assumptions))
             goto reset_picosat;
     }
-
-    /* picosat_set_seed(picosat, seed); */
 
     /* Do the damn thing */
     Py_BEGIN_ALLOW_THREADS
@@ -431,6 +437,10 @@ PyDoc_STRVAR(_satisfy_all_docstring,
         Set a limit on the number of propagations. A negative value sets no\n\
         propagation limit.\n\
 \n\
+    seed : int\n\
+        Set a seed for PicoSAT's random number generator.\n\
+        Defaults to 1.\n\
+\n\
     decision_limit : int\n\
         Set a limit on the number of decisions. A negative value sets no\n\
         decision limit.\n\
@@ -462,6 +472,7 @@ _satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     static char *keywords[] = {
         "nvars", "clauses",
         "verbosity", "default_phase", "propagation_limit", "decision_limit",
+        "seed",
         NULL
     };
 
@@ -475,14 +486,16 @@ _satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     int default_phase = 2; /* Jeroslow-Wang */
     int propagation_limit = -1;
     int decision_limit = -1;
+    unsigned seed = 1;
 
     /* Python return value */
     _satisfy_all_state *state;
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "iO|iiii:satisfy_all", keywords,
+            args, kwargs, "iO|iiiiI:satisfy_all", keywords,
             &nvars, &clauses,
-            &verbosity, &default_phase, &propagation_limit, &decision_limit))
+            &verbosity, &default_phase, &propagation_limit, &decision_limit,
+            &seed))
         goto error;
 
     if (nvars < 0) {
@@ -505,13 +518,12 @@ _satisfy_all_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
     picosat_set_verbosity(picosat, verbosity);
     picosat_set_global_default_phase(picosat, default_phase);
     picosat_set_propagation_limit(picosat, propagation_limit);
+    picosat_set_seed(picosat, seed);
 
     picosat_adjust(picosat, nvars);
 
     if (!_add_clauses(picosat, clauses))
         goto reset_picosat;
-
-    /* picosat_set_seed(picosat, seed); */
 
     /* Initialize iterator state */
     state = (_satisfy_all_state *) cls->tp_alloc(cls, 0);
