@@ -1389,7 +1389,9 @@ class ConjNormalForm(NormalForm):
         propagation_limit = params.get('propagation_limit', -1)
         decision_limit = params.get('decision_limit', -1)
         seed = params.get('seed', 1)
-        yield from picosat.satisfy_all(self.nvars, self.clauses)
+        yield from picosat.satisfy_all(self.nvars, self.clauses, verbosity,
+                                       default_phase, propagation_limit,
+                                       decision_limit, seed)
 
     @staticmethod
     def soln2point(soln, litmap):
