@@ -389,13 +389,13 @@ _cofactors(struct BoolExpr **fv0, struct BoolExpr **fv1, struct BoolExpr *f, str
 
     if (!BX_Dict_Insert(v1, v, &BX_One)) {
         BX_Dict_Del(v1); // LCOV_EXCL_LINE
-        return false;         // LCOV_EXCL_LINE
+        return false;    // LCOV_EXCL_LINE
     }
 
     *fv1 = BX_Restrict(f, v1);
     if (fv1 == NULL) {
         BX_Dict_Del(v1); // LCOV_EXCL_LINE
-        return false;         // LCOV_EXCL_LINE
+        return false;    // LCOV_EXCL_LINE
     }
 
     BX_Dict_Del(v1);
