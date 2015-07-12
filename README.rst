@@ -385,6 +385,11 @@ as well.
   used for the SAT paper `Fast DQBF Refutation <http://www.react.uni-saarland.de/publications/sat14.pdf>`_.
 * `Solving Logic Riddles with PyEDA <http://nicky.vanforeest.com/misc/pyeda/puzzle.html>`_
 
+Presentations
+=============
+
+* Video from `SciPy 2015 <https://www.youtube.com/watch?v=cljDuK0ouRs>`_
+
 Contact the Authors
 ===================
 
