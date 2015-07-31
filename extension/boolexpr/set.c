@@ -354,7 +354,7 @@ BX_Set_GTE(struct BX_Set *self, struct BX_Set *other)
 bool
 BX_Set_LT(struct BX_Set *self, struct BX_Set *other)
 {
-    if (self->length >= self->length)
+    if (self->length >= other->length)
         return false;
 
     struct BX_SetItem *item;
