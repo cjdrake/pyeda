@@ -76,7 +76,7 @@ for installing PyEDA on Windows.
 
 If you are using a Windows wheel distribution,
 you may need to install the
-[Visual Studio 2012 Redistributable](http://www.microsoft.com/en-us/download/details.aspx?id=30679).
+`Visual Studio 2012 Redistributable <http://www.microsoft.com/en-us/download/details.aspx?id=30679>`_
 
 Getting the Source
 ==================
