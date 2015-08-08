@@ -187,7 +187,7 @@ it just finds a path from the function's root node to one.
     {a: 1, b: 0, c: 0},
     {a: 1, b: 1, c: 1}]
 
-Trace all that paths from the top node to ``1`` to verify.
+Trace all the paths from the top node to ``1`` to verify.
 
 .. figure:: image/bdd_xor3.png
    :align: center
