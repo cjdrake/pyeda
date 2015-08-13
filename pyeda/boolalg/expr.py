@@ -525,13 +525,14 @@ def NHot(n, *xs, simplify=True):
         y = y.simplify()
     return _expr(y)
 
+
 def AtMostN(*xs, k=1, auxvarname='less_or_equal', simplify=True):
     """
     Return an expression that means
     "at most K input functions are true" using a sequential unary counter circuit.
 
     Uses O(n·k) clauses and O(n·k) auxiliary variables
-    
+
     If *simplify* is ``True``, return a simplified expression.
     Returns cnf
 
@@ -579,6 +580,7 @@ def AtMostN(*xs, k=1, auxvarname='less_or_equal', simplify=True):
 
     return _expr(y)
 
+
 def AtLeastN(*xs, k=1, auxvarname='greater_or_equal', simplify=True):
     """
     Return an expression that means
@@ -587,13 +589,14 @@ def AtLeastN(*xs, k=1, auxvarname='greater_or_equal', simplify=True):
     Uses O(n·(n-k)) clauses and O(n·(n-k)) auxiliary variables
 
     Uses function "AtMostN" and the following rule:
-    ≥k(x1, . . . , xn) == ≤k(~x1, . . . , ~xn)     
+    ≥k(x1, . . . , xn) == ≤k(~x1, . . . , ~xn)
 
     Returns cnf
     """
     xs = [_expr(exprnode.not_(Expression.box(x).node)) for x in xs]   # negated
     n = len(xs)
     return AtMostN(*xs, k=n-k, auxvarname=auxvarname, simplify=True)
+
 
 def ExactlyN(*xs, k=1, auxvarname='equal', simplify=True):
     """
@@ -603,15 +606,16 @@ def ExactlyN(*xs, k=1, auxvarname='equal', simplify=True):
     Uses O(n·k + n·(n-k)) clauses and O(n·k + n·(n-k)) auxiliary variables
 
     Uses functions "AtLeastN" and "AtMostN" and the following rules:
-    ≥k(x1, . . . , xn) == ≤k(~x1, . . . , ~xn)  
+    ≥k(x1, . . . , xn) == ≤k(~x1, . . . , ~xn)
 
-    =k(x1, . . . , xn) ⇔ ≥k(x1, . . . , xn) & ≤k(~x1, . . . , ~xn) 
+    =k(x1, . . . , xn) ⇔ ≥k(x1, . . . , xn) & ≤k(~x1, . . . , ~xn)
 
     Returns cnf
     """
     xs = [_expr(Expression.box(x).node) for x in xs]
     return And(AtMostN(*xs, k=k, auxvarname=auxvarname, simplify=True),
               AtLeastN(*xs, k=k, auxvarname=auxvarname, simplify=True))
+
 
 def Majority(*xs, simplify=True, conj=False):
     """
