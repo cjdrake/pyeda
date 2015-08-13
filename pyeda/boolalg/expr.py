@@ -529,14 +529,17 @@ def NHot(n, *xs, simplify=True):
 def AtMostN(*xs, k=1, auxvarname='less_or_equal', simplify=True):
     """
     Return an expression that means
-    "at most K input functions are true" using a sequential unary counter circuit.
+    "at most K input functions are true"
+    using a sequential unary counter circuit.
 
     Uses O(n·k) clauses and O(n·k) auxiliary variables
 
     If *simplify* is ``True``, return a simplified expression.
+
     Returns cnf
 
-    Based on C. Sinz: "Towards an Optimal CNF Encoding of Boolean Cardinality Constraints"
+    Based on C. Sinz: "Towards an Optimal CNF Encoding of Boolean
+                       Cardinality Constraints"
     """
     from pyeda.boolalg.bfarray import exprvars
 
@@ -552,26 +555,30 @@ def AtMostN(*xs, k=1, auxvarname='less_or_equal', simplify=True):
     # (n-1)*k variables
     # index of s_{i,j} is: i*k + j
     # (0 <= i < n-1, 0 <= j < k)
-    aux_vars = list(map(lambda x: x.node, exprvars(auxvarname, (n-1)*k)))
-    def s(i,j,k):
-        return aux_vars[i*k+j]
+    aux_nodes = [x.node for x in exprvars(auxvarname, (n-1) * k)]
+    def s(i, j, k):
+        return aux_nodes[i*k+j]
 
     # clauses of first partial sum (i.e. i=0)
-    terms.append(exprnode.or_(exprnode.not_(xs[0]), s(0,0,k)))
-    for i in range(1,k):
-        terms.append(exprnode.not_(s(0,i,k)))
+    terms.append(exprnode.or_(exprnode.not_(xs[0]), s(0, 0, k)))
+    for i in range(1, k):
+        terms.append(exprnode.not_(s(0, i, k)))
 
     # write clauses for general case (i.e. 0 < i < n-1)
-    for i in range(1,n-1):
-        terms.append(exprnode.or_(exprnode.not_(xs[i]),s(i,0,k)))
-        terms.append(exprnode.or_(exprnode.not_(s(i-1,0,k)), s(i,0,k)))
-        for u in range(1,k):
-            terms.append(exprnode.or_(exprnode.not_(xs[i]), exprnode.not_(s(i-1,u-1,k)), s(i,u,k)))
-            terms.append(exprnode.or_(exprnode.not_(s(i-1,u,k)), s(i,u,k)))
-        terms.append(exprnode.or_(exprnode.not_(xs[i]), exprnode.not_(s(i-1,k-1,k))))
+    for i in range(1, n-1):
+        terms.append(exprnode.or_(exprnode.not_(xs[i]), s(i, 0, k)))
+        terms.append(exprnode.or_(exprnode.not_(s(i-1, 0, k)), s(i, 0, k)))
+        for u in range(1, k):
+            terms.append(exprnode.or_(exprnode.not_(xs[i]),
+                                      exprnode.not_(s(i-1, u-1, k)),
+                                      s(i, u, k)))
+            terms.append(exprnode.or_(exprnode.not_(s(i-1, u, k)), s(i, u, k)))
+        terms.append(exprnode.or_(exprnode.not_(xs[i]),
+                                  exprnode.not_(s(i-1, k-1, k))))
 
     # last clause for last variable
-    terms.append(exprnode.or_(exprnode.not_(xs[-1]), exprnode.not_(s(n-2,k-1,k))))
+    terms.append(exprnode.or_(exprnode.not_(xs[-1]),
+                              exprnode.not_(s(n-2, k-1, k))))
 
     y = exprnode.and_(*terms)
 
@@ -595,7 +602,7 @@ def AtLeastN(*xs, k=1, auxvarname='greater_or_equal', simplify=True):
     """
     xs = [_expr(exprnode.not_(Expression.box(x).node)) for x in xs]   # negated
     n = len(xs)
-    return AtMostN(*xs, k=n-k, auxvarname=auxvarname, simplify=True)
+    return AtMostN(*xs, k=n-k, auxvarname=auxvarname, simplify=simplify)
 
 
 def ExactlyN(*xs, k=1, auxvarname='equal', simplify=True):
@@ -613,8 +620,9 @@ def ExactlyN(*xs, k=1, auxvarname='equal', simplify=True):
     Returns cnf
     """
     xs = [_expr(Expression.box(x).node) for x in xs]
-    return And(AtMostN(*xs, k=k, auxvarname=auxvarname, simplify=True),
-              AtLeastN(*xs, k=k, auxvarname=auxvarname, simplify=True))
+    return And(AtMostN(*xs, k=k, auxvarname=auxvarname, simplify=simplify),
+               AtLeastN(*xs, k=k, auxvarname=auxvarname, simplify=simplify),
+               simplify=simplify)
 
 
 def Majority(*xs, simplify=True, conj=False):
