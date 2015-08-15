@@ -620,8 +620,8 @@ def ExactlyN(*xs, k=1, auxvarname='equal', simplify=True):
     Returns cnf
     """
     xs = [_expr(Expression.box(x).node) for x in xs]
-    return And(AtMostN(*xs, k=k, auxvarname=auxvarname, simplify=simplify),
-               AtLeastN(*xs, k=k, auxvarname=auxvarname, simplify=simplify),
+    return And(AtMostN(*xs, k=k, auxvarname=auxvarname+'_atmost_part', simplify=simplify),
+               AtLeastN(*xs, k=k, auxvarname=auxvarname+'_atleast_part', simplify=simplify),
                simplify=simplify)
 
 
