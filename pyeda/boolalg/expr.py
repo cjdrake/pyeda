@@ -1552,9 +1552,6 @@ ASTOPS = {
 
     'onehot0' : OneHot0,
     'onehot' : OneHot,
-    'atleastn' : AtLeastN,
-    'atmostn' : AtMostN,
-    'exactlyn' : ExactlyN,
     'majority' : Majority,
     'achillesheel' : AchillesHeel,
 }
