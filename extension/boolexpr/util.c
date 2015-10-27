@@ -14,7 +14,7 @@
 
 
 void
-_bx_free_exprs(int length, struct BoolExpr **exprs)
+_bx_free_exprs(size_t length, struct BoolExpr **exprs)
 {
     for (size_t i = 0; i < length; ++i)
         BX_DecRef(exprs[i]);

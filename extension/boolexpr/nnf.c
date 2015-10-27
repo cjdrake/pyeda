@@ -161,7 +161,7 @@ _xor_nnfify(struct BoolExpr *op)
 static struct BoolExpr *
 _eq_nnfify(struct BoolExpr *op)
 {
-    int length = op->data.xs->length;
+    size_t length = op->data.xs->length;
     struct BoolExpr **xs = op->data.xs->items;
     struct BoolExpr **xns;
     struct BoolExpr *all0, *all1;

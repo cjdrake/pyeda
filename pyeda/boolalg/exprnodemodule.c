@@ -155,7 +155,7 @@ _node2ast(struct BoolExpr *ex)
         PyTuple_SET_ITEM(ast, 1, l);
     }
     else {
-        int i, j;
+        size_t i, j;
         PyObject *s;
 
         /* FIXME: magic number: 6 */
@@ -617,7 +617,7 @@ ExprNode_data(ExprNode *self)
         return PyLong_FromLong(self->ex->data.lit.uniqid);
 
     if (BX_IS_OP(self->ex)) {
-        int i, j;
+        size_t i, j;
         ExprNode **nodes;
         PyObject *xs;
 

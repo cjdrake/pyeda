@@ -151,7 +151,7 @@ _lits_cmp(struct BX_Array *xs, struct BX_Array *ys)
 static struct BoolExpr *
 _absorb(struct BoolExpr *nf)
 {
-    int length = nf->data.xs->length;
+    size_t length = nf->data.xs->length;
     bool *keep;
     struct BX_Array **arrays;
     unsigned int val;
