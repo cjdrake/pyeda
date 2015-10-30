@@ -12,6 +12,7 @@ from pyeda.boolalg.expr import (
     Zero, One,
     Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
     OneHot0, OneHot, NHot, Majority, AchillesHeel, Mux,
+    ExactlyN, AtLeastN, AtMostN,
 )
 
 
@@ -183,6 +184,55 @@ def test_nhot():
     assert NHot(2, 1, 0, 1) is One
     assert NHot(2, 1, 1, 0) is One
     assert NHot(2, 1, 1, 1) is Zero
+
+def test_exactlyn():
+    """
+    'Towards an Optimal CNF Encoding of Boolean Cardinality Constraints' (Sinz)
+
+    Def 1:
+    A clause set E over the variables V = {x1, . . . , xn, s1, . . . , sm} is a
+    clausal encoding of ≤k (x1, . . . , xn) if for all assignments α : {x1, . . . , xn} → B the
+    following holds: there is an extension of α to α∗: V → B that is a model of E if and
+    only if α is a model of ≤k (x1, . . . , xn), i.e. if and only if at most k of the variables xi
+    are set to 1 by α
+
+    => checking for Zero/One is not enough, but checking feasibility is needed!
+    """
+    is_sat = lambda x: x.satisfy_one() is not None
+    assert not is_sat(ExactlyN(0, 0, 0, k=2))
+    assert not is_sat(ExactlyN(0, 0, 1, k=2))
+    assert not is_sat(ExactlyN(0, 1, 0, k=2))
+    assert is_sat(ExactlyN(0, 1, 1, k=2))
+    assert not is_sat(ExactlyN(1, 0, 0, k=2))
+    assert is_sat(ExactlyN(1, 0, 1, k=2))
+    assert is_sat(ExactlyN(1, 1, 0, k=2))
+    assert not is_sat(ExactlyN(1, 1, 1, k=2))
+
+def test_atleastn():
+    """ see remark above (in test_exactlyn)
+    """
+    is_sat = lambda x: x.satisfy_one() is not None
+    assert not is_sat(AtLeastN(0, 0, 0, k=2))
+    assert not is_sat(AtLeastN(0, 0, 1, k=2))
+    assert not is_sat(AtLeastN(0, 1, 0, k=2))
+    assert is_sat(AtLeastN(0, 1, 1, k=2))
+    assert not is_sat(AtLeastN(1, 0, 0, k=2))
+    assert is_sat(AtLeastN(1, 0, 1, k=2))
+    assert is_sat(AtLeastN(1, 1, 0, k=2))
+    assert is_sat(AtLeastN(1, 1, 1, k=2))
+
+def test_atmost_n():
+    """ see remark above (in test_exactlyn)
+    """
+    is_sat = lambda x: x.satisfy_one() is not None
+    assert is_sat(AtMostN(0, 0, 0, k=2))
+    assert is_sat(AtMostN(0, 0, 1, k=2))
+    assert is_sat(AtMostN(0, 1, 0, k=2))
+    assert is_sat(AtMostN(0, 1, 1, k=2))
+    assert is_sat(AtMostN(1, 0, 0, k=2))
+    assert is_sat(AtMostN(1, 0, 1, k=2))
+    assert is_sat(AtMostN(1, 1, 0, k=2))
+    assert not is_sat(AtMostN(1, 1, 1, k=2))
 
 def test_majority():
     assert Majority(0, 0, 0) is Zero
