@@ -25,7 +25,6 @@ def test_var():
     assert_raises(TypeError, var, 42)
     assert_raises(ValueError, var, tuple())
     assert_raises(TypeError, var, (42, ))
-    assert_raises(ValueError, var, ('foo#bar', ))
     assert_raises(TypeError, var, 'a', 'index')
     assert_raises(TypeError, var, 'a', ('index', ))
     assert_raises(ValueError, var, 'a', (-1, ))

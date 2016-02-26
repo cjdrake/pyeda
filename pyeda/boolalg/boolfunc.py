@@ -91,9 +91,6 @@ def var(name, index=None):
         if tname is not str:
             fstr = "expected name to be a str, got {0.__name__}"
             raise TypeError(fstr.format(tname))
-        if not re.match(r"^[^\d\W]\w*$", name, flags=re.UNICODE):
-            fstr = "expected name to match (letter|'_')(letter|digit|'_')*, got {}"
-            raise ValueError(fstr.format(name))
 
     if index is None:
         indices = tuple()
