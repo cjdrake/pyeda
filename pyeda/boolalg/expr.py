@@ -96,15 +96,16 @@ Interface Classes:
 
 
 import itertools
+import os
 import random
 
 import pyeda.parsing.boolexpr
 from pyeda.boolalg import boolfunc
 from pyeda.util import bit_on, cached_property, clog2
 
+
 # ReadTheDocs doesn't build C extensions
 # See http://docs.readthedocs.org/en/latest/faq.html for details
-import os
 if os.getenv('READTHEDOCS') == 'True':
     from unittest.mock import MagicMock
     # pylint: disable=C0103

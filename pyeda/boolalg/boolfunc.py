@@ -55,7 +55,6 @@ Interface Classes:
 
 import functools
 import operator
-import re
 import threading
 
 from pyeda.util import bit_on, cached_property
