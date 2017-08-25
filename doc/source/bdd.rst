@@ -285,7 +285,7 @@ PyEDA uses the Python standard library's
 `weakref <https://docs.python.org/3/library/weakref.html>`_
 module to automatically garbage collect BDD nodes when they are no longer needed.
 The BDD function contains a reference to a node,
-which contains references to it's children, and so on until you get to zero/one.
+which contains references to its children, and so on until you get to zero/one.
 When a function's name is either deleted or it goes out of scope,
 it may initiate a corresponding cascade of node deletions.
 
