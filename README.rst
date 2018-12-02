@@ -382,8 +382,11 @@ as well.
 
 * `A Model-Based Approach for Reliability Assessment in Component-Based Systems <https://www.phmsociety.org/sites/phmsociety.org/files/phm_submission/2014/phmc_14_025.pdf>`_
 * `bunsat <http://www.react.uni-saarland.de/tools/bunsat>`_,
-  used for the SAT paper `Fast DQBF Refutation <http://www.react.uni-saarland.de/publications/sat14.pdf>`_.
+  used for the SAT paper `Fast DQBF Refutation <http://www.react.uni-saarland.de/publications/sat14.pdf>`_
 * `Solving Logic Riddles with PyEDA <http://nicky.vanforeest.com/misc/pyeda/puzzle.html>`_
+* `Input-Aware Implication Selection Scheme Utilizing ATPG for Efficient Concurrent Error Detection <https://www.mdpi.com/2079-9292/7/10/258>`_
+* `Generation Methodology for Good-Enough Approximate Modules of ATMR <https://www.dropbox.com/s/dx307ml5qlxn49z/electronicstestingppr.pdf>`_
+* `Effect of FPGA Circuit Implementation on Error Detection Using Logic Implication Checking <https://www.dropbox.com/s/brwjnrqdlvkuxxe/08491817.pdf>`_
 
 Presentations
 =============
@@ -394,4 +397,3 @@ Contact the Authors
 ===================
 
 * Chris Drake (cjdrake AT gmail DOT com), http://cjdrake.github.io
-
