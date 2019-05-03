@@ -20,6 +20,11 @@
 #include "share.h"
 #include "util.h"
 
+#ifdef _WIN32
+/* https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/alloca */
+#define alloca _alloca
+#endif
+
 
 #define READ_ARGS(n, xs) \
 do { \
@@ -437,7 +442,7 @@ BX_ITE(struct BoolExpr *s, struct BoolExpr *d1, struct BoolExpr *d0)
 struct BoolExpr *
 BX_OrN(size_t n, ...)
 {
-    struct BoolExpr *xs[n];
+    struct BoolExpr **xs = alloca(sizeof(struct BoolExpr) * n);
     READ_ARGS(n, xs);
     return BX_Or(n, xs);
 }
@@ -446,7 +451,7 @@ BX_OrN(size_t n, ...)
 struct BoolExpr *
 BX_NorN(size_t n, ...)
 {
-    struct BoolExpr *xs[n];
+    struct BoolExpr **xs = alloca(sizeof(struct BoolExpr) * n);
     READ_ARGS(n, xs);
     return BX_Nor(n, xs);
 }
@@ -455,7 +460,7 @@ BX_NorN(size_t n, ...)
 struct BoolExpr *
 BX_AndN(size_t n, ...)
 {
-    struct BoolExpr *xs[n];
+    struct BoolExpr **xs = alloca(sizeof(struct BoolExpr) * n);
     READ_ARGS(n, xs);
     return BX_And(n, xs);
 }
@@ -464,7 +469,7 @@ BX_AndN(size_t n, ...)
 struct BoolExpr *
 BX_NandN(size_t n, ...)
 {
-    struct BoolExpr *xs[n];
+    struct BoolExpr **xs = alloca(sizeof(struct BoolExpr) * n);
     READ_ARGS(n, xs);
     return BX_Nand(n, xs);
 }
@@ -473,7 +478,7 @@ BX_NandN(size_t n, ...)
 struct BoolExpr *
 BX_XorN(size_t n, ...)
 {
-    struct BoolExpr *xs[n];
+    struct BoolExpr **xs = alloca(sizeof(struct BoolExpr) * n);
     READ_ARGS(n, xs);
     return BX_Xor(n, xs);
 }
@@ -482,7 +487,7 @@ BX_XorN(size_t n, ...)
 struct BoolExpr *
 BX_XnorN(size_t n, ...)
 {
-    struct BoolExpr *xs[n];
+    struct BoolExpr **xs = alloca(sizeof(struct BoolExpr) * n);
     READ_ARGS(n, xs);
     return BX_Xnor(n, xs);
 }
@@ -491,7 +496,7 @@ BX_XnorN(size_t n, ...)
 struct BoolExpr *
 BX_EqualN(size_t n, ...)
 {
-    struct BoolExpr *xs[n];
+    struct BoolExpr **xs = alloca(sizeof(struct BoolExpr) * n);
     READ_ARGS(n, xs);
     return BX_Equal(n, xs);
 }
@@ -500,7 +505,7 @@ BX_EqualN(size_t n, ...)
 struct BoolExpr *
 BX_UnequalN(size_t n, ...)
 {
-    struct BoolExpr *xs[n];
+    struct BoolExpr **xs = alloca(sizeof(struct BoolExpr) * n);
     READ_ARGS(n, xs);
     return BX_Unequal(n, xs);
 }
