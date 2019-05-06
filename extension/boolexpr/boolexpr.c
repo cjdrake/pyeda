@@ -23,6 +23,8 @@
 #ifdef _WIN32
 /* https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/alloca */
 #define alloca _alloca
+#else
+#include <alloca.h>
 #endif
 
 
