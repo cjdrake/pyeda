@@ -1029,10 +1029,10 @@ def _int2farray(ftype, num, length=None):
 
 def _itemize(objs):
     """Recursive helper function for farray."""
-    if not isinstance(objs, collections.Sequence):
+    if not isinstance(objs, collections.abc.Sequence):
         raise TypeError("expected a sequence of Function")
 
-    isseq = [isinstance(obj, collections.Sequence) for obj in objs]
+    isseq = [isinstance(obj, collections.abc.Sequence) for obj in objs]
     if not any(isseq):
         ftype = None
         for obj in objs:
