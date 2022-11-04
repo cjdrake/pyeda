@@ -743,7 +743,7 @@ class Expression(boolfunc.Function):
             if _ASSUMPTIONS:
                 aupnt = _assume2point()
                 soln = _backtrack(self.restrict(aupnt))
-                soln.update(aupnt)
+                if soln != None: soln.update(aupnt)
                 return soln
             else:
                 return _backtrack(self)
