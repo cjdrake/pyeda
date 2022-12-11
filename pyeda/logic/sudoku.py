@@ -10,13 +10,14 @@ Logic functions for Sudoku
 from pyeda.boolalg.expr import And, OneHot, expr2dimacscnf
 from pyeda.boolalg.bfarray import exprvars
 
+
 DIGITS = "123456789"
 
 
 class SudokuSolver:
     """Logical constraints for 3x3 Sudoku"""
     def __init__(self):
-        self.X = exprvars('x', (1, 10), (1, 10), (1, 10))
+        self.X = exprvars("x", (1, 10), (1, 10), (1, 10))
 
         V = And(*[And(*[OneHot(*[self.X[r, c, v] for v in range(1, 10)])
                         for c in range(1, 10)])
@@ -54,7 +55,7 @@ class SudokuSolver:
 
     def _soln2str(self, soln, fancy=False):
         """Convert a Sudoku solution point to a string."""
-        chars = list()
+        chars = []
         for r in range(1, 10):
             for c in range(1, 10):
                 if fancy and c in (4, 7):
@@ -72,4 +73,3 @@ class SudokuSolver:
             if soln[self.X[r, c, v]]:
                 return DIGITS[v-1]
         return "X"
-
