@@ -20,6 +20,7 @@ import re
 
 from pyeda.boolalg.espresso import FTYPE, DTYPE, RTYPE
 
+
 _COMMENT = re.compile(r"^#.*$")
 _NINS = re.compile(r"^.i\s+(\d+)$")
 _NOUTS = re.compile(r"^.o\s+(\d+)$")
@@ -31,16 +32,16 @@ _CUBE = re.compile(r"^([01-]+)\s+([01-]+)$")
 _END = re.compile(r"^.e(?:nd)?$")
 
 _TYPES = {
-    'f': FTYPE,
-    'r': RTYPE,
-    'fd': FTYPE | DTYPE,
-    'fr': FTYPE | RTYPE,
-    'dr': DTYPE | RTYPE,
-    'fdr': FTYPE | DTYPE | RTYPE,
+    "f": FTYPE,
+    "r": RTYPE,
+    "fd": FTYPE | DTYPE,
+    "fr": FTYPE | RTYPE,
+    "dr": DTYPE | RTYPE,
+    "fdr": FTYPE | DTYPE | RTYPE,
 }
 
-_INCODE = {'0': 1, '1': 2, '-': 3}
-_OUTCODE = {'0': 0, '1': 1, '-': 2}
+_INCODE = {"0": 1, "1": 2, "-": 3}
+_OUTCODE = {"0": 0, "1": 1, "-": 2}
 
 
 class Error(Exception):
@@ -85,8 +86,8 @@ def parse(s):
         # .i
         m_in = _NINS.match(line)
         if m_in:
-            if d['ninputs'] is None:
-                d['ninputs'] = int(m_in.group(1))
+            if d["ninputs"] is None:
+                d["ninputs"] = int(m_in.group(1))
                 continue
             else:
                 raise Error(".i declared more than once")
@@ -94,8 +95,8 @@ def parse(s):
         # .o
         m_out = _NOUTS.match(line)
         if m_out:
-            if d['noutputs'] is None:
-                d['noutputs'] = int(m_out.group(1))
+            if d["noutputs"] is None:
+                d["noutputs"] = int(m_out.group(1))
                 continue
             else:
                 raise Error(".o declared more than once")
@@ -108,8 +109,8 @@ def parse(s):
         # .ilb
         m_ilb = _ILB.match(line)
         if m_ilb:
-            if d['input_labels'] is None:
-                d['input_labels'] = m_ilb.group(1).split()
+            if d["input_labels"] is None:
+                d["input_labels"] = m_ilb.group(1).split()
                 continue
             else:
                 raise Error(".ilb declared more than once")
@@ -117,8 +118,8 @@ def parse(s):
         # .ob
         m_ob = _OB.match(line)
         if m_ob:
-            if d['output_labels'] is None:
-                d['output_labels'] = m_ob.group(1).split()
+            if d["output_labels"] is None:
+                d["output_labels"] = m_ob.group(1).split()
                 continue
             else:
                 raise Error(".ob declared more than once")
@@ -126,8 +127,8 @@ def parse(s):
         # .type
         m_type = _TYPE.match(line)
         if m_type:
-            if d['intype'] is None:
-                d['intype'] = _TYPES[m_type.group(1)]
+            if d["intype"] is None:
+                d["intype"] = _TYPES[m_type.group(1)]
                 continue
             else:
                 raise Error(".type declared more tha once")
@@ -138,7 +139,7 @@ def parse(s):
             inputs, outputs = m_cube.groups()
             invec = tuple(_INCODE[c] for c in inputs)
             outvec = tuple(_OUTCODE[c] for c in outputs)
-            d['cover'].add((invec, outvec))
+            d["cover"].add((invec, outvec))
             continue
 
         # ignore .e
@@ -146,7 +147,6 @@ def parse(s):
         if m_end:
             continue
 
-        raise Error("syntax error on line {}: {}".format(i, line))
+        raise Error(f"syntax error on line {i}: {line}")
 
     return d
-
