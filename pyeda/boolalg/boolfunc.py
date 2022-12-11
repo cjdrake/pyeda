@@ -60,7 +60,7 @@ from functools import cached_property
 
 from pyeda.util import bit_on
 
-VARIABLES = dict()
+VARIABLES = {}
 
 
 def var(name, index=None):
@@ -86,8 +86,8 @@ def var(name, index=None):
     if not names:
         raise ValueError("expected at least one name")
 
-    for name in names:
-        tname = type(name)
+    for name_ in names:
+        tname = type(name_)
         if tname is not str:
             fstr = "expected name to be a str, got {0.__name__}"
             raise TypeError(fstr.format(tname))
@@ -104,14 +104,14 @@ def var(name, index=None):
             fstr = "expected index to be an int or tuple, got {0.__name__}"
             raise TypeError(fstr.format(tindex))
 
-    for index in indices:
-        tindex = type(index)
+    for index_ in indices:
+        tindex = type(index_)
         if tindex is not int:
             fstr = "expected index to be an int, got {0.__name__}"
             raise TypeError(fstr.format(tindex))
-        if index < 0:
+        if index_ < 0:
             fstr = "expected index to be >= 0, got {}"
-            raise ValueError(fstr.format(index))
+            raise ValueError(fstr.format(index_))
 
     try:
         v = VARIABLES[(names, indices)]
@@ -317,7 +317,7 @@ def vpoint2point(vpoint):
            ...
        ValueError: expected 1:1 mapping from Variable => {0, 1}
     """
-    point = dict()
+    point = {}
     for v, val in vpoint.items():
         point.update(_flatten(v, val))
     return point
@@ -330,11 +330,11 @@ def _flatten(v, val):
     else:
         if len(v) != len(val):
             raise ValueError("expected 1:1 mapping from Variable => {0, 1}")
-        for _var, _val in zip(v, val):
-            yield from _flatten(_var, _val)
+        for var_, val_ in zip(v, val):
+            yield from _flatten(var_, val_)
 
 
-_UNIQIDS = dict()
+_UNIQIDS = {}
 _COUNT = 1
 
 
@@ -740,11 +740,11 @@ class Function:
     def _expect_vars(vs=None):
         """Verify the input type and return a list of Variables."""
         if vs is None:
-            return list()
+            return []
         elif isinstance(vs, Variable):
             return [vs]
         else:
-            checked = list()
+            checked = []
             # Will raise TypeError if vs is not iterable
             for v in vs:
                 if isinstance(v, Variable):
