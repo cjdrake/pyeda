@@ -37,17 +37,22 @@ class Error(Exception):
 class KW_p(KeywordToken):
     """DIMACS 'p' preamble token"""
 
+
 class KW_cnf(KeywordToken):
     """DIMACS 'cnf' token"""
+
 
 class KW_sat(KeywordToken):
     """DIMACS 'sat' token"""
 
+
 class KW_satx(KeywordToken):
     """DIMACS 'satx' token"""
 
+
 class KW_sate(KeywordToken):
     """DIMACS 'sate' token"""
+
 
 class KW_satex(KeywordToken):
     """DIMACS 'satex' token"""
@@ -56,28 +61,33 @@ class KW_satex(KeywordToken):
 # Operators
 class OP_not(OperatorToken):
     """DIMACS '-' operator"""
-    ASTOP = 'not'
+    ASTOP = "not"
+
 
 class OP_or(OperatorToken):
     """DIMACS '+' operator"""
-    ASTOP = 'or'
+    ASTOP = "or"
+
 
 class OP_and(OperatorToken):
     """DIMACS '*' operator"""
-    ASTOP = 'and'
+    ASTOP = "and"
+
 
 class OP_xor(OperatorToken):
     """DIMACS 'xor' operator"""
-    ASTOP = 'xor'
+    ASTOP = "xor"
+
 
 class OP_equal(OperatorToken):
     """DIMACS '=' operator"""
-    ASTOP = 'equal'
+    ASTOP = "equal"
 
 
 # Punctuation
 class LPAREN(PunctuationToken):
     """DIMACS '(' token"""
+
 
 class RPAREN(PunctuationToken):
     """DIMACS ')' token"""
@@ -104,17 +114,17 @@ class CNFLexer(lex.RegexLexer):
         return int(text)
 
     RULES = {
-        'root': [
+        "root": [
             (r"c.*\n", ignore),
-            (r"\bp\b", keyword, 'preamble'),
+            (r"\bp\b", keyword, "preamble"),
         ],
-        'preamble': [
+        "preamble": [
             (r"[ \t]+", ignore),
             (r"\bcnf\b", keyword),
             (r"\d+", integer),
-            (r"\n", ignore, 'formula'),
+            (r"\n", ignore, "formula"),
         ],
-        'formula': [
+        "formula": [
             (r"\s+", ignore),
             (r"-", operator),
             (r"\d+", integer),
@@ -122,12 +132,12 @@ class CNFLexer(lex.RegexLexer):
     }
 
     KEYWORDS = {
-        'p': KW_p,
-        'cnf': KW_cnf,
+        "p": KW_p,
+        "cnf": KW_cnf,
     }
 
     OPERATORS = {
-        '-': OP_not,
+        "-": OP_not,
     }
 
 
@@ -140,7 +150,7 @@ def _expect_token(lexer, types):
         raise Error("unexpected token: " + str(tok))
 
 
-def parse_cnf(s, varname='x'):
+def parse_cnf(s, varname="x"):
     """
     Parse an input string in DIMACS CNF format,
     and return an expression abstract syntax tree.
@@ -173,7 +183,7 @@ def parse_cnf(s, varname='x'):
     except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
-        raise Error(fstr.format(exc))
+        raise Error(fstr.format(exc)) from exc
 
     # Check for end of buffer
     _expect_token(lexer, {EndToken})
@@ -201,7 +211,7 @@ def _cnf_formula(lexer, varname, nvars, nclauses):
         fstr = "formula has more than {} clauses"
         raise Error(fstr.format(nclauses))
 
-    return ('and', ) + clauses
+    return ("and", ) + clauses
 
 
 def _clauses(lexer, varname, nvars):
@@ -221,7 +231,7 @@ def _clauses(lexer, varname, nvars):
 
 def _clause(lexer, varname, nvars):
     """Return a DIMACS CNF clause."""
-    return ('or', ) + _lits(lexer, varname, nvars)
+    return ("or", ) + _lits(lexer, varname, nvars)
 
 
 def _lits(lexer, varname, nvars):
@@ -241,9 +251,9 @@ def _lits(lexer, varname, nvars):
             fstr = "formula literal {} is greater than {}"
             raise Error(fstr.format(index, nvars))
 
-        lit = ('var', (varname, ), (index, ))
+        lit = ("var", (varname, ), (index, ))
         if neg:
-            lit = ('not', lit)
+            lit = ("not", lit)
 
         return (lit, ) + _lits(lexer, varname, nvars)
 
@@ -274,20 +284,20 @@ class SATLexer(lex.RegexLexer):
         return int(text)
 
     RULES = {
-        'root': [
+        "root": [
             (r"c.*\n", ignore),
-            (r"\bp\b", keyword, 'preamble'),
+            (r"\bp\b", keyword, "preamble"),
         ],
-        'preamble': [
+        "preamble": [
             (r"[ \t]+", ignore),
             (r"\bsat\b", keyword),
             (r"\bsatx\b", keyword),
             (r"\bsate\b", keyword),
             (r"\bsatex\b", keyword),
             (r"\d+", integer),
-            (r"\n", ignore, 'formula'),
+            (r"\n", ignore, "formula"),
         ],
-        'formula': [
+        "formula": [
             (r"\s+", ignore),
             (r"\+", operator),
             (r"\-", operator),
@@ -301,24 +311,24 @@ class SATLexer(lex.RegexLexer):
     }
 
     KEYWORDS = {
-        'p': KW_p,
-        'sat': KW_sat,
-        'satx': KW_satx,
-        'sate': KW_sate,
-        'satex': KW_satex,
+        "p": KW_p,
+        "sat": KW_sat,
+        "satx": KW_satx,
+        "sate": KW_sate,
+        "satex": KW_satex,
     }
 
     OPERATORS = {
-        '-': OP_not,
-        '+': OP_or,
-        '*': OP_and,
-        'xor': OP_xor,
-        '=': OP_equal,
+        "-": OP_not,
+        "+": OP_or,
+        "*": OP_and,
+        "xor": OP_xor,
+        "=": OP_equal,
     }
 
     PUNCTUATION = {
-        '(': LPAREN,
-        ')': RPAREN,
+        "(": LPAREN,
+        ")": RPAREN,
     }
 
 
@@ -347,14 +357,14 @@ FORMULAS := FORMULAS FORMULA
 """
 
 _SAT_TOKS = {
-    'sat': {OP_not, OP_or, OP_and},
-    'satx': {OP_not, OP_or, OP_and, OP_xor},
-    'sate': {OP_not, OP_or, OP_and, OP_equal},
-    'satex': {OP_not, OP_or, OP_and, OP_xor, OP_equal},
+    "sat": {OP_not, OP_or, OP_and},
+    "satx": {OP_not, OP_or, OP_and, OP_xor},
+    "sate": {OP_not, OP_or, OP_and, OP_equal},
+    "satex": {OP_not, OP_or, OP_and, OP_xor, OP_equal},
 }
 
 
-def parse_sat(s, varname='x'):
+def parse_sat(s, varname="x"):
     """
     Parse an input string in DIMACS SAT format,
     and return an expression.
@@ -366,7 +376,7 @@ def parse_sat(s, varname='x'):
     except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
-        raise Error(fstr.format(exc))
+        raise Error(fstr.format(exc)) from exc
 
     # Check for end of buffer
     _expect_token(lexer, {EndToken})
@@ -392,7 +402,7 @@ def _sat_formula(lexer, varname, fmt, nvars):
         if not 0 < index <= nvars:
             fstr = "formula literal {} outside valid range: (0, {}]"
             raise Error(fstr.format(index, nvars))
-        return ('var', (varname, ), (index, ))
+        return ("var", (varname, ), (index, ))
     # '-'
     elif isinstance(tok, OP_not):
         tok = _expect_token(lexer, {IntegerToken, LPAREN})
@@ -402,12 +412,12 @@ def _sat_formula(lexer, varname, fmt, nvars):
             if not 0 < index <= nvars:
                 fstr = "formula literal {} outside valid range: (0, {}]"
                 raise Error(fstr.format(index, nvars))
-            return ('not', ('var', (varname, ), (index, )))
+            return ("not", ("var", (varname, ), (index, )))
         # '-' '(' FORMULA ')'
         else:
             formula = _sat_formula(lexer, varname, fmt, nvars)
             _expect_token(lexer, {RPAREN})
-            return ('not', formula)
+            return ("not", formula)
     # '(' FORMULA ')'
     elif isinstance(tok, LPAREN):
         formula = _sat_formula(lexer, varname, fmt, nvars)
@@ -432,4 +442,3 @@ def _formulas(lexer, varname, fmt, nvars):
     # null
     else:
         return tuple()
-
