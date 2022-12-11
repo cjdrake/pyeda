@@ -15,6 +15,7 @@ Interface Classes:
         TTVariable
 """
 
+
 import array
 from functools import cached_property
 
@@ -30,13 +31,13 @@ from pyeda.boolalg.expr import exprvar, Or, And
 PC_VOID, PC_ZERO, PC_ONE, PC_DC = range(4)
 
 # existing TTVariable references
-_VARS = dict()
+_VARS = {}
 
 _PC2STR = {
-    PC_VOID : '?',
-    PC_ZERO : '0',
-    PC_ONE  : '1',
-    PC_DC   : '-'
+    PC_VOID: "?",
+    PC_ZERO: "0",
+    PC_ONE:  "1",
+    PC_DC:   "-"
 }
 
 
@@ -66,9 +67,9 @@ def truthtable(inputs, outputs):
         for output in outputs:
             if isinstance(output, boolfunc.Function):
                 output = output.unbox()
-            if output in (0, '0'):
+            if output in (0, "0"):
                 yield PC_ZERO
-            elif output in (1, '1'):
+            elif output in (1, "1"):
                 yield PC_ONE
             elif output in "-xX":
                 yield PC_DC
@@ -87,8 +88,8 @@ def _truthtable(inputs, pcdata):
     """Return a truth table."""
     if len(inputs) == 0 and pcdata[0] in {PC_ZERO, PC_ONE}:
         return {
-            PC_ZERO : TTZERO,
-            PC_ONE  : TTONE
+            PC_ZERO: TTZERO,
+            PC_ONE:  TTONE
         }[pcdata[0]]
     elif len(inputs) == 1 and pcdata[0] == PC_ZERO and pcdata[1] == PC_ONE:
         return inputs[0]
@@ -123,7 +124,7 @@ class PCData:
     The 2^N indices cover a Boolean space of dimension N.
     """
     def __init__(self, items):
-        data = array.array('L')
+        data = array.array("L")
         width = data.itemsize << 3
 
         pos = num = 0
@@ -262,6 +263,7 @@ class TruthTable(boolfunc.Function):
     def __or__(self, other):
         other = self.box(other)
         inputs = sorted(self.support | other.support)
+
         def items():
             """Iterate through OR'ed items."""
             for point in boolfunc.iter_points(inputs):
@@ -270,12 +272,14 @@ class TruthTable(boolfunc.Function):
                 cd = other.restrict(point).pcdata[0]
                 # a | c, b & d
                 yield ((ab | cd) & 2) | ((ab & cd) & 1)
+
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
     def __and__(self, other):
         other = self.box(other)
         inputs = sorted(self.support | other.support)
+
         def items():
             """Iterate through AND'ed items."""
             for point in boolfunc.iter_points(inputs):
@@ -284,12 +288,14 @@ class TruthTable(boolfunc.Function):
                 cd = other.restrict(point).pcdata[0]
                 # a & c, b | d
                 yield ((ab & cd) & 2) | ((ab | cd) & 1)
+
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
     def __xor__(self, other):
         other = self.box(other)
         inputs = sorted(self.support | other.support)
+
         def items():
             """Iterate through XOR'ed items."""
             for point in boolfunc.iter_points(inputs):
@@ -299,6 +305,7 @@ class TruthTable(boolfunc.Function):
                 # a & d | b & c, a & c | b & d
                 a, b, c, d = ab >> 1, ab & 1, cd >> 1, cd & 1
                 yield ((a & d | b & c) << 1) | (a & c | b & d)
+
         pcdata = PCData(items())
         return _truthtable(inputs, pcdata)
 
@@ -341,6 +348,7 @@ class TruthTable(boolfunc.Function):
                 continue
             unmapped = self.support - {gvar}
             inputs = sorted(unmapped | gfunc.support)
+
             def items():
                 """Iterate through composed outputs."""
                 for point in boolfunc.iter_points(inputs):
@@ -353,6 +361,7 @@ class TruthTable(boolfunc.Function):
                             if v in unmapped}
                     fpnt[gvar] = int(gval)
                     yield func.restrict(fpnt).pcdata[0]
+
             pcdata = PCData(items())
             func = _truthtable(inputs, pcdata)
         return func
@@ -378,9 +387,9 @@ class TruthTable(boolfunc.Function):
     def box(obj):
         if isinstance(obj, TruthTable):
             return obj
-        elif obj == 0 or obj == '0':
+        elif obj in (0, "0"):
             return TTZERO
-        elif obj == 1 or obj == '1':
+        elif obj in (1, "1"):
             return TTONE
         else:
             return TTONE if bool(obj) else TTZERO
@@ -432,7 +441,7 @@ class TruthTable(boolfunc.Function):
     def _iter_restrict(self, zeros, ones):
         """Iterate through indices of all table entries that vary."""
         inputs = list(self.inputs)
-        unmapped = dict()
+        unmapped = {}
         for i, v in enumerate(self.inputs):
             if v in zeros:
                 inputs[i] = 0
@@ -450,7 +459,7 @@ class TruthTable(boolfunc.Function):
 class TTConstant(TruthTable):
     """Truth table constant"""
     def __init__(self, pcval, value):
-        super(TTConstant, self).__init__([], PCData([pcval]))
+        super().__init__([], PCData([pcval]))
         self.value = value
 
     def __bool__(self):
@@ -489,10 +498,9 @@ def _bin_zfill(num, width=None):
     --------
 
     >>> _bin_zfill(42)
-    '101010'
+    "101010"
     >>> _bin_zfill(42, 8)
-    '00101010'
+    "00101010"
     """
     s = bin(num)[2:]
     return s if width is None else s.zfill(width)
-
