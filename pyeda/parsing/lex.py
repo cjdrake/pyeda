@@ -36,7 +36,7 @@ class RunError(Error):
         self.lineno = lineno
         self.offset = offset
         self.text = text
-        super(RunError, self).__init__(msg, lineno, offset, text)
+        super().__init__(msg, lineno, offset, text)
 
 
 class RegexLexer:
@@ -44,7 +44,7 @@ class RegexLexer:
     Lexer based on regular expressions.
     """
     RULES = {
-        'root': []
+        "root": []
     }
 
     def __init__(self, string):
@@ -54,12 +54,12 @@ class RegexLexer:
         self.lineno = None
         self.offset = None
 
-        self.states = list()
+        self.states = []
         self.tokens = collections.deque()
 
         self.gtoks = None
 
-        self._rules = dict()
+        self._rules = {}
         self._compile_rules()
 
     def __iter__(self):
@@ -67,7 +67,7 @@ class RegexLexer:
         self.lineno = 1
         self.offset = 1
 
-        self.states = ['root']
+        self.states = ["root"]
         self.tokens.clear()
 
         self.gtoks = self._iter_tokens()
@@ -83,22 +83,22 @@ class RegexLexer:
     def _compile_rules(self):
         """Compile the rules into the internal lexer state."""
         for state, table in self.RULES.items():
-            patterns = list()
-            actions = list()
-            nextstates = list()
+            patterns = []
+            actions = []
+            nextstates = []
             for i, row in enumerate(table):
                 if len(row) == 2:
-                    pattern, _action = row
+                    pattern, action_ = row
                     nextstate = None
                 elif len(row) == 3:
-                    pattern, _action, nextstate = row
+                    pattern, action_, nextstate = row
                 else:
                     fstr = "invalid RULES: state {}, row {}"
                     raise CompileError(fstr.format(state, i))
                 patterns.append(pattern)
-                actions.append(_action)
+                actions.append(action_)
                 nextstates.append(nextstate)
-            reobj = re.compile('|'.join("(" + p + ")" for p in patterns))
+            reobj = re.compile("|".join("(" + p + ")" for p in patterns))
             self._rules[state] = (reobj, actions, nextstates)
 
     def _iter_tokens(self):
@@ -119,7 +119,7 @@ class RegexLexer:
 
             # Update position variables
             self.pos = mobj.end()
-            lines = text.split('\n')
+            lines = text.split("\n")
             nlines = len(lines) - 1
             if nlines == 0:
                 self.offset = self.offset + len(lines[0])
@@ -166,7 +166,7 @@ class RegexLexer:
 
     def peek_token(self):
         """Peek at the next token from the token queue."""
-        tok = self.__next__()
+        tok = next(self)
         self.unpop_token(tok)
         return tok
 
@@ -181,4 +181,3 @@ def action(toktype):
             lexer.tokens.append(toktype(value, lexer.lineno, lexer.offset))
         return inner
     return outer
-
