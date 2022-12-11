@@ -29,7 +29,7 @@ from pyeda.boolalg.expr import exprvar, Or, And
 
 
 # existing BDDVariable references
-_VARS = dict()
+_VARS = {}
 
 # node/bdd cache
 _NODES = weakref.WeakValueDictionary()
@@ -88,17 +88,17 @@ def bddvar(name, index=None):
     Given identical names and indices, the ``bddvar`` function will always
     return the same variable:
 
-    >>> bddvar('a', 0) is bddvar('a', 0)
+    >>> bddvar("a", 0) is bddvar("a", 0)
     True
 
     To create several single-letter variables:
 
-    >>> a, b, c, d = map(bddvar, 'abcd')
+    >>> a, b, c, d = map(bddvar, "abcd")
 
     To create variables with multiple names (inner-most first):
 
-    >>> fifo_push = bddvar(('push', 'fifo'))
-    >>> fifo_pop = bddvar(('pop', 'fifo'))
+    >>> fifo_push = bddvar(("push", "fifo"))
+    >>> fifo_pop = bddvar(("pop", "fifo"))
 
     .. seealso::
        For creating arrays of variables with incremental indices,
@@ -145,7 +145,7 @@ def bdd2expr(bdd, conj=False):
 
     For example::
 
-       >>> a, b = map(bddvar, 'ab')
+       >>> a, b = map(bddvar, "ab")
        >>> bdd2expr(~a | b)
        Or(~a, And(a, b))
     """
@@ -155,7 +155,7 @@ def bdd2expr(bdd, conj=False):
     else:
         outer, inner = (Or, And)
         paths = _iter_all_paths(bdd.node, BDDNODEONE)
-    terms = list()
+    terms = []
     for path in paths:
         expr_point = {exprvar(v.names, v.indices): val
                       for v, val in _path2point(path).items()}
@@ -170,7 +170,7 @@ def upoint2bddpoint(upoint):
        For definitions of points and untyped points,
        see the :mod:`pyeda.boolalg.boolfunc` module.
     """
-    point = dict()
+    point = {}
     for uniqid in upoint[0]:
         point[_VARS[uniqid]] = 0
     for uniqid in upoint[1]:
@@ -242,7 +242,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     For example::
 
-       >>> a, b, c, d = map(bddvar, 'abcd')
+       >>> a, b, c, d = map(bddvar, "abcd")
        >>> f = ~a | b & c ^ d
 
     The ``BinaryDecisionDiagram`` class is useful for type checking,
@@ -292,13 +292,13 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
     @cached_property
     def inputs(self):
-        _inputs = list()
+        inputs_ = []
         for node in self.dfs_postorder():
             if node.root > 0:
                 v = _VARS[node.root]
-                if v not in _inputs:
-                    _inputs.append(v)
-        return tuple(reversed(_inputs))
+                if v not in inputs_:
+                    inputs_.append(v)
+        return tuple(reversed(inputs_))
 
     def restrict(self, point):
         npoint = {v.node.root: self.box(val).node for v, val in point.items()}
@@ -332,9 +332,9 @@ class BinaryDecisionDiagram(boolfunc.Function):
     def box(obj):
         if isinstance(obj, BinaryDecisionDiagram):
             return obj
-        elif obj == 0 or obj == '0':
+        elif obj in (0, "0"):
             return BDDZERO
-        elif obj == 1 or obj == '1':
+        elif obj in (1, "1"):
             return BDDONE
         else:
             return BDDONE if bool(obj) else BDDZERO
@@ -359,7 +359,7 @@ class BinaryDecisionDiagram(boolfunc.Function):
 
         For example::
 
-           >>> a, b, c = map(bddvar, 'abc')
+           >>> a, b, c = map(bddvar, "abc")
            >>> f1 = a ^ b ^ c
            >>> f2 = a & ~b & ~c | ~a & b & ~c | ~a & ~b & c | a & b & c
            >>> f1 is f2
@@ -368,32 +368,32 @@ class BinaryDecisionDiagram(boolfunc.Function):
         other = self.box(other)
         return self.node is other.node
 
-    def to_dot(self, name='BDD'): # pragma: no cover
+    def to_dot(self, name="BDD"):  # pragma: no cover
         """Convert to DOT language representation.
 
         See the
         `DOT language reference <http://www.graphviz.org/content/dot-language>`_
         for details.
         """
-        parts = ['graph', name, '{']
+        parts = ["graph", name, "{"]
         for node in self.dfs_postorder():
             if node is BDDNODEZERO:
-                parts += ['n' + str(id(node)), '[label=0,shape=box];']
+                parts += ["n" + str(id(node)), "[label=0,shape=box];"]
             elif node is BDDNODEONE:
-                parts += ['n' + str(id(node)), '[label=1,shape=box];']
+                parts += ["n" + str(id(node)), "[label=1,shape=box];"]
             else:
                 v = _VARS[node.root]
-                parts.append('n' + str(id(node)))
-                parts.append('[label="{}",shape=circle];'.format(v))
+                parts.append("n" + str(id(node)))
+                parts.append(f"[label=\"{v}\",shape=circle];")
         for node in self.dfs_postorder():
             if node is not BDDNODEZERO and node is not BDDNODEONE:
-                parts += ['n' + str(id(node)), '--',
-                          'n' + str(id(node.lo)),
-                          '[label=0,style=dashed];']
-                parts += ['n' + str(id(node)), '--',
-                          'n' + str(id(node.hi)),
-                          '[label=1];']
-        parts.append('}')
+                parts += ["n" + str(id(node)), "--",
+                          "n" + str(id(node.lo)),
+                          "[label=0,style=dashed];"]
+                parts += ["n" + str(id(node)), "--",
+                          "n" + str(id(node.hi)),
+                          "[label=1];"]
+        parts.append("}")
         return " ".join(parts)
 
 
@@ -408,7 +408,7 @@ class BDDConstant(BinaryDecisionDiagram):
     and the BDD zero/one instances are singletons.
     """
     def __init__(self, node, value):
-        super(BDDConstant, self).__init__(node)
+        super().__init__(node)
         self.value = value
 
     def __bool__(self):
@@ -486,7 +486,7 @@ def _restrict(node, npoint, cache=None):
         return node
 
     if cache is None:
-        cache = dict()
+        cache = {}
 
     try:
         ret = cache[node]
@@ -528,7 +528,7 @@ def _iter_all_paths(start, end, rand=False, path=tuple()):
         yield path
     else:
         nodes = [start.lo, start.hi]
-        if rand: # pragma: no cover
+        if rand:  # pragma: no cover
             random.shuffle(nodes)
         for node in nodes:
             if node is not None:
@@ -570,4 +570,3 @@ def _bfs(node, visited):
                 queue.appendleft(node.hi)
             visited.add(node)
             yield node
-
