@@ -2,6 +2,7 @@
 Test Boolean expression parsing
 """
 
+
 from nose.tools import assert_raises
 
 from pyeda.boolalg.expr import (
@@ -23,8 +24,9 @@ def test_expr_error():
     assert_raises(Error, expr, "a ? b ,")
     assert_raises(Error, expr, "a | 42")
 
+
 def test_basic():
-    a, b, c, d, p, q, s = map(exprvar, 'abcdpqs')
+    a, b, c, d, p, q, s = map(exprvar, "abcdpqs")
     assert expr("a & ~b | b & ~c").equivalent(a & ~b | b & ~c)
     assert expr("p => q").equivalent(~p | q)
     assert expr("a <=> b").equivalent(~a & ~b | a & b)
@@ -45,8 +47,9 @@ def test_basic():
     assert expr("Majority(a, b, c)").equivalent(Majority(a, b, c))
     assert expr("AchillesHeel(a, b, c, d)").equivalent(AchillesHeel(a, b, c, d))
 
+
 def test_misc():
-    a, b, c = map(exprvar, 'abc')
+    a, b, c = map(exprvar, "abc")
     assert expr("a & b & c").equivalent(a & b & c)
     assert expr("a ^ b ^ c").equivalent(a ^ b ^ c)
     assert expr("a | b | c").equivalent(a | b | c)
@@ -54,9 +57,8 @@ def test_misc():
     assert expr("a | (b & c)").equivalent(a | b & c)
     assert expr("Or()").is_zero()
 
-    a_0 = exprvar('a', 0)
-    b_a = exprvar(('a', 'b'))
-    a_0_1 = exprvar('a', (0, 1))
-    b_a_0_1 = exprvar(('a', 'b'), (0, 1))
+    a_0 = exprvar("a", 0)
+    b_a = exprvar(("a", "b"))
+    a_0_1 = exprvar("a", (0, 1))
+    b_a_0_1 = exprvar(("a", "b"), (0, 1))
     assert expr("a[0] | b.a | a[0,1] | b.a[0,1]").equivalent(a_0 | b_a | a_0_1 | b_a_0_1)
-
