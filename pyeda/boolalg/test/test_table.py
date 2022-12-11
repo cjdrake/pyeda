@@ -2,16 +2,17 @@
 Test table Boolean functions
 """
 
+
 from pyeda.boolalg.expr import exprvar, Xor
 from pyeda.boolalg.table import (
     ttvar, truthtable, expr2truthtable, truthtable2expr
 )
 
-a, b, c, d, e = map(exprvar, 'abcde')
-aa, bb, cc, dd, ee = map(ttvar, 'abcde')
 
-XOR_STR = \
-"""\
+a, b, c, d, e = map(exprvar, "abcde")
+aa, bb, cc, dd, ee = map(ttvar, "abcde")
+
+XOR_STR = """\
 d c b a
 0 0 0 0 : 0
 0 0 0 1 : 1
@@ -30,6 +31,7 @@ d c b a
 1 1 1 0 : 1
 1 1 1 1 : 0
 """
+
 
 def test_unate():
     # ~c & (~a | ~b)
@@ -64,10 +66,12 @@ def test_unate():
     assert f.is_binate(bb)
     assert f.is_binate(cc)
 
+
 def test_ttvar():
-    assert aa.name == 'a'
-    assert aa.names == ('a', )
+    assert aa.name == "a"
+    assert aa.names == ("a", )
     assert aa.indices == tuple()
+
 
 def test_table():
     assert truthtable([], [0]).is_zero()
@@ -86,18 +90,19 @@ def test_table():
     assert tt.restrict({ee: 0}) == tt
 
     assert tt.satisfy_one() == {aa: 1, bb: 0, cc: 0, dd: 0}
-    assert [p for p in tt.satisfy_all()] == [{aa: 1, bb: 0, cc: 0, dd: 0},
-                                             {aa: 0, bb: 1, cc: 0, dd: 0},
-                                             {aa: 0, bb: 0, cc: 1, dd: 0},
-                                             {aa: 1, bb: 1, cc: 1, dd: 0},
-                                             {aa: 0, bb: 0, cc: 0, dd: 1},
-                                             {aa: 1, bb: 1, cc: 0, dd: 1},
-                                             {aa: 1, bb: 0, cc: 1, dd: 1},
-                                             {aa: 0, bb: 1, cc: 1, dd: 1}]
+    assert list(tt.satisfy_all()) == [{aa: 1, bb: 0, cc: 0, dd: 0},
+                                      {aa: 0, bb: 1, cc: 0, dd: 0},
+                                      {aa: 0, bb: 0, cc: 1, dd: 0},
+                                      {aa: 1, bb: 1, cc: 1, dd: 0},
+                                      {aa: 0, bb: 0, cc: 0, dd: 1},
+                                      {aa: 1, bb: 1, cc: 0, dd: 1},
+                                      {aa: 1, bb: 0, cc: 1, dd: 1},
+                                      {aa: 0, bb: 1, cc: 1, dd: 1}]
 
     assert tt.satisfy_count() == 8
 
-    assert truthtable((a, b), "0000").satisfy_one() == None
+    assert truthtable((a, b), "0000").satisfy_one() is None
+
 
 def test_ops():
     f = truthtable([aa, bb], "0001")
@@ -131,4 +136,3 @@ def test_ops():
     assert str(f | g) == "c b a\n0 0 0 : 0\n0 0 1 : 1\n0 1 0 : -\n0 1 1 : 1\n1 0 0 : 1\n1 0 1 : -\n1 1 0 : 0\n1 1 1 : 0\n"
     assert str(f & g) == "c b a\n0 0 0 : 0\n0 0 1 : 0\n0 1 0 : 0\n0 1 1 : 1\n1 0 0 : -\n1 0 1 : -\n1 1 0 : 0\n1 1 1 : 0\n"
     assert str(f ^ g) == "c b a\n0 0 0 : 0\n0 0 1 : 1\n0 1 0 : -\n0 1 1 : 0\n1 0 0 : -\n1 0 1 : -\n1 1 0 : 0\n1 1 1 : 0\n"
-
