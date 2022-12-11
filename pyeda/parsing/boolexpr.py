@@ -28,86 +28,107 @@ class Error(Exception):
 # Keywords
 class KW_or(KeywordToken):
     """Expression 'Or' keyword"""
-    ASTOP = 'or'
+    ASTOP = "or"
+
 
 class KW_and(KeywordToken):
     """Expression 'And' keyword"""
-    ASTOP = 'and'
+    ASTOP = "and"
+
 
 class KW_xor(KeywordToken):
     """Expression 'Xor' keyword"""
-    ASTOP = 'xor'
+    ASTOP = "xor"
+
 
 class KW_xnor(KeywordToken):
     """Expression 'Xnor' keyword"""
-    ASTOP = 'xnor'
+    ASTOP = "xnor"
+
 
 class KW_equal(KeywordToken):
     """Expression 'Equal' keyword"""
-    ASTOP = 'equal'
+    ASTOP = "equal"
+
 
 class KW_unequal(KeywordToken):
     """Expression 'Unequal' keyword"""
-    ASTOP = 'unequal'
+    ASTOP = "unequal"
+
 
 class KW_nor(KeywordToken):
     """Expression 'Nor' keyword"""
-    ASTOP = 'nor'
+    ASTOP = "nor"
+
 
 class KW_nand(KeywordToken):
     """Expression 'Nand' keyword"""
-    ASTOP = 'nand'
+    ASTOP = "nand"
+
 
 class KW_onehot0(KeywordToken):
     """Expression 'OneHot0' keyword"""
-    ASTOP = 'onehot0'
+    ASTOP = "onehot0"
+
 
 class KW_onehot(KeywordToken):
     """Expression 'OneHot' keyword"""
-    ASTOP = 'onehot'
+    ASTOP = "onehot"
+
 
 class KW_majority(KeywordToken):
     """Expression 'Majority' keyword"""
-    ASTOP = 'majority'
+    ASTOP = "majority"
+
 
 class KW_achillesheel(KeywordToken):
     """Expression 'AchillesHeel' keyword"""
-    ASTOP = 'achillesheel'
+    ASTOP = "achillesheel"
+
 
 class KW_ite(KeywordToken):
     """Expression 'ITE' keyword"""
-    ASTOP = 'ite'
+    ASTOP = "ite"
+
 
 class KW_implies(KeywordToken):
     """Expression 'Implies' keyword"""
-    ASTOP = 'implies'
+    ASTOP = "implies"
+
 
 class KW_not(KeywordToken):
     """Expression 'Not' keyword"""
-    ASTOP = 'not'
+    ASTOP = "not"
 
 
 # Operators
 class OP_rarrow(OperatorToken):
     """Expression '=>' operator"""
 
+
 class OP_lrarrow(OperatorToken):
     """Expression '<=>' operator"""
+
 
 class OP_question(OperatorToken):
     """Expression '?' operator"""
 
+
 class OP_colon(OperatorToken):
     """Expression ':' operator"""
+
 
 class OP_not(OperatorToken):
     """Expression '~' operator"""
 
+
 class OP_or(OperatorToken):
     """Expression '|' operator"""
 
+
 class OP_and(OperatorToken):
     """Expression '&' operator"""
+
 
 class OP_xor(OperatorToken):
     """Expression '^' operator"""
@@ -117,17 +138,22 @@ class OP_xor(OperatorToken):
 class LPAREN(PunctuationToken):
     """Expression '(' token"""
 
+
 class RPAREN(PunctuationToken):
     """Expression ')' token"""
+
 
 class LBRACK(PunctuationToken):
     """Expression '[' token"""
 
+
 class RBRACK(PunctuationToken):
     """Expression ']' token"""
 
+
 class COMMA(PunctuationToken):
     """Expression ',' token"""
+
 
 class DOT(PunctuationToken):
     """Expression '.' token"""
@@ -164,7 +190,7 @@ class BoolExprLexer(lex.RegexLexer):
         return int(text)
 
     RULES = {
-        'root': [
+        "root": [
             (r"\s+", ignore),
 
             (r"\bOr\b", keyword),
@@ -206,42 +232,42 @@ class BoolExprLexer(lex.RegexLexer):
     }
 
     KEYWORDS = {
-        'Or'       : KW_or,
-        'And'      : KW_and,
-        'Xor'      : KW_xor,
-        'Xnor'     : KW_xnor,
-        'Equal'    : KW_equal,
-        'Unequal'  : KW_unequal,
-        'Nor'      : KW_nor,
-        'Nand'     : KW_nand,
-        'OneHot0'  : KW_onehot0,
-        'OneHot'   : KW_onehot,
-        'Majority' : KW_majority,
-        'AchillesHeel' : KW_achillesheel,
+        "Or":           KW_or,
+        "And":          KW_and,
+        "Xor":          KW_xor,
+        "Xnor":         KW_xnor,
+        "Equal":        KW_equal,
+        "Unequal":      KW_unequal,
+        "Nor":          KW_nor,
+        "Nand":         KW_nand,
+        "OneHot0":      KW_onehot0,
+        "OneHot":       KW_onehot,
+        "Majority":     KW_majority,
+        "AchillesHeel": KW_achillesheel,
 
-        'ITE'     : KW_ite,
-        'Implies' : KW_implies,
-        'Not'     : KW_not,
+        "ITE":     KW_ite,
+        "Implies": KW_implies,
+        "Not":     KW_not,
     }
 
     OPERATORS = {
-        '=>'  : OP_rarrow,
-        '<=>' : OP_lrarrow,
-        '?'   : OP_question,
-        ':'   : OP_colon,
-        '~'   : OP_not,
-        '|'   : OP_or,
-        '&'   : OP_and,
-        '^'   : OP_xor,
+        "=>":  OP_rarrow,
+        "<=>": OP_lrarrow,
+        "?":   OP_question,
+        ":":   OP_colon,
+        "~":   OP_not,
+        "|":   OP_or,
+        "&":   OP_and,
+        "^":   OP_xor,
     }
 
     PUNCTUATION = {
-        '(': LPAREN,
-        ')': RPAREN,
-        '[': LBRACK,
-        ']': RBRACK,
-        ',': COMMA,
-        '.': DOT,
+        "(": LPAREN,
+        ")": RPAREN,
+        "[": LBRACK,
+        "]": RBRACK,
+        ",": COMMA,
+        ".": DOT,
     }
 
 
@@ -385,7 +411,7 @@ def parse(s):
     except lex.RunError as exc:
         fstr = ("{0.args[0]}: "
                 "(line: {0.lineno}, offset: {0.offset}, text: {0.text})")
-        raise Error(fstr.format(exc))
+        raise Error(fstr.format(exc)) from exc
 
     # Check for end of buffer
     _expect_token(lexer, {EndToken})
@@ -417,7 +443,7 @@ def _ite(lexer):
         d1 = _ite(lexer)
         _expect_token(lexer, {OP_colon})
         d0 = _ite(lexer)
-        return ('ite', s, d1, d0)
+        return ("ite", s, d1, d0)
     # IMPL
     else:
         lexer.unpop_token(tok)
@@ -432,11 +458,11 @@ def _impl(lexer):
     # SUMTERM '=>' IMPL
     if isinstance(tok, OP_rarrow):
         q = _impl(lexer)
-        return ('implies', p, q)
+        return ("implies", p, q)
     # SUMTERM '<=>' IMPL
     elif isinstance(tok, OP_lrarrow):
         q = _impl(lexer)
-        return ('equal', p, q)
+        return ("equal", p, q)
     # SUMTERM
     else:
         lexer.unpop_token(tok)
@@ -450,7 +476,7 @@ def _sumterm(lexer):
     if sumterm_prime is None:
         return xorterm
     else:
-        return ('or', xorterm, sumterm_prime)
+        return ("or", xorterm, sumterm_prime)
 
 
 def _sumterm_prime(lexer):
@@ -463,7 +489,7 @@ def _sumterm_prime(lexer):
         if sumterm_prime is None:
             return xorterm
         else:
-            return ('or', xorterm, sumterm_prime)
+            return ("or", xorterm, sumterm_prime)
     # null
     else:
         lexer.unpop_token(tok)
@@ -477,7 +503,7 @@ def _xorterm(lexer):
     if xorterm_prime is None:
         return prodterm
     else:
-        return ('xor', prodterm, xorterm_prime)
+        return ("xor", prodterm, xorterm_prime)
 
 
 def _xorterm_prime(lexer):
@@ -490,7 +516,7 @@ def _xorterm_prime(lexer):
         if xorterm_prime is None:
             return prodterm
         else:
-            return ('xor', prodterm, xorterm_prime)
+            return ("xor", prodterm, xorterm_prime)
     # null
     else:
         lexer.unpop_token(tok)
@@ -504,7 +530,7 @@ def _prodterm(lexer):
     if prodterm_prime is None:
         return factor
     else:
-        return ('and', factor, prodterm_prime)
+        return ("and", factor, prodterm_prime)
 
 
 def _prodterm_prime(lexer):
@@ -517,7 +543,7 @@ def _prodterm_prime(lexer):
         if prodterm_prime is None:
             return factor
         else:
-            return ('and', factor, prodterm_prime)
+            return ("and", factor, prodterm_prime)
     # null
     else:
         lexer.unpop_token(tok)
@@ -530,7 +556,7 @@ def _factor(lexer):
     # '~' F
     toktype = type(tok)
     if toktype is OP_not:
-        return ('not', _factor(lexer))
+        return ("not", _factor(lexer))
     # '(' EXPR ')'
     elif toktype is LPAREN:
         expr = _expr(lexer)
@@ -559,7 +585,7 @@ def _factor(lexer):
         _expect_token(lexer, {COMMA})
         d0 = _expr(lexer)
         _expect_token(lexer, {RPAREN})
-        return ('ite', s, d1, d0)
+        return ("ite", s, d1, d0)
     # Implies '(' EXPR ',' EXPR ')'
     elif toktype is KW_implies:
         _expect_token(lexer, {LPAREN})
@@ -567,13 +593,13 @@ def _factor(lexer):
         _expect_token(lexer, {COMMA})
         q = _expr(lexer)
         _expect_token(lexer, {RPAREN})
-        return ('implies', p, q)
+        return ("implies", p, q)
     # Not '(' EXPR ')'
     elif toktype is KW_not:
         _expect_token(lexer, {LPAREN})
         x = _expr(lexer)
         _expect_token(lexer, {RPAREN})
-        return ('not', x)
+        return ("not", x)
     # VARIABLE
     elif toktype is NameToken:
         lexer.unpop_token(tok)
@@ -582,7 +608,7 @@ def _factor(lexer):
     else:
         if tok.value not in {0, 1}:
             raise Error("unexpected token: " + str(tok))
-        return ('const', tok.value)
+        return ("const", tok.value)
 
 
 def _args(lexer):
@@ -616,7 +642,7 @@ def _variable(lexer):
         lexer.unpop_token(tok)
         indices = tuple()
 
-    return ('var', names, indices)
+    return ("var", names, indices)
 
 
 def _names(lexer):
@@ -660,4 +686,3 @@ def _zom_index(lexer):
     else:
         lexer.unpop_token(tok)
         return tuple()
-
