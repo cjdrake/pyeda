@@ -9,7 +9,7 @@ Interface Functions:
 """
 
 
-# Disable the 'no-name-in-module' error, b/c pylint can't look into C extensions
+# Disable 'no-name-in-module' error, b/c pylint can't look into C extensions
 # pylint: disable=E0611
 
 
@@ -22,7 +22,7 @@ from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC
 
 # ReadTheDocs doesn't build C extensions
 # See http://docs.readthedocs.org/en/latest/faq.html for details
-if os.getenv('READTHEDOCS') == 'True':
+if os.getenv("READTHEDOCS") == "True":
     pass
 else:
     from pyeda.boolalg.espresso import FTYPE, DTYPE, RTYPE
@@ -47,7 +47,7 @@ def espresso_exprs(*exprs):
     For example::
 
        >>> from pyeda.boolalg.expr import exprvar
-       >>> a, b, c = map(exprvar, 'abc')
+       >>> a, b, c = map(exprvar, "abc")
        >>> f1 = Or(And(~a, ~b, ~c), And(~a, ~b, c), And(a, ~b, c), And(a, b, c), And(a, b, ~c))
        >>> f2 = Or(And(~a, ~b, c), And(a, ~b, c))
        >>> f1m, f2m = espresso_exprs(f1, f2)
@@ -77,7 +77,7 @@ def espresso_exprs(*exprs):
 
     cover = set()
     for fscube in fscover:
-        invec = list()
+        invec = []
         for v in inputs:
             if ~v in fscube:
                 invec.append(1)
@@ -85,7 +85,7 @@ def espresso_exprs(*exprs):
                 invec.append(2)
             else:
                 invec.append(3)
-        outvec = list()
+        outvec = []
         for f in exprs:
             for fcube in f.cover:
                 if fcube <= fscube:
@@ -111,7 +111,7 @@ def espresso_tts(*tts):
 
        >>> from pyeda.boolalg.bfarray import exprvars
        >>> from pyeda.boolalg.table import truthtable
-       >>> X = exprvars('x', 4)
+       >>> X = exprvars("x", 4)
        >>> f1 = truthtable(X, "0000011111------")
        >>> f2 = truthtable(X, "0001111100------")
        >>> f1m, f2m = espresso_tts(f1, f2)
@@ -133,7 +133,7 @@ def espresso_tts(*tts):
     cover = set()
     for i, point in enumerate(boolfunc.iter_points(inputs)):
         invec = [2 if point[v] else 1 for v in inputs]
-        outvec = list()
+        outvec = []
         for f in tts:
             val = f.pcdata[i]
             if val == PC_ZERO:
@@ -148,19 +148,19 @@ def espresso_tts(*tts):
 
     set_config(**CONFIG)
 
-    cover = espresso(ninputs, noutputs, cover, intype=FTYPE|DTYPE|RTYPE)
+    cover = espresso(ninputs, noutputs, cover, intype=FTYPE | DTYPE | RTYPE)
     inputs = [exprvar(v.names, v.indices) for v in inputs]
     return _cover2exprs(inputs, noutputs, cover)
 
 
 def _cover2exprs(inputs, noutputs, cover):
     """Convert a cover to a tuple of Expression instances."""
-    fs = list()
+    fs = []
     for i in range(noutputs):
-        terms = list()
+        terms = []
         for invec, outvec in cover:
             if outvec[i]:
-                term = list()
+                term = []
                 for j, v in enumerate(inputs):
                     if invec[j] == 1:
                         term.append(~v)
@@ -170,4 +170,3 @@ def _cover2exprs(inputs, noutputs, cover):
         fs.append(Or(*[And(*term) for term in terms]))
 
     return tuple(fs)
-
