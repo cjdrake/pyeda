@@ -5,28 +5,25 @@ NOTE: This was from some miscellaneous work a while ago.
       Needs to be reorganized.
 """
 
+
 from nose.tools import assert_raises
 
-from pyeda.boolalg import boolfunc
 from pyeda.boolalg import exprnode
 from pyeda.boolalg.bfarray import exprvars
 from pyeda.boolalg.expr import (
     Zero, One,
     exprvar, expr,
-    #expr2dimacscnf, expr2dimacssat,
     Expression,
     Not, Or, And, Xor, Equal, Implies, ITE,
-    Nor, Nand, Xnor, Unequal,
-    OneHot0, OneHot, Majority, AchillesHeel, Mux,
 )
 
 
 # Common variables
-a, b, c, d, e, p, q, s, w, x, y, z = map(exprvar, 'abcdepqswxyz')
-d1, d0 = map(exprvar, ('d1', 'd0'))
+a, b, c, d, e, p, q, s, w, x, y, z = map(exprvar, "abcdepqswxyz")
+d1, d0 = map(exprvar, ("d1", "d0"))
 
-xs = exprvars('x', 16)
-ys = exprvars('y', 16, 16, 16)
+xs = exprvars("x", 16)
+ys = exprvars("y", 16, 16, 16)
 
 
 def test_exprnode_constants():
@@ -80,11 +77,11 @@ def test_expr():
     assert expr(0) is Zero
     assert expr(1) is One
 
-    assert expr('0') is Zero
-    assert expr('1') is One
+    assert expr("0") is Zero
+    assert expr("1") is One
 
     assert expr([]) is Zero
-    assert expr(['foo', 'bar']) is One
+    assert expr(["foo", "bar"]) is One
 
     assert str(expr("a & ~b | c ^ ~d")) == "Or(And(a, ~b), Xor(c, ~d))"
     assert str(expr("a & 0 | 1 ^ ~d", simplify=False)) == "Or(And(a, 0), Xor(1, ~d))"
@@ -94,21 +91,21 @@ def test_to_ast():
     """Test exprnode.to_ast()."""
     f = (~a | b & ~c ^ d).eq(~(0 & p) >> (~q ^ 1))
     assert f.to_ast() == \
-        ('eq',
-            ('or',
-                ('lit', -a.uniqid),
-                ('xor',
-                    ('and', ('lit', b.uniqid),
-                            ('lit', -c.uniqid)),
-                    ('lit', d.uniqid))),
-            ('impl',
-                ('not',
-                    ('and',
-                        ('lit', p.uniqid),
-                        ('const', 0))),
-                ('xor',
-                    ('lit', -q.uniqid),
-                    ('const', 1))))
+        ("eq",
+            ("or",
+                ("lit", -a.uniqid),
+                ("xor",
+                    ("and", ("lit", b.uniqid),
+                            ("lit", -c.uniqid)),
+                    ("lit", d.uniqid))),
+            ("impl",
+                ("not",
+                    ("and",
+                        ("lit", p.uniqid),
+                        ("const", 0))),
+                ("xor",
+                    ("lit", -q.uniqid),
+                    ("const", 1))))
 
 
 def test_not():
@@ -279,9 +276,8 @@ def test_box():
     assert Expression.box(0) is Zero
     assert Expression.box(1) is One
 
-    assert Expression.box('0') is Zero
-    assert Expression.box('1') is One
+    assert Expression.box("0") is Zero
+    assert Expression.box("1") is One
 
     assert Expression.box([]) is Zero
     assert Expression.box(42) is One
-
