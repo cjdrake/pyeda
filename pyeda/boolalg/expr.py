@@ -107,7 +107,7 @@ from pyeda.util import bit_on, clog2
 
 # ReadTheDocs doesn't build C extensions
 # See http://docs.readthedocs.org/en/latest/faq.html for details
-if os.getenv('READTHEDOCS') == 'True':
+if os.getenv("READTHEDOCS") == "True":
     from unittest.mock import MagicMock
     # pylint: disable=C0103
     exprnode = MagicMock()
@@ -117,7 +117,7 @@ else:
 
 
 # existing Literal references
-_LITS = dict()
+_LITS = {}
 
 # satisfy_one literal assumptions
 _ASSUMPTIONS = set()
@@ -125,7 +125,7 @@ _ASSUMPTIONS = set()
 
 def _assume2point():
     """Convert global assumptions to a point."""
-    point = dict()
+    point = {}
     for lit in _ASSUMPTIONS:
         if isinstance(lit, Complement):
             point[~lit] = 0
@@ -191,21 +191,22 @@ def _exprcomp(node):
 
 
 _KIND2EXPR = {
-    exprnode.ZERO : lambda node: Zero,
-    exprnode.ONE  : lambda node: One,
+    exprnode.ZERO: lambda node: Zero,
+    exprnode.ONE: lambda node: One,
 
-    exprnode.COMP : lambda node: _exprcomp(node),
-    exprnode.VAR  : lambda node: _LITS[node.data()],
+    exprnode.COMP: lambda node: _exprcomp(node),
+    exprnode.VAR: lambda node: _LITS[node.data()],
 
-    exprnode.OP_OR   : lambda node: OrOp(node),
-    exprnode.OP_AND  : lambda node: AndOp(node),
-    exprnode.OP_XOR  : lambda node: XorOp(node),
-    exprnode.OP_EQ   : lambda node: EqualOp(node),
+    exprnode.OP_OR: lambda node: OrOp(node),
+    exprnode.OP_AND: lambda node: AndOp(node),
+    exprnode.OP_XOR: lambda node: XorOp(node),
+    exprnode.OP_EQ: lambda node: EqualOp(node),
 
-    exprnode.OP_NOT  : lambda node: NotOp(node),
-    exprnode.OP_IMPL : lambda node: ImpliesOp(node),
-    exprnode.OP_ITE  : lambda node: IfThenElseOp(node),
+    exprnode.OP_NOT: lambda node: NotOp(node),
+    exprnode.OP_IMPL: lambda node: ImpliesOp(node),
+    exprnode.OP_ITE: lambda node: IfThenElseOp(node),
 }
+
 
 def _expr(node):
     """Expression constructor that returns unique atomic nodes."""
@@ -231,9 +232,9 @@ def expr(obj, simplify=True):
 
 def ast2expr(ast):
     """Convert an abstract syntax tree to an Expression."""
-    if ast[0] == 'const':
+    if ast[0] == "const":
         return _CONSTS[ast[1]]
-    elif ast[0] == 'var':
+    elif ast[0] == "var":
         return exprvar(ast[1], ast[2])
     else:
         xs = [ast2expr(x) for x in ast[1:]]
@@ -254,17 +255,17 @@ def expr2dimacssat(ex):
     litmap, nvars = ex.encode_inputs()
 
     formula = _expr2sat(ex, litmap)
-    if 'xor' in formula:
-        if '=' in formula:
-            fmt = 'satex'
+    if "xor" in formula:
+        if "=" in formula:
+            fmt = "satex"
         else:
-            fmt = 'satx'
-    elif '=' in formula:
-        fmt = 'sate'
+            fmt = "satx"
+    elif "=" in formula:
+        fmt = "sate"
     else:
-        fmt = 'sat'
+        fmt = "sat"
 
-    return "p {} {}\n{}".format(fmt, nvars, formula)
+    return f"p {fmt} {nvars}\n{formula}"
 
 
 def _expr2sat(ex, litmap): # pragma: no cover
@@ -298,7 +299,7 @@ def upoint2exprpoint(upoint):
        For definitions of points and untyped points,
        see the :mod:`pyeda.boolalg.boolfunc` module.
     """
-    point = dict()
+    point = {}
     for uniqid in upoint[0]:
         point[_LITS[uniqid]] = 0
     for uniqid in upoint[1]:
@@ -455,15 +456,15 @@ def OneHot0(*xs, simplify=True, conj=True):
     Otherwise, return a DNF.
     """
     xs = [Expression.box(x).node for x in xs]
-    terms = list()
+    terms = []
     if conj:
         for x0, x1 in itertools.combinations(xs, 2):
             terms.append(exprnode.or_(exprnode.not_(x0),
                                       exprnode.not_(x1)))
         y = exprnode.and_(*terms)
     else:
-        for _xs in itertools.combinations(xs, len(xs) - 1):
-            terms.append(exprnode.and_(*[exprnode.not_(x) for x in _xs]))
+        for xs_ in itertools.combinations(xs, len(xs) - 1):
+            terms.append(exprnode.and_(*[exprnode.not_(x) for x in xs_]))
         y = exprnode.or_(*terms)
     if simplify:
         y = y.simplify()
@@ -481,7 +482,7 @@ def OneHot(*xs, simplify=True, conj=True):
     Otherwise, return a DNF.
     """
     xs = [Expression.box(x).node for x in xs]
-    terms = list()
+    terms = []
     if conj:
         for x0, x1 in itertools.combinations(xs, 2):
             terms.append(exprnode.or_(exprnode.not_(x0),
@@ -513,12 +514,12 @@ def NHot(n, *xs, simplify=True):
 
     xs = [Expression.box(x).node for x in xs]
     num = len(xs)
-    terms = list()
+    terms = []
     for hot_idxs in itertools.combinations(range(num), n):
         hot_idxs = set(hot_idxs)
-        _xs = [xs[i] if i in hot_idxs else exprnode.not_(xs[i])
+        xs_ = [xs[i] if i in hot_idxs else exprnode.not_(xs[i])
                for i in range(num)]
-        terms.append(exprnode.and_(*_xs))
+        terms.append(exprnode.and_(*xs_))
     y = exprnode.or_(*terms)
     if simplify:
         y = y.simplify()
@@ -537,14 +538,14 @@ def Majority(*xs, simplify=True, conj=False):
     """
     xs = [Expression.box(x).node for x in xs]
     if conj:
-        terms = list()
-        for _xs in itertools.combinations(xs, (len(xs) + 1) // 2):
-            terms.append(exprnode.or_(*_xs))
+        terms = []
+        for xs_ in itertools.combinations(xs, (len(xs) + 1) // 2):
+            terms.append(exprnode.or_(*xs_))
         y = exprnode.and_(*terms)
     else:
-        terms = list()
-        for _xs in itertools.combinations(xs, len(xs) // 2 + 1):
-            terms.append(exprnode.and_(*_xs))
+        terms = []
+        for xs_ in itertools.combinations(xs, len(xs) // 2 + 1):
+            terms.append(exprnode.and_(*xs_))
         y = exprnode.or_(*terms)
     if simplify:
         y = y.simplify()
@@ -591,7 +592,7 @@ def Mux(fs, sel, simplify=True):
     return _expr(y)
 
 
-def ForAll(vs, ex): # pragma: no cover
+def ForAll(vs, ex):  # pragma: no cover
     """
     Return an expression that means
     "for all variables in *vs*, *ex* is true".
@@ -599,7 +600,7 @@ def ForAll(vs, ex): # pragma: no cover
     return And(*ex.cofactors(vs))
 
 
-def Exists(vs, ex): # pragma: no cover
+def Exists(vs, ex):  # pragma: no cover
     """
     Return an expression that means
     "there exists a variable in *vs* such that *ex* is true".
@@ -713,7 +714,7 @@ class Expression(boolfunc.Function):
         return tuple(sorted(self.support, key=lambda ex: ex.node.data()))
 
     def restrict(self, point):
-        d = dict()
+        d = {}
         for key, val in point.items():
             if not isinstance(key, Variable):
                 raise TypeError("expected point keys to be variables")
@@ -724,7 +725,7 @@ class Expression(boolfunc.Function):
         return _expr(self.node.restrict(d))
 
     def compose(self, mapping):
-        d = dict()
+        d = {}
         for key, val in mapping.items():
             if not isinstance(key, Variable):
                 raise TypeError("expected mapping keys to be variables")
@@ -744,7 +745,8 @@ class Expression(boolfunc.Function):
             if _ASSUMPTIONS:
                 aupnt = _assume2point()
                 soln = _backtrack(self.restrict(aupnt))
-                if soln != None: soln.update(aupnt)
+                if soln is not None:
+                    soln.update(aupnt)
                 return soln
             else:
                 return _backtrack(self)
@@ -915,7 +917,7 @@ class Expression(boolfunc.Function):
 
     def encode_inputs(self):
         """Return a compact encoding for input variables."""
-        litmap = dict()
+        litmap = {}
         nvars = 0
         for i, v in enumerate(self.inputs, start=1):
             litmap[v] = i
@@ -939,7 +941,7 @@ class Expression(boolfunc.Function):
         else:
             raise ValueError("expected a CNF expression")
 
-    def tseitin(self, auxvarname='aux'):
+    def tseitin(self, auxvarname="aux"):
         """Convert the expression to Tseitin's encoding."""
         if self.is_cnf():
             return self
@@ -954,36 +956,36 @@ class Expression(boolfunc.Function):
         f = Xor(self, self.box(other))
         return f.satisfy_one() is None
 
-    def to_dot(self, name='EXPR'): # pragma: no cover
+    def to_dot(self, name="EXPR"): # pragma: no cover
         """Convert to DOT language representation."""
-        parts = ['graph', name, '{', 'rankdir=BT;']
+        parts = ["graph", name, "{', 'rankdir=BT;"]
         for ex in self.iter_dfs():
             exid = ex.node.id()
             if ex is Zero:
-                parts += ["n{} [label=0,shape=box];".format(exid)]
+                parts += [f"n{exid} [label=0,shape=box];"]
             elif ex is One:
-                parts += ["n{} [label=1,shape=box];".format(exid)]
+                parts += [f"n{exid} [label=1,shape=box];"]
             elif isinstance(ex, Literal):
-                parts += ['n{} [label="{}",shape=box];'.format(exid, ex)]
+                parts += [f"n{exid} [label=\"{ex}\",shape=box];"]
             else:
-                parts += ["n{0} [label={1.ASTOP},shape=circle];".format(exid, ex)]
+                parts += [f"n{exid} [label={ex.ASTOP},shape=circle];"]
         for ex in self.iter_dfs():
             exid = ex.node.id()
             if isinstance(ex, NotOp):
-                parts += ["n{} -- n{};".format(ex.x.node.id(), exid)]
+                parts += [f"n{ex.x.node.id()} -- n{exid};"]
             elif isinstance(ex, ImpliesOp):
                 p, q = ex.xs
-                parts += ["n{} -- n{} [label=p];".format(p.node.id(), exid)]
-                parts += ["n{} -- n{} [label=q];".format(q.node.id(), exid)]
+                parts += [f"n{p.node.id()} -- n{exid} [label=p];"]
+                parts += [f"n{q.node.id()} -- n{exid} [label=q];"]
             elif isinstance(ex, IfThenElseOp):
                 s, d1, d0 = ex.xs
-                parts += ["n{} -- n{} [label=s];".format(s.node.id(), exid)]
-                parts += ["n{} -- n{} [label=d1];".format(d1.node.id(), exid)]
-                parts += ["n{} -- n{} [label=d0];".format(d0.node.id(), exid)]
+                parts += [f"n{s.node.id()} -- n{exid} [label=s];"]
+                parts += [f"n{d1.node.id()} -- n{exid} [label=d1];"]
+                parts += [f"n{d0.node.id()} -- n{exid} [label=d0];"]
             elif isinstance(ex, NaryOp):
                 for x in ex.xs:
-                    parts += ["n{} -- n{};".format(x.node.id(), exid)]
-        parts.append('}')
+                    parts += [f"n{x.node.id()} -- n{exid};"]
+        parts.append("}")
         return " ".join(parts)
 
 
@@ -1058,7 +1060,7 @@ _CONSTS = [Zero, One]
 class Literal(Atom, _Clause, _DNF, _CNF):
     """Literal Expression"""
 
-    ASTOP = 'lit'
+    ASTOP = "lit"
 
     def __enter__(self):
         _ASSUMPTIONS.add(self)
@@ -1095,7 +1097,7 @@ class Complement(Literal):
     """Complement Expression"""
 
     def __str__(self):
-        return "~{}".format(self.__invert__())
+        return f"~{self.__invert__()}"
 
     @cached_property
     def uniqid(self):
@@ -1121,7 +1123,8 @@ class Operator(Expression):
     NAME = NotImplemented
 
     def __str__(self):
-        return "{}({})".format(self.NAME, ', '.join(str(x) for x in self.xs))
+        args = ", ".join(str(x) for x in self.xs)
+        return f"{self.NAME}({args})"
 
     @cached_property
     def xs(self):
@@ -1148,8 +1151,8 @@ class OrAndOp(NaryOp, _Clause, _DNF, _CNF):
 class OrOp(OrAndOp):
     """OR Operator"""
 
-    ASTOP = 'or'
-    NAME = 'Or'
+    ASTOP = "or"
+    NAME = "Or"
 
     # _DNF
     def _encode_dnf(self):
@@ -1171,8 +1174,8 @@ class OrOp(OrAndOp):
 class AndOp(OrAndOp):
     """AND Operator"""
 
-    ASTOP = 'and'
-    NAME = 'And'
+    ASTOP = "and"
+    NAME = "And"
 
     def __enter__(self):
         for x in self.xs:
@@ -1207,21 +1210,21 @@ class AndOp(OrAndOp):
 
 class XorOp(NaryOp):
     """XOR Operator"""
-    ASTOP = 'xor'
-    NAME = 'Xor'
+    ASTOP = "xor"
+    NAME = "Xor"
 
 
 class EqualOp(NaryOp):
     """Equal Operator"""
-    ASTOP = 'eq'
-    NAME = 'Equal'
+    ASTOP = "eq"
+    NAME = "Equal"
 
 
 class NotOp(Operator):
     """NOT Operator"""
 
-    ASTOP = 'not'
-    NAME = 'Not'
+    ASTOP = "not"
+    NAME = "Not"
 
     @cached_property
     def x(self):
@@ -1232,8 +1235,8 @@ class NotOp(Operator):
 class ImpliesOp(Operator):
     """Implies Operator"""
 
-    ASTOP = 'impl'
-    NAME = 'Implies'
+    ASTOP = "impl"
+    NAME = "Implies"
 
     @cached_property
     def p(self):
@@ -1249,8 +1252,8 @@ class ImpliesOp(Operator):
 class IfThenElseOp(Operator):
     """If-Then-Else (ITE) Operator"""
 
-    ASTOP = 'ite'
-    NAME = 'ITE'
+    ASTOP = "ite"
+    NAME = "ITE"
 
     @cached_property
     def s(self):
@@ -1276,7 +1279,7 @@ def _backtrack(ex):
     if ex is Zero:
         return None
     elif ex is One:
-        return dict()
+        return {}
     else:
         v = ex.top
         points = {v: 0}, {v: 1}
@@ -1291,7 +1294,7 @@ def _backtrack(ex):
 def _iter_backtrack(ex, rand=False):
     """Iterate through all satisfying points using backtrack algorithm."""
     if ex is One:
-        yield dict()
+        yield {}
     elif ex is not Zero:
         if rand:
             v = random.choice(ex.inputs) if rand else ex.top
@@ -1375,22 +1378,22 @@ class ConjNormalForm(NormalForm):
         If the input CNF is satisfiable, return a satisfying input point.
         A contradiction will return None.
         """
-        verbosity = params.get('verbosity', 0)
-        default_phase = params.get('default_phase', 2)
-        propagation_limit = params.get('propagation_limit', -1)
-        decision_limit = params.get('decision_limit', -1)
-        seed = params.get('seed', 1)
+        verbosity = params.get("verbosity", 0)
+        default_phase = params.get("default_phase", 2)
+        propagation_limit = params.get("propagation_limit", -1)
+        decision_limit = params.get("decision_limit", -1)
+        seed = params.get("seed", 1)
         return picosat.satisfy_one(self.nvars, self.clauses, assumptions,
                                    verbosity, default_phase, propagation_limit,
                                    decision_limit, seed)
 
     def satisfy_all(self, **params):
         """Iterate through all satisfying input points."""
-        verbosity = params.get('verbosity', 0)
-        default_phase = params.get('default_phase', 2)
-        propagation_limit = params.get('propagation_limit', -1)
-        decision_limit = params.get('decision_limit', -1)
-        seed = params.get('seed', 1)
+        verbosity = params.get("verbosity", 0)
+        default_phase = params.get("default_phase", 2)
+        propagation_limit = params.get("propagation_limit", -1)
+        decision_limit = params.get("decision_limit", -1)
+        seed = params.get("seed", 1)
         yield from picosat.satisfy_all(self.nvars, self.clauses, verbosity,
                                        default_phase, propagation_limit,
                                        decision_limit, seed)
@@ -1406,8 +1409,8 @@ class DimacsCNF(ConjNormalForm):
     """Wrapper class for a DIMACS CNF representation"""
 
     def __str__(self):
-        formula = super(DimacsCNF, self).__str__()
-        return "p cnf {0.nvars} {0.nclauses}\n{1}".format(self, formula)
+        formula = super().__str__()
+        return f"p cnf {self.nvars} {self.nclauses}\n{formula}"
 
 
 def _tseitin(ex, auxvarname, auxvars=None):
@@ -1415,13 +1418,13 @@ def _tseitin(ex, auxvarname, auxvars=None):
     Convert a factored expression to a literal, and a list of constraints.
     """
     if isinstance(ex, Literal):
-        return ex, list()
+        return ex, []
     else:
         if auxvars is None:
-            auxvars = list()
+            auxvars = []
 
-        lits = list()
-        constraints = list()
+        lits = []
+        constraints = []
         for x in ex.xs:
             lit, subcons = _tseitin(x, auxvarname, auxvars)
             lits.append(lit)
@@ -1437,22 +1440,21 @@ def _tseitin(ex, auxvarname, auxvars=None):
 
 
 ASTOPS = {
-    'not' : Not,
-    'or' : Or,
-    'and' : And,
-    'xor' : Xor,
-    'equal' : Equal,
-    'implies' : Implies,
-    'ite' : ITE,
+    "not": Not,
+    "or": Or,
+    "and": And,
+    "xor": Xor,
+    "equal": Equal,
+    "implies": Implies,
+    "ite": ITE,
 
-    'nor': Nor,
-    'nand': Nand,
-    'xnor': Xnor,
-    'unequal': Unequal,
+    "nor": Nor,
+    "nand": Nand,
+    "xnor": Xnor,
+    "unequal": Unequal,
 
-    'onehot0' : OneHot0,
-    'onehot' : OneHot,
-    'majority' : Majority,
-    'achillesheel' : AchillesHeel,
+    "onehot0": OneHot0,
+    "onehot": OneHot,
+    "majority": Majority,
+    "achillesheel": AchillesHeel,
 }
-
