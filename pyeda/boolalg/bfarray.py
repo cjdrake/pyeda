@@ -397,7 +397,7 @@ def fcat(*fs):
 
     The variadic *fs* input is a homogeneous sequence of functions or arrays.
     """
-    items = list()
+    items = []
     for f in fs:
         if isinstance(f, boolfunc.Function):
             items.append(f)
@@ -760,7 +760,7 @@ class farray:
         Returns a new farray.
         """
         if num < 0 or num > self.size:
-            raise ValueError("expected 0 <= num <= {0.size}".format(self))
+            raise ValueError(f"expected 0 <= num <= {self.size}")
         if cin is None:
             items = [self.ftype.box(0) for _ in range(num)]
             cin = self.__class__(items, ftype=self.ftype)
@@ -789,7 +789,7 @@ class farray:
         Returns a new farray.
         """
         if num < 0 or num > self.size:
-            raise ValueError("expected 0 <= num <= {0.size}".format(self))
+            raise ValueError(f"expected 0 <= num <= {self.size}")
         if cin is None:
             items = [self.ftype.box(0) for _ in range(num)]
             cin = self.__class__(items, ftype=self.ftype)
@@ -814,7 +814,7 @@ class farray:
         Returns a new farray.
         """
         if num < 0 or num > self.size:
-            raise ValueError("expected 0 <= num <= {0.size}".format(self))
+            raise ValueError(f"expected 0 <= num <= {self.size}")
         if num == 0:
             return self, self.__class__([], ftype=self.ftype)
         else:
@@ -849,7 +849,7 @@ class farray:
     # Subroutines of __getitem__/__setitem__
     def _keys2sls(self, keys, key2sl):
         """Convert an input key to a list of slices."""
-        sls = list()
+        sls = []
         if isinstance(keys, tuple):
             for key in keys:
                 sls.append(key2sl(key))
@@ -864,7 +864,7 @@ class farray:
         """Fill all '...' and ':' slice entries."""
         # Fill '...' entries with ':'
         nfill = self.ndim - len(sls)
-        fsls = list()
+        fsls = []
         for sl in sls:
             if sl is Ellipsis:
                 while nfill:
@@ -883,7 +883,7 @@ class farray:
     def _norm_slices(self, fsls):
         """Convert slices to a normalized tuple of int/slice/farray."""
         # Normalize indices, and fill empty slice entries
-        nsls = list()
+        nsls = []
         for i, fsl in enumerate(fsls):
             fsl_type = type(fsl)
             if fsl_type is int:
@@ -927,7 +927,7 @@ def _dims2shape(*dims):
     """Convert input dimensions to a shape."""
     if not dims:
         raise ValueError("expected at least one dimension spec")
-    shape = list()
+    shape = []
     for dim in dims:
         if isinstance(dim, int):
             dim = (0, dim)
@@ -970,7 +970,7 @@ def _ones(ftype, *dims):
 def _vars(ftype, name, *dims):
     """Return a new farray filled with Boolean variables."""
     shape = _dims2shape(*dims)
-    objs = list()
+    objs = []
     for indices in itertools.product(*[range(i, j) for i, j in shape]):
         objs.append(_VAR[ftype](name, indices))
     return farray(objs, shape, ftype)
@@ -982,7 +982,7 @@ def _uint2objs(ftype, num, length=None):
         objs = [ftype.box(0)]
     else:
         _num = num
-        objs = list()
+        objs = []
         while _num != 0:
             objs.append(ftype.box(_num & 1))
             _num >>= 1
@@ -1049,7 +1049,7 @@ def _itemize(objs):
                 raise ValueError("expected uniform Function types")
         return list(objs), ((0, len(objs)), ), ftype
     elif all(isseq):
-        items = list()
+        items = []
         shape = None
         ftype = None
         for obj in objs:
@@ -1157,8 +1157,7 @@ def _norm_slice(sl, start, stop):
                 normstop = length
             else:
                 normstop = sl.stop - start
-    if normstop < normstart:
-        normstop = normstart
+    normstop = max(normstop, normstart)
     return slice(normstart, normstop)
 
 
@@ -1166,7 +1165,7 @@ def _filtdim(items, shape, dim, nsl):
     """Return items, shape filtered by a dimension slice."""
     normshape = tuple(stop - start for start, stop in shape)
     nsl_type = type(nsl)
-    newitems = list()
+    newitems = []
     # Number of groups
     num = reduce(operator.mul, normshape[:dim+1])
     # Size of each group
@@ -1192,7 +1191,7 @@ def _filtdim(items, shape, dim, nsl):
         if nsl.size < clog2(n):
             fstr = "expected dim {} select to have >= {} bits, got {}"
             raise ValueError(fstr.format(dim, clog2(n), nsl.size))
-        groups = [list() for _ in range(n)]
+        groups = [[] for _ in range(n)]
         for i in range(num):
             groups[i % n] += items[size*i:size*(i+1)]
         for muxins in zip(*groups):
@@ -1208,7 +1207,7 @@ def _filtdim(items, shape, dim, nsl):
 def _iter_coords(nsls):
     """Iterate through all matching coordinates in a sequence of slices."""
     # First convert all slices to ranges
-    ranges = list()
+    ranges = []
     for nsl in nsls:
         if isinstance(nsl, int):
             ranges.append(range(nsl, nsl+1))
@@ -1216,4 +1215,3 @@ def _iter_coords(nsls):
             ranges.append(range(nsl.start, nsl.stop))
     # Iterate through all matching coordinates
     yield from itertools.product(*ranges)
-
