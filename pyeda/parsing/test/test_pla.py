@@ -4,7 +4,7 @@ Test PLA parsing functions
 
 from nose.tools import assert_raises
 
-from pyeda.boolalg.espresso import FTYPE, DTYPE, RTYPE
+from pyeda.boolalg.espresso import FTYPE, RTYPE
 from pyeda.parsing.pla import Error, parse
 
 
@@ -24,6 +24,7 @@ BASIC = """
 .e
 """
 
+
 def test_errors():
     # General syntax error
     assert_raises(Error, parse, "foo\nbar\nfiz\nbuz\n")
@@ -38,19 +39,19 @@ def test_errors():
     # .type declared more than once
     assert_raises(Error, parse, ".type f\n.type r\n")
 
+
 def test_basic():
     d = parse(BASIC)
     assert d == {
-        'ninputs': 4,
-        'noutputs': 2,
-        'input_labels': ['x', 'y', 'z'],
-        'output_labels': ['f', 'g'],
-        'intype': FTYPE | RTYPE,
-        'cover': {
+        "ninputs": 4,
+        "noutputs": 2,
+        "input_labels": ["x", "y", "z"],
+        "output_labels": ["f", "g"],
+        "intype": FTYPE | RTYPE,
+        "cover": {
             ((1, 1, 1, 2), (0, 0)),
             ((1, 1, 2, 1), (0, 1)),
             ((1, 2, 1, 1), (1, 0)),
             ((2, 1, 1, 1), (1, 1))
         },
     }
-
