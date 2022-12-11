@@ -22,7 +22,7 @@ def ripple_carry_add(A, B, cin=0):
     """Return symbolic logic for an N-bit ripple carry adder."""
     if len(A) != len(B):
         raise ValueError("expected A and B to be equal length")
-    ss, cs = list(), list()
+    ss, cs = [], []
     for i, a in enumerate(A):
         c = (cin if i == 0 else cs[i-1])
         ss.append(a ^ B[i] ^ c)
@@ -75,4 +75,3 @@ def brent_kung_add(A, B, cin=0):
     ss = [A[0] ^ B[0] ^ cin]
     ss += [A[i] ^ B[i] ^ gs[i-1] for i in range(1, N)]
     return farray(ss), farray(gs)
-
