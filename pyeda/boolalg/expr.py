@@ -98,10 +98,11 @@ Interface Classes:
 import itertools
 import os
 import random
+from functools import cached_property
 
 import pyeda.parsing.boolexpr
 from pyeda.boolalg import boolfunc
-from pyeda.util import bit_on, cached_property, clog2
+from pyeda.util import bit_on, clog2
 
 
 # ReadTheDocs doesn't build C extensions

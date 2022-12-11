@@ -22,10 +22,10 @@ Interface Classes:
 import collections
 import random
 import weakref
+from functools import cached_property
 
 from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import exprvar, Or, And
-from pyeda.util import cached_property
 
 
 # existing BDDVariable references

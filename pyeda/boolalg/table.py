@@ -16,10 +16,10 @@ Interface Classes:
 """
 
 import array
+from functools import cached_property
 
 from pyeda.boolalg import boolfunc
 from pyeda.boolalg.expr import exprvar, Or, And
-from pyeda.util import cached_property
 
 
 # Binary-valued positional cube (msb:lsb):

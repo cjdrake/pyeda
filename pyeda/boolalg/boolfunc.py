@@ -56,8 +56,9 @@ Interface Classes:
 import functools
 import operator
 import threading
+from functools import cached_property
 
-from pyeda.util import bit_on, cached_property
+from pyeda.util import bit_on
 
 VARIABLES = dict()
 
