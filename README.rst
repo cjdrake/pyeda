@@ -2,12 +2,13 @@
   Python Electronic Design Automation
 ***************************************
 
+Hello all,
+I haven't maintained this repository in years.
+It appears to need some TLC.
+
 PyEDA is a Python library for electronic design automation.
 
 `Read the docs! <http://pyeda.rtfd.org>`_
-
-.. image:: https://travis-ci.org/cjdrake/pyeda.png?branch=master
-   :target: https://travis-ci.org/cjdrake/pyeda
 
 Features
 ========
