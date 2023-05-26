@@ -3,7 +3,7 @@ Test Boolean expression parsing
 """
 
 
-from nose.tools import assert_raises
+import pytest
 
 from pyeda.boolalg.expr import (
     exprvar, expr,
@@ -15,14 +15,20 @@ from pyeda.parsing.boolexpr import Error
 
 def test_expr_error():
     # lexical error
-    assert_raises(Error, expr, "#a")
+    with pytest.raises(Error):
+        expr("#a")
     # incomplete expression
-    assert_raises(Error, expr, "a &")
+    with pytest.raises(Error):
+        expr("a &")
     # unexpected token
-    assert_raises(Error, expr, "a ,")
-    assert_raises(Error, expr, "a a")
-    assert_raises(Error, expr, "a ? b ,")
-    assert_raises(Error, expr, "a | 42")
+    with pytest.raises(Error):
+        expr("a ,")
+    with pytest.raises(Error):
+        expr("a a")
+    with pytest.raises(Error):
+        expr("a ? b ,")
+    with pytest.raises(Error):
+        expr("a | 42")
 
 
 def test_basic():

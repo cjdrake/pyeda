@@ -6,7 +6,7 @@ Test the Espresso interface
 import multiprocessing as mp
 import os
 
-from nose.tools import assert_raises
+import pytest
 
 from pyeda.boolalg import espresso
 from pyeda.boolalg.bfarray import exprvars
@@ -77,26 +77,38 @@ def test_boom():
 
 
 def test_errors():
-    assert_raises(ValueError, espresso_exprs, "bad input")
-    assert_raises(ValueError, espresso_tts, "bad input")
+    with pytest.raises(ValueError):
+        espresso_exprs("bad input")
+    with pytest.raises(ValueError):
+        espresso_tts("bad input")
 
     # expected row vector of length 2
-    assert_raises(ValueError, espresso.espresso, 2, 2, {(1, 2, 3)})
+    with pytest.raises(ValueError):
+        espresso.espresso(2, 2, {(1, 2, 3)})
     # expected N inputs
-    assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2, 3), (0, 0))})
+    with pytest.raises(ValueError):
+        espresso.espresso(2, 2, {((1, 2, 3), (0, 0))})
     # expected input to be an int
-    assert_raises(TypeError, espresso.espresso, 2, 2, {(("1", "2"), (0, 0))})
+    with pytest.raises(TypeError):
+        espresso.espresso(2, 2, {(("1", "2"), (0, 0))})
     # expected input in range
-    assert_raises(ValueError, espresso.espresso, 2, 2, {(1, 4), (0, 0)})
+    with pytest.raises(ValueError):
+        espresso.espresso(2, 2, {(1, 4), (0, 0)})
     # expected N outputs
-    assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2), (0, 0, 0))})
+    with pytest.raises(ValueError):
+        espresso.espresso(2, 2, {((1, 2), (0, 0, 0))})
     # expected output to be an int
-    assert_raises(TypeError, espresso.espresso, 2, 2, {((1, 2), ("0", "0"))})
+    with pytest.raises(TypeError):
+        espresso.espresso(2, 2, {((1, 2), ("0", "0"))})
     # expected output in {0, 1, 2}
-    assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2), (0, 3))})
+    with pytest.raises(ValueError):
+        espresso.espresso(2, 2, {((1, 2), (0, 3))})
     # expected ninputs > 0
-    assert_raises(ValueError, espresso.espresso, 0, 2, {((), (0, 0))})
+    with pytest.raises(ValueError):
+        espresso.espresso(0, 2, {((), (0, 0))})
     # expected noutputs > 0
-    assert_raises(ValueError, espresso.espresso, 2, 0, {((1, 2), ())})
+    with pytest.raises(ValueError):
+        espresso.espresso(2, 0, {((1, 2), ())})
     # expected intype in {f, r, fd, fr, dr, fdr}
-    assert_raises(ValueError, espresso.espresso, 2, 2, {((1, 2), (0, 1))}, intype=0)
+    with pytest.raises(ValueError):
+        espresso.espresso(2, 2, {((1, 2), (0, 1))}, intype=0)

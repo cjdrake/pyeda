@@ -6,7 +6,7 @@ NOTE: This was from some miscellaneous work a while ago.
 """
 
 
-from nose.tools import assert_raises
+import pytest
 
 from pyeda.boolalg import exprnode
 from pyeda.boolalg.bfarray import exprvars
@@ -46,22 +46,38 @@ def test_exprnode_constants():
 
 def test_exprnode_errors():
     """Test exprnode errors."""
-    assert_raises(TypeError, exprnode.lit, "invalid input")
-    assert_raises(ValueError, exprnode.lit, 0)
-    assert_raises(TypeError, exprnode.not_, "invalid input")
-    assert_raises(TypeError, exprnode.or_, "invalid input", b.node)
-    assert_raises(TypeError, exprnode.or_, a.node, "invalid input")
-    assert_raises(TypeError, exprnode.and_, "invalid input", b.node)
-    assert_raises(TypeError, exprnode.and_, a.node, "invalid input")
-    assert_raises(TypeError, exprnode.xor, "invalid input", b.node)
-    assert_raises(TypeError, exprnode.xor, a.node, "invalid input")
-    assert_raises(TypeError, exprnode.eq, "invalid input", b.node)
-    assert_raises(TypeError, exprnode.eq, a.node, "invalid input")
-    assert_raises(TypeError, exprnode.impl, "invalid input", q.node)
-    assert_raises(TypeError, exprnode.impl, p.node, "invalid input")
-    assert_raises(TypeError, exprnode.ite, "invalid input", d1.node, d0.node)
-    assert_raises(TypeError, exprnode.ite, s.node, "invalid input", d0.node)
-    assert_raises(TypeError, exprnode.ite, s.node, d1.node, "invalid input")
+    with pytest.raises(TypeError):
+        exprnode.lit("invalid input")
+    with pytest.raises(ValueError):
+        exprnode.lit(0)
+    with pytest.raises(TypeError):
+        exprnode.not_("invalid input")
+    with pytest.raises(TypeError):
+        exprnode.or_("invalid input", b.node)
+    with pytest.raises(TypeError):
+        exprnode.or_(a.node, "invalid input")
+    with pytest.raises(TypeError):
+        exprnode.and_("invalid input", b.node)
+    with pytest.raises(TypeError):
+        exprnode.and_(a.node, "invalid input")
+    with pytest.raises(TypeError):
+        exprnode.xor("invalid input", b.node)
+    with pytest.raises(TypeError):
+        exprnode.xor(a.node, "invalid input")
+    with pytest.raises(TypeError):
+        exprnode.eq("invalid input", b.node)
+    with pytest.raises(TypeError):
+        exprnode.eq(a.node, "invalid input")
+    with pytest.raises(TypeError):
+        exprnode.impl("invalid input", q.node)
+    with pytest.raises(TypeError):
+        exprnode.impl(p.node, "invalid input")
+    with pytest.raises(TypeError):
+        exprnode.ite("invalid input", d1.node, d0.node)
+    with pytest.raises(TypeError):
+        exprnode.ite(s.node, "invalid input", d0.node)
+    with pytest.raises(TypeError):
+        exprnode.ite(s.node, d1.node, "invalid input")
 
 
 def test_expr():

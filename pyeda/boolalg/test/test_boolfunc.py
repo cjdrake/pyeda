@@ -2,7 +2,7 @@
 Test Boolean functions
 """
 
-from nose.tools import assert_raises
+import pytest
 
 from pyeda.boolalg.boolfunc import (
     num2point,
@@ -22,17 +22,27 @@ a, b, c, d = map(exprvar, 'abcd')
 aa, bb, cc, dd = a.uniqid, b.uniqid, c.uniqid, d.uniqid
 
 def test_var():
-    assert_raises(TypeError, var, 42)
-    assert_raises(ValueError, var, tuple())
-    assert_raises(TypeError, var, (42, ))
-    assert_raises(TypeError, var, 'a', 'index')
-    assert_raises(TypeError, var, 'a', ('index', ))
-    assert_raises(ValueError, var, 'a', (-1, ))
+    with pytest.raises(TypeError):
+        var(42)
+    with pytest.raises(ValueError):
+        var(tuple())
+    with pytest.raises(TypeError):
+        var((42, ))
+    with pytest.raises(TypeError):
+        var('a', 'index')
+    with pytest.raises(TypeError):
+        var('a', ('index', ))
+    with pytest.raises(ValueError):
+        var('a', (-1, ))
+
 
 def test_num2point():
-    assert_raises(TypeError, num2point, 1.0, [a, b])
-    assert_raises(ValueError, num2point, -1, [a, b])
-    assert_raises(ValueError, num2point, 4, [a, b])
+    with pytest.raises(TypeError):
+        num2point(1.0, [a, b])
+    with pytest.raises(ValueError):
+        num2point(-1, [a, b])
+    with pytest.raises(ValueError):
+        num2point(4, [a, b])
 
     assert num2point(0x0, [a, b, c, d]) == {a: 0, b: 0, c: 0, d: 0}
     assert num2point(0x1, [a, b, c, d]) == {a: 1, b: 0, c: 0, d: 0}
@@ -50,6 +60,7 @@ def test_num2point():
     assert num2point(0xD, [a, b, c, d]) == {a: 1, b: 0, c: 1, d: 1}
     assert num2point(0xE, [a, b, c, d]) == {a: 0, b: 1, c: 1, d: 1}
     assert num2point(0xF, [a, b, c, d]) == {a: 1, b: 1, c: 1, d: 1}
+
 
 def test_num2upoint():
     assert num2upoint(0x0, [a, b, c, d]) == ({aa, bb, cc, dd}, set())
@@ -69,10 +80,14 @@ def test_num2upoint():
     assert num2upoint(0xE, [a, b, c, d]) == ({aa}, {bb, cc, dd})
     assert num2upoint(0xF, [a, b, c, d]) == (set(), {aa, bb, cc, dd})
 
+
 def test_num2term():
-    assert_raises(TypeError, num2term, 1.0, [a, b])
-    assert_raises(ValueError, num2term, -1, [a, b])
-    assert_raises(ValueError, num2term, 4, [a, b])
+    with pytest.raises(TypeError):
+        num2term(1.0, [a, b])
+    with pytest.raises(ValueError):
+        num2term(-1, [a, b])
+    with pytest.raises(ValueError):
+        num2term(4, [a, b])
 
     assert num2term(0x0, [a, b, c, d], conj=False) == (~a, ~b, ~c, ~d)
     assert num2term(0x1, [a, b, c, d], conj=False) == ( a, ~b, ~c, ~d)
@@ -108,6 +123,7 @@ def test_num2term():
     assert num2term(0xE, [a, b, c, d], conj=True) == ( a, ~b, ~c, ~d)
     assert num2term(0xF, [a, b, c, d], conj=True) == (~a, ~b, ~c, ~d)
 
+
 def test_point2upoint():
     assert point2upoint({a: 0, b: 0, c: 0, d: 0}) == ({aa, bb, cc, dd}, set())
     assert point2upoint({a: 1, b: 0, c: 0, d: 0}) == ({bb, cc, dd}, {aa})
@@ -125,6 +141,7 @@ def test_point2upoint():
     assert point2upoint({a: 1, b: 0, c: 1, d: 1}) == ({bb}, {aa, cc, dd})
     assert point2upoint({a: 0, b: 1, c: 1, d: 1}) == ({aa}, {bb, cc, dd})
     assert point2upoint({a: 1, b: 1, c: 1, d: 1}) == (set(), {aa, bb, cc, dd})
+
 
 def test_point2term():
     assert set(point2term({a: 0, b: 0, c: 0, d: 0}, conj=False)) == {~a, ~b, ~c, ~d}

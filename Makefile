@@ -19,7 +19,7 @@ help:
 
 .PHONY: test
 test:
-	@$(PYTHON) setup.py nosetests --with-doctest
+	@pytest --doctest-modules --ignore=doc
 
 .PHONY: lint
 lint:
@@ -27,7 +27,7 @@ lint:
 
 .PHONY: cover
 cover:
-	@$(PYTHON) setup.py nosetests --with-doctest --with-coverage --cover-html --cover-package=pyeda
+	@pytest --doctest-modules --ignore=doc --cov=pyeda --cov-report=html
 
 .PHONY: html
 html:

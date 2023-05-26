@@ -5,14 +5,12 @@ Test logic functions for addition
 
 import random
 
-from nose.tools import assert_raises
+import pytest
 
-from pyeda.boolalg.bfarray import exprvars, uint2exprs, int2exprs, fcat
-from pyeda.logic.addition import (
-    ripple_carry_add as rca,
-    kogge_stone_add as ksa,
-    brent_kung_add as bka,
-)
+from pyeda.boolalg.bfarray import exprvars, fcat, int2exprs, uint2exprs
+from pyeda.logic.addition import brent_kung_add as bka
+from pyeda.logic.addition import kogge_stone_add as ksa
+from pyeda.logic.addition import ripple_carry_add as rca
 
 
 NVECS = 100
@@ -35,7 +33,8 @@ def test_errors():
     B = exprvars('B', 9)
 
     for adder in (rca, ksa, bka):
-        assert_raises(ValueError, adder, A, B)
+        with pytest.raises(ValueError):
+            adder(A, B)
 
 
 def test_unsigned_add():

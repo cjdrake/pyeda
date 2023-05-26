@@ -342,7 +342,7 @@ Use the ``espresso_tts`` function to minimize multiple truth tables::
 Execute Unit Test Suite
 =======================
 
-If you have `Nose <http://nose.readthedocs.org/en/latest>`_ installed,
+If you have `PyTest <https://pytest.org>`_ installed,
 run the unit test suite with the following command::
 
    $ make test

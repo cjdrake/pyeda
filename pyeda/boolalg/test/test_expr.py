@@ -3,7 +3,7 @@ Test expression Boolean functions
 """
 
 
-from nose.tools import assert_raises
+import pytest
 
 from pyeda.boolalg.bfarray import exprvars
 from pyeda.boolalg.expr import (
@@ -92,7 +92,8 @@ def test_expr():
 
 
 def test_expr2dimacssat():
-    assert_raises(ValueError, expr2dimacssat, Xor(0, a, simplify=False))
+    with pytest.raises(ValueError):
+        expr2dimacssat(Xor(0, a, simplify=False))
     ret = expr2dimacssat(Xor(a, ~b))
     assert ret in {"p satx 2\nxor(-2 1)", "p satx 2\nxor(1 -2)"}
     ret = expr2dimacssat(Xor(a, Equal(b, ~c)))
@@ -213,7 +214,8 @@ def test_achilles_heel():
     assert AchillesHeel(a, b).equivalent(a | b)
     assert AchillesHeel(a, b, c, d).equivalent((a | b) & (c | d))
     # expected an even number of arguments
-    assert_raises(ValueError, AchillesHeel, a, b, c)
+    with pytest.raises(ValueError):
+        AchillesHeel(a, b, c)
 
 
 def test_mux():
@@ -222,7 +224,8 @@ def test_mux():
     assert Mux(X[:4], [a,b]).equivalent(~a&~b&X[0] | a&~b&X[1] | ~a&b&X[2] | a&b&X[3])
     assert Mux(X[:2], a).equivalent(~a & X[0] | a & X[1])
     # Expected at least ? select bits
-    assert_raises(ValueError, Mux, X, [a,b])
+    with pytest.raises(ValueError):
+        Mux(X, [a,b])
 
 
 def test_ops():

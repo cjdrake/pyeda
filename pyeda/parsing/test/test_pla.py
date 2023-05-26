@@ -2,11 +2,11 @@
 Test PLA parsing functions
 """
 
-from nose.tools import assert_raises
+
+import pytest
 
 from pyeda.boolalg.espresso import FTYPE, RTYPE
 from pyeda.parsing.pla import Error, parse
-
 
 BASIC = """
 # Filename: basic.pla
@@ -27,17 +27,23 @@ BASIC = """
 
 def test_errors():
     # General syntax error
-    assert_raises(Error, parse, "foo\nbar\nfiz\nbuz\n")
+    with pytest.raises(Error):
+        parse("foo\nbar\nfiz\nbuz\n")
     # .i declared more than once
-    assert_raises(Error, parse, ".i 1\n.i 2\n")
+    with pytest.raises(Error):
+        parse(".i 1\n.i 2\n")
     # .o declared more than once
-    assert_raises(Error, parse, ".o 1\n.o 2\n")
+    with pytest.raises(Error):
+        parse(".o 1\n.o 2\n")
     # .ilb declared more than once
-    assert_raises(Error, parse, ".ilb a b\n.ilb c d\n")
+    with pytest.raises(Error):
+        parse(".ilb a b\n.ilb c d\n")
     # .ob declared more than once
-    assert_raises(Error, parse, ".ob a b\n.ob c d\n")
+    with pytest.raises(Error):
+        parse(".ob a b\n.ob c d\n")
     # .type declared more than once
-    assert_raises(Error, parse, ".type f\n.type r\n")
+    with pytest.raises(Error):
+        parse(".type f\n.type r\n")
 
 
 def test_basic():

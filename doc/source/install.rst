@@ -4,7 +4,7 @@
 .. _pip: https://pip.pypa.io
 
 .. _IPython: http://ipython.org
-.. _Nose: http://nose.readthedocs.org
+.. _PyTest: https://pytest.org/
 .. _Sphinx: http://sphinx-doc.org
 
 ********************
@@ -99,7 +99,7 @@ you must have the excellent `Sphinx`_ documentaton system installed.
    $ make html
 
 If you want to run the tests,
-you must have the excellent `Nose`_ unit testing framework installed.
+you must have the excellent `PyTest`_ unit testing framework installed.
 
 ::
 

@@ -498,9 +498,9 @@ def _bin_zfill(num, width=None):
     --------
 
     >>> _bin_zfill(42)
-    "101010"
+    '101010'
     >>> _bin_zfill(42, 8)
-    "00101010"
+    '00101010'
     """
     s = bin(num)[2:]
     return s if width is None else s.zfill(width)
