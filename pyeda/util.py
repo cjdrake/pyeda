@@ -7,10 +7,6 @@ Interface Functions:
 * :func:`bit_on` --- Return the value of a number's bit position
 * :func:`clog2` --- Return the ceiling log base two of an integer
 * :func:`parity` --- Return the parity of an integer
-
-Decorators:
-
-* :func:`cached_property`
 """
 
 

@@ -14,9 +14,3 @@ Interface Functions
 .. autofunction:: pyeda.util.clog2
 
 .. autofunction:: pyeda.util.parity
-
-Decorators
-==========
-
-.. autofunction:: pyeda.util.cached_property
-
