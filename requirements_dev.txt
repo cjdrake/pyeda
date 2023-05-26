@@ -1,0 +1,15 @@
+# Development Requirements
+# To install: pip install -r requirements_dev.txt
+
+# Include runtime requirements
+-r requirements.txt
+
+# PyLint: https://pylint.org
+pylint==2.17.4
+
+# PyTest: https://pytest.org
+pytest==7.3.1
+pytest-cov==4.1.0
+
+# Sphinx
+sphinx==7.0.1
