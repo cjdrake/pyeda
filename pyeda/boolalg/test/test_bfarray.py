@@ -9,14 +9,10 @@ Test Boolean Function arrays
 
 import pytest
 
-from pyeda.boolalg.bdd import bddvar, BinaryDecisionDiagram
-from pyeda.boolalg.bfarray import (
-    exprzeros, exprvars,
-    fcat, farray,
-    uint2exprs, int2exprs,
-)
-from pyeda.boolalg.expr import exprvar, Expression
-
+from pyeda.boolalg.bdd import BinaryDecisionDiagram, bddvar
+from pyeda.boolalg.bfarray import (exprvars, exprzeros, farray, fcat,
+                                   int2exprs, uint2exprs)
+from pyeda.boolalg.expr import Expression, exprvar
 
 X = exprvars("x", 4)
 Y = exprvars("y", 4)

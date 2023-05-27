@@ -7,8 +7,7 @@ Logic function for AES cipher
 # pylint: disable=C0103
 
 
-from pyeda.boolalg.bfarray import exprzeros, uint2exprs, fcat
-
+from pyeda.boolalg.bfarray import exprzeros, fcat, uint2exprs
 
 _SBOX = [
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5,

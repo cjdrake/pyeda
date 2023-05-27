@@ -16,17 +16,16 @@ Interface Functions:
 import os
 
 from pyeda.boolalg import boolfunc
-from pyeda.boolalg.expr import exprvar, Expression, Or, And
-from pyeda.boolalg.table import TruthTable, PC_ZERO, PC_ONE, PC_DC
-
+from pyeda.boolalg.expr import And, Expression, Or, exprvar
+from pyeda.boolalg.table import PC_DC, PC_ONE, PC_ZERO, TruthTable
 
 # ReadTheDocs doesn't build C extensions
 # See http://docs.readthedocs.org/en/latest/faq.html for details
 if os.getenv("READTHEDOCS") == "True":
     pass
 else:
-    from pyeda.boolalg.espresso import FTYPE, DTYPE, RTYPE
-    from pyeda.boolalg.espresso import set_config, espresso
+    from pyeda.boolalg.espresso import (DTYPE, FTYPE, RTYPE, espresso,
+                                        set_config)
 
 
 CONFIG = dict(

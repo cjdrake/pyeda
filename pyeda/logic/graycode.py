@@ -11,7 +11,7 @@ Interface Functions:
 # pylint: disable=C0103
 
 
-from pyeda.boolalg.bfarray import fcat, farray
+from pyeda.boolalg.bfarray import farray, fcat
 
 
 def bin2gray(B):

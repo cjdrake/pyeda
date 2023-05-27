@@ -4,19 +4,10 @@ Test Boolean functions
 
 import pytest
 
-from pyeda.boolalg.boolfunc import (
-    num2point,
-    num2upoint,
-    num2term,
-    point2upoint,
-    point2term,
-    iter_points,
-    iter_upoints,
-    iter_terms,
-    var,
-)
+from pyeda.boolalg.boolfunc import (iter_points, iter_terms, iter_upoints,
+                                    num2point, num2term, num2upoint,
+                                    point2term, point2upoint, var)
 from pyeda.boolalg.expr import exprvar
-
 
 a, b, c, d = map(exprvar, 'abcd')
 aa, bb, cc, dd = a.uniqid, b.uniqid, c.uniqid, d.uniqid

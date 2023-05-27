@@ -11,11 +11,10 @@ import pytest
 from pyeda.boolalg import espresso
 from pyeda.boolalg.bfarray import exprvars
 from pyeda.boolalg.minimization import espresso_exprs, espresso_tts
-from pyeda.boolalg.table import truthtable2expr, truthtable
+from pyeda.boolalg.table import truthtable, truthtable2expr
 from pyeda.inter import exprvar
 from pyeda.logic.addition import ripple_carry_add
 from pyeda.parsing import pla
-
 
 BOOM_PLAS = [
     "bb_50x5x50_20%_0.pla",

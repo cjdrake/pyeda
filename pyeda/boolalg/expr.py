@@ -104,16 +104,15 @@ import pyeda.parsing.boolexpr
 from pyeda.boolalg import boolfunc
 from pyeda.util import bit_on, clog2
 
-
 # ReadTheDocs doesn't build C extensions
 # See http://docs.readthedocs.org/en/latest/faq.html for details
 if os.getenv("READTHEDOCS") == "True":
     from unittest.mock import MagicMock
+
     # pylint: disable=C0103
     exprnode = MagicMock()
 else:
-    from pyeda.boolalg import exprnode
-    from pyeda.boolalg import picosat
+    from pyeda.boolalg import exprnode, picosat
 
 
 # existing Literal references

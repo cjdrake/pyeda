@@ -5,11 +5,9 @@ Test Boolean expression parsing
 
 import pytest
 
-from pyeda.boolalg.expr import (
-    exprvar, expr,
-    Not, Or, And, Xor, Xnor, Equal, Unequal, Implies, ITE,
-    Nor, Nand, OneHot0, OneHot, Majority, AchillesHeel,
-)
+from pyeda.boolalg.expr import (ITE, AchillesHeel, And, Equal, Implies,
+                                Majority, Nand, Nor, Not, OneHot, OneHot0, Or,
+                                Unequal, Xnor, Xor, expr, exprvar)
 from pyeda.parsing.boolexpr import Error
 
 

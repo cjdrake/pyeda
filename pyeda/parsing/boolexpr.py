@@ -15,10 +15,8 @@ Interface Functions:
 
 
 from pyeda.parsing import lex
-from pyeda.parsing.token import (
-    EndToken,
-    KeywordToken, NameToken, IntegerToken, OperatorToken, PunctuationToken,
-)
+from pyeda.parsing.token import (EndToken, IntegerToken, KeywordToken,
+                                 NameToken, OperatorToken, PunctuationToken)
 
 
 class Error(Exception):

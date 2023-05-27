@@ -10,13 +10,8 @@ import pytest
 
 from pyeda.boolalg import exprnode
 from pyeda.boolalg.bfarray import exprvars
-from pyeda.boolalg.expr import (
-    Zero, One,
-    exprvar, expr,
-    Expression,
-    Not, Or, And, Xor, Equal, Implies, ITE,
-)
-
+from pyeda.boolalg.expr import (ITE, And, Equal, Expression, Implies, Not, One,
+                                Or, Xor, Zero, expr, exprvar)
 
 # Common variables
 a, b, c, d, e, p, q, s, w, x, y, z = map(exprvar, "abcdepqswxyz")

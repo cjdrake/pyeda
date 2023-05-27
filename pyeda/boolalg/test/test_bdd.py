@@ -3,13 +3,10 @@ Test binary decision diagrams
 """
 
 
-from pyeda.boolalg.bdd import (
-    bddvar, expr2bdd, bdd2expr, upoint2bddpoint, ite,
-    BinaryDecisionDiagram,
-    BDDNODEZERO, BDDNODEONE,
-)
-from pyeda.boolalg.expr import expr, OrOp, AndOp
-
+from pyeda.boolalg.bdd import (BDDNODEONE, BDDNODEZERO, BinaryDecisionDiagram,
+                               bdd2expr, bddvar, expr2bdd, ite,
+                               upoint2bddpoint)
+from pyeda.boolalg.expr import AndOp, OrOp, expr
 
 zero = BinaryDecisionDiagram.box(0)
 one = BinaryDecisionDiagram.box(1)

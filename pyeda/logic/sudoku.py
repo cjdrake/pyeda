@@ -7,9 +7,8 @@ Logic functions for Sudoku
 # pylint: disable=C0103
 
 
-from pyeda.boolalg.expr import And, OneHot, expr2dimacscnf
 from pyeda.boolalg.bfarray import exprvars
-
+from pyeda.boolalg.expr import And, OneHot, expr2dimacscnf
 
 DIGITS = "123456789"
 

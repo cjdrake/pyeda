@@ -6,15 +6,10 @@ Test expression Boolean functions
 import pytest
 
 from pyeda.boolalg.bfarray import exprvars
-from pyeda.boolalg.expr import (
-    exprvar, expr,
-    expr2dimacssat,
-    Expression,
-    Zero, One,
-    Not, Or, And, Nor, Nand, Xor, Xnor, Equal, Unequal, Implies, ITE,
-    OneHot0, OneHot, NHot, Majority, AchillesHeel, Mux,
-)
-
+from pyeda.boolalg.expr import (ITE, AchillesHeel, And, Equal, Expression,
+                                Implies, Majority, Mux, Nand, NHot, Nor, Not,
+                                One, OneHot, OneHot0, Or, Unequal, Xnor, Xor,
+                                Zero, expr, expr2dimacssat, exprvar)
 
 a, b, c, d, e, p, q, s = map(exprvar, "abcdepqs")
 

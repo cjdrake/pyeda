@@ -12,7 +12,6 @@ from pyeda.logic.addition import brent_kung_add as bka
 from pyeda.logic.addition import kogge_stone_add as ksa
 from pyeda.logic.addition import ripple_carry_add as rca
 
-
 NVECS = 100
 
 

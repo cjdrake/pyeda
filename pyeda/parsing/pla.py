@@ -18,8 +18,7 @@ Interface Functions:
 
 import re
 
-from pyeda.boolalg.espresso import FTYPE, DTYPE, RTYPE
-
+from pyeda.boolalg.espresso import DTYPE, FTYPE, RTYPE
 
 _COMMENT = re.compile(r"^#.*$")
 _NINS = re.compile(r"^.i\s+(\d+)$")

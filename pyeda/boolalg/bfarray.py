@@ -41,7 +41,6 @@ from pyeda.boolalg.expr import Expression, exprvar
 from pyeda.boolalg.table import TruthTable, ttvar
 from pyeda.util import clog2
 
-
 _VAR = {
     BinaryDecisionDiagram: bddvar,
     Expression: exprvar,
