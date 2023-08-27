@@ -101,6 +101,15 @@ def espresso_exprs(*exprs):
     return _cover2exprs(inputs, noutputs, cover)
 
 
+def pc_data_index(point, f):
+    result = 0
+    for key, value in point.items():
+        if value:
+            index =f.inputs.index(key)
+            result |= (1<<index)
+    return result
+
+
 def espresso_tts(*tts):
     """Return a tuple of expressions optimized using Espresso.
 
@@ -130,11 +139,11 @@ def espresso_tts(*tts):
     noutputs = len(tts)
 
     cover = set()
-    for i, point in enumerate(boolfunc.iter_points(inputs)):
+    for point in boolfunc.iter_points(inputs):
         invec = [2 if point[v] else 1 for v in inputs]
         outvec = []
         for f in tts:
-            val = f.pcdata[i]
+            val = f.pcdata[pc_data_index(point, f)]
             if val == PC_ZERO:
                 outvec.append(0)
             elif val == PC_ONE:
