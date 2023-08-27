@@ -62,6 +62,16 @@ def test_issue75():
     assert f_out.equivalent(f_out_r)
 
 
+def test_issue125():
+    """Reference: https://github.com/cjdrake/pyeda/issues/125"""
+    a, b, c = map(exprvar, "abc")
+
+    f_tt = truthtable((c, b, a), '10110101')
+    f_ex = truthtable2expr(f_tt)
+    g_ex = espresso_tts(f_tt)[0]
+    f_ex.equivalent(g_ex)
+
+
 def _do_espresso(fname):
     fpath = os.path.join("thirdparty", "espresso", "test", "bb_all", fname)
     with open(fpath, encoding="utf-8") as fin:
