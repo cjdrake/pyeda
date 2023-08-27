@@ -105,8 +105,8 @@ def pc_data_index(point, f):
     result = 0
     for key, value in point.items():
         if value:
-            index =f.inputs.index(key)
-            result |= (1<<index)
+            index = f.inputs.index(key)
+            result |= (1 << index)
     return result
 
 
