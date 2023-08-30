@@ -66,17 +66,17 @@ def test_issue125():
     """Reference: https://github.com/cjdrake/pyeda/issues/125"""
     a, b, c = map(exprvar, "abc")
 
-    f_tt = truthtable((a, b, c), '10110101')
-    f_ex = truthtable2expr(f_tt)
-    g_ex = espresso_tts(f_tt)[0]
-    assert f_ex.equivalent(g_ex)
-    
-    f_tt = truthtable((c, b, a), '10110101')
+    f_tt = truthtable((a, b, c), "10110101")
     f_ex = truthtable2expr(f_tt)
     g_ex = espresso_tts(f_tt)[0]
     assert f_ex.equivalent(g_ex)
 
-    f_tt = truthtable((b, a, c), '10110101')
+    f_tt = truthtable((c, b, a), "10110101")
+    f_ex = truthtable2expr(f_tt)
+    g_ex = espresso_tts(f_tt)[0]
+    assert f_ex.equivalent(g_ex)
+
+    f_tt = truthtable((b, a, c), "10110101")
     f_ex = truthtable2expr(f_tt)
     g_ex = espresso_tts(f_tt)[0]
     assert f_ex.equivalent(g_ex)
