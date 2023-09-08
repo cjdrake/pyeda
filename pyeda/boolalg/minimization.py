@@ -66,34 +66,39 @@ def espresso_exprs(*exprs):
     support = frozenset.union(*[f.support for f in exprs])
     inputs = sorted(support)
 
-    # Gather all cubes in the cover of input functions
-    fscover = set()
-    for f in exprs:
-        fscover.update(f.cover)
-
     ninputs = len(inputs)
     noutputs = len(exprs)
 
+    # Gather all cubes in the cover of input functions
+    if noutputs == 1:
+        fscover = exprs[0].cover
+    else:
+        fscover = set()
+        for f in exprs:
+            fscover.update(f.cover)
+
+    invec = [0] * ninputs
+    outvec = [0] * noutputs
     cover = set()
     for fscube in fscover:
-        invec = []
-        for v in inputs:
+        for i, v in enumerate(inputs):
             if ~v in fscube:
-                invec.append(1)
+                invec[i] = 1
             elif v in fscube:
-                invec.append(2)
+                invec[i] = 2
             else:
-                invec.append(3)
-        outvec = []
-        for f in exprs:
-            for fcube in f.cover:
-                if fcube <= fscube:
-                    outvec.append(1)
-                    break
-            else:
-                outvec.append(0)
-
-        cover.add((tuple(invec), tuple(outvec)))
+                invec[i] = 3
+        if noutputs == 1:
+            cover.add((tuple(invec), (1,)))
+        else:
+            for i, f in enumerate(exprs):
+                for fcube in f.cover:
+                    if fcube <= fscube:
+                        outvec[i] = 1
+                        break
+                else:
+                    outvec[i] = 0
+            cover.add((tuple(invec), tuple(outvec)))
 
     set_config(**CONFIG)
 
