@@ -186,7 +186,7 @@ def rowxcol(row, col):
     for i in range(4):
         for j in range(4):
             if row[i, j]:
-                ret ^= xtime(col[i], j)
+                ret ^= xtime(col[3-i], j)
     return ret
 
 
