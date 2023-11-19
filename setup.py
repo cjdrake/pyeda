@@ -17,7 +17,7 @@ VERSION = pyeda.__version__
 
 AUTHOR = "Chris Drake"
 
-AUTHOR_EMAIL = "cjdrake AT gmail DOT com"
+AUTHOR_EMAIL = "cjdrake@gmail.com"
 
 DESCRIPTION = "Python Electronic Design Automation"
 
@@ -64,12 +64,9 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
@@ -167,7 +164,7 @@ EXPRNODE = dict(
 
 # PicoSAT C extension
 with open(pjoin("thirdparty", "picosat", "VERSION"), encoding="utf-8") as fin:
-    PICOSAT_VERSION = "\"" + fin.read().strip() + "\""
+    PICOSAT_VERSION = '"' + fin.read().strip() + '"'
 
 PICOSAT = dict(
     define_macros=[

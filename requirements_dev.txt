@@ -4,12 +4,15 @@
 # Include runtime requirements
 -r requirements.txt
 
+build
+twine
+
 # PyLint: https://pylint.org
-pylint==2.17.4
+pylint
 
 # PyTest: https://pytest.org
-pytest==7.3.1
-pytest-cov==4.1.0
+pytest
+pytest-cov
 
 # Sphinx
-sphinx==7.0.1
+sphinx
