@@ -957,7 +957,7 @@ class Expression(boolfunc.Function):
 
     def to_dot(self, name="EXPR"): # pragma: no cover
         """Convert to DOT language representation."""
-        parts = ["graph", name, "{', 'rankdir=BT;"]
+        parts = ["graph", name, "{", "rankdir=BT;"]
         for ex in self.iter_dfs():
             exid = ex.node.id()
             if ex is Zero:
