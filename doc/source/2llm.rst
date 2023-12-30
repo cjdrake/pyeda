@@ -24,7 +24,7 @@ Minimize Boolean Expressions
 ============================
 
 Consider the three-input function
-:math:`f_{1} = a \cdot b' \cdot c' + a' \cdot b' \cdot c + a \cdot b' \cdot c + a \cdot b \cdot c + a \cdot b \cdot c'`
+:math:`f_{1} = a' \cdot b' \cdot c' + a' \cdot b' \cdot c + a \cdot b' \cdot c + a \cdot b \cdot c + a \cdot b \cdot c'`
 
 ::
 
