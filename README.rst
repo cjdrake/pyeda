@@ -3,8 +3,13 @@
 ***************************************
 
 Hello all,
-I haven't maintained this repository in years.
-It appears to need some TLC.
+
+I have moved on from this project,
+and will not spend time on maintenance or bug fixes.
+I welcome any discussion in Issues.
+I also welcome forks of any kind, for any reason.
+
+--------------------
 
 PyEDA is a Python library for electronic design automation.
 
