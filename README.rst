@@ -54,6 +54,13 @@ Latest release version using
 
    $ pip3 install pyeda
 
+Latest release version using
+`conda <https://anaconda.org/anaconda/conda>`_
+and
+`conda-forge <https://conda-forge.org/docs/user/introduction/>`_::
+
+   $ conda install pyeda
+
 Installation from the repository::
 
    $ python3 setup.py install
